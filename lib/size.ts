@@ -81,7 +81,7 @@ import { first_in_statement } from "./utils/first_in_statement";
 
 let mangle_options = undefined;
 AST_Node.prototype.size = function (compressor, stack) {
-    mangle_options = default_options.mangle;
+    mangle_options = (default_options as any).mangle;
 
     let size = 0;
     walk_parent(this, (node, info) => {
@@ -139,7 +139,7 @@ AST_Accessor.prototype._size = function () {
 };
 
 AST_Function.prototype._size = function (info) {
-    const first = !!first_in_statement(info);
+    const first: any = !!first_in_statement(info);
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
 };
 
@@ -159,7 +159,7 @@ AST_Arrow.prototype._size = function () {
         args_and_arrow += 2;
     }
 
-    return lambda_modifiers(this) + args_and_arrow + Array.isArray(this.body) ? list_overhead(this.body) : this.body._size();
+    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
 };
 
 AST_Destructuring.prototype._size = () => 2;
