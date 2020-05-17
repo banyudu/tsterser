@@ -32,6 +32,7 @@ function first_in_statement(stack) {
             return false;
         }
     }
+    return undefined;
 }
 
 // Returns whether the leftmost item in the expression is an object

@@ -68,7 +68,7 @@ function find_builtins(reserved) {
 
     // Compatibility fix for some standard defined globals not defined on every js environment
     var new_globals = ["Symbol", "Map", "Promise", "Proxy", "Reflect", "Set", "WeakMap", "WeakSet"];
-    var objects = {};
+    var objects: any = {};
     var global_ref = typeof global === "object" ? global : self;
 
     new_globals.forEach(function (new_global) {

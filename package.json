@@ -86,7 +86,9 @@
   ],
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint"],
+    "plugins": [
+      "@typescript-eslint"
+    ],
     "parserOptions": {
       "sourceType": "module"
     },

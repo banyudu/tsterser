@@ -58,11 +58,11 @@ function SourceMap(options) {
         orig_line_diff : 0,
         dest_line_diff : 0,
     });
-    var generator = new MOZ_SourceMap.SourceMapGenerator({
+    var generator: any = new MOZ_SourceMap.SourceMapGenerator({
         file       : options.file,
         sourceRoot : options.root
     });
-    var orig_map = options.orig && new MOZ_SourceMap.SourceMapConsumer(options.orig);
+    var orig_map: any = options.orig && new MOZ_SourceMap.SourceMapConsumer(options.orig);
 
     if (orig_map) {
         orig_map.sources.forEach(function(source) {
