@@ -172,7 +172,7 @@ import {
         return body;
     };
 
-    var MOZ_TO_ME = {
+    var MOZ_TO_ME: any = {
         Program: function(M) {
             return new AST_Toplevel({
                 start: my_start_token(M),
@@ -310,7 +310,7 @@ import {
         },
         Property: function(M) {
             var key = M.key;
-            var args = {
+            var args: any = {
                 start    : my_start_token(key || M.value),
                 end      : my_end_token(M.value),
                 key      : key.type == "Identifier" ? key.name : key.value,
@@ -351,7 +351,7 @@ import {
             }
         },
         MethodDefinition: function(M) {
-            var args = {
+            var args: any = {
                 start    : my_start_token(M),
                 end      : my_end_token(M),
                 key      : M.computed ? from_moz(M.key) : new AST_SymbolMethod({ name: M.key.name || M.key.value }),
@@ -506,7 +506,7 @@ import {
             });
         },
         Literal: function(M) {
-            var val = M.value, args = {
+            var val = M.value, args: any = {
                 start  : my_start_token(M),
                 end    : my_end_token(M)
             };
@@ -523,7 +523,7 @@ import {
                 const rx_source = M.raw || val;
                 const match = rx_source.match(/^\/(.*)\/(\w*)$/);
                 if (!match) throw new Error("Invalid regex source " + rx_source);
-                const [_, source, flags] = match;
+                const [, source, flags] = match;
                 args.value = { source, flags };
                 return new AST_RegExp(args);
             }
@@ -1107,7 +1107,7 @@ import {
         });
     }
 
-    function map(moztype, mytype, propmap) {
+    function map(moztype, mytype, propmap?) {
         var moz_to_me = "function From_Moz_" + moztype + "(M){\n";
         moz_to_me += "return new U2." + mytype.name + "({\n" +
             "start: my_start_token(M),\n" +
