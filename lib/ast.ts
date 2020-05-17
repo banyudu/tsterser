@@ -48,7 +48,7 @@ import {
     MAP,
     noop,
     string_template,
-} from "./utils/";
+} from "./utils";
 import { parse } from "./parse";
 
 function DEFNODE(type, props, methods, base = AST_Node) {
@@ -394,12 +394,13 @@ var AST_Toplevel = DEFNODE("Toplevel", "globals", {
     },
     wrap_commonjs: function(name) {
         var body = this.body;
-        var wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + "={}):" + name + ");";
-        wrapped_tl = parse(wrapped_tl);
+        var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + "={}):" + name + ");";
+        var wrapped_tl = parse(_wrapped_tl);
         wrapped_tl = wrapped_tl.transform(new TreeTransformer(function(node) {
             if (node instanceof AST_Directive && node.value == "$ORIG") {
                 return MAP.splice(body);
             }
+            return undefined;
         }));
         return wrapped_tl;
     },
@@ -418,6 +419,7 @@ var AST_Toplevel = DEFNODE("Toplevel", "globals", {
             if (node instanceof AST_Directive && node.value == "$ORIG") {
                 return MAP.splice(body);
             }
+            return undefined;
         }));
     }
 }, AST_Scope);
@@ -1498,7 +1500,10 @@ const walk_abort = Symbol("abort walk");
 /* -----[ TreeWalker ]----- */
 
 class TreeWalker {
-    constructor(callback) {
+    visit: any
+    stack: any[]
+    directives: any
+    constructor(callback?) {
         this.visit = callback;
         this.stack = [];
         this.directives = Object.create(null);
@@ -1583,7 +1588,9 @@ class TreeWalker {
 
 // Tree transformer helpers.
 class TreeTransformer extends TreeWalker {
-    constructor(before, after) {
+    before: any
+    after: any
+    constructor(before, after?) {
         super();
         this.before = before;
         this.after = after;
