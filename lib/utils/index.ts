@@ -110,7 +110,7 @@ function return_this() { return this; }
 function return_null() { return null; }
 
 var MAP = (function() {
-    function MAP(a, f, backwards) {
+    function MAP(a, f, backwards?) {
         var ret = [], top = [], i;
         function doit() {
             var val: any = f(a[i], i);
