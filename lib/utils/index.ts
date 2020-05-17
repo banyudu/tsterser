@@ -43,6 +43,27 @@
 
 "use strict";
 
+class AtTop {
+    v: any
+    constructor (val) {
+        this.v = val;
+    }
+}
+
+class Splice {
+    v: any
+    constructor (val) {
+        this.v = val;
+    }
+}
+
+class Last {
+    v: any
+    constructor (val) {
+        this.v = val;
+    }
+}
+
 function characters(str) {
     return str.split("");
 }
@@ -52,6 +73,7 @@ function member(name, array) {
 }
 
 class DefaultsError extends Error {
+    defs: any
     constructor(msg, defs) {
         super();
 
@@ -91,7 +113,7 @@ var MAP = (function() {
     function MAP(a, f, backwards) {
         var ret = [], top = [], i;
         function doit() {
-            var val = f(a[i], i);
+            var val: any = f(a[i], i);
             var is_last = val instanceof Last;
             if (is_last) val = val.v;
             if (val instanceof AtTop) {
@@ -127,9 +149,6 @@ var MAP = (function() {
     MAP.splice = function(val) { return new Splice(val); };
     MAP.last = function(val) { return new Last(val); };
     var skip = MAP.skip = {};
-    function AtTop(val) { this.v = val; }
-    function Splice(val) { this.v = val; }
-    function Last(val) { this.v = val; }
     return MAP;
 })();
 
@@ -148,7 +167,7 @@ function push_uniq(array, el) {
 }
 
 function string_template(text, props) {
-    return text.replace(/{(.+?)}/g, function(str, p) {
+    return text.replace(/{(.+?)}/g, function(_, p) {
         return props && props[p];
     });
 }
