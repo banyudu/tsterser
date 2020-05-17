@@ -1,6 +1,6 @@
 // API
-import "./lib/transform.js";
-export { minify } from "./lib/minify.js";
+import "./lib/transform";
+export { minify } from "./lib/minify";
 
 // CLI
 export {
@@ -124,21 +124,21 @@ export {
     _INLINE,
     _NOINLINE,
     _PURE,
-} from "./lib/ast.js";
+} from "./lib/ast";
 export {
     defaults,
     push_uniq,
     string_template,
     has_annotation as _has_annotation,
-} from "./lib/utils/index.js";
-export { base54 } from "./lib/scope.js";
-export { Compressor } from "./lib/compress/index.js";
-export { to_ascii } from "./lib/minify.js";
-export { OutputStream } from "./lib/output.js";
-export { parse, tokenizer as _tokenizer, JS_Parse_Error as _JS_Parse_Error }  from "./lib/parse.js";
+} from "./lib/utils/";
+export { base54 } from "./lib/scope";
+export { Compressor } from "./lib/compress/";
+export { to_ascii } from "./lib/minify";
+export { OutputStream } from "./lib/output";
+export { parse, tokenizer as _tokenizer, JS_Parse_Error as _JS_Parse_Error }  from "./lib/parse";
 export {
     mangle_properties,
     reserve_quoted_keys,
-} from "./lib/propmangle.js";
+} from "./lib/propmangle";
 export { default_options } from "./tools/node";
-import "./lib/mozilla-ast.js";
+import "./lib/mozilla-ast";
