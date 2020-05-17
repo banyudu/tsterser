@@ -51,7 +51,7 @@ import {
     sort_regexp_flags,
     return_false,
     return_true,
-} from "./utils/";
+} from "./utils";
 import { first_in_statement, left_is_object } from "./utils/first_in_statement";
 import {
     AST_Array,
@@ -204,7 +204,7 @@ function OutputStream(options) {
         options.shorthand = options.ecma > 5;
 
     // Convert comment option to RegExp if neccessary and set up comments filter
-    var comment_filter = return_false; // Default case, throw all comments away
+    var comment_filter: any = return_false; // Default case, throw all comments away
     if (options.comments) {
         let comments = options.comments;
         if (typeof options.comments === "string" && /^\/.*\/[a-zA-Z]*$/.test(options.comments)) {
@@ -236,7 +236,7 @@ function OutputStream(options) {
     var OUTPUT = "";
     let printed_comments = new Set();
 
-    var to_utf8 = options.ascii_only ? function(str, identifier) {
+    var to_utf8 = options.ascii_only ? function(str, identifier?) {
         if (options.ecma >= 2015) {
             str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, function(ch) {
                 var code = get_full_char_code(ch, 0).toString(16);
@@ -485,7 +485,7 @@ function OutputStream(options) {
         might_need_space = true;
     };
 
-    var indent = options.beautify ? function(half) {
+    var indent = options.beautify ? function(half?) {
         if (options.beautify) {
             print(make_indent(half ? 0.5 : 0));
         }
@@ -498,7 +498,7 @@ function OutputStream(options) {
         var ret = cont();
         indentation = save_indentation;
         return ret;
-    } : function(col, cont) { return cont(); };
+    } : function(_col, cont) { return cont(); };
 
     var newline = options.beautify ? function() {
         if (newline_insert < 0) return print("\n");
@@ -642,7 +642,7 @@ function OutputStream(options) {
                     || parent instanceof AST_Sequence && parent.expressions[0] === node
                     || parent instanceof AST_Sub && parent.expression === node
                     || parent instanceof AST_UnaryPostfix) {
-                    if (!node.start) return;
+                    if (!node.start) return undefined;
                     var text = node.start.comments_before;
                     if (text && !printed_comments.has(text)) {
                         printed_comments.add(text);
@@ -651,6 +651,7 @@ function OutputStream(options) {
                 } else {
                     return true;
                 }
+                return undefined;
             });
             tw.push(node);
             node.value.walk(tw);
@@ -979,6 +980,7 @@ function OutputStream(options) {
                 return true;
             }
         }
+        return undefined;
     });
 
     PARENS(AST_Yield, function(output) {
@@ -1001,6 +1003,7 @@ function OutputStream(options) {
         // (yield x)['foo']
         if (p instanceof AST_PropAccess && p.expression === this)
             return true;
+        return undefined;
     });
 
     PARENS(AST_PropAccess, function(output) {
@@ -1017,8 +1020,10 @@ function OutputStream(options) {
                 if (node instanceof AST_Call) {
                     return walk_abort;  // makes walk() return true.
                 }
+                return undefined;
             });
         }
+        return undefined;
     });
 
     PARENS(AST_Call, function(output) {
@@ -1042,6 +1047,7 @@ function OutputStream(options) {
             && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
                 || p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
             return true;
+        return undefined;
     });
 
     PARENS(AST_Number, function(output) {
@@ -1052,6 +1058,7 @@ function OutputStream(options) {
                 return true;
             }
         }
+        return undefined;
     });
 
     PARENS(AST_BigInt, function(output) {
@@ -1062,6 +1069,7 @@ function OutputStream(options) {
                 return true;
             }
         }
+        return undefined;
     });
 
     PARENS([ AST_Assign, AST_Conditional ], function(output) {
@@ -1084,6 +1092,7 @@ function OutputStream(options) {
         // ({a, b} = {a: 1, b: 2}), a destructuring assignment
         if (this instanceof AST_Assign && this.left instanceof AST_Destructuring && this.left.is_array === false)
             return true;
+        return undefined;
     });
 
     /* -----[ PRINTERS ]----- */
@@ -1112,7 +1121,7 @@ function OutputStream(options) {
         output.print(self.is_array ? "]" : "}");
     });
 
-    DEFPRINT(AST_Debugger, function(self, output) {
+    DEFPRINT(AST_Debugger, function(_self, output) {
         output.print("debugger");
         output.semicolon();
     });
@@ -1175,7 +1184,7 @@ function OutputStream(options) {
         });
         output.print("}");
     }
-    function print_braced(self, output, allow_directives) {
+    function print_braced(self, output, allow_directives?) {
         if (self.body.length > 0) {
             output.with_block(function() {
                 display_body(self.body, false, output, allow_directives);
@@ -1185,7 +1194,7 @@ function OutputStream(options) {
     DEFPRINT(AST_BlockStatement, function(self, output) {
         print_braced(self, output);
     });
-    DEFPRINT(AST_EmptyStatement, function(self, output) {
+    DEFPRINT(AST_EmptyStatement, function(_self, output) {
         output.semicolon();
     });
     DEFPRINT(AST_Do, function(self, output) {
@@ -1699,6 +1708,7 @@ function OutputStream(options) {
                 if (node instanceof AST_Binary && node.operator == "in") {
                     return walk_abort;  // makes walk() return true
                 }
+                return undefined;
             });
         }
         node.print(output, parens);
@@ -1912,7 +1922,7 @@ function OutputStream(options) {
         });
         else output.print("{}");
     });
-    DEFPRINT(AST_NewTarget, function(self, output) {
+    DEFPRINT(AST_NewTarget, function(_self, output) {
         output.print("new.target");
     });
 
@@ -2042,10 +2052,10 @@ function OutputStream(options) {
         self._do_print(output);
     });
     DEFPRINT(AST_Hole, noop);
-    DEFPRINT(AST_This, function(self, output) {
+    DEFPRINT(AST_This, function(_self, output) {
         output.print("this");
     });
-    DEFPRINT(AST_Super, function(self, output) {
+    DEFPRINT(AST_Super, function(_self, output) {
         output.print("super");
     });
     DEFPRINT(AST_Constant, function(self, output) {
