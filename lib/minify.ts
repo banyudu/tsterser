@@ -6,20 +6,20 @@ import {
     map_from_object,
     map_to_object,
     HOP,
-} from "./utils/index.js";
+} from "./utils/";
 import {
     AST_Node,
     AST_Toplevel,
-} from "./ast.js";
-import { parse } from "./parse.js";
-import { OutputStream } from "./output.js";
-import { Compressor } from "./compress/index.js";
-import { base54 } from "./scope.js";
-import { SourceMap } from "./sourcemap.js";
+} from "./ast";
+import { parse } from "./parse";
+import { OutputStream } from "./output";
+import { Compressor } from "./compress/index";
+import { base54 } from "./scope";
+import { SourceMap } from "./sourcemap";
 import {
     mangle_properties,
     reserve_quoted_keys,
-} from "./propmangle.js";
+} from "./propmangle";
 
 var to_ascii = typeof atob == "undefined" ? function(b64) {
     return Buffer.from(b64, "base64").toString();
@@ -86,7 +86,7 @@ function minify(files, options) {
             warnings: false,
             wrap: false,
         }, true);
-        var timings = options.timings && {
+        var timings: any = options.timings && {
             start: Date.now()
         };
         if (options.keep_classnames === undefined) {
@@ -201,7 +201,7 @@ function minify(files, options) {
             toplevel = mangle_properties(toplevel, options.mangle.properties);
         }
         if (timings) timings.output = Date.now();
-        var result = {};
+        var result: any = {};
         if (options.output.ast) {
             result.ast = toplevel;
         }
