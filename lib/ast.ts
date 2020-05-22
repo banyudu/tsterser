@@ -48,7 +48,7 @@ import {
     MAP,
     noop,
     string_template,
-} from "./utils";
+} from "./utils/index";
 import { parse } from "./parse";
 
 function DEFNODE(type, props, methods, base = AST_Node) {

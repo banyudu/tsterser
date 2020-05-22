@@ -130,9 +130,9 @@ export {
     push_uniq,
     string_template,
     has_annotation as _has_annotation,
-} from "./lib/utils/";
+} from "./lib/utils/index";
 export { base54 } from "./lib/scope";
-export { Compressor } from "./lib/compress/";
+export { Compressor } from "./lib/compress/index";
 export { to_ascii } from "./lib/minify";
 export { OutputStream } from "./lib/output";
 export { parse, tokenizer as _tokenizer, JS_Parse_Error as _JS_Parse_Error }  from "./lib/parse";

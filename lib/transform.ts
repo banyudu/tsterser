@@ -88,7 +88,7 @@ import {
 import {
     MAP,
     noop,
-} from "./utils";
+} from "./utils/index";
 
 function def_transform(node, descend) {
     node.DEFMETHOD("transform", function(tw, in_list) {

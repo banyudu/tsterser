@@ -46,7 +46,7 @@
 import MOZ_SourceMap from "source-map";
 import {
     defaults,
-} from "./utils/";
+} from "./utils/index";
 
 // a small wrapper around fitzgen's source-map library
 function SourceMap(options) {

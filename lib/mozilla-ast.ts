@@ -42,7 +42,7 @@
  ***********************************************************************/
 
 import * as ast from "./ast";
-import { make_node } from "./utils/";
+import { make_node } from "./utils/index";
 import {
     AST_Accessor,
     AST_Array,

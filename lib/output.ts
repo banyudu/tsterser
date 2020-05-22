@@ -51,7 +51,7 @@ import {
     sort_regexp_flags,
     return_false,
     return_true,
-} from "./utils";
+} from "./utils/index";
 import { first_in_statement, left_is_object } from "./utils/first_in_statement";
 import {
     AST_Array,

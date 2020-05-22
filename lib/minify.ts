@@ -6,7 +6,7 @@ import {
     map_from_object,
     map_to_object,
     HOP,
-} from "./utils/";
+} from "./utils/index";
 import {
     AST_Node,
     AST_Toplevel,
