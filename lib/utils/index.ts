@@ -152,7 +152,7 @@ var MAP = (function() {
     return MAP;
 })();
 
-function make_node(ctor, orig, props) {
+function make_node(ctor, orig?, props?) {
     if (!props) props = {};
     if (orig) {
         if (!props.start) props.start = orig.start;

@@ -1437,7 +1437,7 @@ function walk(node, cb, to_visit = [node]) {
     return false;
 }
 
-function walk_parent(node, cb, initial_stack) {
+function walk_parent(node, cb, initial_stack?) {
     const to_visit = [node];
     const push = to_visit.push.bind(to_visit);
     const stack = initial_stack ? initial_stack.slice() : [];
@@ -1503,6 +1503,10 @@ class TreeWalker {
     visit: any
     stack: any[]
     directives: any
+    safe_ids: any;
+    in_loop: any;
+    loop_ids: Map<any, any>;
+    defs_to_safe_ids: Map<any, any>;
     constructor(callback?) {
         this.visit = callback;
         this.stack = [];

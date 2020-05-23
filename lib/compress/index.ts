@@ -214,7 +214,14 @@ const set_flag = (node, flag) => { node.flags |= flag; };
 const clear_flag = (node, flag) => { node.flags &= ~flag; };
 
 class Compressor extends TreeWalker {
-    constructor(options, false_by_default) {
+    options: any;
+    pure_funcs: any;
+    top_retain: (def: any) => any;
+    toplevel: { funcs: any; vars: any; };
+    sequences_limit: number;
+    warnings_produced: {};
+    evaluated_regexps: Map<any, any>;
+    constructor(options, false_by_default?) {
         super();
         if (options.defaults !== undefined && !options.defaults) false_by_default = true;
         this.options = defaults(options, {
@@ -556,7 +563,7 @@ function read_property(obj, key) {
     return value instanceof AST_SymbolRef && value.fixed_value() || value;
 }
 
-function is_modified(compressor, tw, node, value, level, immutable) {
+function is_modified(compressor, tw, node, value, level, immutable?) {
     var parent = tw.parent(level);
     var lhs = is_lhs(node, parent);
     if (lhs) return lhs;
@@ -1484,7 +1491,7 @@ function tighten_body(statements, compressor) {
                 var may_throw = candidate.may_throw(compressor);
                 var funarg = candidate.name instanceof AST_SymbolFunarg;
                 var hit = funarg;
-                var abort = false, replaced = 0, can_replace = !args || !hit;
+                var abort = false,replaced: any = 0, can_replace = !args || !hit;
                 if (!can_replace) {
                     for (var j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; !abort && j < args.length; j++) {
                         args[j].transform(scanner);
@@ -1704,7 +1711,7 @@ function tighten_body(statements, compressor) {
             hit_stack.pop();
         }
 
-        function find_stop(node, level, write_only) {
+        function find_stop(node, level, write_only?) {
             var parent = scanner.parent(level);
             if (parent instanceof AST_Assign) {
                 if (write_only
@@ -1870,7 +1877,7 @@ function tighten_body(statements, compressor) {
             });
         }
 
-        function side_effects_external(node, lhs) {
+        function side_effects_external(node, lhs?) {
             if (node instanceof AST_Assign) return side_effects_external(node.left, true);
             if (node instanceof AST_Unary) return side_effects_external(node.expression, true);
             if (node instanceof AST_VarDef) return node.value && side_effects_external(node.value);
@@ -2434,7 +2441,7 @@ function get_value(key) {
     return key;
 }
 
-function is_undefined(node, compressor) {
+function is_undefined(node, compressor?) {
     return has_flag(node, UNDEFINED)
         || node instanceof AST_Undefined
         || node instanceof AST_UnaryPrefix
@@ -2829,7 +2836,7 @@ var static_fns = convert_to_predicate({
     });
     def_eval(AST_Function, function(compressor) {
         if (compressor.option("unsafe")) {
-            var fn = function() {};
+            var fn: any = function() {};
             fn.node = this;
             fn.toString = function() {
                 return this.node.print_to_string();
@@ -3495,7 +3502,7 @@ const pure_prop_access_globals = new Set([
 // determine if expression is constant
 (function(def_is_constant_expression) {
     function all_refs_local(scope) {
-        let result = true;
+        let result: any = true;
         walk(this, node => {
             if (node instanceof AST_SymbolRef) {
                 if (has_flag(this, INLINED)) {
@@ -4273,7 +4280,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
         var ret = [], changed = false;
         for (var i = 0; i < len; i++) {
             var node = nodes[i].drop_side_effect_free(compressor, first_in_statement);
-            changed |= node !== nodes[i];
+            changed = (node !== nodes[i]) || changed;
             if (node) {
                 ret.push(node);
                 first_in_statement = false;
@@ -4482,7 +4489,7 @@ def_optimize(AST_While, function(self, compressor) {
     return compressor.option("loops") ? make_node(AST_For, self, self).optimize(compressor) : self;
 });
 
-function has_break_or_continue(loop, parent) {
+function has_break_or_continue(loop, parent?) {
     var found = false;
     var tw = new TreeWalker(function(node) {
         if (found || node instanceof AST_Scope) return true;
@@ -4762,7 +4769,7 @@ def_optimize(AST_If, function(self, compressor) {
         }
     }
     if (aborts(self.alternative)) {
-        var body = self.body;
+        const body = self.body;
         self.body = self.alternative;
         self.condition = negated_is_best ? negated : self.condition.negate(compressor);
         self.alternative = null;
@@ -5255,8 +5262,8 @@ def_optimize(AST_Call, function(self, compressor) {
                         return walk_abort;
                     }
                 });
-                var code = OutputStream();
-                AST_BlockStatement.prototype._codegen.call(fun, fun, code);
+                const code2 = OutputStream();
+                AST_BlockStatement.prototype._codegen.call(fun, fun, code2);
                 self.args = [
                     make_node(AST_String, self, {
                         value: fun.argnames.map(function(arg) {
@@ -5264,7 +5271,7 @@ def_optimize(AST_Call, function(self, compressor) {
                         }).join(",")
                     }),
                     make_node(AST_String, self.args[self.args.length - 1], {
-                        value: code.get().replace(/^{|}$/g, "")
+                        value: code2.get().replace(/^{|}$/g, "")
                     })
                 ];
                 return self;
@@ -5804,7 +5811,7 @@ def_optimize(AST_Binary, function(self, compressor) {
             || !self.left.has_side_effects(compressor)
                 && !self.right.has_side_effects(compressor);
     }
-    function reverse(op) {
+    function reverse(op?) {
         if (reversible()) {
             if (op) self.operator = op;
             var tmp = self.left;
@@ -6346,7 +6353,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
             return self;
         }
         var fixed = self.fixed_value();
-        var single_use = def.single_use
+        var single_use: any = def.single_use
             && !(parent instanceof AST_Call
                 && (parent.is_expr_pure(compressor))
                     || has_annotation(parent, _NOINLINE));
@@ -7142,7 +7149,7 @@ def_optimize(AST_Sub, function(self, compressor) {
             var flatten = true;
             var values = [];
             for (var i = elements.length; --i > index;) {
-                var value = elements[i].drop_side_effect_free(compressor);
+                const value = elements[i].drop_side_effect_free(compressor);
                 if (value) {
                     values.unshift(value);
                     if (flatten && value.has_side_effects(compressor)) flatten = false;
@@ -7152,7 +7159,7 @@ def_optimize(AST_Sub, function(self, compressor) {
             retValue = retValue instanceof AST_Hole ? make_node(AST_Undefined, retValue) : retValue;
             if (!flatten) values.unshift(retValue);
             while (--i >= 0) {
-                var value = elements[i];
+                let value = elements[i];
                 if (value instanceof AST_Expansion) break FLATTEN;
                 value = value.drop_side_effect_free(compressor);
                 if (value) values.unshift(value);

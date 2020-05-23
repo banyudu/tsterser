@@ -169,7 +169,7 @@ function is_some_comments(comment) {
     );
 }
 
-function OutputStream(options) {
+function OutputStream(options?) {
 
     var readonly = !options;
     options = defaults(options, {
