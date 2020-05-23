@@ -111,7 +111,7 @@ function return_null() { return null; }
 
 var MAP = (function() {
     function MAP(a, f, backwards?) {
-        var ret = [], top = [], i;
+        var ret: any[] = [], top: any[] = [], i;
         function doit() {
             var val: any = f(a[i], i);
             var is_last = val instanceof Last;
@@ -181,7 +181,7 @@ function remove(array, el) {
 function mergeSort(array, cmp) {
     if (array.length < 2) return array.slice();
     function merge(a, b) {
-        var r = [], ai = 0, bi = 0, i = 0;
+        var r: any[] = [], ai = 0, bi = 0, i = 0;
         while (ai < a.length && bi < b.length) {
             cmp(a[ai], b[bi]) <= 0
                 ? r[i++] = a[ai++]

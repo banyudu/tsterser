@@ -337,7 +337,7 @@ function OutputStream(options?) {
     var need_space = false;
     var newline_insert = -1;
     var last = "";
-    var mapping_token, mapping_name, mappings = options.source_map && [];
+    var mapping_token, mapping_name, mappings: any[] = options.source_map && [];
 
     var do_add_mapping = mappings ? function() {
         mappings.forEach(function(mapping) {
@@ -752,7 +752,7 @@ function OutputStream(options?) {
         if (OUTPUT.length > insert) newline_insert = insert;
     }
 
-    var stack = [];
+    var stack: any[] = [];
     return {
         get             : get,
         toString        : get,

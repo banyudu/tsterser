@@ -143,7 +143,7 @@ function minify(files, options) {
                 url: null,
             }, true);
         }
-        var warnings = [];
+        var warnings: any[] = [];
         if (options.warnings && !AST_Node.warn_function) {
             AST_Node.warn_function = function(warning) {
                 warnings.push(warning);

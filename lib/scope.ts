@@ -112,8 +112,8 @@ import {
 const MASK_EXPORT_DONT_MANGLE = 1 << 0;
 const MASK_EXPORT_WANT_MANGLE = 1 << 1;
 
-let function_defs = null;
-let unmangleable_names = null;
+let function_defs: Set<any> | null = null;
+let unmangleable_names: Set<any> | null = null;
 
 class SymbolDef {
     name: any;
@@ -225,11 +225,11 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
     }
 
     // pass 1: setup scope chaining and handle definitions
-    var scope = this.parent_scope = parent_scope;
+    var scope: any = this.parent_scope = parent_scope;
     var labels = new Map();
-    var defun = null;
+    var defun: any = null;
     var in_destructuring = null;
-    var for_scopes = [];
+    var for_scopes: any[] = [];
     var tw = new TreeWalker((node, descend) => {
         if (node.is_block_scope()) {
             const save_scope = scope;
@@ -554,7 +554,7 @@ AST_Scope.DEFMETHOD("add_child_scope", function (scope) {
 
     const new_scope_enclosed_set = new Set(scope.enclosed);
     const scope_ancestry = (() => {
-        const ancestry = [];
+        const ancestry: any[] = [];
         let cur = this;
         do {
             ancestry.push(cur);
@@ -563,7 +563,7 @@ AST_Scope.DEFMETHOD("add_child_scope", function (scope) {
         return ancestry;
     })();
 
-    const to_enclose = [];
+    const to_enclose: any[] = [];
     for (const scope_topdown of scope_ancestry) {
         to_enclose.forEach(e => push_uniq(scope_topdown.enclosed, e));
         for (const def of scope_topdown.variables.values()) {
@@ -750,7 +750,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
     // present (and for AST_SymbolRef-s it'll use the mangled name of
     // the AST_SymbolDeclaration that it points to).
     var lname = -1;
-    var to_mangle = [];
+    var to_mangle: any[] = [];
 
     if (options.keep_fnames) {
         function_defs = new Set();
@@ -814,7 +814,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
         // for use in avoiding collisions in next_mangled.
         to_mangle.forEach(def => {
             if (def.name.length < 6 && def.unmangleable(options)) {
-                unmangleable_names.add(def.name);
+                unmangleable_names?.add(def.name);
             }
         });
     }

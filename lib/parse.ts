@@ -394,10 +394,10 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         newline_before  : false,
         regex_allowed   : false,
         brace_counter   : 0,
-        template_braces : [],
-        comments_before : [],
+        template_braces : [] as any[],
+        comments_before : [] as any[],
         directives      : {},
-        directive_stack : []
+        directive_stack : [] as any[]
     };
 
     function peek() { return get_full_char(S.text, S.pos); }
@@ -456,7 +456,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
     }
 
     var prev_was_dot = false;
-    var previous_token = null;
+    var previous_token: any = null;
     function token(type, value?, is_comment?) {
         S.regex_allowed = ((type == "operator" && !UNARY_POSTFIX.has(value)) ||
                            (type == "keyword" && KEYWORDS_BEFORE_EXPRESSION.has(value)) ||
@@ -545,12 +545,12 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         if (num.endsWith("n")) {
             const without_n = num.slice(0, -1);
             const allow_e = RE_HEX_NUMBER.test(without_n);
-            const valid = parse_js_number(without_n, allow_e);
+            const valid = parse_js_number(without_n, allow_e) as number;
             if (!has_dot && RE_BIG_INT.test(num) && !isNaN(valid))
                 return token("big_int", without_n);
             parse_error("Invalid or unexpected token");
         }
-        var valid = parse_js_number(num);
+        var valid = parse_js_number(num) as number;
         if (!isNaN(valid)) {
             return token("num", valid);
         } else {
@@ -1021,15 +1021,15 @@ function parse($TEXT, options?) {
                          ? tokenizer($TEXT, options.filename,
                                      options.html5_comments, options.shebang)
                          : $TEXT),
-        token         : null,
-        prev          : null,
+        token         : null as any,
+        prev          : null as any,
         peeked        : null,
         in_function   : 0,
         in_async      : -1,
         in_generator  : -1,
         in_directives : true,
         in_loop       : 0,
-        labels        : []
+        labels        : [] as any[]
     };
 
     S.token = next();
@@ -1252,11 +1252,11 @@ function parse($TEXT, options?) {
                 next();
                 return if_();
 
-              case "return":
+              case "return": {
                 if (S.in_function == 0 && !options.bare_returns)
                     croak("'return' outside of function");
                 next();
-                var value = null;
+                let value = null;
                 if (is("punc", ";")) {
                     next();
                 } else if (!can_insert_semicolon()) {
@@ -1266,7 +1266,7 @@ function parse($TEXT, options?) {
                 return new AST_Return({
                     value: value
                 });
-
+              }
               case "switch":
                 next();
                 return new AST_Switch({
@@ -1278,7 +1278,7 @@ function parse($TEXT, options?) {
                 next();
                 if (has_newline_before(S.token))
                     croak("Illegal newline after 'throw'");
-                var value = expression(true);
+                const value = expression(true);
                 semicolon();
                 return new AST_Throw({
                     value: value
@@ -1364,7 +1364,7 @@ function parse($TEXT, options?) {
     }
 
     function break_cont(type) {
-        var label = null, ldef;
+        var label: any = null, ldef;
         if (!can_insert_semicolon()) {
             label = as_symbol(AST_LabelRef, true);
         }
@@ -1393,7 +1393,7 @@ function parse($TEXT, options?) {
             await_tok = false;
         }
         expect("(");
-        var init = null;
+        var init: any = null;
         if (!is("punc", ";")) {
             init =
                 is("keyword", "var") ? (next(), var_(true)) :
@@ -1638,7 +1638,7 @@ function parse($TEXT, options?) {
     }
 
     function binding_element(used_parameters, symbol_type) {
-        var elements = [];
+        var elements: any[] = [];
         var first = true;
         var is_expand = false;
         var expand_token;
@@ -1754,7 +1754,7 @@ function parse($TEXT, options?) {
                     var property = as_property_name();
                     if (property === null) {
                         unexpected(prev());
-                    } else if (prev().type === "name" && !is("punc", ":")) {
+                    } else if (prev()?.type === "name" && !is("punc", ":")) {
                         elements.push(new AST_ObjectKeyVal({
                             start: prev(),
                             key: property,
@@ -1812,7 +1812,7 @@ function parse($TEXT, options?) {
         var spread_token;
         var invalid_sequence;
         var trailing_comma;
-        var a = [];
+        var a: any[] = [];
         expect("(");
         while (!is("punc", ")")) {
             if (spread_token) unexpected(spread_token);
@@ -1948,7 +1948,7 @@ function parse($TEXT, options?) {
 
     function block_() {
         expect("{");
-        var a = [];
+        var a: any[] = [];
         while (!is("punc", "}")) {
             if (is("eof")) unexpected();
             a.push(statement());
@@ -1959,7 +1959,7 @@ function parse($TEXT, options?) {
 
     function switch_body_() {
         expect("{");
-        var a = [], cur = null, branch = null, tmp;
+        var a: any[] = [], cur: any = null, branch: any = null, tmp;
         while (!is("punc", "}")) {
             if (is("eof")) unexpected();
             if (is("keyword", "case")) {
@@ -1995,11 +1995,12 @@ function parse($TEXT, options?) {
         if (is("keyword", "catch")) {
             var start = S.token;
             next();
+            var name;
             if (is("punc", "{")) {
-                var name = null;
+                name = null;
             } else {
                 expect("(");
-                var name = parameter(undefined, AST_SymbolCatch);
+                name = parameter(undefined, AST_SymbolCatch);
                 expect(")");
             }
             bcatch = new AST_Catch({
@@ -2028,7 +2029,7 @@ function parse($TEXT, options?) {
     }
 
     function vardefs(no_in, kind) {
-        var a = [];
+        var a: any[] = [];
         var def;
         for (;;) {
             var sym_type =
@@ -2248,7 +2249,7 @@ function parse($TEXT, options?) {
                     start.comments_after = ex.start.comments_after;
                 }
                 ex.start = start;
-                var end = prev();
+                var end: any = prev();
                 if (ex.end) {
                     end.comments_before = ex.end.comments_before;
                     ex.end.comments_after.push(...end.comments_after);
@@ -2301,7 +2302,7 @@ function parse($TEXT, options?) {
         if (_arg) {
             // do nothing
         }
-        var segments = [], start = S.token;
+        var segments: any[] = [], start = S.token;
 
         segments.push(new AST_TemplateSegment({
             start: S.token,
@@ -2335,7 +2336,7 @@ function parse($TEXT, options?) {
     }
 
     function expr_list(closing, allow_trailing_comma, allow_empty?) {
-        var first = true, a = [];
+        var first = true, a: any[] = [];
         while (!is("punc", closing)) {
             if (first) first = false; else expect(",");
             if (allow_trailing_comma && is("punc", closing)) break;
@@ -2364,7 +2365,7 @@ function parse($TEXT, options?) {
     });
 
     var object_or_destructuring_ = embed_tokens(function object_or_destructuring_() {
-        var start = S.token, first = true, a = [];
+        var start = S.token, first = true, a: any[] = [];
         expect("{");
         while (!is("punc", "}")) {
             if (first) first = false; else expect(",");
@@ -2432,7 +2433,7 @@ function parse($TEXT, options?) {
     });
 
     function class_(KindOfClass) {
-        var start, method, class_name, extends_, a = [];
+        var start, method, class_name, extends_, a: any[] = [];
 
         S.input.push_directives_stack(); // Push directive stack, but not scope stack
         S.input.add_directive("use strict");
@@ -2945,7 +2946,7 @@ function parse($TEXT, options?) {
     };
 
     function call_args() {
-        var args = [];
+        var args: any[] = [];
         while (!is("punc", ")")) {
             if (is("expand", "...")) {
                 next();
@@ -3069,7 +3070,7 @@ function parse($TEXT, options?) {
                 end: node.end
             });
         } else if (node instanceof AST_Array) {
-            var names = [];
+            var names: any[] = [];
 
             for (var i = 0; i < node.elements.length; i++) {
                 // Only allow expansion as last element
@@ -3138,7 +3139,7 @@ function parse($TEXT, options?) {
 
     var expression = function(commas?, no_in?) {
         var start = S.token;
-        var exprs = [];
+        var exprs: any[] = [];
         while (true) {
             exprs.push(maybe_assign(no_in));
             if (!commas || !is("punc", ",")) break;
@@ -3165,7 +3166,7 @@ function parse($TEXT, options?) {
 
     return (function() {
         var start = S.token;
-        var body = [];
+        var body: any[] = [];
         S.input.push_directives_stack();
         if (options.module) S.input.add_directive("use strict");
         while (!is("eof"))

@@ -449,7 +449,7 @@ var AST_Lambda = DEFNODE("Lambda", "name argnames uses_arguments is_generator as
         async: "[boolean] is this method async",
     },
     args_as_names: function () {
-        var out = [];
+        var out: any[] = [];
         for (var i = 0; i < this.argnames.length; i++) {
             if (this.argnames[i] instanceof AST_Destructuring) {
                 out.push(...this.argnames[i].all_symbols());
@@ -515,7 +515,7 @@ var AST_Destructuring = DEFNODE("Destructuring", "names is_array", {
         while (i--) push(this.names[i]);
     },
     all_symbols: function() {
-        var out = [];
+        var out: any[] = [];
         this.walk(new TreeWalker(function (node) {
             if (node instanceof AST_Symbol) {
                 out.push(node);
@@ -1441,7 +1441,7 @@ function walk_parent(node, cb, initial_stack?) {
     const to_visit = [node];
     const push = to_visit.push.bind(to_visit);
     const stack = initial_stack ? initial_stack.slice() : [];
-    const parent_pop_indices = [];
+    const parent_pop_indices: any[] = [];
 
     let current;
 

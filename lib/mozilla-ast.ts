@@ -233,7 +233,7 @@ import {
             });
         },
         TemplateLiteral: function(M) {
-            var segments = [];
+            var segments: any[] = [];
             for (var i = 0; i < M.quasis.length; i++) {
                 segments.push(from_moz(M.quasis[i]));
                 if (M.expressions[i]) {
@@ -440,7 +440,7 @@ import {
 
         ImportDeclaration: function(M) {
             var imported_name = null;
-            var imported_names = null;
+            var imported_names: any[] | null = null;
             M.specifiers.forEach(function (specifier) {
                 if (specifier.type === "ImportSpecifier") {
                     if (!imported_names) { imported_names = []; }
@@ -548,7 +548,7 @@ import {
             }
         },
         Identifier: function(M) {
-            var p = FROM_MOZ_STACK[FROM_MOZ_STACK.length - 2];
+            var p = FROM_MOZ_STACK?.[FROM_MOZ_STACK.length - 2];
             return new (  p.type == "LabeledStatement" ? AST_Label
                         : p.type == "VariableDeclarator" && p.id === M ? (p.kind == "const" ? AST_SymbolConst : p.kind == "let" ? AST_SymbolLet : AST_SymbolVar)
                         : /Import.*Specifier/.test(p.type) ? (p.local === M ? AST_SymbolImport : AST_SymbolImportForeign)
@@ -651,8 +651,8 @@ import {
     });
 
     def_to_moz(AST_TemplateString, function To_Moz_TemplateLiteral(M) {
-        var quasis = [];
-        var expressions = [];
+        var quasis: any[] = [];
+        var expressions: any[] = [];
         for (var i = 0; i < M.segments.length; i++) {
             if (i % 2 !== 0) {
                 expressions.push(to_moz(M.segments[i]));
@@ -808,7 +808,7 @@ import {
     });
 
     def_to_moz(AST_Import, function To_Moz_ImportDeclaration(M) {
-        var specifiers = [];
+        var specifiers: any[] = [];
         if (M.imported_name) {
             specifiers.push({
                 type: "ImportDefaultSpecifier",
@@ -1158,12 +1158,12 @@ import {
         def_to_moz(mytype, me_to_moz);
     }
 
-    var FROM_MOZ_STACK = null;
+    var FROM_MOZ_STACK: any[] | null = null;
 
     function from_moz(node) {
-        FROM_MOZ_STACK.push(node);
+        FROM_MOZ_STACK?.push(node);
         var ret = node != null ? MOZ_TO_ME[node.type](node) : null;
-        FROM_MOZ_STACK.pop();
+        FROM_MOZ_STACK?.pop();
         return ret;
     }
 
@@ -1202,7 +1202,7 @@ import {
         });
     }
 
-    var TO_MOZ_STACK = null;
+    var TO_MOZ_STACK: any[] | null = null;
 
     function to_moz(node) {
         if (TO_MOZ_STACK === null) { TO_MOZ_STACK = []; }
@@ -1214,9 +1214,9 @@ import {
     }
 
     function to_moz_in_destructuring() {
-        var i = TO_MOZ_STACK.length;
+        var i = TO_MOZ_STACK?.length as number;
         while (i--) {
-            if (TO_MOZ_STACK[i] instanceof AST_Destructuring) {
+            if (TO_MOZ_STACK?.[i] instanceof AST_Destructuring) {
                 return true;
             }
         }

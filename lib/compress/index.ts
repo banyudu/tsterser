@@ -1320,7 +1320,7 @@ function tighten_body(statements, compressor) {
     function collapse(statements, compressor) {
         if (scope.pinned()) return statements;
         var args;
-        var candidates = [];
+        var candidates: any[] = [];
         var stat_index = statements.length;
         var scanner = new TreeTransformer(function(node) {
             if (abort) return node;
@@ -1471,13 +1471,13 @@ function tighten_body(statements, compressor) {
             //   var a = x(), b = undefined;
             if (stat_index == 0 && compressor.option("unused")) extract_args();
             // Find collapsible assignments
-            var hit_stack = [];
+            var hit_stack: any[] = [];
             extract_candidates(statements[stat_index]);
             while (candidates.length > 0) {
                 hit_stack = candidates.pop();
                 var hit_index = 0;
                 var candidate = hit_stack[hit_stack.length - 1];
-                var value_def = null;
+                var value_def: any = null;
                 var stop_after = null;
                 var stop_if_hit = null;
                 var lhs = get_lhs(candidate);
@@ -1892,7 +1892,7 @@ function tighten_body(statements, compressor) {
     }
 
     function eliminate_spurious_blocks(statements) {
-        var seen_dirs = [];
+        var seen_dirs: any[] = [];
         for (var i = 0; i < statements.length;) {
             var stat = statements[i];
             if (stat instanceof AST_BlockStatement && stat.body.every(can_be_evicted_from_block)) {
@@ -2153,7 +2153,7 @@ function tighten_body(statements, compressor) {
 
     function sequencesize(statements, compressor) {
         if (statements.length < 2) return;
-        var seq = [], n = 0;
+        var seq: any[] = [], n = 0;
         function push_seq() {
             if (!seq.length) return;
             var body = make_sequence(seq[0], seq);
@@ -2242,7 +2242,7 @@ function tighten_body(statements, compressor) {
                 }
             }
             if (compressor.option("conditionals") && stat instanceof AST_If) {
-                var decls = [];
+                var decls: any[] = [];
                 var body = to_simple_statement(stat.body, decls);
                 var alt = to_simple_statement(stat.alternative, decls);
                 if (body !== false && alt !== false && decls.length > 0) {
@@ -2618,7 +2618,7 @@ function is_lhs(node, parent) {
             })
         });
         if (value && typeof value == "object") {
-            var props = [];
+            var props: any[] = [];
             for (var key in value) if (HOP(value, key)) {
                 props.push(make_node(AST_ObjectKeyVal, orig, {
                     key: key,
@@ -2849,7 +2849,7 @@ var static_fns = convert_to_predicate({
     });
     def_eval(AST_Array, function(compressor, depth) {
         if (compressor.option("unsafe")) {
-            var elements = [];
+            var elements: any[] = [];
             for (var i = 0, len = this.elements.length; i < len; i++) {
                 var element = this.elements[i];
                 var value = element._eval(compressor, depth);
@@ -3080,7 +3080,7 @@ var static_fns = convert_to_predicate({
                 var native_fn = native_fns.get(val.constructor.name);
                 if (!native_fn || !native_fn.has(key)) return this;
             }
-            var args = [];
+            var args: any[] = [];
             for (var i = 0, len = this.args.length; i < len; i++) {
                 var arg = this.args[i];
                 var value = arg._eval(compressor, depth);
@@ -3865,11 +3865,11 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             if (node instanceof AST_Definitions && !(parent instanceof AST_ForIn && parent.init === node)) {
                 var drop_block = !(parent instanceof AST_Toplevel) && !(node instanceof AST_Var);
                 // place uninitialized names at the start
-                var body = [], head = [], tail = [];
+                var body: any[] = [], head: any[] = [], tail: any[] = [];
                 // for unused names whose initialization has
                 // side effects, we can cascade the init. code
                 // into the next one, or next statement.
-                var side_effects = [];
+                var side_effects: any[] = [];
                 node.definitions.forEach(function(def) {
                     if (def.value) def.value = def.value.transform(tt);
                     var is_destructure = def.name instanceof AST_Destructuring;
@@ -4069,8 +4069,8 @@ AST_Scope.DEFMETHOD("hoist_declarations", function(compressor) {
     var hoist_vars = compressor.option("hoist_vars");
 
     if (hoist_funs || hoist_vars) {
-        var dirs = [];
-        var hoisted = [];
+        var dirs: any[] = [];
+        var hoisted: any[] = [];
         var vars = new Map(), vars_found = 0, var_decl = 0;
         // let's count var_decl first, we seem to waste a lot of
         // space if we hoist `var` when there's only one.
@@ -4127,7 +4127,7 @@ AST_Scope.DEFMETHOD("hoist_declarations", function(compressor) {
         self = self.transform(tt);
         if (vars_found > 0) {
             // collect only vars which don't show up in self's arguments list
-            var defs = [];
+            var defs: any[] = [];
             const is_lambda = self instanceof AST_Lambda;
             const args_as_names = is_lambda ? self.args_as_names() : null;
             vars.forEach((def, name) => {
@@ -4229,7 +4229,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
             ) {
                 descend(node, this);
                 const defs = new Map();
-                const assignments = [];
+                const assignments: any[] = [];
                 value.properties.forEach(function(prop) {
                     assignments.push(make_node(AST_VarDef, node, {
                         name: make_sym(sym, prop.key, defs),
@@ -4279,7 +4279,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
     function trim(nodes, compressor, first_in_statement) {
         var len = nodes.length;
         if (!len) return null;
-        var ret = [], changed = false;
+        var ret: any[] = [], changed = false;
         for (var i = 0; i < len; i++) {
             var node = nodes[i].drop_side_effect_free(compressor, first_in_statement);
             changed = (node !== nodes[i]) || changed;
@@ -4320,7 +4320,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
     def_drop_side_effect_free(AST_Function, return_null);
     def_drop_side_effect_free(AST_Arrow, return_null);
     def_drop_side_effect_free(AST_Class, function (compressor) {
-        const with_effects = [];
+        const with_effects: any[] = [];
         const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor);
         if (trimmed_extends) with_effects.push(trimmed_extends);
         for (const prop of this.properties) {
@@ -4536,7 +4536,7 @@ def_optimize(AST_Do, function(self, compressor) {
 function if_break_in_loop(self, compressor) {
     var first = self.body instanceof AST_BlockStatement ? self.body.body[0] : self.body;
     if (compressor.option("dead_code") && is_break(first)) {
-        var body = [];
+        var body: any[] = [];
         if (self.init instanceof AST_Statement) {
             body.push(self.init);
         } else if (self.init) {
@@ -4619,7 +4619,7 @@ def_optimize(AST_For, function(self, compressor) {
         if (compressor.option("dead_code")) {
             if (cond instanceof AST_Node) cond = self.condition.tail_node().evaluate(compressor);
             if (!cond) {
-                var body = [];
+                var body: any[] = [];
                 extract_declarations_from_unreachable_code(compressor, self.body, body);
                 if (self.init instanceof AST_Statement) {
                     body.push(self.init);
@@ -4656,7 +4656,7 @@ def_optimize(AST_If, function(self, compressor) {
         if (cond instanceof AST_Node) cond = self.condition.tail_node().evaluate(compressor);
         if (!cond) {
             compressor.warn("Condition always false [{file}:{line},{col}]", self.condition.start);
-            var body = [];
+            var body: any[] = [];
             extract_declarations_from_unreachable_code(compressor, self.body, body);
             body.push(make_node(AST_SimpleStatement, self.condition, {
                 body: self.condition
@@ -4665,7 +4665,7 @@ def_optimize(AST_If, function(self, compressor) {
             return make_node(AST_BlockStatement, self, { body: body }).optimize(compressor);
         } else if (!(cond instanceof AST_Node)) {
             compressor.warn("Condition always true [{file}:{line},{col}]", self.condition.start);
-            var body = [];
+            var body: any[] = [];
             body.push(make_node(AST_SimpleStatement, self.condition, {
                 body: self.condition
             }));
@@ -4795,8 +4795,8 @@ def_optimize(AST_Switch, function(self, compressor) {
     if (value instanceof AST_Node) {
         value = self.expression.tail_node().evaluate(compressor);
     }
-    var decl = [];
-    var body = [];
+    var decl: any[] = [];
+    var body: any[] = [];
     var default_branch;
     var exact_match;
     for (var i = 0, len = self.body.length; i < len && !exact_match; i++) {
@@ -4892,7 +4892,7 @@ def_optimize(AST_Try, function(self, compressor) {
     tighten_body(self.body, compressor);
     if (self.bcatch && self.bfinally && self.bfinally.body.every(is_empty)) self.bfinally = null;
     if (compressor.option("dead_code") && self.body.every(is_empty)) {
-        var body = [];
+        var body: any[] = [];
         if (self.bcatch) {
             extract_declarations_from_unreachable_code(compressor, self.bcatch, body);
         }
@@ -4905,7 +4905,7 @@ def_optimize(AST_Try, function(self, compressor) {
 });
 
 AST_Definitions.DEFMETHOD("remove_initializers", function() {
-    var decls = [];
+    var decls: any[] = [];
     this.definitions.forEach(function(def) {
         if (def.name instanceof AST_SymbolDeclaration) {
             def.value = null;
@@ -5036,7 +5036,7 @@ def_optimize(AST_Call, function(self, compressor) {
                     elements: self.args
                 }).optimize(compressor);
             } else if (self.args[0] instanceof AST_Number && self.args[0].value <= 11) {
-                const elements = [];
+                const elements: any[] = [];
                 for (let i = 0; i < self.args[0].value; i++) elements.push(new AST_Hole);
                 return new AST_Array({ elements });
             }
@@ -5084,7 +5084,7 @@ def_optimize(AST_Call, function(self, compressor) {
             }).optimize(compressor);
             break;
           case "RegExp":
-            var params = [];
+            var params: any[] = [];
             if (self.args.length >= 1
                 && self.args.length <= 2
                 && self.args.every((arg) => {
@@ -5126,8 +5126,8 @@ def_optimize(AST_Call, function(self, compressor) {
                     separator = self.args[0].evaluate(compressor);
                     if (separator === self.args[0]) break EXIT; // not a constant
                 }
-                var elements = [];
-                var consts = [];
+                var elements: any[] = [];
+                var consts: any[] = [];
                 for (var i = 0, len = exp.expression.elements.length; i < len; i++) {
                     var el = exp.expression.elements[i];
                     if (el instanceof AST_Expansion) break EXIT;
@@ -5611,8 +5611,8 @@ def_optimize(AST_Call, function(self, compressor) {
     }
 
     function flatten_fn(returned_value) {
-        var decls = [];
-        var expressions = [];
+        var decls: any[] = [];
+        var expressions: any[] = [];
         flatten_args(decls, expressions);
         flatten_vars(decls, expressions);
         expressions.push(returned_value);
@@ -5637,7 +5637,7 @@ def_optimize(AST_New, function(self, compressor) {
 
 def_optimize(AST_Sequence, function(self, compressor) {
     if (!compressor.option("side_effects")) return self;
-    var expressions = [];
+    var expressions: any[] = [];
     filter_for_side_effects();
     var end = expressions.length - 1;
     trim_right_for_undefined();
@@ -5835,10 +5835,11 @@ def_optimize(AST_Binary, function(self, compressor) {
         }
     }
     self = self.lift_sequences(compressor);
+    var is_strict_comparison: any
     if (compressor.option("comparisons")) switch (self.operator) {
       case "===":
       case "!==":
-        var is_strict_comparison = true;
+        is_strict_comparison = true;
         if ((self.left.is_string(compressor) && self.right.is_string(compressor)) ||
             (self.left.is_number(compressor) && self.right.is_number(compressor)) ||
             (self.left.is_boolean() && self.right.is_boolean()) ||
@@ -7064,6 +7065,7 @@ function safe_to_flatten(value, compressor) {
 def_optimize(AST_Sub, function(self, compressor) {
     var expr = self.expression;
     var prop = self.property;
+    var property: any
     if (compressor.option("properties")) {
         var key = prop.evaluate(compressor);
         if (key !== prop) {
@@ -7078,7 +7080,7 @@ def_optimize(AST_Sub, function(self, compressor) {
                 }
             }
             prop = self.property = best_of_expression(prop, make_node_from_constant(key, prop).transform(compressor));
-            var property = "" + key;
+            property = "" + key;
             if (is_basic_identifier_string(property)
                 && property.length <= prop.size() + 1) {
                 return make_node(AST_Dot, self, {
@@ -7149,7 +7151,7 @@ def_optimize(AST_Sub, function(self, compressor) {
         var retValue = elements[index];
         FLATTEN: if (safe_to_flatten(retValue, compressor)) {
             var flatten = true;
-            var values = [];
+            var values: any[] = [];
             for (var i = elements.length; --i > index;) {
                 const value = elements[i].drop_side_effect_free(compressor);
                 if (value) {
@@ -7403,7 +7405,7 @@ def_optimize(AST_TemplateString, function(self, compressor) {
     || compressor.parent() instanceof AST_PrefixedTemplateString)
         return self;
 
-    var segments = [];
+    var segments: any[] = [];
     for (var i = 0; i < self.segments.length; i++) {
         var segment = self.segments[i];
         if (segment instanceof AST_Node) {
@@ -7555,7 +7557,7 @@ def_optimize(AST_Destructuring, function(self, compressor) {
         && !self.is_array
         && Array.isArray(self.names)
         && !is_destructuring_export_decl(compressor)) {
-        var keep = [];
+        var keep: any[] = [];
         for (var i = 0; i < self.names.length; i++) {
             var elem = self.names[i];
             if (!(elem instanceof AST_ObjectKeyVal
