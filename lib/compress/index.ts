@@ -1655,8 +1655,7 @@ function tighten_body(statements, compressor) {
                 extract_candidates(expr.condition);
                 extract_candidates(expr.consequent);
                 extract_candidates(expr.alternative);
-            } else if (expr instanceof AST_Definitions
-                && (compressor.option("unused") || !(expr instanceof AST_Const))) {
+            } else if (expr instanceof AST_Definitions) {
                 var len = expr.definitions.length;
                 // limit number of trailing variable definitions for consideration
                 var i = len - 200;
@@ -1824,7 +1823,9 @@ function tighten_body(statements, compressor) {
                 if (node === expr || node.body === expr) {
                     found = true;
                     if (node instanceof AST_VarDef) {
-                        node.value = null;
+                        node.value = node.name instanceof AST_SymbolConst
+                             ? make_node(AST_Undefined, node.value)  // `const` always needs value.
+                             : null;
                         return node;
                     }
                     return in_list ? MAP.skip : null;
@@ -2504,6 +2505,7 @@ function is_undefined(node, compressor?) {
         return this.tail_node()._dot_throw(compressor);
     });
     def_may_throw_on_access(AST_SymbolRef, function(compressor) {
+        if (this.name === "arguments") return false;
         if (has_flag(this, UNDEFINED)) return true;
         if (!is_strict(compressor)) return false;
         if (is_undeclared_ref(this) && this.is_declared(compressor)) return false;
