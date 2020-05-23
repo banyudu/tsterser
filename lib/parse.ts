@@ -353,8 +353,14 @@ function parse_js_number(num, allow_e = true) {
 }
 
 class JS_Parse_Error extends Error {
+    filename: any;
+    line: any;
+    col: any;
+    pos: any;
     constructor(message, filename, line, col, pos) {
         super();
+
+        Object.setPrototypeOf(this, JS_Parse_Error.prototype);
 
         this.name = "SyntaxError";
         this.message = message;
@@ -369,7 +375,7 @@ function js_error(message, filename, line, col, pos) {
     throw new JS_Parse_Error(message, filename, line, col, pos);
 }
 
-function is_token(token, type, val) {
+function is_token(token, type?, val?) {
     return token.type == type && (val == null || token.value == val);
 }
 
@@ -396,7 +402,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
 
     function peek() { return get_full_char(S.text, S.pos); }
 
-    function next(signal_eof, in_string) {
+    function next(signal_eof?, in_string?) {
         var ch = get_full_char(S.text, S.pos++);
         if (signal_eof && !ch)
             throw EX_EOF;
@@ -451,7 +457,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
 
     var prev_was_dot = false;
     var previous_token = null;
-    function token(type, value, is_comment) {
+    function token(type, value?, is_comment?) {
         S.regex_allowed = ((type == "operator" && !UNARY_POSTFIX.has(value)) ||
                            (type == "keyword" && KEYWORDS_BEFORE_EXPRESSION.has(value)) ||
                            (type == "punc" && PUNC_BEFORE_EXPRESSION.has(value))) ||
@@ -461,7 +467,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         } else if (!is_comment) {
             prev_was_dot = false;
         }
-        var ret = {
+        var ret: any = {
             type    : type,
             value   : value,
             line    : S.tokline,
@@ -502,7 +508,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         js_error(err, filename, S.tokline, S.tokcol, S.tokpos);
     }
 
-    function read_num(prefix) {
+    function read_num(prefix?) {
         var has_e = false, after_e = false, has_x = false, has_dot = prefix == ".", is_big_int = false;
         var num = read_while(function(ch, i) {
             if (is_big_int) return false;
@@ -556,7 +562,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return ch >= "0" && ch <= "7";
     }
 
-    function read_escaped_char(in_string, strict_hex, template_string) {
+    function read_escaped_char(in_string, strict_hex, template_string?) {
         var ch = next(true, in_string);
         switch (ch.charCodeAt(0)) {
           case 110 : return "\n";
@@ -565,7 +571,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
           case 98  : return "\b";
           case 118 : return "\u000b"; // \v
           case 102 : return "\f";
-          case 120 : return String.fromCharCode(hex_bytes(2, strict_hex)); // \x
+          case 120 : return String.fromCharCode(hex_bytes(2, strict_hex) as number); // \x
           case 117 : // \u
             if (peek() == "{") {
                 next(true);
@@ -581,7 +587,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
                 next(true);
                 return from_char_code(result);
             }
-            return String.fromCharCode(hex_bytes(4, strict_hex));
+            return String.fromCharCode(hex_bytes(4, strict_hex) as number);
           case 10  : return ""; // newline
           case 13  :            // \r
             if (peek() == "\n") { // DOS newline
@@ -621,14 +627,14 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         var num = 0;
         for (; n > 0; --n) {
             if (!strict_hex && isNaN(parseInt(peek(), 16))) {
-                return parseInt(num, 16) || "";
+                return parseInt(num as any, 16) || "";
             }
             var digit = next(true);
             if (isNaN(parseInt(digit, 16)))
                 parse_error("Invalid hex-character pattern in string");
             num += digit;
         }
-        return parseInt(num, 16);
+        return parseInt(num as any, 16);
     }
 
     var read_string = with_eof_error("Unterminated string constant", function() {
@@ -640,7 +646,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
             else if (ch == quote) break;
             ret += ch;
         }
-        var tok = token("string", ret);
+        var tok: any = token("string", ret);
         tok.quote = quote;
         return tok;
     });
@@ -776,7 +782,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return token("regexp", { source, flags });
     });
 
-    function read_operator(prefix) {
+    function read_operator(prefix?) {
         function grow(op) {
             if (!peek()) return op;
             var bigger = op + peek();
@@ -837,7 +843,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
     }
 
     function with_eof_error(eof_error, cont) {
-        return function(x) {
+        return function(x?) {
             try {
                 return cont(x);
             } catch(ex) {
@@ -990,7 +996,7 @@ var ATOMIC_START_TOKEN = makePredicate([ "atom", "num", "big_int", "string", "re
 
 /* -----[ Parser ]----- */
 
-function parse($TEXT, options) {
+function parse($TEXT, options?) {
     // maps start tokens to count of comments found outside of their parens
     // Example: /* I count */ ( /* I don't */ foo() )
     // Useful because comments_before property of call with parens outside
@@ -1028,7 +1034,7 @@ function parse($TEXT, options) {
 
     S.token = next();
 
-    function is(type, value) {
+    function is(type, value?) {
         return is_token(S.token, type, value);
     }
 
@@ -1050,7 +1056,7 @@ function parse($TEXT, options) {
         return S.prev;
     }
 
-    function croak(msg, line, col, pos) {
+    function croak(msg, line?, col?, pos?) {
         var ctx = S.input.context();
         js_error(msg,
                  ctx.filename,
@@ -1063,7 +1069,7 @@ function parse($TEXT, options) {
         croak(msg, token.line, token.col);
     }
 
-    function unexpected(token) {
+    function unexpected(token?) {
         if (token == null)
             token = S.token;
         token_error(token, "Unexpected token: " + token.type + " (" + token.value + ")");
@@ -1095,7 +1101,7 @@ function parse($TEXT, options) {
         return S.in_async === S.in_function;
     }
 
-    function semicolon(optional) {
+    function semicolon(optional?) {
         if (is("punc", ";")) next();
         else if (!optional && !can_insert_semicolon()) unexpected();
     }
@@ -1353,7 +1359,7 @@ function parse($TEXT, options) {
         return new AST_LabeledStatement({ body: stat, label: label });
     }
 
-    function simple_statement(tmp) {
+    function simple_statement(tmp?) {
         return new AST_SimpleStatement({ body: (tmp = expression(true), semicolon(), tmp) });
     }
 
@@ -1463,7 +1469,7 @@ function parse($TEXT, options) {
 
         expect_token("arrow", "=>");
 
-        var body = _function_body(is("punc", "{"), false, is_async);
+        var body: any = _function_body(is("punc", "{"), false, is_async);
 
         var end =
             body instanceof Array && body.length ? body[body.length - 1].end :
@@ -1479,7 +1485,7 @@ function parse($TEXT, options) {
         });
     };
 
-    var function_ = function(ctor, is_generator_property, is_async, is_export_default) {
+    var function_ = function(ctor, is_generator_property, is_async, is_export_default?) {
         var in_statement = ctor === AST_Defun;
         var is_generator = is("operator", "*");
         if (is_generator) {
@@ -1498,8 +1504,8 @@ function parse($TEXT, options) {
         if (name && ctor !== AST_Accessor && !(name instanceof AST_SymbolDeclaration))
             unexpected(prev());
 
-        var args = [];
-        var body = _function_body(true, is_generator || is_generator_property, is_async, name, args);
+        var args: any = [];
+        var body: any = _function_body(true, is_generator || is_generator_property, is_async, name, args);
         return new ctor({
             start : args.start,
             end   : body.end,
@@ -1513,7 +1519,7 @@ function parse($TEXT, options) {
 
     function track_used_binding_identifiers(is_parameter, strict) {
         var parameters = new Set();
-        var duplicate = false;
+        var duplicate: any = false;
         var default_assignment = false;
         var spread = false;
         var strict_mode = !!strict;
@@ -1591,7 +1597,7 @@ function parse($TEXT, options) {
         next();
     }
 
-    function parameter(used_parameters, symbol_type) {
+    function parameter(used_parameters, symbol_type?) {
         var param;
         var expand = false;
         if (used_parameters === undefined) {
@@ -1840,7 +1846,7 @@ function parse($TEXT, options) {
         return a;
     }
 
-    function _function_body(block, generator, is_async, name, args) {
+    function _function_body(block, generator, is_async, name?, args?) {
         var loop = S.in_loop;
         var labels = S.labels;
         var current_generator = S.in_generator;
@@ -2056,7 +2062,7 @@ function parse($TEXT, options) {
         return a;
     }
 
-    var var_ = function(no_in) {
+    var var_ = function(no_in?) {
         return new AST_Var({
             start       : prev(),
             definitions : vardefs(no_in, "var"),
@@ -2064,7 +2070,7 @@ function parse($TEXT, options) {
         });
     };
 
-    var let_ = function(no_in) {
+    var let_ = function(no_in?) {
         return new AST_Let({
             start       : prev(),
             definitions : vardefs(no_in, "let"),
@@ -2072,7 +2078,7 @@ function parse($TEXT, options) {
         });
     };
 
-    var const_ = function(no_in) {
+    var const_ = function(no_in?) {
         return new AST_Const({
             start       : prev(),
             definitions : vardefs(no_in, "const"),
@@ -2149,7 +2155,7 @@ function parse($TEXT, options) {
         return ret;
     }
 
-    function to_fun_args(ex, _, __, default_seen_above) {
+    function to_fun_args(ex, _?, __?, default_seen_above?) {
         var insert_default = function(ex, default_value) {
             if (default_value) {
                 return new AST_DefaultAssign({
@@ -2203,7 +2209,7 @@ function parse($TEXT, options) {
         }
     }
 
-    var expr_atom = function(allow_calls, allow_arrows) {
+    var expr_atom = function(allow_calls, allow_arrows?) {
         if (is("operator", "new")) {
             return new_(allow_calls);
         }
@@ -2291,7 +2297,10 @@ function parse($TEXT, options) {
         unexpected();
     };
 
-    function template_string() {
+    function template_string(_arg: any) {
+        if (_arg) {
+            // do nothing
+        }
         var segments = [], start = S.token;
 
         segments.push(new AST_TemplateSegment({
@@ -2325,7 +2334,7 @@ function parse($TEXT, options) {
         });
     }
 
-    function expr_list(closing, allow_trailing_comma, allow_empty) {
+    function expr_list(closing, allow_trailing_comma, allow_empty?) {
         var first = true, a = [];
         while (!is("punc", closing)) {
             if (first) first = false; else expect(",");
@@ -2465,7 +2474,7 @@ function parse($TEXT, options) {
         });
     }
 
-    function concise_method_or_getset(name, start, is_class) {
+    function concise_method_or_getset(name, start, is_class?) {
         var get_method_name_ast = function(name, start) {
             if (typeof name === "string" || typeof name === "number") {
                 return new AST_SymbolMethod({
@@ -2478,7 +2487,10 @@ function parse($TEXT, options) {
             }
             return name;
         };
-        const get_class_property_key_ast = (name) => {
+        const get_class_property_key_ast = (name, _arg) => {
+            if (_arg) {
+                // do nothing
+            }
             if (typeof name === "string" || typeof name === "number") {
                 return new AST_SymbolClassProperty({
                     start: property_token,
@@ -2852,7 +2864,7 @@ function parse($TEXT, options) {
         }
     }
 
-    function as_symbol(type, noerror) {
+    function as_symbol(type, noerror?) {
         if (!is("name")) {
             if (!noerror) croak("Name expected");
             return null;
@@ -2954,7 +2966,7 @@ function parse($TEXT, options) {
         return args;
     }
 
-    var maybe_unary = function(allow_calls, allow_arrows) {
+    var maybe_unary = function(allow_calls, allow_arrows?) {
         var start = S.token;
         if (start.type == "name" && start.value == "await") {
             if (is_in_async()) {
@@ -3124,7 +3136,7 @@ function parse($TEXT, options) {
         return left;
     };
 
-    var expression = function(commas, no_in) {
+    var expression = function(commas?, no_in?) {
         var start = S.token;
         var exprs = [];
         while (true) {
