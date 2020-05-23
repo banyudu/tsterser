@@ -1505,8 +1505,8 @@ class TreeWalker {
     directives: any
     safe_ids: any;
     in_loop: any;
-    loop_ids: Map<any, any>;
-    defs_to_safe_ids: Map<any, any>;
+    loop_ids: Map<any, any> | undefined;
+    defs_to_safe_ids: Map<any, any> | undefined;
     constructor(callback?) {
         this.visit = callback;
         this.stack = [];

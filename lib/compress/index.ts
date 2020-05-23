@@ -216,7 +216,7 @@ const clear_flag = (node, flag) => { node.flags &= ~flag; };
 class Compressor extends TreeWalker {
     options: any;
     pure_funcs: any;
-    top_retain: (def: any) => any;
+    top_retain: ((def: any) => any) | undefined;
     toplevel: { funcs: any; vars: any; };
     sequences_limit: number;
     warnings_produced: {};
@@ -5835,7 +5835,7 @@ def_optimize(AST_Binary, function(self, compressor) {
         }
     }
     self = self.lift_sequences(compressor);
-    var is_strict_comparison: any
+    var is_strict_comparison: any;
     if (compressor.option("comparisons")) switch (self.operator) {
       case "===":
       case "!==":
@@ -7065,7 +7065,7 @@ function safe_to_flatten(value, compressor) {
 def_optimize(AST_Sub, function(self, compressor) {
     var expr = self.expression;
     var prop = self.property;
-    var property: any
+    var property: any;
     if (compressor.option("properties")) {
         var key = prop.evaluate(compressor);
         if (key !== prop) {
