@@ -2196,7 +2196,7 @@ function tighten_body(statements, compressor) {
         return stat;
     }
 
-    function sequencesize_2(statements, compressor) {
+    function sequencesize_2(statements: any[], compressor) {
         function cons_seq(right) {
             n--;
             CHANGED = true;
@@ -2253,7 +2253,7 @@ function tighten_body(statements, compressor) {
                         alternative: alt
                     }));
                     decls.unshift(n, 1);
-                    [].splice.apply(statements, decls);
+                    [].splice.apply(statements, decls as any); // TODO: check type
                     i += len;
                     n += len + 1;
                     prev = null;
