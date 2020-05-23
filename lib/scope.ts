@@ -116,7 +116,28 @@ let function_defs = null;
 let unmangleable_names = null;
 
 class SymbolDef {
-    constructor(scope, orig, init) {
+    name: any;
+    orig: any[];
+    init: any;
+    eliminated: number;
+    assignments: number;
+    scope: any;
+    replaced: number;
+    global: boolean;
+    export: number;
+    mangled_name: any;
+    undeclared: boolean;
+    id: number;
+    static next_id: any;
+    chained: boolean;
+    direct_access: boolean;
+    escaped: number;
+    recursive_refs: number;
+    references: any[];
+    should_replace: any;
+    single_use: boolean;
+    fixed: any;
+    constructor(scope, orig, init?) {
         this.name = orig.name;
         this.orig = [ orig ];
         this.init = init;
