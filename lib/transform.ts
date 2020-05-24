@@ -84,6 +84,7 @@ import {
     AST_While,
     AST_With,
     AST_Yield,
+    TreeTransformer,
 } from "./ast";
 import {
     MAP,
@@ -91,7 +92,7 @@ import {
 } from "./utils/index";
 
 function def_transform(node, descend) {
-    node.DEFMETHOD("transform", function(tw, in_list) {
+    node.DEFMETHOD("transform", function(tw: TreeTransformer, in_list: boolean) {
         let transformed = undefined;
         tw.push(this);
         if (tw.before) transformed = tw.before(this, descend, in_list);
@@ -108,7 +109,7 @@ function def_transform(node, descend) {
     });
 }
 
-function do_list(list, tw) {
+function do_list(list, tw: TreeTransformer) {
     return MAP(list, function(node) {
         return node.transform(tw, true);
     });
@@ -116,96 +117,96 @@ function do_list(list, tw) {
 
 def_transform(AST_Node, noop);
 
-def_transform(AST_LabeledStatement, function(self, tw) {
+def_transform(AST_LabeledStatement, function(self, tw: TreeTransformer) {
     self.label = self.label.transform(tw);
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_SimpleStatement, function(self, tw) {
+def_transform(AST_SimpleStatement, function(self, tw: TreeTransformer) {
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_Block, function(self, tw) {
+def_transform(AST_Block, function(self, tw: TreeTransformer) {
     self.body = do_list(self.body, tw);
 });
 
-def_transform(AST_Do, function(self, tw) {
+def_transform(AST_Do, function(self, tw: TreeTransformer) {
     self.body = self.body.transform(tw);
     self.condition = self.condition.transform(tw);
 });
 
-def_transform(AST_While, function(self, tw) {
+def_transform(AST_While, function(self, tw: TreeTransformer) {
     self.condition = self.condition.transform(tw);
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_For, function(self, tw) {
+def_transform(AST_For, function(self, tw: TreeTransformer) {
     if (self.init) self.init = self.init.transform(tw);
     if (self.condition) self.condition = self.condition.transform(tw);
     if (self.step) self.step = self.step.transform(tw);
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_ForIn, function(self, tw) {
+def_transform(AST_ForIn, function(self, tw: TreeTransformer) {
     self.init = self.init.transform(tw);
     self.object = self.object.transform(tw);
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_With, function(self, tw) {
+def_transform(AST_With, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
     self.body = self.body.transform(tw);
 });
 
-def_transform(AST_Exit, function(self, tw) {
+def_transform(AST_Exit, function(self, tw: TreeTransformer) {
     if (self.value) self.value = self.value.transform(tw);
 });
 
-def_transform(AST_LoopControl, function(self, tw) {
+def_transform(AST_LoopControl, function(self, tw: TreeTransformer) {
     if (self.label) self.label = self.label.transform(tw);
 });
 
-def_transform(AST_If, function(self, tw) {
+def_transform(AST_If, function(self, tw: TreeTransformer) {
     self.condition = self.condition.transform(tw);
     self.body = self.body.transform(tw);
     if (self.alternative) self.alternative = self.alternative.transform(tw);
 });
 
-def_transform(AST_Switch, function(self, tw) {
+def_transform(AST_Switch, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
     self.body = do_list(self.body, tw);
 });
 
-def_transform(AST_Case, function(self, tw) {
+def_transform(AST_Case, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
     self.body = do_list(self.body, tw);
 });
 
-def_transform(AST_Try, function(self, tw) {
+def_transform(AST_Try, function(self, tw: TreeTransformer) {
     self.body = do_list(self.body, tw);
     if (self.bcatch) self.bcatch = self.bcatch.transform(tw);
     if (self.bfinally) self.bfinally = self.bfinally.transform(tw);
 });
 
-def_transform(AST_Catch, function(self, tw) {
+def_transform(AST_Catch, function(self, tw: TreeTransformer) {
     if (self.argname) self.argname = self.argname.transform(tw);
     self.body = do_list(self.body, tw);
 });
 
-def_transform(AST_Definitions, function(self, tw) {
+def_transform(AST_Definitions, function(self, tw: TreeTransformer) {
     self.definitions = do_list(self.definitions, tw);
 });
 
-def_transform(AST_VarDef, function(self, tw) {
+def_transform(AST_VarDef, function(self, tw: TreeTransformer) {
     self.name = self.name.transform(tw);
     if (self.value) self.value = self.value.transform(tw);
 });
 
-def_transform(AST_Destructuring, function(self, tw) {
+def_transform(AST_Destructuring, function(self, tw: TreeTransformer) {
     self.names = do_list(self.names, tw);
 });
 
-def_transform(AST_Lambda, function(self, tw) {
+def_transform(AST_Lambda, function(self, tw: TreeTransformer) {
     if (self.name) self.name = self.name.transform(tw);
     self.argnames = do_list(self.argnames, tw);
     if (self.body instanceof AST_Node) {
@@ -215,98 +216,98 @@ def_transform(AST_Lambda, function(self, tw) {
     }
 });
 
-def_transform(AST_Call, function(self, tw) {
+def_transform(AST_Call, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
     self.args = do_list(self.args, tw);
 });
 
-def_transform(AST_Sequence, function(self, tw) {
+def_transform(AST_Sequence, function(self, tw: TreeTransformer) {
     const result = do_list(self.expressions, tw);
     self.expressions = result.length
         ? result
         : [new AST_Number({ value: 0 })];
 });
 
-def_transform(AST_Dot, function(self, tw) {
+def_transform(AST_Dot, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
 });
 
-def_transform(AST_Sub, function(self, tw) {
+def_transform(AST_Sub, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
     self.property = self.property.transform(tw);
 });
 
-def_transform(AST_Yield, function(self, tw) {
+def_transform(AST_Yield, function(self, tw: TreeTransformer) {
     if (self.expression) self.expression = self.expression.transform(tw);
 });
 
-def_transform(AST_Await, function(self, tw) {
+def_transform(AST_Await, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
 });
 
-def_transform(AST_Unary, function(self, tw) {
+def_transform(AST_Unary, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
 });
 
-def_transform(AST_Binary, function(self, tw) {
+def_transform(AST_Binary, function(self, tw: TreeTransformer) {
     self.left = self.left.transform(tw);
     self.right = self.right.transform(tw);
 });
 
-def_transform(AST_Conditional, function(self, tw) {
+def_transform(AST_Conditional, function(self, tw: TreeTransformer) {
     self.condition = self.condition.transform(tw);
     self.consequent = self.consequent.transform(tw);
     self.alternative = self.alternative.transform(tw);
 });
 
-def_transform(AST_Array, function(self, tw) {
+def_transform(AST_Array, function(self, tw: TreeTransformer) {
     self.elements = do_list(self.elements, tw);
 });
 
-def_transform(AST_Object, function(self, tw) {
+def_transform(AST_Object, function(self, tw: TreeTransformer) {
     self.properties = do_list(self.properties, tw);
 });
 
-def_transform(AST_ObjectProperty, function(self, tw) {
+def_transform(AST_ObjectProperty, function(self, tw: TreeTransformer) {
     if (self.key instanceof AST_Node) {
         self.key = self.key.transform(tw);
     }
     if (self.value) self.value = self.value.transform(tw);
 });
 
-def_transform(AST_Class, function(self, tw) {
+def_transform(AST_Class, function(self, tw: TreeTransformer) {
     if (self.name) self.name = self.name.transform(tw);
     if (self.extends) self.extends = self.extends.transform(tw);
     self.properties = do_list(self.properties, tw);
 });
 
-def_transform(AST_Expansion, function(self, tw) {
+def_transform(AST_Expansion, function(self, tw: TreeTransformer) {
     self.expression = self.expression.transform(tw);
 });
 
-def_transform(AST_NameMapping, function(self, tw) {
+def_transform(AST_NameMapping, function(self, tw: TreeTransformer) {
     self.foreign_name = self.foreign_name.transform(tw);
     self.name = self.name.transform(tw);
 });
 
-def_transform(AST_Import, function(self, tw) {
+def_transform(AST_Import, function(self, tw: TreeTransformer) {
     if (self.imported_name) self.imported_name = self.imported_name.transform(tw);
     if (self.imported_names) do_list(self.imported_names, tw);
     self.module_name = self.module_name.transform(tw);
 });
 
-def_transform(AST_Export, function(self, tw) {
+def_transform(AST_Export, function(self, tw: TreeTransformer) {
     if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw);
     if (self.exported_value) self.exported_value = self.exported_value.transform(tw);
     if (self.exported_names) do_list(self.exported_names, tw);
     if (self.module_name) self.module_name = self.module_name.transform(tw);
 });
 
-def_transform(AST_TemplateString, function(self, tw) {
+def_transform(AST_TemplateString, function(self, tw: TreeTransformer) {
     self.segments = do_list(self.segments, tw);
 });
 
-def_transform(AST_PrefixedTemplateString, function(self, tw) {
+def_transform(AST_PrefixedTemplateString, function(self, tw: TreeTransformer) {
     self.prefix = self.prefix.transform(tw);
     self.template_string = self.template_string.transform(tw);
 });
