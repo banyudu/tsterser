@@ -51,14 +51,13 @@ import {
 } from "./utils/index";
 import { parse } from "./parse";
 
-function DEFNODE(type, props, methods, base = AST_Node) {
-    if (!props) props = [];
-    else props = props.split(/\s+/);
+function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base = AST_Node) {
+    let props = strProps ? strProps.split(/\s+/) : [];
     var self_props = props;
     if (base && base.PROPS)
         props = props.concat(base.PROPS);
     var code = "return function AST_" + type + "(props){ if (props) { ";
-    for (var i = props.length; --i >= 0;) {
+    for (let i = props.length; --i >= 0;) {
         code += "this." + props[i] + " = props." + props[i] + ";";
     }
     const proto = base && Object.create(base.prototype);
@@ -81,7 +80,7 @@ function DEFNODE(type, props, methods, base = AST_Node) {
     if (type) {
         ctor.prototype.TYPE = ctor.TYPE = type;
     }
-    if (methods) for (i in methods) if (HOP(methods, i)) {
+    if (methods) for (let i in methods) if (HOP(methods, i)) {
         if (i[0] === "$") {
             ctor[i.substr(1)] = methods[i];
         } else {
