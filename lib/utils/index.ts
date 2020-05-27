@@ -72,7 +72,7 @@ function member(name, array) {
     return array.includes(name);
 }
 
-class DefaultsError extends Error {
+export class DefaultsError extends Error {
     defs: any
     constructor(msg, defs) {
         super();
