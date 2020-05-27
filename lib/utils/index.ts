@@ -83,7 +83,7 @@ class DefaultsError extends Error {
     }
 }
 
-function defaults(args, defs, croak?) {
+function defaults(args, defs, croak?): typeof args {
     if (args === true)
         args = {};
     const ret = args || {};

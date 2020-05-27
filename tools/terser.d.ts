@@ -12,6 +12,8 @@ export interface ParseOptions {
     ecma?: ECMA;
     html5_comments?: boolean;
     shebang?: boolean;
+    toplevel?: any;
+    filename?: string;
 }
 
 export interface CompressOptions {
@@ -84,10 +86,11 @@ export interface MangleOptions {
     keep_classnames?: boolean | RegExp;
     keep_fnames?: boolean | RegExp;
     module?: boolean;
-    properties?: boolean | ManglePropertiesOptions;
+    properties?: false | ManglePropertiesOptions;
     reserved?: string[];
     safari10?: boolean;
     toplevel?: boolean;
+    cache?: boolean;
 }
 
 export interface ManglePropertiesOptions {
@@ -96,6 +99,7 @@ export interface ManglePropertiesOptions {
     keep_quoted?: boolean | "strict";
     regex?: RegExp | string;
     reserved?: string[];
+    cache?: any;
 }
 
 export interface OutputOptions {
@@ -124,11 +128,14 @@ export interface OutputOptions {
     semicolons?: boolean;
     shebang?: boolean;
     shorthand?: boolean;
-    source_map?: SourceMapOptions;
+    // source_map?: SourceMapOptions;
+    source_map?: any;
     webkit?: boolean;
     width?: number;
     wrap_iife?: boolean;
     wrap_func_args?: boolean;
+    ast?: any;
+    code?: any;
 }
 
 export enum OutputQuoteStyle {
@@ -144,15 +151,19 @@ export interface MinifyOptions {
     ie8?: boolean;
     keep_classnames?: boolean | RegExp;
     keep_fnames?: boolean | RegExp;
-    mangle?: boolean | MangleOptions;
+    mangle?: false | MangleOptions;
     module?: boolean;
-    nameCache?: object;
+    nameCache?: AnyObject;
     output?: OutputOptions;
     parse?: ParseOptions;
     safari10?: boolean;
-    sourceMap?: boolean | SourceMapOptions;
+    sourceMap?: false | SourceMapOptions;
     toplevel?: boolean;
     warnings?: boolean | "verbose";
+    timings?: boolean;
+    rename?: boolean;
+    wrap?: boolean;
+    enclose?: boolean;
 }
 
 export interface MinifyOutput {
@@ -170,6 +181,7 @@ export interface SourceMapOptions {
     filename?: string;
     root?: string;
     url?: string | "inline";
+    asObject?: any;
 }
 
 declare function parse(text: string, options?: ParseOptions): AST_Node;

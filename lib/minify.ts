@@ -20,6 +20,7 @@ import {
     mangle_properties,
     reserve_quoted_keys,
 } from "./propmangle";
+import { MinifyOptions } from "../tools/terser";
 
 var to_ascii = typeof atob == "undefined" ? function(b64) {
     return Buffer.from(b64, "base64").toString();
@@ -63,7 +64,7 @@ function cache_to_json(cache) {
     };
 }
 
-function minify(files, options) {
+function minify(files, options: MinifyOptions) {
     var warn_function = AST_Node.warn_function;
     try {
         options = defaults(options, {
@@ -93,7 +94,7 @@ function minify(files, options) {
             options.keep_classnames = options.keep_fnames;
         }
         if (options.rename === undefined) {
-            options.rename = options.compress && options.mangle;
+            options.rename = (options.compress && options.mangle) as any;
         }
         set_shorthand("ecma", options, [ "parse", "compress", "output" ]);
         set_shorthand("ie8", options, [ "compress", "mangle", "output" ]);
@@ -117,7 +118,7 @@ function minify(files, options) {
                 safari10: false,
                 toplevel: false,
             }, true);
-            if (options.mangle.properties) {
+            if (options.mangle && options.mangle.properties) {
                 if (typeof options.mangle.properties != "object") {
                     options.mangle.properties = {};
                 }
@@ -130,8 +131,8 @@ function minify(files, options) {
                     options.mangle.properties.cache = options.nameCache.props || {};
                 }
             }
-            init_cache(options.mangle.cache);
-            init_cache(options.mangle.properties.cache);
+            init_cache(options.mangle && options.mangle.cache);
+            init_cache(options.mangle && options.mangle.properties && options.mangle.properties.cache);
         }
         if (options.sourceMap) {
             options.sourceMap = defaults(options.sourceMap, {
@@ -165,12 +166,12 @@ function minify(files, options) {
                 if (options.sourceMap && options.sourceMap.content == "inline") {
                     if (Object.keys(files).length > 1)
                         throw new Error("inline source map only works with singular input");
-                    options.sourceMap.content = read_source_map(files[name]);
+                    options.sourceMap.content = read_source_map(files[name]) || undefined;
                 }
             }
             toplevel = options.parse.toplevel;
         }
-        if (quoted_props && options.mangle.properties.keep_quoted !== "strict") {
+        if (quoted_props && options.mangle && options.mangle.properties && options.mangle.properties.keep_quoted !== "strict") {
             reserve_quoted_keys(toplevel, quoted_props);
         }
         if (options.wrap) {
@@ -202,43 +203,45 @@ function minify(files, options) {
         }
         if (timings) timings.output = Date.now();
         var result: any = {};
-        if (options.output.ast) {
-            result.ast = toplevel;
-        }
-        if (!HOP(options.output, "code") || options.output.code) {
-            if (options.sourceMap) {
-                if (typeof options.sourceMap.content == "string") {
-                    options.sourceMap.content = JSON.parse(options.sourceMap.content);
-                }
-                options.output.source_map = SourceMap({
-                    file: options.sourceMap.filename,
-                    orig: options.sourceMap.content,
-                    root: options.sourceMap.root
-                });
-                if (options.sourceMap.includeSources) {
-                    if (files instanceof AST_Toplevel) {
-                        throw new Error("original source content unavailable");
-                    } else for (var name in files) if (HOP(files, name)) {
-                        options.output.source_map.get().setSourceContent(name, files[name]);
+        if (options.output) {
+            if (options.output.ast) {
+                result.ast = toplevel;
+            }
+            if (!HOP(options.output, "code") || options.output.code) {
+                if (options.sourceMap) {
+                    if (typeof options.sourceMap.content == "string") {
+                        options.sourceMap.content = JSON.parse(options.sourceMap.content);
+                    }
+                    options.output.source_map = SourceMap({
+                        file: options.sourceMap.filename,
+                        orig: options.sourceMap.content,
+                        root: options.sourceMap.root
+                    });
+                    if (options.sourceMap.includeSources) {
+                        if (files instanceof AST_Toplevel) {
+                            throw new Error("original source content unavailable");
+                        } else for (var name in files) if (HOP(files, name)) {
+                            options.output.source_map.get().setSourceContent(name, files[name]);
+                        }
                     }
                 }
-            }
-            delete options.output.ast;
-            delete options.output.code;
-            var stream = OutputStream(options.output);
-            toplevel.print(stream);
-            result.code = stream.get();
-            if (options.sourceMap) {
-                if(options.sourceMap.asObject) {
-                    result.map = options.output.source_map.get().toJSON();
-                } else {
-                    result.map = options.output.source_map.toString();
-                }
-                if (options.sourceMap.url == "inline") {
-                    var sourceMap = typeof result.map === "object" ? JSON.stringify(result.map) : result.map;
-                    result.code += "\n//# sourceMappingURL=data:application/json;charset=utf-8;base64," + to_base64(sourceMap);
-                } else if (options.sourceMap.url) {
-                    result.code += "\n//# sourceMappingURL=" + options.sourceMap.url;
+                delete options.output.ast;
+                delete options.output.code;
+                var stream = OutputStream(options.output);
+                toplevel.print(stream);
+                result.code = stream.get();
+                if (options.sourceMap) {
+                    if(options.sourceMap.asObject) {
+                        result.map = options.output.source_map.get().toJSON();
+                    } else {
+                        result.map = options.output.source_map.toString();
+                    }
+                    if (options.sourceMap.url == "inline") {
+                        var sourceMap = typeof result.map === "object" ? JSON.stringify(result.map) : result.map;
+                        result.code += "\n//# sourceMappingURL=data:application/json;charset=utf-8;base64," + to_base64(sourceMap);
+                    } else if (options.sourceMap.url) {
+                        result.code += "\n//# sourceMappingURL=" + options.sourceMap.url;
+                    }
                 }
             }
         }
