@@ -1,6 +1,6 @@
 /// <reference lib="es2015" />
 
-import { RawSourceMap } from 'source-map';
+import { RawSourceMap } from "source-map";
 
 /** @deprecated since this versions basically do not exist */
 type ECMA_UNOFFICIAL = 6 | 7 | 8 | 9 | 10 | 11;
@@ -49,7 +49,7 @@ export interface CompressOptions {
     passes?: number;
     properties?: boolean;
     pure_funcs?: string[];
-    pure_getters?: boolean | 'strict';
+    pure_getters?: boolean | "strict";
     reduce_funcs?: boolean;
     reduce_vars?: boolean;
     sequences?: boolean | number;
@@ -93,7 +93,7 @@ export interface MangleOptions {
 export interface ManglePropertiesOptions {
     builtins?: boolean;
     debug?: boolean;
-    keep_quoted?: boolean | 'strict';
+    keep_quoted?: boolean | "strict";
     regex?: RegExp | string;
     reserved?: string[];
 }
@@ -102,9 +102,9 @@ export interface OutputOptions {
     ascii_only?: boolean;
     beautify?: boolean;
     braces?: boolean;
-    comments?: boolean | 'all' | 'some' | RegExp | ( (node: AST_Node, comment: {
+    comments?: boolean | "all" | "some" | RegExp | ( (node: AST_Node, comment: {
         value: string,
-        type: 'comment1' | 'comment2' | 'comment3' | 'comment4',
+        type: "comment1" | "comment2" | "comment3" | "comment4",
         pos: number,
         line: number,
         col: number,
@@ -152,7 +152,7 @@ export interface MinifyOptions {
     safari10?: boolean;
     sourceMap?: boolean | SourceMapOptions;
     toplevel?: boolean;
-    warnings?: boolean | 'verbose';
+    warnings?: boolean | "verbose";
 }
 
 export interface MinifyOutput {
@@ -169,7 +169,7 @@ export interface SourceMapOptions {
     includeSources?: boolean;
     filename?: string;
     root?: string;
-    url?: string | 'inline';
+    url?: string | "inline";
 }
 
 declare function parse(text: string, options?: ParseOptions): AST_Node;
