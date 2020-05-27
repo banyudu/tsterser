@@ -101,6 +101,8 @@ export interface ManglePropertiesOptions {
     regex?: RegExp | string;
     reserved?: string[];
     cache?: any;
+    undeclared?: any;
+    only_cache?: boolean;
 }
 
 export interface OutputOptions {

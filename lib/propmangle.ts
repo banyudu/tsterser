@@ -62,6 +62,7 @@ import {
     TreeWalker,
 } from "./ast";
 import { domprops } from "../tools/domprops";
+import { ManglePropertiesOptions } from "../tools/terser";
 
 function find_builtins(reserved) {
     domprops.forEach(add);
@@ -136,7 +137,7 @@ function addStrings(node, add) {
     }));
 }
 
-function mangle_properties(ast, options) {
+function mangle_properties(ast, options: ManglePropertiesOptions) {
     options = defaults(options, {
         builtins: false,
         cache: null,
@@ -148,8 +149,7 @@ function mangle_properties(ast, options) {
         undeclared: false,
     }, true);
 
-    var reserved_option = options.reserved;
-    if (!Array.isArray(reserved_option)) reserved_option = [reserved_option];
+    var reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved];
     var reserved = new Set(reserved_option);
     if (!options.builtins) find_builtins(reserved);
 
