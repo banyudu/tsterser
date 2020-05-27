@@ -1,6 +1,7 @@
 /// <reference lib="es2015" />
 
 import { RawSourceMap } from "source-map";
+import { DefaultsError } from "../lib/utils";
 
 /** @deprecated since this versions basically do not exist */
 type ECMA_UNOFFICIAL = 6 | 7 | 8 | 9 | 10 | 11;
@@ -169,7 +170,7 @@ export interface MinifyOptions {
 export interface MinifyOutput {
     ast?: AST_Node;
     code?: string;
-    error?: Error;
+    error?: DefaultsError;
     map?: RawSourceMap | string;
     warnings?: string[];
 }
