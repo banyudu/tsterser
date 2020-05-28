@@ -349,7 +349,7 @@ function OutputStream(options?) {
                     !mapping.name && mapping.token.type == "name" ? mapping.token.value : mapping.name
                 );
             } catch(ex) {
-                mapping.token.file != null && AST_Node.warn("Couldn't figure out mapping for {file}:{line},{col} → {cline},{ccol} [{name}]", {
+                mapping.token.file != null && AST_Node.warn?.("Couldn't figure out mapping for {file}:{line},{col} → {cline},{ccol} [{name}]", {
                     file: mapping.token.file,
                     line: mapping.token.line,
                     col: mapping.token.col,
@@ -380,7 +380,7 @@ function OutputStream(options?) {
                 current_col = right.length;
             }
             if (current_col > options.max_line_len) {
-                AST_Node.warn("Output exceeds {max_line_len} characters", options);
+                AST_Node.warn?.("Output exceeds {max_line_len} characters", options);
             }
         }
         if (might_add_newline) {

@@ -412,9 +412,9 @@ class Compressor extends TreeWalker {
         return toplevel;
     }
 
-    info(...args) {
+    info(text, props?) {
         if (this.options.warnings == "verbose") {
-            AST_Node.warn(...args);
+            AST_Node.warn?.(text, props);
         }
     }
 
@@ -424,7 +424,7 @@ class Compressor extends TreeWalker {
             var message = string_template(text, props);
             if (!(message in this.warnings_produced)) {
                 this.warnings_produced[message] = true;
-                AST_Node.warn.apply(AST_Node, arguments);
+                AST_Node.warn?.apply(AST_Node, [text, props]);
             }
         }
     }
@@ -2291,7 +2291,7 @@ function tighten_body(statements, compressor) {
             if (!node.right.is_constant_expression(scope)) break;
             var prop = node.left.property;
             if (prop instanceof AST_Node) {
-                prop = prop.evaluate(compressor);
+                prop = prop.evaluate?.(compressor);
             }
             if (prop instanceof AST_Node) break;
             prop = "" + prop;
@@ -2871,7 +2871,7 @@ var static_fns = convert_to_predicate({
                 if (key instanceof AST_Symbol) {
                     key = key.name;
                 } else if (key instanceof AST_Node) {
-                    key = key._eval(compressor, depth);
+                    key = key._eval?.(compressor, depth);
                     if (key === prop.key) return this;
                 }
                 if (typeof Object.prototype[key] === "function") {
@@ -3013,7 +3013,7 @@ var static_fns = convert_to_predicate({
         if (compressor.option("unsafe")) {
             var key = this.property;
             if (key instanceof AST_Node) {
-                key = key._eval(compressor, depth);
+                key = key._eval?.(compressor, depth);
                 if (key === this.property) return this;
             }
             var exp = this.expression;
@@ -3056,7 +3056,7 @@ var static_fns = convert_to_predicate({
         if (compressor.option("unsafe") && exp instanceof AST_PropAccess) {
             var key = exp.property;
             if (key instanceof AST_Node) {
-                key = key._eval(compressor, depth);
+                key = key._eval?.(compressor, depth);
                 if (key === exp.property) return this;
             }
             var val;
@@ -7410,10 +7410,10 @@ def_optimize(AST_TemplateString, function(self, compressor) {
     for (var i = 0; i < self.segments.length; i++) {
         var segment = self.segments[i];
         if (segment instanceof AST_Node) {
-            var result = segment.evaluate(compressor);
+            var result = segment.evaluate?.(compressor);
             // Evaluate to constant value
             // Constant value shorter than ${segment}
-            if (result !== segment && (result + "").length <= segment.size() + "${}".length) {
+            if (result !== segment && (result + "").length <= segment.size?.() + "${}".length) {
                 // There should always be a previous and next segment if segment is a node
                 segments[segments.length - 1].value = segments[segments.length - 1].value + result + self.segments[++i].value;
                 continue;

@@ -225,12 +225,22 @@ export class AST_Node {
     static documentation: string;
     static propdoc?: Record<string, string>;
     static expressions?: AST_Node[];
-    static warn?: (text: string, props: any) => void;
+    static warn?: (text: string, props?: any) => void;
+    static warn_function: Function | null;
     static from_mozilla_ast?: (node: AST_Node) => any;
+    static DEFMETHOD: any;
+    print?: Function;
+    _print?: Function;
+    _eval?: Function;
+    evaluate?: Function;
+    size?: Function;
+    _size?: Function;
     walk: (visitor: TreeWalker) => void;
     print_to_string: (options?: OutputOptions) => string;
     transform: (tt: TreeTransformer, in_list?: boolean) => AST_Node;
     TYPE: string;
+    value?: any;
+    shallow_cmp?: Function;
     CTOR: typeof AST_Node;
 }
 

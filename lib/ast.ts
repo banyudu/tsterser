@@ -50,8 +50,9 @@ import {
     string_template,
 } from "./utils/index";
 import { parse } from "./parse";
+import * as types from "../tools/terser";
 
-function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base = AST_Node) {
+function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base: typeof types.AST_Node | null = AST_Node) {
     let props = strProps ? strProps.split(/\s+/) : [];
     var self_props = props;
     if (base && base.PROPS)
@@ -96,7 +97,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
 var AST_Token = DEFNODE("Token", "type value line col pos endline endcol endpos nlb comments_before comments_after file raw quote end", {
 }, null);
 
-var AST_Node = DEFNODE("Node", "start end", {
+var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
     _clone: function(deep) {
         if (deep) {
             var self = this.clone();
@@ -542,7 +543,7 @@ var AST_PrefixedTemplateString = DEFNODE("PrefixedTemplateString", "template_str
     },
 });
 
-var AST_TemplateString = DEFNODE("TemplateString", "segments", {
+var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateString", "segments", {
     $documentation: "A template string literal",
     $propdoc: {
         segments: "[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment."

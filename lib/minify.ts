@@ -32,7 +32,7 @@ var to_base64 = typeof btoa == "undefined" ? function(str) {
 function read_source_map(code) {
     var match = /(?:^|[^.])\/\/# sourceMappingURL=data:application\/json(;[\w=-]*)?;base64,([+/0-9A-Za-z]*=*)\s*$/.exec(code);
     if (!match) {
-        AST_Node.warn("inline source map not found");
+        AST_Node.warn?.("inline source map not found");
         return null;
     }
     return to_ascii(match[2]);
