@@ -149,7 +149,7 @@ export enum OutputQuoteStyle {
 }
 
 export interface MinifyOptions {
-    compress?: boolean | CompressOptions;
+    compress?: false | CompressOptions;
     ecma?: ECMA;
     ie8?: boolean;
     keep_classnames?: boolean | RegExp;

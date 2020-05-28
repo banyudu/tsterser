@@ -190,7 +190,7 @@ import {
     SymbolDef,
 } from "../scope";
 import "../size";
-import * as types from '../../tools/terser'
+import * as types from "../../tools/terser";
 
 const UNUSED    = 0b00000001;
 const TRUTHY    = 0b00000010;
