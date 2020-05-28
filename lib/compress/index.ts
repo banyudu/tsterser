@@ -190,6 +190,7 @@ import {
     SymbolDef,
 } from "../scope";
 import "../size";
+import * as types from '../../tools/terser'
 
 const UNUSED    = 0b00000001;
 const TRUTHY    = 0b00000010;
@@ -221,7 +222,7 @@ class Compressor extends TreeWalker {
     sequences_limit: number;
     warnings_produced: {};
     evaluated_regexps: Map<any, any>;
-    constructor(options, false_by_default?) {
+    constructor(options: types.CompressOptions, false_by_default?: boolean) {
         super();
         if (options.defaults !== undefined && !options.defaults) false_by_default = true;
         this.options = defaults(options, {
