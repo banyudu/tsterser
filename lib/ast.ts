@@ -1122,7 +1122,7 @@ var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectPropert
     }
 });
 
-var AST_ObjectKeyVal = DEFNODE("ObjectKeyVal", "quote", {
+var AST_ObjectKeyVal: typeof types.AST_ObjectKeyVal = DEFNODE("ObjectKeyVal", "quote", {
     $documentation: "A key: value object property",
     $propdoc: {
         quote: "[string] the original quote character"
@@ -1132,7 +1132,7 @@ var AST_ObjectKeyVal = DEFNODE("ObjectKeyVal", "quote", {
     }
 }, AST_ObjectProperty);
 
-var AST_ObjectSetter = DEFNODE("ObjectSetter", "quote static", {
+var AST_ObjectSetter: typeof types.AST_ObjectSetter = DEFNODE("ObjectSetter", "quote static", {
     $propdoc: {
         quote: "[string|undefined] the original quote character, if any",
         static: "[boolean] whether this is a static setter (classes only)"
@@ -1143,7 +1143,7 @@ var AST_ObjectSetter = DEFNODE("ObjectSetter", "quote static", {
     }
 }, AST_ObjectProperty);
 
-var AST_ObjectGetter = DEFNODE("ObjectGetter", "quote static", {
+var AST_ObjectGetter: typeof types.AST_ObjectGetter = DEFNODE("ObjectGetter", "quote static", {
     $propdoc: {
         quote: "[string|undefined] the original quote character, if any",
         static: "[boolean] whether this is a static getter (classes only)"
@@ -1154,7 +1154,7 @@ var AST_ObjectGetter = DEFNODE("ObjectGetter", "quote static", {
     }
 }, AST_ObjectProperty);
 
-var AST_ConciseMethod = DEFNODE("ConciseMethod", "quote static is_generator async", {
+var AST_ConciseMethod: typeof types.AST_ConciseMethod = DEFNODE("ConciseMethod", "quote static is_generator async", {
     $propdoc: {
         quote: "[string|undefined] the original quote character, if any",
         static: "[boolean] is this method static (classes only)",
