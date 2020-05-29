@@ -288,7 +288,7 @@ type ArgType = AST_SymbolFunarg | AST_DefaultAssign | AST_Destructuring | AST_Ex
 
 declare class AST_Statement extends AST_Node {
     constructor(props?: object);
-    body: AST_Node;
+    body: AST_Node[] | AST_Node;
 }
 
 declare class AST_Debugger extends AST_Statement {
@@ -709,6 +709,8 @@ declare class AST_SymbolDeclaration extends AST_Symbol {
     init: AST_Node | null;
     names: AST_Node[];
     is_array: AST_Node[];
+    mark_enclosed: Function;
+    reference: Function;
 }
 
 declare class AST_SymbolVar extends AST_SymbolDeclaration {
@@ -766,6 +768,7 @@ declare class AST_SymbolImportForeign extends AST_Symbol {
 declare class AST_Label extends AST_Symbol {
     constructor(props?: object);
     references: AST_LoopControl | null;
+    mangled_name: null | string;
 }
 
 declare class AST_SymbolRef extends AST_Symbol {

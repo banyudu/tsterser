@@ -307,8 +307,9 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             node.scope = scope;
         }
         if (node instanceof AST_Label) {
-            node.thedef = node;
-            node.references = [];
+            // TODO: check type
+            node.thedef = node as any;
+            node.references = [] as any;
         }
         if (node instanceof AST_SymbolLambda) {
             defun.def_function(node, node.name == "arguments" ? undefined : defun);
@@ -438,7 +439,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
         // ensure mangling works if catch reuses a scope variable
         var def;
         if (node instanceof AST_SymbolCatch && (def = redefined_catch_def(node.definition()))) {
-            var s = node.scope;
+            let s: any = node.scope;
             while (s) {
                 push_uniq(s.enclosed, def);
                 if (s === def.scope) break;

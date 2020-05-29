@@ -1281,23 +1281,23 @@ var AST_SymbolDefClass: typeof types.AST_SymbolDefClass = DEFNODE("SymbolDefClas
     $documentation: "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolClass = DEFNODE("SymbolClass", null, {
+var AST_SymbolClass: typeof types.AST_SymbolClass = DEFNODE("SymbolClass", null, {
     $documentation: "Symbol naming a class's name. Lexically scoped to the class."
 }, AST_SymbolDeclaration);
 
-var AST_SymbolCatch = DEFNODE("SymbolCatch", null, {
+var AST_SymbolCatch: typeof types.AST_SymbolCatch = DEFNODE("SymbolCatch", null, {
     $documentation: "Symbol naming the exception in catch",
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolImport = DEFNODE("SymbolImport", null, {
+var AST_SymbolImport: typeof types.AST_SymbolImport = DEFNODE("SymbolImport", null, {
     $documentation: "Symbol referring to an imported name",
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolImportForeign = DEFNODE("SymbolImportForeign", null, {
+var AST_SymbolImportForeign: typeof types.AST_SymbolImportForeign = DEFNODE("SymbolImportForeign", null, {
     $documentation: "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes",
 }, AST_Symbol);
 
-var AST_Label = DEFNODE("Label", "references", {
+var AST_Label: typeof types.AST_Label = DEFNODE("Label", "references", {
     $documentation: "Symbol naming a label (declaration)",
     $propdoc: {
         references: "[AST_LoopControl*] a list of nodes referring to this label"
