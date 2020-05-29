@@ -229,8 +229,8 @@ export class AST_Node {
     static warn_function: Function | null;
     static from_mozilla_ast?: (node: AST_Node) => any;
     static DEFMETHOD: any;
-    print?: Function;
-    _print?: Function;
+    print: Function;
+    _print: Function;
     _eval: Function;
     evaluate: Function;
     size?: Function;
@@ -265,6 +265,7 @@ export class AST_Node {
     contains_this: Function;
     getValue: Function;
     properties: any[];
+    may_throw: Function;
 }
 
 declare class SymbolDef {

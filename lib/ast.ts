@@ -1167,7 +1167,7 @@ var AST_ConciseMethod: typeof types.AST_ConciseMethod = DEFNODE("ConciseMethod",
     }
 }, AST_ObjectProperty);
 
-var AST_Class = DEFNODE("Class", "name extends properties", {
+var AST_Class: typeof types.AST_Class = DEFNODE("Class", "name extends properties", {
     $propdoc: {
         name: "[AST_SymbolClass|AST_SymbolDefClass?] optional class name.",
         extends: "[AST_Node]? optional parent class",
@@ -1216,15 +1216,15 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
     }
 }, AST_ObjectProperty);
 
-var AST_DefClass = DEFNODE("DefClass", null, {
+var AST_DefClass: typeof types.AST_DefClass = DEFNODE("DefClass", null, {
     $documentation: "A class definition",
 }, AST_Class);
 
-var AST_ClassExpression = DEFNODE("ClassExpression", null, {
+var AST_ClassExpression: typeof types.AST_ClassExpression = DEFNODE("ClassExpression", null, {
     $documentation: "A class expression."
 }, AST_Class);
 
-var AST_Symbol = DEFNODE("Symbol", "scope name thedef", {
+var AST_Symbol: typeof types.AST_Symbol = DEFNODE("Symbol", "scope name thedef", {
     $propdoc: {
         name: "[string] name of this symbol",
         scope: "[AST_Scope/S] the current scope (not necessarily the definition scope)",
@@ -1233,39 +1233,39 @@ var AST_Symbol = DEFNODE("Symbol", "scope name thedef", {
     $documentation: "Base class for all symbols"
 });
 
-var AST_NewTarget = DEFNODE("NewTarget", null, {
+var AST_NewTarget: typeof types.AST_NewTarget = DEFNODE("NewTarget", null, {
     $documentation: "A reference to new.target"
 });
 
-var AST_SymbolDeclaration = DEFNODE("SymbolDeclaration", "init", {
+var AST_SymbolDeclaration: typeof types.AST_SymbolDeclaration = DEFNODE("SymbolDeclaration", "init", {
     $documentation: "A declaration symbol (symbol in var/const, function name or argument, symbol in catch)",
 }, AST_Symbol);
 
-var AST_SymbolVar = DEFNODE("SymbolVar", null, {
+var AST_SymbolVar: typeof types.AST_SymbolVar = DEFNODE("SymbolVar", null, {
     $documentation: "Symbol defining a variable",
 }, AST_SymbolDeclaration);
 
-var AST_SymbolBlockDeclaration = DEFNODE("SymbolBlockDeclaration", null, {
+var AST_SymbolBlockDeclaration: typeof types.AST_SymbolBlockDeclaration = DEFNODE("SymbolBlockDeclaration", null, {
     $documentation: "Base class for block-scoped declaration symbols"
 }, AST_SymbolDeclaration);
 
-var AST_SymbolConst = DEFNODE("SymbolConst", null, {
+var AST_SymbolConst: typeof types.AST_SymbolConst = DEFNODE("SymbolConst", null, {
     $documentation: "A constant declaration"
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolLet = DEFNODE("SymbolLet", null, {
+var AST_SymbolLet: typeof types.AST_SymbolLet = DEFNODE("SymbolLet", null, {
     $documentation: "A block-scoped `let` declaration"
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolFunarg = DEFNODE("SymbolFunarg", null, {
+var AST_SymbolFunarg: typeof types.AST_SymbolFunarg = DEFNODE("SymbolFunarg", null, {
     $documentation: "Symbol naming a function argument",
 }, AST_SymbolVar);
 
-var AST_SymbolDefun = DEFNODE("SymbolDefun", null, {
+var AST_SymbolDefun: typeof types.AST_SymbolDefun = DEFNODE("SymbolDefun", null, {
     $documentation: "Symbol defining a function",
 }, AST_SymbolDeclaration);
 
-var AST_SymbolMethod = DEFNODE("SymbolMethod", null, {
+var AST_SymbolMethod: typeof types.AST_SymbolMethod = DEFNODE("SymbolMethod", null, {
     $documentation: "Symbol in an object defining a method",
 }, AST_Symbol);
 
@@ -1273,11 +1273,11 @@ var AST_SymbolClassProperty = DEFNODE("SymbolClassProperty", null, {
     $documentation: "Symbol for a class property",
 }, AST_Symbol);
 
-var AST_SymbolLambda = DEFNODE("SymbolLambda", null, {
+var AST_SymbolLambda: typeof types.AST_SymbolLambda = DEFNODE("SymbolLambda", null, {
     $documentation: "Symbol naming a function expression",
 }, AST_SymbolDeclaration);
 
-var AST_SymbolDefClass = DEFNODE("SymbolDefClass", null, {
+var AST_SymbolDefClass: typeof types.AST_SymbolDefClass = DEFNODE("SymbolDefClass", null, {
     $documentation: "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
 }, AST_SymbolBlockDeclaration);
 

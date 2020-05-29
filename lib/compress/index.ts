@@ -3710,7 +3710,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
         }
         if (node === self) return;
         if (node instanceof AST_Defun || node instanceof AST_DefClass) {
-            var node_def = node.name.definition?.();
+            var node_def = node.name?.definition?.();
             const in_export = tw.parent() instanceof AST_Export;
             if (in_export || !drop_funcs && scope === self) {
                 if (node_def.global && !in_use_ids.has(node_def.id)) {
@@ -3846,10 +3846,10 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                 }
             }
             if ((node instanceof AST_Defun || node instanceof AST_DefClass) && node !== self) {
-                const def = node.name.definition?.();
+                const def = node.name?.definition?.();
                 let keep = def.global && !drop_funcs || in_use_ids.has(def.id);
                 if (!keep) {
-                    compressor[node.name.unreferenced() ? "warn" : "info"]("Dropping unused function {name} [{file}:{line},{col}]", template(node.name));
+                    compressor[node.name?.unreferenced() ? "warn" : "info"]("Dropping unused function {name} [{file}:{line},{col}]", template(node.name));
                     def.eliminated++;
                     if (node instanceof AST_DefClass) {
                         // Classes might have extends with side effects
