@@ -231,8 +231,8 @@ export class AST_Node {
     static DEFMETHOD: any;
     print?: Function;
     _print?: Function;
-    _eval?: Function;
-    evaluate?: Function;
+    _eval: Function;
+    evaluate: Function;
     size?: Function;
     _size?: Function;
     walk: (visitor: TreeWalker) => void;
@@ -252,6 +252,19 @@ export class AST_Node {
     definition: Function;
     equivalent_to: (node: AST_Node) => boolean;
     may_throw_on_access: Function;
+    has_side_effects: Function;
+    is_constant_expression: Function;
+    clone: Function;
+    definitions: any[];
+    fixed_value: any;
+    unreferenced: Function;
+    scope: AST_Node;
+    is_constant: Function;
+    negate: Function;
+    is_string: Function;
+    contains_this: Function;
+    getValue: Function;
+    properties: any[];
 }
 
 declare class SymbolDef {
@@ -274,6 +287,7 @@ type ArgType = AST_SymbolFunarg | AST_DefaultAssign | AST_Destructuring | AST_Ex
 
 declare class AST_Statement extends AST_Node {
     constructor(props?: object);
+    body: AST_Node;
 }
 
 declare class AST_Debugger extends AST_Statement {
@@ -288,7 +302,7 @@ declare class AST_Directive extends AST_Statement {
 
 declare class AST_SimpleStatement extends AST_Statement {
     constructor(props?: object);
-    body: AST_Node[];
+    body: AST_Node[] | AST_Node;
 }
 
 declare class AST_Block extends AST_Statement {
@@ -299,6 +313,7 @@ declare class AST_Block extends AST_Statement {
 
 declare class AST_BlockStatement extends AST_Block {
     constructor(props?: object);
+    _codegen: Function;
 }
 
 declare class AST_Scope extends AST_Block {
@@ -310,9 +325,12 @@ declare class AST_Scope extends AST_Block {
     parent_scope: AST_Scope | null;
     enclosed: any;
     cname: any;
-    init_scope_vars?: Function;
-    hoist_properties?: Function;
-    drop_unused?: Function;
+    init_scope_vars: Function;
+    hoist_properties: Function;
+    drop_unused: Function;
+    find_variable: Function;
+    is_block_scope: Function;
+    get_defun_scope: Function;
 }
 
 declare class AST_Toplevel extends AST_Scope {
@@ -329,6 +347,8 @@ declare class AST_Lambda extends AST_Scope {
     is_generator: boolean;
     async: boolean;
     pinned?: Function;
+    make_var_name: Function;
+    def_variable: Function;
 }
 
 declare class AST_Accessor extends AST_Lambda {
@@ -337,7 +357,6 @@ declare class AST_Accessor extends AST_Lambda {
 
 declare class AST_Function extends AST_Lambda {
     constructor(props?: object);
-    contains_this?: Function;
 }
 
 declare class AST_Arrow extends AST_Lambda {
@@ -402,8 +421,7 @@ declare class AST_EmptyStatement extends AST_Statement {
 
 declare class AST_StatementWithBody extends AST_Statement {
     constructor(props?: object);
-    // body: AST_Node[];
-    body: AST_Node;
+    body: AST_Node[] | AST_Node;
 }
 
 declare class AST_LabeledStatement extends AST_StatementWithBody {
@@ -491,10 +509,12 @@ declare class AST_Continue extends AST_LoopControl {
 declare class AST_Definitions extends AST_Statement {
     constructor(props?: object);
     definitions: AST_VarDef[];
+    to_assignments: Function;
 }
 
 declare class AST_Var extends AST_Definitions {
     constructor(props?: object);
+    remove_initializers: Function;
 }
 
 declare class AST_Let extends AST_Definitions {
@@ -565,8 +585,8 @@ declare class AST_Call extends AST_Node {
     constructor(props?: object);
     expression: AST_Node;
     args: AST_Node[];
-    _codegen?: Function;
-    is_expr_pure?: Function;
+    _codegen: Function;
+    is_expr_pure: Function;
 }
 
 declare class AST_New extends AST_Call {
@@ -576,13 +596,14 @@ declare class AST_New extends AST_Call {
 declare class AST_Sequence extends AST_Node {
     constructor(props?: object);
     expressions: AST_Node[];
-    tail_node?: Function;
+    tail_node: Function;
 }
 
 declare class AST_PropAccess extends AST_Node {
     constructor(props?: object);
     expression: AST_Node;
     property: AST_Node | string;
+    optimize: Function;
 }
 
 declare class AST_Dot extends AST_PropAccess {
@@ -647,6 +668,7 @@ declare class AST_ObjectProperty extends AST_Node {
     key: any;
     value: AST_Node;
     quote: any;
+    is_generator: boolean;
 }
 
 declare class AST_ObjectKeyVal extends AST_ObjectProperty {
@@ -684,7 +706,8 @@ declare class AST_Symbol extends AST_Node {
 declare class AST_SymbolDeclaration extends AST_Symbol {
     constructor(props?: object);
     init: AST_Node | null;
-    definition?: Function;
+    names: AST_Node[];
+    is_array: AST_Node[];
 }
 
 declare class AST_SymbolVar extends AST_SymbolDeclaration {
@@ -746,6 +769,9 @@ declare class AST_Label extends AST_Symbol {
 
 declare class AST_SymbolRef extends AST_Symbol {
     constructor(props?: object);
+    reference: Function;
+    is_immutable: Function;
+    is_declared: Function;
 }
 
 declare class AST_SymbolExport extends AST_SymbolRef {

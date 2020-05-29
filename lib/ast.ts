@@ -1308,7 +1308,7 @@ var AST_Label = DEFNODE("Label", "references", {
     }
 }, AST_Symbol);
 
-var AST_SymbolRef = DEFNODE("SymbolRef", null, {
+var AST_SymbolRef: typeof types.AST_SymbolRef = DEFNODE("SymbolRef", null, {
     $documentation: "Reference to some symbol (not definition/declaration)",
 }, AST_Symbol);
 

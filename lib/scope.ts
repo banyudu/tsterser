@@ -414,7 +414,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
         if (node instanceof AST_SymbolRef) {
             var name = node.name;
             if (name == "eval" && tw.parent() instanceof AST_Call) {
-                for (var s = node.scope; s && !s.uses_eval; s = s.parent_scope) {
+                for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
                     s.uses_eval = true;
                 }
             }

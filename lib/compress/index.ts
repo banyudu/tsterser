@@ -532,12 +532,12 @@ AST_Scope.DEFMETHOD("process_expression", function(insert, compressor) {
                 node.body[index] = node.body[index].transform(tt);
             }
         } else if (node instanceof AST_If) {
-            node.body = node.body.transform(tt);
+            node.body = (node.body as types.AST_Node).transform(tt);
             if (node.alternative) {
                 node.alternative = node.alternative.transform(tt);
             }
         } else if (node instanceof AST_With) {
-            node.body = node.body.transform(tt);
+            node.body = (node.body as types.AST_Node).transform(tt);
         }
         return node;
     });
@@ -1357,7 +1357,7 @@ function tighten_body(statements, compressor) {
                     && (
                         node instanceof AST_SymbolRef
                         && !node.is_declared(compressor)
-                        && !pure_prop_access_globals.has(node))
+                        && !pure_prop_access_globals.has(node as any)) // TODO: check type
                 || node instanceof AST_SymbolRef
                     && parent instanceof AST_Call
                     && has_annotation(parent, _NOINLINE)
@@ -2165,7 +2165,7 @@ function tighten_body(statements, compressor) {
             var stat = statements[i];
             if (stat instanceof AST_SimpleStatement) {
                 if (seq.length >= compressor.sequences_limit) push_seq();
-                var body = stat.body;
+                var body = stat.body as types.AST_Node;
                 if (seq.length > 0) body = body.drop_side_effect_free(compressor);
                 if (body) merge_sequence(seq, body);
             } else if (stat instanceof AST_Definitions && declarations_only(stat)
@@ -2183,7 +2183,7 @@ function tighten_body(statements, compressor) {
 
     function to_simple_statement(block, decls) {
         if (!(block instanceof AST_BlockStatement)) return block;
-        var stat = null;
+        var stat: any = null;
         for (var i = 0, len = block.body.length; i < len; i++) {
             var line = block.body[i];
             if (line instanceof AST_Var && declarations_only(line)) {
@@ -3089,7 +3089,7 @@ var static_fns = convert_to_predicate({
                 args.push(value);
             }
             try {
-                return val[key].apply(val, args);
+                return val[key as string].apply(val, args);
             } catch (ex) {
                 compressor.warn("Error evaluating {code} [{file}:{line},{col}]", {
                     code: this.print_to_string(),
@@ -3977,7 +3977,8 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                     block.body.push(node);
                 }
                 if (node.init instanceof AST_SimpleStatement) {
-                    node.init = node.init.body;
+                    // TODO: check type
+                    node.init = node.init.body as types.AST_Node;
                 } else if (is_empty(node.init)) {
                     node.init = null;
                 }
@@ -3988,8 +3989,8 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             ) {
                 descend(node, this);
                 if (node.body instanceof AST_BlockStatement) {
-                    var block = node.body;
-                    node.body = block.body.pop();
+                    const block = node.body;
+                    node.body = block.body.pop() as any; // TODO: check type
                     block.body.push(node);
                     return in_list ? MAP.splice(block.body) : block;
                 }
@@ -4935,7 +4936,7 @@ AST_Definitions.DEFMETHOD("to_assignments", function(compressor) {
                 left     : name,
                 right    : def.value
             }));
-            if (reduce_vars) name.definition?.().fixed = false;
+            if (reduce_vars) name.definition().fixed = false;
         } else if (def.value) {
             // Because it's a destructuring, do not turn into an assignment.
             var varDef = make_node(AST_VarDef, def, {
@@ -5129,7 +5130,7 @@ def_optimize(AST_Call, function(self, compressor) {
                 }
                 var elements: any[] = [];
                 var consts: any[] = [];
-                for (var i = 0, len = exp.expression.elements.length; i < len; i++) {
+                for (let i = 0, len = exp.expression.elements.length; i < len; i++) {
                     var el = exp.expression.elements[i];
                     if (el instanceof AST_Expansion) break EXIT;
                     var value = el.evaluate(compressor);
@@ -5375,7 +5376,7 @@ def_optimize(AST_Call, function(self, compressor) {
     }
     const can_drop_this_call = is_regular_func && compressor.option("side_effects") && fn.body.every(is_empty);
     if (can_drop_this_call) {
-        var args = self.args.concat(make_node(AST_Undefined, self));
+        const args = self.args.concat(make_node(AST_Undefined, self));
         return make_sequence(self, args).optimize(compressor);
     }
     if (compressor.option("negate_iife")
@@ -5399,7 +5400,7 @@ def_optimize(AST_Call, function(self, compressor) {
         if (stat instanceof AST_SimpleStatement) {
             return make_node(AST_UnaryPrefix, stat, {
                 operator: "void",
-                expression: stat.body.clone(true)
+                expression: (stat.body as types.AST_Node).clone(true)
             });
         }
     }
@@ -7114,7 +7115,7 @@ def_optimize(AST_Sub, function(self, compressor) {
             }
             params.add(param);
         }
-        var argname = fn.argnames[index];
+        var argname: any = fn.argnames[index];
         if (argname && compressor.has_directive("use strict")) {
             var def = argname.definition?.();
             if (!compressor.option("reduce_vars") || def.assignments || def.orig.length > 1) {
