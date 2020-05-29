@@ -1312,34 +1312,34 @@ var AST_SymbolRef: typeof types.AST_SymbolRef = DEFNODE("SymbolRef", null, {
     $documentation: "Reference to some symbol (not definition/declaration)",
 }, AST_Symbol);
 
-var AST_SymbolExport = DEFNODE("SymbolExport", null, {
+var AST_SymbolExport: typeof types.AST_SymbolExport = DEFNODE("SymbolExport", null, {
     $documentation: "Symbol referring to a name to export",
 }, AST_SymbolRef);
 
-var AST_SymbolExportForeign = DEFNODE("SymbolExportForeign", null, {
+var AST_SymbolExportForeign: typeof types.AST_SymbolExportForeign = DEFNODE("SymbolExportForeign", null, {
     $documentation: "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes",
 }, AST_Symbol);
 
-var AST_LabelRef = DEFNODE("LabelRef", null, {
+var AST_LabelRef: typeof types.AST_LabelRef = DEFNODE("LabelRef", null, {
     $documentation: "Reference to a label symbol",
 }, AST_Symbol);
 
-var AST_This = DEFNODE("This", null, {
+var AST_This: typeof types.AST_This = DEFNODE("This", null, {
     $documentation: "The `this` symbol",
 }, AST_Symbol);
 
-var AST_Super = DEFNODE("Super", null, {
+var AST_Super: typeof types.AST_Super = DEFNODE("Super", null, {
     $documentation: "The `super` symbol",
 }, AST_This);
 
-var AST_Constant = DEFNODE("Constant", null, {
+var AST_Constant: typeof types.AST_Constant = DEFNODE("Constant", null, {
     $documentation: "Base class for all constants",
     getValue: function() {
         return this.value;
     }
 });
 
-var AST_String = DEFNODE("String", "value quote", {
+var AST_String: typeof types.AST_String = DEFNODE("String", "value quote", {
     $documentation: "A string literal",
     $propdoc: {
         value: "[string] the contents of this string",
@@ -1347,7 +1347,7 @@ var AST_String = DEFNODE("String", "value quote", {
     }
 }, AST_Constant);
 
-var AST_Number = DEFNODE("Number", "value literal", {
+var AST_Number: typeof types.AST_Number = DEFNODE("Number", "value literal", {
     $documentation: "A number literal",
     $propdoc: {
         value: "[number] the numeric value",
@@ -1362,52 +1362,52 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
     }
 }, AST_Constant);
 
-var AST_RegExp = DEFNODE("RegExp", "value", {
+var AST_RegExp: typeof types.AST_RegExp = DEFNODE("RegExp", "value", {
     $documentation: "A regexp literal",
     $propdoc: {
         value: "[RegExp] the actual regexp",
     }
 }, AST_Constant);
 
-var AST_Atom = DEFNODE("Atom", null, {
+var AST_Atom: typeof types.AST_Atom = DEFNODE("Atom", null, {
     $documentation: "Base class for atoms",
 }, AST_Constant);
 
-var AST_Null = DEFNODE("Null", null, {
+var AST_Null: typeof types.AST_Null = DEFNODE("Null", null, {
     $documentation: "The `null` atom",
     value: null
 }, AST_Atom);
 
-var AST_NaN = DEFNODE("NaN", null, {
+var AST_NaN: typeof types.AST_NaN = DEFNODE("NaN", null, {
     $documentation: "The impossible value",
     value: 0/0
 }, AST_Atom);
 
-var AST_Undefined = DEFNODE("Undefined", null, {
+var AST_Undefined: typeof types.AST_Undefined = DEFNODE("Undefined", null, {
     $documentation: "The `undefined` value",
     value: (function() {}())
 }, AST_Atom);
 
-var AST_Hole = DEFNODE("Hole", null, {
+var AST_Hole: typeof types.AST_Hole = DEFNODE("Hole", null, {
     $documentation: "A hole in an array",
     value: (function() {}())
 }, AST_Atom);
 
-var AST_Infinity = DEFNODE("Infinity", null, {
+var AST_Infinity: typeof types.AST_Infinity = DEFNODE("Infinity", null, {
     $documentation: "The `Infinity` value",
     value: 1/0
 }, AST_Atom);
 
-var AST_Boolean = DEFNODE("Boolean", null, {
+var AST_Boolean: typeof types.AST_Boolean = DEFNODE("Boolean", null, {
     $documentation: "Base class for booleans",
 }, AST_Atom);
 
-var AST_False = DEFNODE("False", null, {
+var AST_False: typeof types.AST_False = DEFNODE("False", null, {
     $documentation: "The `false` atom",
     value: false
 }, AST_Boolean);
 
-var AST_True = DEFNODE("True", null, {
+var AST_True: typeof types.AST_True = DEFNODE("True", null, {
     $documentation: "The `true` atom",
     value: true
 }, AST_Boolean);
