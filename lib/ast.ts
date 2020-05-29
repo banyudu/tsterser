@@ -134,11 +134,11 @@ AST_Node.warn = function(txt, props) {
 
 /* -----[ statements ]----- */
 
-var AST_Statement = DEFNODE("Statement", null, {
+var AST_Statement: typeof types.AST_Statement = DEFNODE("Statement", null, {
     $documentation: "Base class of all statements",
 });
 
-var AST_Debugger = DEFNODE("Debugger", null, {
+var AST_Debugger: typeof types.AST_Debugger = DEFNODE("Debugger", null, {
     $documentation: "Represents a debugger statement",
 }, AST_Statement);
 
@@ -150,7 +150,7 @@ var AST_Directive = DEFNODE("Directive", "value quote", {
     },
 }, AST_Statement);
 
-var AST_SimpleStatement = DEFNODE("SimpleStatement", "body", {
+var AST_SimpleStatement: typeof types.AST_SimpleStatement = DEFNODE("SimpleStatement", "body", {
     $documentation: "A statement consisting of an expression, i.e. a = 1 + 2",
     $propdoc: {
         body: "[AST_Node] an expression node (should not be instanceof AST_Statement)"
@@ -182,7 +182,7 @@ function clone_block_scope(deep) {
     return clone;
 }
 
-var AST_Block = DEFNODE("Block", "body block_scope", {
+var AST_Block: typeof types.AST_Block = DEFNODE("Block", "body block_scope", {
     $documentation: "A body of statements (usually braced)",
     $propdoc: {
         body: "[AST_Statement*] an array of statements",
@@ -200,22 +200,22 @@ var AST_Block = DEFNODE("Block", "body block_scope", {
     clone: clone_block_scope
 }, AST_Statement);
 
-var AST_BlockStatement = DEFNODE("BlockStatement", null, {
+var AST_BlockStatement: typeof types.AST_BlockStatement = DEFNODE("BlockStatement", null, {
     $documentation: "A block statement",
 }, AST_Block);
 
-var AST_EmptyStatement = DEFNODE("EmptyStatement", null, {
+var AST_EmptyStatement: typeof types.AST_EmptyStatement = DEFNODE("EmptyStatement", null, {
     $documentation: "The empty statement (empty block or simply a semicolon)"
 }, AST_Statement);
 
-var AST_StatementWithBody = DEFNODE("StatementWithBody", "body", {
+var AST_StatementWithBody: typeof types.AST_StatementWithBody = DEFNODE("StatementWithBody", "body", {
     $documentation: "Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`",
     $propdoc: {
         body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
     }
 }, AST_Statement);
 
-var AST_LabeledStatement = DEFNODE("LabeledStatement", "label", {
+var AST_LabeledStatement: typeof types.AST_LabeledStatement = DEFNODE("LabeledStatement", "label", {
     $documentation: "Statement with a label",
     $propdoc: {
         label: "[AST_Label] a label definition"
@@ -247,7 +247,7 @@ var AST_LabeledStatement = DEFNODE("LabeledStatement", "label", {
     }
 }, AST_StatementWithBody);
 
-var AST_IterationStatement = DEFNODE("IterationStatement", "block_scope", {
+var AST_IterationStatement: typeof types.AST_IterationStatement = DEFNODE("IterationStatement", "block_scope", {
     $documentation: "Internal class.  All loops inherit from it.",
     $propdoc: {
         block_scope: "[AST_Scope] the block scope for this iteration statement."
@@ -255,14 +255,14 @@ var AST_IterationStatement = DEFNODE("IterationStatement", "block_scope", {
     clone: clone_block_scope
 }, AST_StatementWithBody);
 
-var AST_DWLoop = DEFNODE("DWLoop", "condition", {
+var AST_DWLoop: typeof types.AST_DWLoop = DEFNODE("DWLoop", "condition", {
     $documentation: "Base class for do/while statements",
     $propdoc: {
         condition: "[AST_Node] the loop condition.  Should not be instanceof AST_Statement"
     }
 }, AST_IterationStatement);
 
-var AST_Do = DEFNODE("Do", null, {
+var AST_Do: typeof types.AST_Do = DEFNODE("Do", null, {
     $documentation: "A `do` statement",
     _walk: function(visitor) {
         return visitor._visit(this, function() {
@@ -276,7 +276,7 @@ var AST_Do = DEFNODE("Do", null, {
     }
 }, AST_DWLoop);
 
-var AST_While = DEFNODE("While", null, {
+var AST_While: typeof types.AST_While = DEFNODE("While", null, {
     $documentation: "A `while` statement",
     _walk: function(visitor) {
         return visitor._visit(this, function() {
@@ -290,7 +290,7 @@ var AST_While = DEFNODE("While", null, {
     },
 }, AST_DWLoop);
 
-var AST_For = DEFNODE("For", "init condition step", {
+var AST_For: typeof types.AST_For = DEFNODE("For", "init condition step", {
     $documentation: "A `for` statement",
     $propdoc: {
         init: "[AST_Node?] the `for` initialization code, or null if empty",
@@ -313,7 +313,7 @@ var AST_For = DEFNODE("For", "init condition step", {
     },
 }, AST_IterationStatement);
 
-var AST_ForIn = DEFNODE("ForIn", "init object", {
+var AST_ForIn: typeof types.AST_ForIn = DEFNODE("ForIn", "init object", {
     $documentation: "A `for ... in` statement",
     $propdoc: {
         init: "[AST_Node] the `for/in` initialization code",
@@ -333,11 +333,11 @@ var AST_ForIn = DEFNODE("ForIn", "init object", {
     },
 }, AST_IterationStatement);
 
-var AST_ForOf = DEFNODE("ForOf", "await", {
+var AST_ForOf: typeof types.AST_ForOf = DEFNODE("ForOf", "await", {
     $documentation: "A `for ... of` statement",
 }, AST_ForIn);
 
-var AST_With = DEFNODE("With", "expression", {
+var AST_With: typeof types.AST_With = DEFNODE("With", "expression", {
     $documentation: "A `with` statement",
     $propdoc: {
         expression: "[AST_Node] the `with` expression"
@@ -356,7 +356,7 @@ var AST_With = DEFNODE("With", "expression", {
 
 /* -----[ scope and functions ]----- */
 
-var AST_Scope = DEFNODE("Scope", "variables functions uses_with uses_eval parent_scope enclosed cname _var_name_cache", {
+var AST_Scope: typeof types.AST_Scope = DEFNODE("Scope", "variables functions uses_with uses_eval parent_scope enclosed cname _var_name_cache", {
     $documentation: "Base class for all statements introducing a lexical scope",
     $propdoc: {
         variables: "[Map/S] a map of name -> SymbolDef for all variables/functions defined in this scope",
@@ -387,7 +387,7 @@ var AST_Scope = DEFNODE("Scope", "variables functions uses_with uses_eval parent
     }
 }, AST_Block);
 
-var AST_Toplevel = DEFNODE("Toplevel", "globals", {
+var AST_Toplevel: typeof types.AST_Toplevel = DEFNODE("Toplevel", "globals", {
     $documentation: "The toplevel scope",
     $propdoc: {
         globals: "[Map/S] a map of name -> SymbolDef for all undeclared names",
@@ -424,7 +424,7 @@ var AST_Toplevel = DEFNODE("Toplevel", "globals", {
     }
 }, AST_Scope);
 
-var AST_Expansion = DEFNODE("Expansion", "expression", {
+var AST_Expansion: typeof types.AST_Expansion = DEFNODE("Expansion", "expression", {
     $documentation: "An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list",
     $propdoc: {
         expression: "[AST_Node] the thing to be expanded"
@@ -439,7 +439,7 @@ var AST_Expansion = DEFNODE("Expansion", "expression", {
     },
 });
 
-var AST_Lambda = DEFNODE("Lambda", "name argnames uses_arguments is_generator async", {
+var AST_Lambda: typeof types.AST_Lambda = DEFNODE("Lambda", "name argnames uses_arguments is_generator async", {
     $documentation: "Base class for functions",
     $propdoc: {
         name: "[AST_SymbolDeclaration?] the name of this function",
@@ -480,24 +480,24 @@ var AST_Lambda = DEFNODE("Lambda", "name argnames uses_arguments is_generator as
     },
 }, AST_Scope);
 
-var AST_Accessor = DEFNODE("Accessor", null, {
+var AST_Accessor: typeof types.AST_Accessor = DEFNODE("Accessor", null, {
     $documentation: "A setter/getter function.  The `name` property is always null."
 }, AST_Lambda);
 
-var AST_Function = DEFNODE("Function", null, {
+var AST_Function: typeof types.AST_Function = DEFNODE("Function", null, {
     $documentation: "A function expression"
 }, AST_Lambda);
 
-var AST_Arrow = DEFNODE("Arrow", null, {
+var AST_Arrow: typeof types.AST_Arrow = DEFNODE("Arrow", null, {
     $documentation: "An ES6 Arrow function ((a) => b)"
 }, AST_Lambda);
 
-var AST_Defun = DEFNODE("Defun", null, {
+var AST_Defun: typeof types.AST_Defun = DEFNODE("Defun", null, {
     $documentation: "A function definition"
 }, AST_Lambda);
 
 /* -----[ DESTRUCTURING ]----- */
-var AST_Destructuring = DEFNODE("Destructuring", "names is_array", {
+var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring", "names is_array", {
     $documentation: "A destructuring of several names. Used in destructuring assignment and with destructuring function argument names",
     $propdoc: {
         "names": "[AST_Node*] Array of properties or elements",
@@ -525,7 +525,7 @@ var AST_Destructuring = DEFNODE("Destructuring", "names is_array", {
     }
 });
 
-var AST_PrefixedTemplateString = DEFNODE("PrefixedTemplateString", "template_string prefix", {
+var AST_PrefixedTemplateString: typeof types.AST_PrefixedTemplateString = DEFNODE("PrefixedTemplateString", "template_string prefix", {
     $documentation: "A templatestring with a prefix, such as String.raw`foobarbaz`",
     $propdoc: {
         template_string: "[AST_TemplateString] The template string",
@@ -561,7 +561,7 @@ var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateStrin
     }
 });
 
-var AST_TemplateSegment = DEFNODE("TemplateSegment", "value raw", {
+var AST_TemplateSegment: typeof types.AST_TemplateSegment = DEFNODE("TemplateSegment", "value raw", {
     $documentation: "A segment of a template string literal",
     $propdoc: {
         value: "Content of the segment",
@@ -571,11 +571,11 @@ var AST_TemplateSegment = DEFNODE("TemplateSegment", "value raw", {
 
 /* -----[ JUMPS ]----- */
 
-var AST_Jump = DEFNODE("Jump", null, {
+var AST_Jump: typeof types.AST_Jump = DEFNODE("Jump", null, {
     $documentation: "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
 }, AST_Statement);
 
-var AST_Exit = DEFNODE("Exit", "value", {
+var AST_Exit: typeof types.AST_Exit = DEFNODE("Exit", "value", {
     $documentation: "Base class for “exits” (`return` and `throw`)",
     $propdoc: {
         value: "[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return"
@@ -590,15 +590,15 @@ var AST_Exit = DEFNODE("Exit", "value", {
     },
 }, AST_Jump);
 
-var AST_Return = DEFNODE("Return", null, {
+var AST_Return: typeof types.AST_Return = DEFNODE("Return", null, {
     $documentation: "A `return` statement"
 }, AST_Exit);
 
-var AST_Throw = DEFNODE("Throw", null, {
+var AST_Throw: typeof types.AST_Throw = DEFNODE("Throw", null, {
     $documentation: "A `throw` statement"
 }, AST_Exit);
 
-var AST_LoopControl = DEFNODE("LoopControl", "label", {
+var AST_LoopControl: typeof types.AST_LoopControl = DEFNODE("LoopControl", "label", {
     $documentation: "Base class for loop control statements (`break` and `continue`)",
     $propdoc: {
         label: "[AST_LabelRef?] the label, or null if none",
@@ -613,15 +613,15 @@ var AST_LoopControl = DEFNODE("LoopControl", "label", {
     },
 }, AST_Jump);
 
-var AST_Break = DEFNODE("Break", null, {
+var AST_Break: typeof types.AST_Break = DEFNODE("Break", null, {
     $documentation: "A `break` statement"
 }, AST_LoopControl);
 
-var AST_Continue = DEFNODE("Continue", null, {
+var AST_Continue: typeof types.AST_Continue = DEFNODE("Continue", null, {
     $documentation: "A `continue` statement"
 }, AST_LoopControl);
 
-var AST_Await = DEFNODE("Await", "expression", {
+var AST_Await: typeof types.AST_Await = DEFNODE("Await", "expression", {
     $documentation: "An `await` statement",
     $propdoc: {
         expression: "[AST_Node] the mandatory expression being awaited",
@@ -636,7 +636,7 @@ var AST_Await = DEFNODE("Await", "expression", {
     },
 });
 
-var AST_Yield = DEFNODE("Yield", "expression is_star", {
+var AST_Yield: typeof types.AST_Yield = DEFNODE("Yield", "expression is_star", {
     $documentation: "A `yield` statement",
     $propdoc: {
         expression: "[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false",
@@ -654,7 +654,7 @@ var AST_Yield = DEFNODE("Yield", "expression is_star", {
 
 /* -----[ IF ]----- */
 
-var AST_If = DEFNODE("If", "condition alternative", {
+var AST_If: typeof types.AST_If = DEFNODE("If", "condition alternative", {
     $documentation: "A `if` statement",
     $propdoc: {
         condition: "[AST_Node] the `if` condition",
@@ -678,7 +678,7 @@ var AST_If = DEFNODE("If", "condition alternative", {
 
 /* -----[ SWITCH ]----- */
 
-var AST_Switch = DEFNODE("Switch", "expression", {
+var AST_Switch: typeof types.AST_Switch = DEFNODE("Switch", "expression", {
     $documentation: "A `switch` statement",
     $propdoc: {
         expression: "[AST_Node] the `switch` “discriminant”"
@@ -696,15 +696,15 @@ var AST_Switch = DEFNODE("Switch", "expression", {
     }
 }, AST_Block);
 
-var AST_SwitchBranch = DEFNODE("SwitchBranch", null, {
+var AST_SwitchBranch: typeof types.AST_SwitchBranch = DEFNODE("SwitchBranch", null, {
     $documentation: "Base class for `switch` branches",
 }, AST_Block);
 
-var AST_Default = DEFNODE("Default", null, {
+var AST_Default: typeof types.AST_Default = DEFNODE("Default", null, {
     $documentation: "A `default` switch branch",
 }, AST_SwitchBranch);
 
-var AST_Case = DEFNODE("Case", "expression", {
+var AST_Case: typeof types.AST_Case = DEFNODE("Case", "expression", {
     $documentation: "A `case` switch branch",
     $propdoc: {
         expression: "[AST_Node] the `case` expression"
@@ -724,7 +724,7 @@ var AST_Case = DEFNODE("Case", "expression", {
 
 /* -----[ EXCEPTIONS ]----- */
 
-var AST_Try = DEFNODE("Try", "bcatch bfinally", {
+var AST_Try: typeof types.AST_Try = DEFNODE("Try", "bcatch bfinally", {
     $documentation: "A `try` statement",
     $propdoc: {
         bcatch: "[AST_Catch?] the catch block, or null if not present",
@@ -745,7 +745,7 @@ var AST_Try = DEFNODE("Try", "bcatch bfinally", {
     },
 }, AST_Block);
 
-var AST_Catch = DEFNODE("Catch", "argname", {
+var AST_Catch: typeof types.AST_Catch = DEFNODE("Catch", "argname", {
     $documentation: "A `catch` node; only makes sense as part of a `try` statement",
     $propdoc: {
         argname: "[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception"
@@ -763,13 +763,13 @@ var AST_Catch = DEFNODE("Catch", "argname", {
     },
 }, AST_Block);
 
-var AST_Finally = DEFNODE("Finally", null, {
+var AST_Finally: typeof types.AST_Finally = DEFNODE("Finally", null, {
     $documentation: "A `finally` node; only makes sense as part of a `try` statement"
 }, AST_Block);
 
 /* -----[ VAR/CONST ]----- */
 
-var AST_Definitions = DEFNODE("Definitions", "definitions", {
+var AST_Definitions: typeof types.AST_Definitions = DEFNODE("Definitions", "definitions", {
     $documentation: "Base class for `var` or `const` nodes (variable declarations/initializations)",
     $propdoc: {
         definitions: "[AST_VarDef*] array of variable definitions"
@@ -788,19 +788,19 @@ var AST_Definitions = DEFNODE("Definitions", "definitions", {
     },
 }, AST_Statement);
 
-var AST_Var = DEFNODE("Var", null, {
+var AST_Var: typeof types.AST_Var = DEFNODE("Var", null, {
     $documentation: "A `var` statement"
 }, AST_Definitions);
 
-var AST_Let = DEFNODE("Let", null, {
+var AST_Let: typeof types.AST_Let = DEFNODE("Let", null, {
     $documentation: "A `let` statement"
 }, AST_Definitions);
 
-var AST_Const = DEFNODE("Const", null, {
+var AST_Const: typeof types.AST_Const = DEFNODE("Const", null, {
     $documentation: "A `const` statement"
 }, AST_Definitions);
 
-var AST_VarDef = DEFNODE("VarDef", "name value", {
+var AST_VarDef: typeof types.AST_VarDef = DEFNODE("VarDef", "name value", {
     $documentation: "A variable declaration; only appears in a AST_Definitions node",
     $propdoc: {
         name: "[AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar] name of the variable",
@@ -818,7 +818,7 @@ var AST_VarDef = DEFNODE("VarDef", "name value", {
     },
 });
 
-var AST_NameMapping = DEFNODE("NameMapping", "foreign_name name", {
+var AST_NameMapping: typeof types.AST_NameMapping = DEFNODE("NameMapping", "foreign_name name", {
     $documentation: "The part of the export/import statement that declare names from a module.",
     $propdoc: {
         foreign_name: "[AST_SymbolExportForeign|AST_SymbolImportForeign] The name being exported/imported (as specified in the module)",
@@ -836,7 +836,7 @@ var AST_NameMapping = DEFNODE("NameMapping", "foreign_name name", {
     },
 });
 
-var AST_Import = DEFNODE("Import", "imported_name imported_names module_name", {
+var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name imported_names module_name", {
     $documentation: "An `import` statement",
     $propdoc: {
         imported_name: "[AST_SymbolImport] The name of the variable holding the module's default export.",
@@ -866,7 +866,7 @@ var AST_Import = DEFNODE("Import", "imported_name imported_names module_name", {
     },
 });
 
-var AST_Export = DEFNODE("Export", "exported_definition exported_value is_default exported_names module_name", {
+var AST_Export: typeof types.AST_Export = DEFNODE("Export", "exported_definition exported_value is_default exported_names module_name", {
     $documentation: "An `export` statement",
     $propdoc: {
         exported_definition: "[AST_Defun|AST_Definitions|AST_DefClass?] An exported definition",
@@ -906,7 +906,7 @@ var AST_Export = DEFNODE("Export", "exported_definition exported_value is_defaul
 
 /* -----[ OTHER ]----- */
 
-var AST_Call = DEFNODE("Call", "expression args _annotations", {
+var AST_Call: typeof types.AST_Call = DEFNODE("Call", "expression args _annotations", {
     $documentation: "A function call expression",
     $propdoc: {
         expression: "[AST_Node] expression to invoke as function",
@@ -932,11 +932,11 @@ var AST_Call = DEFNODE("Call", "expression args _annotations", {
     },
 });
 
-var AST_New = DEFNODE("New", null, {
+var AST_New: typeof types.AST_New = DEFNODE("New", null, {
     $documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
 }, AST_Call);
 
-var AST_Sequence = DEFNODE("Sequence", "expressions", {
+var AST_Sequence: typeof types.AST_Sequence = DEFNODE("Sequence", "expressions", {
     $documentation: "A sequence expression (comma-separated expressions)",
     $propdoc: {
         expressions: "[AST_Node*] array of expressions (at least two)"
@@ -954,7 +954,7 @@ var AST_Sequence = DEFNODE("Sequence", "expressions", {
     },
 });
 
-var AST_PropAccess = DEFNODE("PropAccess", "expression property", {
+var AST_PropAccess: typeof types.AST_PropAccess = DEFNODE("PropAccess", "expression property", {
     $documentation: "Base class for property access expressions, i.e. `a.foo` or `a[\"foo\"]`",
     $propdoc: {
         expression: "[AST_Node] the “container” expression",
@@ -962,7 +962,7 @@ var AST_PropAccess = DEFNODE("PropAccess", "expression property", {
     }
 });
 
-var AST_Dot = DEFNODE("Dot", "quote", {
+var AST_Dot: typeof types.AST_Dot = DEFNODE("Dot", "quote", {
     $documentation: "A dotted property access expression",
     $propdoc: {
         quote: "[string] the original quote character when transformed from AST_Sub",
@@ -977,7 +977,7 @@ var AST_Dot = DEFNODE("Dot", "quote", {
     },
 }, AST_PropAccess);
 
-var AST_Sub = DEFNODE("Sub", null, {
+var AST_Sub: typeof types.AST_Sub = DEFNODE("Sub", null, {
     $documentation: "Index-style property access, i.e. `a[\"foo\"]`",
     _walk: function(visitor) {
         return visitor._visit(this, function() {
@@ -991,7 +991,7 @@ var AST_Sub = DEFNODE("Sub", null, {
     },
 }, AST_PropAccess);
 
-var AST_Unary = DEFNODE("Unary", "operator expression", {
+var AST_Unary: typeof types.AST_Unary = DEFNODE("Unary", "operator expression", {
     $documentation: "Base class for unary expressions",
     $propdoc: {
         operator: "[string] the operator",
@@ -1007,11 +1007,11 @@ var AST_Unary = DEFNODE("Unary", "operator expression", {
     },
 });
 
-var AST_UnaryPrefix = DEFNODE("UnaryPrefix", null, {
+var AST_UnaryPrefix: typeof types.AST_UnaryPrefix = DEFNODE("UnaryPrefix", null, {
     $documentation: "Unary prefix expression, i.e. `typeof i` or `++i`"
 }, AST_Unary);
 
-var AST_UnaryPostfix = DEFNODE("UnaryPostfix", null, {
+var AST_UnaryPostfix: typeof types.AST_UnaryPostfix = DEFNODE("UnaryPostfix", null, {
     $documentation: "Unary postfix expression, i.e. `i++`"
 }, AST_Unary);
 
