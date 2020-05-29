@@ -1375,10 +1375,10 @@ function OutputStream(options?) {
                 output.print("{}");
             } else if (left_is_object(returned)) {
                 output.print("(");
-                returned.print(output);
+                returned.print?.(output);
                 output.print(")");
             } else {
-                returned.print(output);
+                returned.print?.(output);
             }
         } else {
             print_braced(self, output);
@@ -1744,7 +1744,7 @@ function OutputStream(options?) {
     DEFPRINT(AST_New, function(self, output) {
         output.print("new");
         output.space();
-        AST_Call.prototype._codegen(self, output);
+        AST_Call.prototype._codegen?.(self, output);
     });
 
     AST_Sequence.DEFMETHOD("_do_print", function(output) {
@@ -2143,7 +2143,7 @@ function OutputStream(options?) {
         if (!stmt || stmt instanceof AST_EmptyStatement)
             output.print("{}");
         else if (stmt instanceof AST_BlockStatement)
-            stmt.print(output);
+            stmt.print?.(output);
         else output.with_block(function() {
             output.indent();
             stmt.print(output);

@@ -228,7 +228,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
     var scope: any = this.parent_scope = parent_scope;
     var labels = new Map();
     var defun: any = null;
-    var in_destructuring = null;
+    var in_destructuring: any = null;
     var for_scopes: any[] = [];
     var tw = new TreeWalker((node, descend) => {
         if (node.is_block_scope()) {
@@ -276,7 +276,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             return true;
         }
         if (node instanceof AST_Scope) {
-            node.init_scope_vars(scope);
+            node.init_scope_vars?.(scope);
             var save_scope = scope;
             var save_defun = defun;
             var save_labels = labels;
@@ -408,7 +408,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
 
     var tw = new TreeWalker(node => {
         if (node instanceof AST_LoopControl && node.label) {
-            node.label.thedef.references.push(node);
+            node.label.thedef.references.push(node as any); // TODO: check type
             return true;
         }
         if (node instanceof AST_SymbolRef) {
@@ -422,7 +422,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             if (tw.parent() instanceof AST_NameMapping && tw.parent(1).module_name
                 || !(sym = node.scope.find_variable(name))) {
 
-                sym = toplevel.def_global(node);
+                sym = toplevel.def_global?.(node);
                 if (node instanceof AST_SymbolExport) sym.export = MASK_EXPORT_DONT_MANGLE;
             } else if (sym.scope instanceof AST_Lambda && name == "arguments") {
                 sym.scope.uses_arguments = true;
@@ -587,7 +587,7 @@ AST_Scope.DEFMETHOD("is_block_scope", function () {
 AST_IterationStatement.DEFMETHOD("is_block_scope", return_true);
 
 AST_Lambda.DEFMETHOD("init_scope_vars", function() {
-    AST_Scope.prototype.init_scope_vars.apply(this, arguments);
+    AST_Scope.prototype.init_scope_vars?.apply(this, arguments);
     this.uses_arguments = false;
     this.def_variable(new AST_SymbolFunarg({
         name: "arguments",
@@ -597,7 +597,7 @@ AST_Lambda.DEFMETHOD("init_scope_vars", function() {
 });
 
 AST_Arrow.DEFMETHOD("init_scope_vars", function() {
-    AST_Scope.prototype.init_scope_vars.apply(this, arguments);
+    AST_Scope.prototype.init_scope_vars?.apply(this, arguments);
     this.uses_arguments = false;
 });
 
@@ -789,7 +789,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
             && !node.value.name
             && keep_name(options.keep_fnames, node.name.name)
         ) {
-            function_defs.add(node.name.definition().id);
+            function_defs.add(node.name.definition?.().id);
             return;
         }
         if (node instanceof AST_Label) {
@@ -924,7 +924,7 @@ AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options) {
             skip_string(node.consequent);
             skip_string(node.alternative);
         } else if (node instanceof AST_Sequence) {
-            skip_string(node.tail_node());
+            skip_string(node.tail_node?.());
         }
     }
 });

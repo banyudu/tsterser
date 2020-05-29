@@ -1288,23 +1288,26 @@ function parse($TEXT, options?) {
                 next();
                 return try_();
 
-              case "var":
+              case "var": {
                 next();
-                var node = var_();
+                const node = var_();
                 semicolon();
                 return node;
+              }
 
-              case "let":
+              case "let": {
                 next();
-                var node = let_();
+                const node = let_();
                 semicolon();
                 return node;
+              }
 
-              case "const":
+              case "const": {
                 next();
-                var node = const_();
+                const node = const_();
                 semicolon();
                 return node;
+              }
 
               case "with":
                 if (S.input.has_directive("use strict")) {
@@ -1316,13 +1319,14 @@ function parse($TEXT, options?) {
                     body       : statement()
                 });
 
-              case "export":
+              case "export": {
                 if (!is_token(peek(), "punc", "(")) {
                     next();
-                    var node = export_();
+                    const node = export_();
                     if (is("punc", ";")) semicolon();
                     return node;
                 }
+              }
             }
         }
         unexpected();
@@ -1350,7 +1354,7 @@ function parse($TEXT, options?) {
             // https://github.com/mishoo/UglifyJS2/issues/287
             label.references.forEach(function(ref) {
                 if (ref instanceof AST_Continue) {
-                    ref = ref.label.start;
+                    ref = ref.label?.start;
                     croak("Continue label `" + label.name + "` refers to non-IterationStatement.",
                           ref.line, ref.col, ref.pos);
                 }
@@ -1861,14 +1865,15 @@ function parse($TEXT, options?) {
             S.in_directives = true;
         S.in_loop = 0;
         S.labels = [];
+        let a;
         if (block) {
             S.input.push_directives_stack();
-            var a = block_();
+            a = block_();
             if (name) _verify_symbol(name);
             if (args) args.forEach(_verify_symbol);
             S.input.pop_directives_stack();
         } else {
-            var a = [new AST_Return({
+            a = [new AST_Return({
                 start: S.token,
                 value: expression(false),
                 end: S.token
@@ -1991,7 +1996,7 @@ function parse($TEXT, options?) {
     }
 
     function try_() {
-        var body = block_(), bcatch = null, bfinally = null;
+        var body = block_(), bcatch: any = null, bfinally: any = null;
         if (is("keyword", "catch")) {
             var start = S.token;
             next();

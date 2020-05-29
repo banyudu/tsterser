@@ -62,7 +62,7 @@ import {
     TreeWalker,
 } from "./ast";
 import { domprops } from "../tools/domprops";
-import { ManglePropertiesOptions } from "../tools/terser";
+import * as types from "../tools/terser";
 
 function find_builtins(reserved) {
     domprops.forEach(add);
@@ -126,7 +126,7 @@ function reserve_quoted_keys(ast, reserved) {
 function addStrings(node, add) {
     node.walk(new TreeWalker(function(node) {
         if (node instanceof AST_Sequence) {
-            addStrings(node.tail_node(), add);
+            addStrings(node.tail_node?.(), add);
         } else if (node instanceof AST_String) {
             add(node.value);
         } else if (node instanceof AST_Conditional) {
@@ -137,7 +137,7 @@ function addStrings(node, add) {
     }));
 }
 
-function mangle_properties(ast, options: ManglePropertiesOptions) {
+function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     options = defaults(options, {
         builtins: false,
         cache: null,
@@ -195,7 +195,8 @@ function mangle_properties(ast, options: ManglePropertiesOptions) {
         } else if (node instanceof AST_Dot) {
             var declared = !!options.undeclared;
             if (!declared) {
-                var root = node;
+                // TODO: check type
+                var root: any = node;
                 while (root.expression) {
                     root = root.expression;
                 }

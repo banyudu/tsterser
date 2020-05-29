@@ -1015,7 +1015,7 @@ var AST_UnaryPostfix: typeof types.AST_UnaryPostfix = DEFNODE("UnaryPostfix", nu
     $documentation: "Unary postfix expression, i.e. `i++`"
 }, AST_Unary);
 
-var AST_Binary = DEFNODE("Binary", "operator left right", {
+var AST_Binary: typeof types.AST_Binary = DEFNODE("Binary", "operator left right", {
     $documentation: "Binary expression, i.e. `a + b`",
     $propdoc: {
         left: "[AST_Node] left-hand side expression",
@@ -1034,7 +1034,7 @@ var AST_Binary = DEFNODE("Binary", "operator left right", {
     },
 });
 
-var AST_Conditional = DEFNODE("Conditional", "condition consequent alternative", {
+var AST_Conditional: typeof types.AST_Conditional = DEFNODE("Conditional", "condition consequent alternative", {
     $documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
     $propdoc: {
         condition: "[AST_Node]",
@@ -1055,17 +1055,17 @@ var AST_Conditional = DEFNODE("Conditional", "condition consequent alternative",
     },
 });
 
-var AST_Assign = DEFNODE("Assign", null, {
+var AST_Assign: typeof types.AST_Assign = DEFNODE("Assign", null, {
     $documentation: "An assignment expression — `a = b + 5`",
 }, AST_Binary);
 
-var AST_DefaultAssign = DEFNODE("DefaultAssign", null, {
+var AST_DefaultAssign: typeof types.AST_DefaultAssign = DEFNODE("DefaultAssign", null, {
     $documentation: "A default assignment expression like in `(a = 3) => a`"
 }, AST_Binary);
 
 /* -----[ LITERALS ]----- */
 
-var AST_Array = DEFNODE("Array", "elements", {
+var AST_Array: typeof types.AST_Array = DEFNODE("Array", "elements", {
     $documentation: "An array literal",
     $propdoc: {
         elements: "[AST_Node*] array of elements"
@@ -1084,7 +1084,7 @@ var AST_Array = DEFNODE("Array", "elements", {
     },
 });
 
-var AST_Object = DEFNODE("Object", "properties", {
+var AST_Object: typeof types.AST_Object = DEFNODE("Object", "properties", {
     $documentation: "An object literal",
     $propdoc: {
         properties: "[AST_ObjectProperty*] array of properties"
@@ -1103,7 +1103,7 @@ var AST_Object = DEFNODE("Object", "properties", {
     },
 });
 
-var AST_ObjectProperty = DEFNODE("ObjectProperty", "key value", {
+var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectProperty", "key value", {
     $documentation: "Base class for literal object properties",
     $propdoc: {
         key: "[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.",
@@ -1499,7 +1499,7 @@ const walk_abort = Symbol("abort walk");
 
 /* -----[ TreeWalker ]----- */
 
-class TreeWalker {
+class TreeWalker implements types.TreeWalker {
     visit: any
     stack: any[]
     directives: any
@@ -1575,12 +1575,12 @@ class TreeWalker {
         }
     }
 
-    loopcontrol_target(node) {
+    loopcontrol_target(node: types.AST_Node): types.AST_Node | undefined {
         var stack = this.stack;
         if (node.label) for (var i = stack.length; --i >= 0;) {
             var x = stack[i];
             if (x instanceof AST_LabeledStatement && x.label.name == node.label.name)
-                return x.body;
+                return x.body as any; // TODO: check this type
         } else for (var i = stack.length; --i >= 0;) {
             var x = stack[i];
             if (x instanceof AST_IterationStatement

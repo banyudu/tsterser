@@ -437,7 +437,7 @@ class Compressor extends TreeWalker {
         if (has_flag(node, SQUEEZED)) return node;
         var was_scope = false;
         if (node instanceof AST_Scope) {
-            node = node.hoist_properties(this);
+            node = node.hoist_properties?.(this);
             node = node.hoist_declarations(this);
             was_scope = true;
         }
@@ -455,7 +455,7 @@ class Compressor extends TreeWalker {
         descend(node, this);
         var opt = node.optimize(this);
         if (was_scope && opt instanceof AST_Scope) {
-            opt.drop_unused(this);
+            opt.drop_unused?.(this);
             descend(opt, this);
         }
         if (opt === node) set_flag(opt, SQUEEZED);
@@ -509,7 +509,7 @@ AST_Scope.DEFMETHOD("process_expression", function(insert, compressor) {
         }
         if (!insert && node instanceof AST_Return) {
             if (compressor) {
-                var value = node.value && node.value.drop_side_effect_free(compressor, true);
+                var value = node.value && node.value.drop_side_effect_free?.(compressor, true);
                 return value ? make_node(AST_SimpleStatement, node, {
                     body: value
                 }) : make_node(AST_EmptyStatement, node);
@@ -573,9 +573,9 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         && parent.expression === node
         && !(value instanceof AST_Arrow)
         && !(value instanceof AST_Class)
-        && !parent.is_expr_pure(compressor)
+        && !parent.is_expr_pure?.(compressor)
         && (!(value instanceof AST_Function)
-            || !(parent instanceof AST_New) && value.contains_this())) {
+            || !(parent instanceof AST_New) && value.contains_this?.())) {
         return true;
     }
     if (parent instanceof AST_Array) {
@@ -713,7 +713,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
             || parent instanceof AST_Binary && lazy_op.has(parent.operator)
             || parent instanceof AST_Conditional && node !== parent.condition
             || parent instanceof AST_Expansion
-            || parent instanceof AST_Sequence && node === parent.tail_node()) {
+            || parent instanceof AST_Sequence && node === parent.tail_node?.()) {
             mark_escaped(tw, d, scope, parent, parent, level + 1, depth);
         } else if (parent instanceof AST_ObjectKeyVal && node === parent.value) {
             var obj = tw.parent(level + 1);
@@ -724,14 +724,14 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
             if (value) return;
         }
         if (level > 0) return;
-        if (parent instanceof AST_Sequence && node !== parent.tail_node()) return;
+        if (parent instanceof AST_Sequence && node !== parent.tail_node?.()) return;
         if (parent instanceof AST_SimpleStatement) return;
         d.direct_access = true;
     }
 
     const suppress = node => walk(node, node => {
         if (!(node instanceof AST_Symbol)) return;
-        var d = node.definition();
+        var d = node.definition?.();
         if (!d) return;
         if (node instanceof AST_SymbolRef) d.references.push(node);
         d.fixed = false;
@@ -751,7 +751,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         }
         var sym = node.left;
         if (!(sym instanceof AST_SymbolRef)) return;
-        var def = sym.definition();
+        var def = sym.definition?.();
         var safe = safe_to_assign(tw, def, sym.scope, node.right);
         def.assignments++;
         if (!safe) return;
@@ -842,7 +842,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
             // So existing transformation rules can work on them.
             this.argnames.forEach((arg, i) => {
                 if (!arg.definition) return;
-                var d = arg.definition();
+                var d = arg.definition?.();
                 // Avoid setting fixed when there's more than one origin for a variable value
                 if (d.orig.length > 1) return;
                 if (d.fixed === undefined && (!this.uses_arguments || tw.has_directive("use strict"))) {
@@ -933,7 +933,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
     });
 
     def_reduce_vars(AST_SymbolRef, function(tw, descend, compressor) {
-        var d = this.definition();
+        var d = this.definition?.();
         d.references.push(this);
         if (d.references.length == 1
             && !d.fixed
@@ -955,7 +955,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
                 && ref_once(tw, compressor, d)
             ) {
                 d.single_use =
-                    fixed_value instanceof AST_Lambda && !fixed_value.pinned()
+                    fixed_value instanceof AST_Lambda && !fixed_value.pinned?.()
                     || fixed_value instanceof AST_Class
                     || d.scope === this.scope && fixed_value.is_constant_expression();
             } else {
@@ -995,7 +995,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         if (node.operator !== "++" && node.operator !== "--") return;
         var exp = node.expression;
         if (!(exp instanceof AST_SymbolRef)) return;
-        var def = exp.definition();
+        var def = exp.definition?.();
         var safe = safe_to_assign(tw, def, exp.scope, true);
         def.assignments++;
         if (!safe) return;
@@ -1024,7 +1024,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
             suppress(node.name);
             return;
         }
-        var d = node.name.definition();
+        var d = node.name.definition?.();
         if (node.value) {
             if (safe_to_assign(tw, d, node.name.scope, node.value)) {
                 d.fixed = function() {
@@ -1087,7 +1087,7 @@ AST_Symbol.DEFMETHOD("fixed_value", function() {
 });
 
 AST_SymbolRef.DEFMETHOD("is_immutable", function() {
-    var orig = this.definition().orig;
+    var orig = this.definition?.().orig;
     return orig.length == 1 && orig[0] instanceof AST_SymbolLambda;
 });
 
@@ -1097,7 +1097,7 @@ function is_func_expr(node) {
 
 function is_lhs_read_only(lhs) {
     if (lhs instanceof AST_This) return true;
-    if (lhs instanceof AST_SymbolRef) return lhs.definition().orig[0] instanceof AST_SymbolLambda;
+    if (lhs instanceof AST_SymbolRef) return lhs.definition?.().orig[0] instanceof AST_SymbolLambda;
     if (lhs instanceof AST_PropAccess) {
         lhs = lhs.expression;
         if (lhs instanceof AST_SymbolRef) {
@@ -1114,7 +1114,7 @@ function is_lhs_read_only(lhs) {
 
 function is_ref_of(ref, type) {
     if (!(ref instanceof AST_SymbolRef)) return false;
-    var orig = ref.definition().orig;
+    var orig = ref.definition?.().orig;
     for (var i = orig.length; --i >= 0;) {
         if (orig[i] instanceof type) return true;
     }
@@ -1134,7 +1134,7 @@ function find_variable(compressor, name) {
     while (scope = compressor.parent(i++)) {
         if (scope instanceof AST_Scope) break;
         if (scope instanceof AST_Catch && scope.argname) {
-            scope = scope.argname.definition().scope;
+            scope = scope.argname.definition?.().scope;
             break;
         }
     }
@@ -1251,12 +1251,12 @@ function is_iife_call(node) {
 }
 
 function is_undeclared_ref(node) {
-    return node instanceof AST_SymbolRef && node.definition().undeclared;
+    return node instanceof AST_SymbolRef && node.definition?.().undeclared;
 }
 
 var global_names = makePredicate("Array Boolean clearInterval clearTimeout console Date decodeURI decodeURIComponent encodeURI encodeURIComponent Error escape eval EvalError Function isFinite isNaN JSON Math Number parseFloat parseInt RangeError ReferenceError RegExp Object setInterval setTimeout String SyntaxError TypeError unescape URIError");
 AST_SymbolRef.DEFMETHOD("is_declared", function(compressor) {
-    return !this.definition().undeclared
+    return !this.definition?.().undeclared
         || compressor.option("unsafe") && global_names.has(this.name);
 });
 
@@ -1344,7 +1344,7 @@ function tighten_body(statements, compressor) {
                 || node instanceof AST_Destructuring
                 || node instanceof AST_Expansion
                    && node.expression instanceof AST_Symbol
-                   && node.expression.definition().references.length > 1
+                   && node.expression.definition?.().references.length > 1
                 || node instanceof AST_IterationStatement && !(node instanceof AST_For)
                 || node instanceof AST_LoopControl
                 || node instanceof AST_Try
@@ -1399,12 +1399,12 @@ function tighten_body(statements, compressor) {
                     return make_node(AST_UnaryPrefix, candidate, candidate);
                 }
                 if (candidate instanceof AST_VarDef) {
-                    var def = candidate.name.definition();
+                    var def = candidate.name.definition?.();
                     var value = candidate.value;
                     if (def.references.length - def.replaced == 1 && !compressor.exposed(def)) {
                         def.replaced++;
                         if (funarg && is_identifier_atom(value)) {
-                            return value.transform(compressor);
+                            return value?.transform(compressor);
                         } else {
                             return maintain_this_binding(parent, node, value);
                         }
@@ -1480,7 +1480,7 @@ function tighten_body(statements, compressor) {
                 var candidate = hit_stack[hit_stack.length - 1];
                 var value_def: any = null;
                 var stop_after = null;
-                var stop_if_hit = null;
+                var stop_if_hit: any = null;
                 var lhs = get_lhs(candidate);
                 if (!lhs || is_lhs_read_only(lhs) || lhs.has_side_effects(compressor)) continue;
                 // Locate symbols which may execute code outside of scanning range
@@ -1503,7 +1503,7 @@ function tighten_body(statements, compressor) {
                     statements[i].transform(scanner);
                 }
                 if (value_def) {
-                    var def = candidate.name.definition();
+                    var def = candidate.name.definition?.();
                     if (abort && def.references.length - def.replaced > replaced) replaced = false;
                     else {
                         abort = false;
@@ -1556,8 +1556,8 @@ function tighten_body(statements, compressor) {
             var found = false, scan_this = !(fn instanceof AST_Arrow);
             arg.walk(new TreeWalker(function(node, descend) {
                 if (found) return true;
-                if (node instanceof AST_SymbolRef && (fn.variables.has(node.name) || redefined_within_scope(node.definition(), fn))) {
-                    var s = node.definition().scope;
+                if (node instanceof AST_SymbolRef && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
+                    var s = node.definition?.().scope;
                     if (s !== scope) while (s = s.parent_scope) {
                         if (s === scope) return true;
                     }
@@ -1594,12 +1594,12 @@ function tighten_body(statements, compressor) {
                 var names = new Set();
                 for (var i = len; --i >= 0;) {
                     var sym = fn.argnames[i];
-                    var arg = iife.args[i];
+                    var arg: any = iife.args[i];
                     // The following two line fix is a duplicate of the fix at
                     // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
                     // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
                     // Might be doing the exact same thing.
-                    const def = sym.definition && sym.definition();
+                    const def = sym.definition && sym.definition?.();
                     const is_reassigned = def && def.orig.length > 1;
                     if (is_reassigned) continue;
                     args.unshift(make_node(AST_VarDef, sym, {
@@ -1623,7 +1623,7 @@ function tighten_body(statements, compressor) {
                     } else {
                         if (!arg) {
                             arg = make_node(AST_Undefined, sym).transform(compressor);
-                        } else if (arg instanceof AST_Lambda && arg.pinned()
+                        } else if (arg instanceof AST_Lambda && arg.pinned?.()
                             || has_overlapping_symbol(fn, arg, fn_strict)
                         ) {
                             arg = null;
@@ -1763,14 +1763,14 @@ function tighten_body(statements, compressor) {
             var value = var_def.value;
             if (!(value instanceof AST_SymbolRef)) return;
             if (value.name == "arguments") return;
-            var def = value.definition();
+            var def = value.definition?.();
             if (def.undeclared) return;
             return value_def = def;
         }
 
         function get_lhs(expr) {
             if (expr instanceof AST_VarDef && expr.name instanceof AST_SymbolDeclaration) {
-                var def = expr.name.definition();
+                var def = expr.name.definition?.();
                 if (!member(expr.name, def.orig)) return;
                 var referenced = def.references.length - def.replaced;
                 if (!referenced) return;
@@ -1842,7 +1842,7 @@ function tighten_body(statements, compressor) {
         function is_lhs_local(lhs) {
             while (lhs instanceof AST_PropAccess) lhs = lhs.expression;
             return lhs instanceof AST_SymbolRef
-                && lhs.definition().scope === scope
+                && lhs.definition?.().scope === scope
                 && !(in_loop
                     && (lvalues.has(lhs.name)
                         || candidate instanceof AST_Unary
@@ -1858,7 +1858,7 @@ function tighten_body(statements, compressor) {
             if (side_effects) return false;
             if (value_def) return true;
             if (lhs instanceof AST_SymbolRef) {
-                var def = lhs.definition();
+                var def = lhs.definition?.();
                 if (def.references.length - def.replaced == (candidate instanceof AST_VarDef ? 1 : 2)) {
                     return true;
                 }
@@ -1868,7 +1868,7 @@ function tighten_body(statements, compressor) {
 
         function may_modify(sym) {
             if (!sym.definition) return true; // AST_Destructuring
-            var def = sym.definition();
+            var def = sym.definition?.();
             if (def.orig.length == 1 && def.orig[0] instanceof AST_SymbolDefun) return false;
             if (def.scope.get_defun_scope() !== scope) return true;
             return !def.references.every((ref) => {
@@ -1886,7 +1886,7 @@ function tighten_body(statements, compressor) {
             if (lhs) {
                 if (node instanceof AST_Dot) return side_effects_external(node.expression, true);
                 if (node instanceof AST_Sub) return side_effects_external(node.expression, true);
-                if (node instanceof AST_SymbolRef) return node.definition().scope !== scope;
+                if (node instanceof AST_SymbolRef) return node.definition?.().scope !== scope;
             }
             return false;
         }
@@ -2978,7 +2978,7 @@ var static_fns = convert_to_predicate({
             };
         }
         if (value && typeof value == "object") {
-            var escaped = this.definition().escaped;
+            var escaped = this.definition?.().escaped;
             if (escaped && depth > escaped) return this;
         }
         return value;
@@ -3512,7 +3512,7 @@ const pure_prop_access_globals = new Set([
                     result = false;
                     return walk_abort;
                 }
-                var def = node.definition();
+                var def = node.definition?.();
                 if (
                     member(def, this.enclosed)
                     && !this.variables.has(def.name)
@@ -3702,7 +3702,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
         if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive("use strict")) {
             node.argnames.forEach(function(argname) {
                 if (!(argname instanceof AST_SymbolDeclaration)) return;
-                var def = argname.definition();
+                var def = argname.definition?.();
                 if (!in_use_ids.has(def.id)) {
                     in_use_ids.set(def.id, def);
                 }
@@ -3710,7 +3710,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
         }
         if (node === self) return;
         if (node instanceof AST_Defun || node instanceof AST_DefClass) {
-            var node_def = node.name.definition();
+            var node_def = node.name.definition?.();
             const in_export = tw.parent() instanceof AST_Export;
             if (in_export || !drop_funcs && scope === self) {
                 if (node_def.global && !in_use_ids.has(node_def.id)) {
@@ -3738,18 +3738,18 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             return true; // don't go in nested scopes
         }
         if (node instanceof AST_SymbolFunarg && scope === self) {
-            map_add(var_defs_by_id, node.definition().id, node);
+            map_add(var_defs_by_id, node.definition?.().id, node);
         }
         if (node instanceof AST_Definitions && scope === self) {
             const in_export = tw.parent() instanceof AST_Export;
             node.definitions.forEach(function(def) {
                 if (def.name instanceof AST_SymbolVar) {
-                    map_add(var_defs_by_id, def.name.definition().id, def);
+                    map_add(var_defs_by_id, def.name.definition?.().id, def);
                 }
                 if (in_export || !drop_vars) {
                     walk(def.name, node => {
                         if (node instanceof AST_SymbolDeclaration) {
-                            const def = node.definition();
+                            const def = node.definition?.();
                             if (
                                 (in_export || def.global)
                                 && !in_use_ids.has(def.id)
@@ -3763,7 +3763,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                     if (def.name instanceof AST_Destructuring) {
                         def.walk(tw);
                     } else {
-                        var node_def = def.name.definition();
+                        var node_def = def.name.definition?.();
                         map_add(initializations, node_def.id, def.value);
                         if (!node_def.chained && def.name.fixed_value() === def.value) {
                             fixed_ids.set(node_def.id, def);
@@ -3796,7 +3796,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             if (drop_vars) {
                 const sym = assign_as_unused(node);
                 if (sym instanceof AST_SymbolRef) {
-                    var def = sym.definition();
+                    var def = sym.definition?.();
                     var in_use = in_use_ids.has(def.id);
                     if (node instanceof AST_Assign) {
                         if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
@@ -3811,9 +3811,9 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             var def;
             if (node.name
                 && (node instanceof AST_ClassExpression
-                    && !keep_name(compressor.option("keep_classnames"), (def = node.name.definition()).name)
+                    && !keep_name(compressor.option("keep_classnames"), (def = node.name.definition?.()).name)
                 || node instanceof AST_Function
-                    && !keep_name(compressor.option("keep_fnames"), (def = node.name.definition()).name))) {
+                    && !keep_name(compressor.option("keep_fnames"), (def = node.name.definition?.()).name))) {
                 // any declarations with same name will overshadow
                 // name of this anonymous function and can therefore
                 // never be used anywhere
@@ -3834,7 +3834,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                     // them would stop that TypeError which would happen
                     // if someone called it with an incorrectly formatted
                     // parameter.
-                    if (!(sym instanceof AST_Destructuring) && !in_use_ids.has(sym.definition().id)) {
+                    if (!(sym instanceof AST_Destructuring) && !in_use_ids.has(sym.definition?.().id)) {
                         set_flag(sym, UNUSED);
                         if (trim) {
                             a.pop();
@@ -3846,7 +3846,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                 }
             }
             if ((node instanceof AST_Defun || node instanceof AST_DefClass) && node !== self) {
-                const def = node.name.definition();
+                const def = node.name.definition?.();
                 let keep = def.global && !drop_funcs || in_use_ids.has(def.id);
                 if (!keep) {
                     compressor[node.name.unreferenced() ? "warn" : "info"]("Dropping unused function {name} [{file}:{line},{col}]", template(node.name));
@@ -3876,7 +3876,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
                     var is_destructure = def.name instanceof AST_Destructuring;
                     var sym = is_destructure
                         ? new SymbolDef(null, { name: "<destructure>" }) /* fake SymbolDef */
-                        : def.name.definition();
+                        : def.name.definition?.();
                     if (drop_block && sym.global) return tail.push(def);
                     if (!(drop_vars || drop_block)
                         || is_destructure
@@ -4028,7 +4028,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
         const sym = assign_as_unused(node);
         if (sym instanceof AST_SymbolRef
             && !is_ref_of(node.left, AST_SymbolBlockDeclaration)
-            && self.variables.get(sym.name) === (node_def = sym.definition())
+            && self.variables.get(sym.name) === (node_def = sym.definition?.())
         ) {
             if (node instanceof AST_Assign) {
                 node.right.walk(tw);
@@ -4039,7 +4039,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             return true;
         }
         if (node instanceof AST_SymbolRef) {
-            node_def = node.definition();
+            node_def = node.definition?.();
             if (!in_use_ids.has(node_def.id)) {
                 in_use_ids.set(node_def.id, node_def);
                 if (node_def.orig[0] instanceof AST_SymbolCatch) {
@@ -4218,7 +4218,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
             let def;
             let value;
             if (sym.scope === self
-                && (def = sym.definition()).escaped != 1
+                && (def = sym.definition?.()).escaped != 1
                 && !def.assignments
                 && !def.direct_access
                 && !def.single_use
@@ -4243,7 +4243,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
         } else if (node instanceof AST_PropAccess
             && node.expression instanceof AST_SymbolRef
         ) {
-            const defs = defs_by_id.get(node.expression.definition().id);
+            const defs = defs_by_id.get(node.expression.definition?.().id);
             if (defs) {
                 const def = defs.get(String(get_value(node.property)));
                 const sym = make_node(AST_SymbolRef, node, {
@@ -4304,7 +4304,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
                 return exprs && make_sequence(this, exprs);
             }
             if (is_func_expr(this.expression)
-                && (!this.expression.name || !this.expression.name.definition().references.length)) {
+                && (!this.expression.name || !this.expression.name.definition?.().references.length)) {
                 var node = this.clone();
                 node.expression.process_expression(false, compressor);
                 return node;
@@ -4935,7 +4935,7 @@ AST_Definitions.DEFMETHOD("to_assignments", function(compressor) {
                 left     : name,
                 right    : def.value
             }));
-            if (reduce_vars) name.definition().fixed = false;
+            if (reduce_vars) name.definition?.().fixed = false;
         } else if (def.value) {
             // Because it's a destructuring, do not turn into an assignment.
             var varDef = make_node(AST_VarDef, def, {
@@ -4947,7 +4947,7 @@ AST_Definitions.DEFMETHOD("to_assignments", function(compressor) {
             });
             a.push(var_);
         }
-        def = def.name.definition();
+        def = def.name.definition?.();
         def.eliminated++;
         def.replaced--;
         return a;
@@ -5346,7 +5346,7 @@ def_optimize(AST_Call, function(self, compressor) {
             && (exp === fn
                 || has_annotation(self, _INLINE)
                 || compressor.option("unused")
-                    && (def = exp.definition()).references.length == 1
+                    && (def = exp.definition?.()).references.length == 1
                     && !recursive_ref(compressor, def)
                     && fn.is_constant_expression(exp.scope))
             && !has_annotation(self, _PURE | _NOINLINE)
@@ -5447,7 +5447,7 @@ def_optimize(AST_Call, function(self, compressor) {
                 || scope.var_names().has(arg.name)) {
                 return false;
             }
-            if (in_loop) in_loop.push(arg.definition());
+            if (in_loop) in_loop.push(arg.definition?.());
         }
         return true;
     }
@@ -5508,7 +5508,7 @@ def_optimize(AST_Call, function(self, compressor) {
                     || scope.var_names().has(name.name)) {
                     return false;
                 }
-                if (in_loop) in_loop.push(name.definition());
+                if (in_loop) in_loop.push(name.definition?.());
             }
         }
         return true;
@@ -5546,7 +5546,7 @@ def_optimize(AST_Call, function(self, compressor) {
     }
 
     function append_var(decls, expressions, name, value) {
-        var def = name.definition();
+        var def = name.definition?.();
         scope.variables.set(name.name, def);
         scope.enclosed.push(def);
         if (!scope.var_names().has(name.name)) {
@@ -5577,7 +5577,7 @@ def_optimize(AST_Call, function(self, compressor) {
                 if (value) expressions.push(value);
             } else {
                 var symbol = make_node(AST_SymbolVar, name, name);
-                name.definition().orig.push(symbol);
+                name.definition?.().orig.push(symbol);
                 if (!value && in_loop) value = make_node(AST_Undefined, self);
                 append_var(decls, expressions, symbol, value);
             }
@@ -5869,7 +5869,7 @@ def_optimize(AST_Binary, function(self, compressor) {
         } else if (self.left instanceof AST_SymbolRef
             // obj !== obj => false
             && self.right instanceof AST_SymbolRef
-            && self.left.definition() === self.right.definition()
+            && self.left.definition?.() === self.right.definition?.()
             && is_object(self.left.fixed_value())) {
             return make_node(self.operator[0] == "=" ? AST_True : AST_False, self);
         }
@@ -6315,7 +6315,7 @@ function recursive_ref(compressor, def) {
             || node instanceof AST_Class
         ) {
             var name = node.name;
-            if (name && name.definition() === def) break;
+            if (name && name.definition?.() === def) break;
         }
     }
     return node;
@@ -6349,7 +6349,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
     }
     var parent = compressor.parent();
     if (compressor.option("reduce_vars") && is_lhs(self, parent) !== self) {
-        const def = self.definition();
+        const def = self.definition?.();
         if (compressor.top_retain && def.global && compressor.top_retain(def)) {
             def.fixed = false;
             def.should_replace = false;
@@ -6412,7 +6412,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
                 fixed = make_node(AST_Function, fixed, fixed);
             }
             if (def.recursive_refs > 0 && fixed.name instanceof AST_SymbolDefun) {
-                const defun_def = fixed.name.definition();
+                const defun_def = fixed.name.definition?.();
                 let lambda_def = fixed.variables.get(fixed.name.name);
                 let name = lambda_def && lambda_def.orig[0];
                 if (!(name instanceof AST_SymbolLambda)) {
@@ -6422,7 +6422,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
                     lambda_def = fixed.def_function(name);
                 }
                 walk(fixed, node => {
-                    if (node instanceof AST_SymbolRef && node.definition() === defun_def) {
+                    if (node instanceof AST_SymbolRef && node.definition?.() === defun_def) {
                         node.thedef = lambda_def;
                         lambda_def.references.push(node);
                     }
@@ -6567,7 +6567,7 @@ def_optimize(AST_NaN, function(self, compressor) {
 
 function is_reachable(self, defs) {
     const find_ref = node => {
-        if (node instanceof AST_SymbolRef && member(node.definition(), defs)) {
+        if (node instanceof AST_SymbolRef && member(node.definition?.(), defs)) {
             return walk_abort;
         }
     };
@@ -6590,7 +6590,7 @@ def_optimize(AST_Assign, function(self, compressor) {
     var def;
     if (compressor.option("dead_code")
         && self.left instanceof AST_SymbolRef
-        && (def = self.left.definition()).scope === compressor.find_parent(AST_Lambda)) {
+        && (def = self.left.definition?.()).scope === compressor.find_parent(AST_Lambda)) {
         var level = 0, node, parent = self;
         do {
             node = parent;
@@ -6634,7 +6634,7 @@ def_optimize(AST_Assign, function(self, compressor) {
         self.right = make_node(AST_Null, right);
         var may_throw = node.may_throw(compressor);
         self.right = right;
-        var scope = self.left.definition().scope;
+        var scope = self.left.definition?.().scope;
         var parent;
         while ((parent = compressor.parent(level++)) !== scope) {
             if (parent instanceof AST_Try) {
@@ -6669,7 +6669,7 @@ function is_nullish(node) {
         || is_undefined(node)
         || (
             node instanceof AST_SymbolRef
-            && (fixed = node.definition().fixed) instanceof AST_Node
+            && (fixed = node.definition?.().fixed) instanceof AST_Node
             && is_nullish(fixed)
         )
     );
@@ -6791,7 +6791,7 @@ def_optimize(AST_Conditional, function(self, compressor) {
     // x?x:y --> x||y
     if (condition instanceof AST_SymbolRef
         && consequent instanceof AST_SymbolRef
-        && condition.definition() === consequent.definition()) {
+        && condition.definition?.() === consequent.definition?.()) {
         return make_node(AST_Binary, self, {
             operator: "||",
             left: condition,
@@ -7096,7 +7096,7 @@ def_optimize(AST_Sub, function(self, compressor) {
     OPT_ARGUMENTS: if (compressor.option("arguments")
         && expr instanceof AST_SymbolRef
         && expr.name == "arguments"
-        && expr.definition().orig.length == 1
+        && expr.definition?.().orig.length == 1
         && (fn = expr.scope) instanceof AST_Lambda
         && fn.uses_arguments
         && !(fn instanceof AST_Arrow)
@@ -7116,7 +7116,7 @@ def_optimize(AST_Sub, function(self, compressor) {
         }
         var argname = fn.argnames[index];
         if (argname && compressor.has_directive("use strict")) {
-            var def = argname.definition();
+            var def = argname.definition?.();
             if (!compressor.option("reduce_vars") || def.assignments || def.orig.length > 1) {
                 argname = null;
             }
@@ -7564,7 +7564,7 @@ def_optimize(AST_Destructuring, function(self, compressor) {
             if (!(elem instanceof AST_ObjectKeyVal
                 && typeof elem.key == "string"
                 && elem.value instanceof AST_SymbolDeclaration
-                && !should_retain(compressor, elem.value.definition()))) {
+                && !should_retain(compressor, elem.value.definition?.()))) {
                 keep.push(elem);
             }
         }
