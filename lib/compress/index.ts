@@ -2126,7 +2126,7 @@ function tighten_body(statements, compressor) {
                     || stat instanceof AST_Continue
                         && loop_body(lct) === self) {
                     if (stat.label) {
-                        remove(stat.label.thedef.references, stat);
+                        remove<types.AST_Node>(stat.label.thedef.references, stat);
                     }
                 } else {
                     statements[n++] = stat;
@@ -3811,9 +3811,9 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor) {
             var def;
             if (node.name
                 && (node instanceof AST_ClassExpression
-                    && !keep_name(compressor.option("keep_classnames"), (def = node.name.definition?.()).name)
+                    && !keep_name(compressor.option("keep_classnames"), (def = node.name?.definition?.()).name)
                 || node instanceof AST_Function
-                    && !keep_name(compressor.option("keep_fnames"), (def = node.name.definition?.()).name))) {
+                    && !keep_name(compressor.option("keep_fnames"), (def = node.name?.definition?.()).name))) {
                 // any declarations with same name will overshadow
                 // name of this anonymous function and can therefore
                 // never be used anywhere
@@ -4206,7 +4206,7 @@ AST_Scope.DEFMETHOD("make_var_name", function(prefix) {
     return name;
 });
 
-AST_Scope.DEFMETHOD("hoist_properties", function(compressor) {
+AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
     var self = this;
     if (!compressor.option("hoist_props") || compressor.has_directive("use asm")) return self;
     var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false;

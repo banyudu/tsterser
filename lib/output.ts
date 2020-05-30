@@ -154,6 +154,7 @@ import {
     PRECEDENCE,
     RESERVED_WORDS,
 } from "./parse";
+import * as types from "../tools/terser";
 
 const EXPECT_DIRECTIVE = /^$|[;{][\s\n]*$/;
 const CODE_LINE_BREAK = 10;
@@ -262,7 +263,7 @@ function OutputStream(options?) {
         });
     };
 
-    function make_string(str, quote) {
+    function make_string(str: string, quote: string) {
         var dq = 0, sq = 0;
         str = str.replace(/[\\\b\f\n\r\v\t\x22\x27\u2028\u2029\0\ufeff]/g,
           function(s, i) {
@@ -307,7 +308,7 @@ function OutputStream(options?) {
         }
     }
 
-    function encode_string(str, quote) {
+    function encode_string(str: string, quote: string) {
         var ret = make_string(str, quote);
         if (options.inline_script) {
             ret = ret.replace(/<\x2f(script)([>\/\t\n\f\r ])/gi, "<\\/$1$2");
@@ -323,7 +324,7 @@ function OutputStream(options?) {
         return name;
     }
 
-    function make_indent(back) {
+    function make_indent(back: number) {
         return " ".repeat(options.indent_start + indentation - back * options.indent_level);
     }
 
@@ -605,7 +606,7 @@ function OutputStream(options?) {
         return comment.replace(/(<\s*\/\s*)(script)/i, "<\\/$2");
     }
 
-    function prepend_comments(node) {
+    function prepend_comments(node: types.AST_Node) {
         var self = this;
         var start = node.start;
         if (!start) return;

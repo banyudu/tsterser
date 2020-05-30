@@ -43,6 +43,8 @@
 
 "use strict";
 
+import * as types from "../../tools/terser";
+
 class AtTop {
     v: any
     constructor (val) {
@@ -64,11 +66,11 @@ class Last {
     }
 }
 
-function characters(str) {
+function characters(str: string) {
     return str.split("");
 }
 
-function member(name, array) {
+function member<T>(name: T, array: T[]) {
     return array.includes(name);
 }
 
@@ -172,7 +174,7 @@ function string_template(text, props) {
     });
 }
 
-function remove(array, el) {
+function remove<T = types.AST_Node>(array: T[], el: T) {
     for (var i = array.length; --i >= 0;) {
         if (array[i] === el) array.splice(i, 1);
     }
@@ -191,7 +193,7 @@ function mergeSort(array, cmp) {
         if (bi < b.length) r.push.apply(r, b.slice(bi));
         return r;
     }
-    function _ms(a) {
+    function _ms(a: any[]) {
         if (a.length <= 1)
             return a;
         var m = Math.floor(a.length / 2), left = a.slice(0, m), right = a.slice(m);
