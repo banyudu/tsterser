@@ -268,6 +268,9 @@ export class AST_Node {
     may_throw: Function;
     _children_backwards: Function;
     _annotations: any;
+    is_block_scope: Function;
+    block_scope: AST_Scope | null;
+    reduce_vars: Function;
 }
 
 declare class SymbolDef {

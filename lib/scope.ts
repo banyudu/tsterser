@@ -408,7 +408,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
         this.globals = new Map();
     }
 
-    var tw = new TreeWalker(node => {
+    var tw = new TreeWalker((node: types.AST_Node) => {
         if (node instanceof AST_LoopControl && node.label) {
             node.label.thedef.references.push(node as any); // TODO: check type
             return true;
@@ -452,7 +452,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
 
     // pass 3: work around IE8 and Safari catch scope bugs
     if (options.ie8 || options.safari10) {
-        walk(this, node => {
+        walk(this, (node: types.AST_Node) => {
             if (node instanceof AST_SymbolCatch) {
                 var name = node.name;
                 var refs = node.thedef.references;
@@ -768,7 +768,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
         }
     }
 
-    var tw = new TreeWalker(function(node, descend) {
+    var tw = new TreeWalker(function(node: types.AST_Node, descend) {
         if (node instanceof AST_LabeledStatement) {
             // lname is incremented when we get to the AST_Label
             var save_nesting = lname;
@@ -781,7 +781,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
             return;
         }
         if (node.is_block_scope()) {
-            node.block_scope.variables.forEach(collect);
+            node.block_scope?.variables.forEach(collect);
             return;
         }
         if (

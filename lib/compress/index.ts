@@ -729,21 +729,21 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         d.direct_access = true;
     }
 
-    const suppress = node => walk(node, node => {
+    const suppress = node => walk(node, (node: types.AST_Node) => {
         if (!(node instanceof AST_Symbol)) return;
         var d = node.definition?.();
         if (!d) return;
         if (node instanceof AST_SymbolRef) d.references.push(node);
         d.fixed = false;
     });
-    def_reduce_vars(AST_Accessor, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Accessor, function(tw: TreeWalker, descend, compressor: Compressor) {
         push(tw);
         reset_variables(tw, compressor, this);
         descend();
         pop(tw);
         return true;
     });
-    def_reduce_vars(AST_Assign, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Assign, function(tw: TreeWalker, descend, compressor: Compressor) {
         var node = this;
         if (node.left instanceof AST_Destructuring) {
             suppress(node.left);
@@ -785,7 +785,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         pop(tw);
         return true;
     });
-    def_reduce_vars(AST_Block, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Block, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
     });
     def_reduce_vars(AST_Case, function(tw) {
@@ -863,7 +863,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
 
     def_reduce_vars(AST_Lambda, mark_lambda);
 
-    def_reduce_vars(AST_Do, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Do, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
         const saved_loop = tw.in_loop;
         tw.in_loop = this;
@@ -878,7 +878,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         tw.in_loop = saved_loop;
         return true;
     });
-    def_reduce_vars(AST_For, function(tw, descend, compressor) {
+    def_reduce_vars(AST_For, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
         if (this.init) this.init.walk(tw);
         const saved_loop = tw.in_loop;
@@ -897,7 +897,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         tw.in_loop = saved_loop;
         return true;
     });
-    def_reduce_vars(AST_ForIn, function(tw, descend, compressor) {
+    def_reduce_vars(AST_ForIn, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
         suppress(this.init);
         this.object.walk(tw);
@@ -932,13 +932,13 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         this.definition().fixed = false;
     });
 
-    def_reduce_vars(AST_SymbolRef, function(tw, descend, compressor) {
+    def_reduce_vars(AST_SymbolRef, function(tw: TreeWalker, descend, compressor: Compressor) {
         var d = this.definition?.();
         d.references.push(this);
         if (d.references.length == 1
             && !d.fixed
             && d.orig[0] instanceof AST_SymbolDefun) {
-            tw.loop_ids.set(d.id, tw.in_loop);
+            tw.loop_ids?.set(d.id, tw.in_loop);
         }
         var fixed_value;
         if (d.fixed === undefined || !safe_to_read(tw, d)) {
@@ -971,13 +971,13 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         }
         mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1);
     });
-    def_reduce_vars(AST_Toplevel, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Toplevel, function(tw: TreeWalker, descend, compressor: Compressor) {
         this.globals.forEach(function(def) {
             reset_def(compressor, def);
         });
         reset_variables(tw, compressor, this);
     });
-    def_reduce_vars(AST_Try, function(tw, descend, compressor) {
+    def_reduce_vars(AST_Try, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
         push(tw);
         walk_body(this, tw);
@@ -1040,7 +1040,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
             }
         }
     });
-    def_reduce_vars(AST_While, function(tw, descend, compressor) {
+    def_reduce_vars(AST_While, function(tw: TreeWalker, descend, compressor: Compressor) {
         reset_block_variables(compressor, this);
         const saved_loop = tw.in_loop;
         tw.in_loop = this;
@@ -1058,7 +1058,7 @@ AST_Toplevel.DEFMETHOD("reset_opt_flags", function(compressor: Compressor) {
     const self = this;
     const reduce_vars = compressor.option("reduce_vars");
 
-    const preparation = new TreeWalker(function(node, descend) {
+    const preparation = new TreeWalker(function(node: types.AST_Node, descend) {
         clear_flag(node, CLEAR_BETWEEN_PASSES);
         if (reduce_vars) {
             if (compressor.top_retain
@@ -1554,7 +1554,7 @@ function tighten_body(statements, compressor) {
 
         function has_overlapping_symbol(fn, arg, fn_strict) {
             var found = false, scan_this = !(fn instanceof AST_Arrow);
-            arg.walk(new TreeWalker(function(node, descend) {
+            arg.walk(new TreeWalker(function(node: types.AST_Node, descend) {
                 if (found) return true;
                 if (node instanceof AST_SymbolRef && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
                     var s = node.definition?.().scope;
@@ -2212,7 +2212,7 @@ function tighten_body(statements, compressor) {
                     stat.value = cons_seq(stat.value || make_node(AST_Undefined, stat).transform(compressor));
                 } else if (stat instanceof AST_For) {
                     if (!(stat.init instanceof AST_Definitions)) {
-                        const abort = walk(prev.body, node => {
+                        const abort = walk(prev.body, (node: types.AST_Node) => {
                             if (node instanceof AST_Scope) return true;
                             if (
                                 node instanceof AST_Binary
@@ -2404,7 +2404,7 @@ function extract_declarations_from_unreachable_code(compressor, stat, target) {
     if (!(stat instanceof AST_Defun)) {
         compressor.warn("Dropping unreachable code [{file}:{line},{col}]", stat.start);
     }
-    walk(stat, node => {
+    walk(stat, (node: types.AST_Node) => {
         if (node instanceof AST_Var) {
             compressor.warn("Declarations in unreachable code! [{file}:{line},{col}]", node.start);
             node.remove_initializers();
@@ -3506,7 +3506,7 @@ const pure_prop_access_globals = new Set([
 (function(def_is_constant_expression) {
     function all_refs_local(scope) {
         let result: any = true;
-        walk(this, node => {
+        walk(this, (node: types.AST_Node) => {
             if (node instanceof AST_SymbolRef) {
                 if (has_flag(this, INLINED)) {
                     result = false;
@@ -3698,7 +3698,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
     var scope = this;
-    var tw = new TreeWalker(function(node, descend) {
+    var tw = new TreeWalker(function(node: types.AST_Node, descend) {
         if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive("use strict")) {
             node.argnames.forEach(function(argname) {
                 if (!(argname instanceof AST_SymbolDeclaration)) return;
@@ -3747,7 +3747,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
                     map_add(var_defs_by_id, def.name.definition?.().id, def);
                 }
                 if (in_export || !drop_vars) {
-                    walk(def.name, node => {
+                    walk(def.name, (node: types.AST_Node) => {
                         if (node instanceof AST_SymbolDeclaration) {
                             const def = node.definition?.();
                             if (
@@ -4076,7 +4076,7 @@ AST_Scope.DEFMETHOD("hoist_declarations", function(compressor: Compressor) {
         var vars = new Map(), vars_found = 0, var_decl = 0;
         // let's count var_decl first, we seem to waste a lot of
         // space if we hoist `var` when there's only one.
-        walk(self, node => {
+        walk(self, (node: types.AST_Node) => {
             if (node instanceof AST_Scope && node !== self)
                 return true;
             if (node instanceof AST_Var) {
@@ -4211,7 +4211,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
     if (!compressor.option("hoist_props") || compressor.has_directive("use asm")) return self;
     var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false;
     var defs_by_id = new Map();
-    var hoister = new TreeTransformer(function(node, descend) {
+    var hoister = new TreeTransformer(function(node: types.AST_Node, descend) {
         if (node instanceof AST_Definitions
             && hoister.parent() instanceof AST_Export) return node;
         if (node instanceof AST_VarDef) {
@@ -4913,7 +4913,7 @@ AST_Definitions.DEFMETHOD("remove_initializers", function() {
             def.value = null;
             decls.push(def);
         } else {
-            walk(def.name, node => {
+            walk(def.name, (node: types.AST_Node) => {
                 if (node instanceof AST_SymbolDeclaration) {
                     decls.push(make_node(AST_VarDef, def, {
                         name: node,
@@ -5260,7 +5260,7 @@ def_optimize(AST_Call, function(self, compressor) {
                 ast.compute_char_frequency(mangle);
                 ast.mangle_names(mangle);
                 var fun;
-                walk(ast, node => {
+                walk(ast, (node: types.AST_Node) => {
                     if (is_func_expr(node)) {
                         fun = node;
                         return walk_abort;
@@ -5455,7 +5455,7 @@ def_optimize(AST_Call, function(self, compressor) {
 
     function can_inject_args_values() {
         var arg_vals_outer_refs = new Set();
-        const value_walker = node => {
+        const value_walker = (node: types.AST_Node) => {
             if (node instanceof AST_Scope) {
                 var scope_outer_refs = new Set();
                 node.enclosed.forEach(function(def) {
@@ -6422,7 +6422,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
                     fixed.name = name;
                     lambda_def = fixed.def_function(name);
                 }
-                walk(fixed, node => {
+                walk(fixed, (node: types.AST_Node) => {
                     if (node instanceof AST_SymbolRef && node.definition?.() === defun_def) {
                         node.thedef = lambda_def;
                         lambda_def.references.push(node);
@@ -6481,7 +6481,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
     return self;
 
     function has_symbol_ref(value) {
-        return walk(value, node => {
+        return walk(value, (node: types.AST_Node) => {
             if (node instanceof AST_SymbolRef) return walk_abort;
         });
     }
@@ -6567,7 +6567,7 @@ def_optimize(AST_NaN, function(self, compressor) {
 });
 
 function is_reachable(self, defs) {
-    const find_ref = node => {
+    const find_ref = (node: types.AST_Node) => {
         if (node instanceof AST_SymbolRef && member(node.definition?.(), defs)) {
             return walk_abort;
         }
@@ -7193,7 +7193,7 @@ def_optimize(AST_Sub, function(self, compressor) {
 });
 
 AST_Lambda.DEFMETHOD("contains_this", function() {
-    return walk(this, node => {
+    return walk(this, (node: types.AST_Node) => {
         if (node instanceof AST_This) return walk_abort;
         if (
             node !== this
@@ -7381,7 +7381,7 @@ def_optimize(AST_Function, function(self, compressor) {
         && !self.is_generator
         && !self.uses_arguments
         && !self.pinned()) {
-        const has_special_symbol = walk(self, node => {
+        const has_special_symbol = walk(self, (node: types.AST_Node) => {
             if (node instanceof AST_This) return walk_abort;
         });
         if (!has_special_symbol) return make_node(AST_Arrow, self, self).optimize(compressor);
