@@ -176,7 +176,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     }
 
     var names_to_mangle = new Set();
-    var unmangleable = new Set();
+    var unmangleable = new Set<string>();
 
     var keep_quoted_strict = options.keep_quoted === "strict";
 
@@ -204,7 +204,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
             }
             if (declared &&
                 (!keep_quoted_strict || !node.quote)) {
-                add(node.property);
+                add(node.property as string); // TODO: check type
             }
         } else if (node instanceof AST_Sub) {
             if (!keep_quoted_strict) {
@@ -242,7 +242,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
 
     // only function declarations after this line
 
-    function can_mangle(name) {
+    function can_mangle(name: string) {
         if (unmangleable.has(name)) return false;
         if (reserved.has(name)) return false;
         if (options.only_cache) {
@@ -252,14 +252,14 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
         return true;
     }
 
-    function should_mangle(name) {
+    function should_mangle(name: string) {
         if (regex && !regex.test(name)) return false;
         if (reserved.has(name)) return false;
         return cache.has(name)
             || names_to_mangle.has(name);
     }
 
-    function add(name) {
+    function add(name: string) {
         if (can_mangle(name))
             names_to_mangle.add(name);
 
@@ -268,8 +268,8 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
         }
     }
 
-    function mangle(name) {
-        if (!should_mangle(name)) {
+    function mangle(name: string | types.AST_Node) {
+        if (!should_mangle(name as string)) { // TODO: check type
             return name;
         }
 
