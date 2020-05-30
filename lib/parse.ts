@@ -257,7 +257,7 @@ function get_full_char(str, pos) {
     return str.charAt(pos);
 }
 
-function get_full_char_code(str, pos) {
+function get_full_char_code(str: string, pos: number) {
     // https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
     if (is_surrogate_pair_head(str.charCodeAt(pos))) {
         return 0x10000 + (str.charCodeAt(pos) - 0xd800 << 10) + str.charCodeAt(pos + 1) - 0xdc00;
@@ -265,7 +265,7 @@ function get_full_char_code(str, pos) {
     return str.charCodeAt(pos);
 }
 
-function get_full_char_length(str) {
+function get_full_char_length(str: string) {
     var surrogates = 0;
 
     for (var i = 0; i < str.length; i++) {
@@ -278,7 +278,7 @@ function get_full_char_length(str) {
     return str.length - surrogates;
 }
 
-function from_char_code(code) {
+function from_char_code(code: number) {
     // Based on https://github.com/mathiasbynens/String.fromCodePoint/blob/master/fromcodepoint.js
     if (code > 0xFFFF) {
         code -= 0x10000;
@@ -288,19 +288,19 @@ function from_char_code(code) {
     return String.fromCharCode(code);
 }
 
-function is_surrogate_pair_head(code) {
+function is_surrogate_pair_head(code: number) {
     return code >= 0xd800 && code <= 0xdbff;
 }
 
-function is_surrogate_pair_tail(code) {
+function is_surrogate_pair_tail(code: number) {
     return code >= 0xdc00 && code <= 0xdfff;
 }
 
-function is_digit(code) {
+function is_digit(code: number) {
     return code >= 48 && code <= 57;
 }
 
-function is_identifier_start(ch) {
+function is_identifier_start(ch: string) {
     return UNICODE.ID_Start.test(ch);
 }
 
@@ -312,7 +312,7 @@ function is_basic_identifier_string(str) {
     return /^[a-z_$][a-z0-9_$]*$/i.test(str);
 }
 
-function is_identifier_string(str, allow_surrogates) {
+function is_identifier_string(str: string, allow_surrogates: boolean) {
     if (/^[a-z_$][a-z0-9_$]*$/i.test(str)) {
         return true;
     }
@@ -333,7 +333,7 @@ function is_identifier_string(str, allow_surrogates) {
     return !!match && match[0].length === str.length;
 }
 
-function parse_js_number(num, allow_e = true) {
+function parse_js_number(num: string, allow_e = true) {
     if (!allow_e && num.includes("e")) {
         return NaN;
     }
@@ -349,7 +349,7 @@ function parse_js_number(num, allow_e = true) {
         return parseFloat(num);
     } else {
         var val = parseFloat(num);
-        if (val == num) return val;
+        if (String(val) == num) return val;
     }
 }
 
@@ -458,7 +458,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
 
     var prev_was_dot = false;
     var previous_token: any = null;
-    function token(type, value?, is_comment?) {
+    function token(type: string, value?: string | number | object, is_comment?: boolean) {
         S.regex_allowed = ((type == "operator" && !UNARY_POSTFIX.has(value)) ||
                            (type == "keyword" && KEYWORDS_BEFORE_EXPRESSION.has(value)) ||
                            (type == "punc" && PUNC_BEFORE_EXPRESSION.has(value))) ||
@@ -505,7 +505,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return ret;
     }
 
-    function parse_error(err) {
+    function parse_error(err: string) {
         js_error(err, filename, S.tokline, S.tokcol, S.tokpos);
     }
 
@@ -559,7 +559,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         }
     }
 
-    function is_octal(ch) {
+    function is_octal(ch: string) {
         return ch >= "0" && ch <= "7";
     }
 
@@ -608,7 +608,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return ch;
     }
 
-    function read_octal_escape_sequence(ch, strict_octal) {
+    function read_octal_escape_sequence(ch: string, strict_octal: boolean) {
         // Read
         var p = peek();
         if (p >= "0" && p <= "7") {
