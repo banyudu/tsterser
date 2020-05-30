@@ -459,9 +459,9 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
     var prev_was_dot = false;
     var previous_token: any = null;
     function token(type: string, value?: string | number | object, is_comment?: boolean) {
-        S.regex_allowed = ((type == "operator" && !UNARY_POSTFIX.has(value)) ||
-                           (type == "keyword" && KEYWORDS_BEFORE_EXPRESSION.has(value)) ||
-                           (type == "punc" && PUNC_BEFORE_EXPRESSION.has(value))) ||
+        S.regex_allowed = ((type == "operator" && !UNARY_POSTFIX.has(value as string)) ||
+                           (type == "keyword" && KEYWORDS_BEFORE_EXPRESSION.has(value as string)) ||
+                           (type == "punc" && PUNC_BEFORE_EXPRESSION.has(value as string))) ||
                            (type == "arrow");
         if (type == "punc" && value == ".") {
             prev_was_dot = true;

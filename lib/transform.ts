@@ -92,7 +92,7 @@ import {
 } from "./utils/index";
 import * as types from "../tools/terser";
 
-function def_transform(node, descend) {
+function def_transform(node: typeof types.AST_Node, descend: Function) {
     node.DEFMETHOD("transform", function(tw: TreeTransformer, in_list: boolean) {
         let transformed = undefined;
         tw.push(this);

@@ -112,7 +112,7 @@ function return_this() { return this; }
 function return_null() { return null; }
 
 var MAP = (function() {
-    function MAP(a, f, backwards?) {
+    function MAP(a: types.AST_Node[] | object, f: Function, backwards?: boolean) {
         var ret: any[] = [], top: any[] = [], i;
         function doit() {
             var val: any = f(a[i], i);
@@ -154,7 +154,7 @@ var MAP = (function() {
     return MAP;
 })();
 
-function make_node(ctor, orig?, props?) {
+function make_node(ctor: any, orig?: any, props?: any) {
     if (!props) props = {};
     if (orig) {
         if (!props.start) props.start = orig.start;
@@ -163,12 +163,12 @@ function make_node(ctor, orig?, props?) {
     return new ctor(props);
 }
 
-function push_uniq(array, el) {
+function push_uniq<T>(array: T[], el: T) {
     if (!array.includes(el))
         array.push(el);
 }
 
-function string_template(text, props) {
+function string_template(text: string, props: object) {
     return text.replace(/{(.+?)}/g, function(_, p) {
         return props && props[p];
     });
@@ -180,7 +180,7 @@ function remove<T = types.AST_Node>(array: T[], el: T) {
     }
 }
 
-function mergeSort(array, cmp) {
+function mergeSort<T>(array: T[], cmp: (a: T, b: T) => number) {
     if (array.length < 2) return array.slice();
     function merge(a, b) {
         var r: any[] = [], ai = 0, bi = 0, i = 0;
@@ -204,7 +204,7 @@ function mergeSort(array, cmp) {
     return _ms(array);
 }
 
-function makePredicate(words) {
+function makePredicate(words: string | string[]) {
     if (!Array.isArray(words)) words = words.split(" ");
 
     return new Set(words);
