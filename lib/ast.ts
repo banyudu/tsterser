@@ -1421,7 +1421,7 @@ var AST_True: typeof types.AST_True = DEFNODE("True", null, {
  * Iteration can be stopped and continued by passing the `to_visit` argument,
  * which is given to the callback in the second argument.
  **/
-function walk(node, cb, to_visit = [node]) {
+function walk(node: types.AST_Node, cb, to_visit = [node]) {
     const push = to_visit.push.bind(to_visit);
     while (to_visit.length) {
         const node = to_visit.pop();
@@ -1432,12 +1432,12 @@ function walk(node, cb, to_visit = [node]) {
             continue;
         }
 
-        node._children_backwards(push);
+        node?._children_backwards(push);
     }
     return false;
 }
 
-function walk_parent(node, cb, initial_stack?) {
+function walk_parent(node: types.AST_Node, cb, initial_stack?) {
     const to_visit = [node];
     const push = to_visit.push.bind(to_visit);
     const stack = initial_stack ? initial_stack.slice() : [];
