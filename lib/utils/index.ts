@@ -218,7 +218,7 @@ function map_add(map, key, value) {
     }
 }
 
-function map_from_object(obj) {
+function map_from_object(obj: object) {
     var map = new Map();
     for (var key in obj) {
         if (HOP(obj, key) && key.charAt(0) === "$") {
@@ -240,7 +240,7 @@ function HOP(obj, prop) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-function keep_name(keep_setting, name) {
+function keep_name(keep_setting: boolean | RegExp, name: string) {
     return keep_setting === true
         || (keep_setting instanceof RegExp && keep_setting.test(name));
 }
@@ -261,7 +261,7 @@ function regexp_source_fix(source) {
     });
 }
 const all_flags = "gimuy";
-function sort_regexp_flags(flags) {
+function sort_regexp_flags(flags: string) {
     const existing_flags = new Set(flags.split(""));
     let out = "";
     for (const flag of all_flags) {
@@ -277,11 +277,11 @@ function sort_regexp_flags(flags) {
     return out;
 }
 
-function has_annotation(node, annotation) {
+function has_annotation(node: types.AST_Node, annotation) {
     return node._annotations & annotation;
 }
 
-function set_annotation(node, annotation) {
+function set_annotation(node: types.AST_Node, annotation) {
     node._annotations |= annotation;
 }
 

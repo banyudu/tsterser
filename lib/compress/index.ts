@@ -4257,7 +4257,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
             }
         }
 
-        function make_sym(sym, key, defs) {
+        function make_sym(sym: types.AST_Symbol | types.AST_Destructuring, key: string, defs: Map<string, any>) {
             const new_var = make_node(sym.CTOR, sym, {
                 name: self.make_var_name(sym.name + "_" + key),
                 scope: self
@@ -4278,7 +4278,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
     // Returns an array of expressions with side-effects or null
     // if all elements were dropped. Note: original array may be
     // returned if nothing changed.
-    function trim(nodes, compressor, first_in_statement) {
+    function trim(nodes: types.AST_Node[], compressor: Compressor, first_in_statement?) {
         var len = nodes.length;
         if (!len) return null;
         var ret: any[] = [], changed = false;

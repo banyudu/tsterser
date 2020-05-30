@@ -267,6 +267,7 @@ export class AST_Node {
     properties: any[];
     may_throw: Function;
     _children_backwards: Function;
+    _annotations: any;
 }
 
 declare class SymbolDef {
