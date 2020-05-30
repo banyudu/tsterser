@@ -236,6 +236,7 @@ export class AST_Node {
     size?: Function;
     _size?: Function;
     walk: (visitor: TreeWalker) => void;
+    _walk: (visitor: TreeWalker) => void;
     print_to_string: (options?: OutputOptions) => string;
     transform: (tt: TreeTransformer, in_list?: boolean) => AST_Node;
     TYPE: string;
@@ -271,6 +272,11 @@ export class AST_Node {
     is_block_scope: Function;
     block_scope: AST_Scope | null;
     reduce_vars: Function;
+    left: AST_Node;
+    right: AST_Node;
+    key: any;
+    _find_defs: Function;
+    is_boolean: () => boolean;
 }
 
 declare class SymbolDef {

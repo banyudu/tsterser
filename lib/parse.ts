@@ -154,6 +154,7 @@ import {
     _NOINLINE,
     _PURE
 } from "./ast";
+import * as types from "../tools/terser";
 
 var _KEYWORDS = "break case catch class const continue debugger default delete do else export extends finally for function if in instanceof let new return switch throw try typeof var void while with";
 var _KEYWORDS_ATOM = "false null true";
@@ -2882,7 +2883,7 @@ function parse($TEXT, options?) {
     }
 
     // Annotate AST_Call, AST_Lambda or AST_New with the special comments
-    function annotate(node) {
+    function annotate(node: types.AST_Node) {
         var start = node.start;
         var comments = start.comments_before;
         const comments_outside_parens = outer_comments_before_counts.get(start);
@@ -3066,7 +3067,7 @@ function parse($TEXT, options?) {
         return expr instanceof AST_PropAccess || expr instanceof AST_SymbolRef;
     }
 
-    function to_destructuring(node) {
+    function to_destructuring(node: types.AST_Node) {
         if (node instanceof AST_Object) {
             node = new AST_Destructuring({
                 start: node.start,

@@ -151,6 +151,7 @@ import {
     AST_With,
     AST_Yield,
 } from "./ast";
+import * as types from "../tools/terser";
 
 (function() {
 
@@ -1167,7 +1168,7 @@ import {
         return ret;
     }
 
-    AST_Node.from_mozilla_ast = function(node) {
+    AST_Node.from_mozilla_ast = function(node: types.AST_Node) {
         var save_stack = FROM_MOZ_STACK;
         FROM_MOZ_STACK = [];
         var ast = from_moz(node);
@@ -1223,7 +1224,7 @@ import {
         return false;
     }
 
-    function to_moz_block(node) {
+    function to_moz_block(node: types.AST_Block) {
         return {
             type: "BlockStatement",
             body: node.body.map(to_moz)

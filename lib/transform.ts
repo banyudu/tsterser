@@ -90,6 +90,7 @@ import {
     MAP,
     noop,
 } from "./utils/index";
+import * as types from "../tools/terser";
 
 function def_transform(node, descend) {
     node.DEFMETHOD("transform", function(tw: TreeTransformer, in_list: boolean) {
@@ -110,7 +111,7 @@ function def_transform(node, descend) {
 }
 
 function do_list(list, tw: TreeTransformer) {
-    return MAP(list, function(node) {
+    return MAP(list, function(node: types.AST_Node) {
         return node.transform(tw, true);
     });
 }

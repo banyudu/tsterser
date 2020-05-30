@@ -112,7 +112,7 @@ function reserve_quoted_keys(ast, reserved) {
         push_uniq(reserved, name);
     }
 
-    ast.walk(new TreeWalker(function(node) {
+    ast.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_ObjectKeyVal && node.quote) {
             add(node.key);
         } else if (node instanceof AST_ObjectProperty && node.quote) {
@@ -124,7 +124,7 @@ function reserve_quoted_keys(ast, reserved) {
 }
 
 function addStrings(node, add) {
-    node.walk(new TreeWalker(function(node) {
+    node.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_Sequence) {
             addStrings(node.tail_node?.(), add);
         } else if (node instanceof AST_String) {
@@ -181,7 +181,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     var keep_quoted_strict = options.keep_quoted === "strict";
 
     // step 1: find candidates to mangle
-    ast.walk(new TreeWalker(function(node) {
+    ast.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_ObjectKeyVal) {
             if (typeof node.key == "string" &&
                 (!keep_quoted_strict || !node.quote)) {
@@ -217,7 +217,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     }));
 
     // step 2: transform the tree, renaming properties
-    return ast.transform(new TreeTransformer(function(node) {
+    return ast.transform(new TreeTransformer(function(node: types.AST_Node) {
         if (node instanceof AST_ObjectKeyVal) {
             if (typeof node.key == "string" &&
                 (!keep_quoted_strict || !node.quote)) {
@@ -233,7 +233,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
                 node.property = mangle(node.property);
             }
         } else if (!options.keep_quoted && node instanceof AST_Sub) {
-            node.property = mangleStrings(node.property);
+            node.property = mangleStrings(node.property as types.AST_Node); // TODO: check type
         } else if (node instanceof AST_Call
             && node.expression.print_to_string() == "Object.defineProperty") {
             node.args[1] = mangleStrings(node.args[1]);
@@ -296,8 +296,8 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
         return mangled;
     }
 
-    function mangleStrings(node) {
-        return node.transform(new TreeTransformer(function(node) {
+    function mangleStrings(node: types.AST_Node) {
+        return node.transform(new TreeTransformer(function(node: types.AST_Node) {
             if (node instanceof AST_Sequence) {
                 var last = node.expressions.length - 1;
                 node.expressions[last] = mangleStrings(node.expressions[last]);

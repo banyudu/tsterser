@@ -633,7 +633,7 @@ function OutputStream(options?) {
         printed_comments.add(comments);
 
         if (return_with_value) {
-            var tw = new TreeWalker(function(node) {
+            var tw = new TreeWalker(function(node: types.AST_Node) {
                 var parent = tw.parent();
                 if (parent instanceof AST_Exit
                     || parent instanceof AST_Binary && parent.left === node
@@ -805,7 +805,7 @@ function OutputStream(options?) {
         line            : function() { return current_line; },
         col             : function() { return current_col; },
         pos             : function() { return current_pos; },
-        push_node       : function(node) { stack.push(node); },
+        push_node       : function(node: types.AST_Node) { stack.push(node); },
         pop_node        : function() { return stack.pop(); },
         parent          : function(n) {
             return stack[stack.length - 2 - (n || 0)];

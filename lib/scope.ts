@@ -484,7 +484,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
     }
 });
 
-AST_Toplevel.DEFMETHOD("def_global", function(node) {
+AST_Toplevel.DEFMETHOD("def_global", function(node: types.AST_Node) {
     var globals = this.globals, name = node.name;
     if (globals.has(name)) {
         return globals.get(name);
@@ -840,7 +840,7 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options) {
     const avoid = new Set();
     options.reserved.forEach(to_avoid);
     this.globals.forEach(add_def);
-    this.walk(new TreeWalker(function(node) {
+    this.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_Scope) node.variables.forEach(add_def);
         if (node instanceof AST_SymbolCatch) add_def(node.definition());
     }));
@@ -865,7 +865,7 @@ AST_Toplevel.DEFMETHOD("expand_names", function(options) {
     var avoid = this.find_colliding_names(options);
     var cname = 0;
     this.globals.forEach(rename);
-    this.walk(new TreeWalker(function(node) {
+    this.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_Scope) node.variables.forEach(rename);
         if (node instanceof AST_SymbolCatch) rename(node.definition());
     }));
@@ -919,7 +919,7 @@ AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options) {
     }
     base54.sort();
 
-    function skip_string(node) {
+    function skip_string(node: types.AST_Node) {
         if (node instanceof AST_String) {
             base54.consider(node.value, -1);
         } else if (node instanceof AST_Conditional) {

@@ -101,7 +101,7 @@ var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
     _clone: function(deep) {
         if (deep) {
             var self = this.clone();
-            return self.transform(new TreeTransformer(function(node) {
+            return self.transform(new TreeTransformer(function(node: types.AST_Node) {
                 if (node !== self) {
                     return node.clone(true);
                 }
@@ -235,7 +235,7 @@ var AST_LabeledStatement: typeof types.AST_LabeledStatement = DEFNODE("LabeledSt
         if (deep) {
             var label = node.label;
             var def = this.label;
-            node.walk(new TreeWalker(function(node) {
+            node.walk(new TreeWalker(function(node: types.AST_Node) {
                 if (node instanceof AST_LoopControl
                     && node.label && node.label.thedef === def) {
                     node.label.thedef = label;
@@ -396,7 +396,7 @@ var AST_Toplevel: typeof types.AST_Toplevel = DEFNODE("Toplevel", "globals", {
         var body = this.body;
         var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + "={}):" + name + ");";
         var wrapped_tl = parse(_wrapped_tl);
-        wrapped_tl = wrapped_tl.transform(new TreeTransformer(function(node) {
+        wrapped_tl = wrapped_tl.transform(new TreeTransformer(function(node: types.AST_Node) {
             if (node instanceof AST_Directive && node.value == "$ORIG") {
                 return MAP.splice(body);
             }
@@ -415,7 +415,7 @@ var AST_Toplevel: typeof types.AST_Toplevel = DEFNODE("Toplevel", "globals", {
             '){"$ORIG"})(',
             args_values.slice(index + 1),
             ")"
-        ].join("")).transform(new TreeTransformer(function(node) {
+        ].join("")).transform(new TreeTransformer(function(node: types.AST_Node) {
             if (node instanceof AST_Directive && node.value == "$ORIG") {
                 return MAP.splice(body);
             }
@@ -516,7 +516,7 @@ var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring",
     },
     all_symbols: function() {
         var out: any[] = [];
-        this.walk(new TreeWalker(function (node) {
+        this.walk(new TreeWalker(function (node: types.AST_Node) {
             if (node instanceof AST_Symbol) {
                 out.push(node);
             }
@@ -943,7 +943,7 @@ var AST_Sequence: typeof types.AST_Sequence = DEFNODE("Sequence", "expressions",
     },
     _walk: function(visitor) {
         return visitor._visit(this, function() {
-            this.expressions.forEach(function(node) {
+            this.expressions.forEach(function(node: types.AST_Node) {
                 node._walk(visitor);
             });
         });
@@ -1513,7 +1513,7 @@ class TreeWalker implements types.TreeWalker {
         this.directives = Object.create(null);
     }
 
-    _visit(node, descend) {
+    _visit(node: types.AST_Node, descend: Function) {
         this.push(node);
         var ret = this.visit(node, descend ? function() {
             descend.call(node);
@@ -1529,7 +1529,7 @@ class TreeWalker implements types.TreeWalker {
         return this.stack[this.stack.length - 2 - (n || 0)];
     }
 
-    push(node) {
+    push(node: types.AST_Node) {
         if (node instanceof AST_Lambda) {
             this.directives = Object.create(this.directives);
         } else if (node instanceof AST_Directive && !this.directives[node.value]) {
