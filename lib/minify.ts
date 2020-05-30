@@ -29,7 +29,7 @@ var to_base64 = typeof btoa == "undefined" ? function(str) {
     return Buffer.from(str).toString("base64");
 } : btoa;
 
-function read_source_map(code) {
+function read_source_map(code: string) {
     var match = /(?:^|[^.])\/\/# sourceMappingURL=data:application\/json(;[\w=-]*)?;base64,([+/0-9A-Za-z]*=*)\s*$/.exec(code);
     if (!match) {
         AST_Node.warn?.("inline source map not found");
@@ -38,7 +38,7 @@ function read_source_map(code) {
     return to_ascii(match[2]);
 }
 
-function set_shorthand(name, options, keys) {
+function set_shorthand(name: string, options, keys: string[]) {
     if (options[name]) {
         keys.forEach(function(key) {
             if (options[key]) {

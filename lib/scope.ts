@@ -108,6 +108,7 @@ import {
     RESERVED_WORDS,
     js_error,
 } from "./parse";
+import * as types from "../tools/terser";
 
 const MASK_EXPORT_DONT_MANGLE = 1 << 0;
 const MASK_EXPORT_WANT_MANGLE = 1 << 1;
@@ -137,7 +138,7 @@ class SymbolDef {
     should_replace: any;
     single_use: boolean;
     fixed: any;
-    constructor(scope, orig, init?) {
+    constructor(scope: types.AST_Scope | null, orig, init?) {
         this.name = orig.name;
         this.orig = [ orig ];
         this.init = init;

@@ -4470,7 +4470,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
         var values = trim(this.segments, compressor, first_in_statement);
         return values && make_sequence(this, values);
     });
-})(function(node, func) {
+})(function(node: typeof types.AST_Node, func: Function) {
     node.DEFMETHOD("drop_side_effect_free", func);
 });
 
