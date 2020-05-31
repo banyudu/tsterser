@@ -244,7 +244,7 @@ export class AST_Node {
     label?: any;
     shallow_cmp?: Function;
     CTOR: typeof AST_Node;
-    to_mozilla_ast?: Function;
+    to_mozilla_ast: Function;
     start: any;
     end: any;
     expression: AST_Node;

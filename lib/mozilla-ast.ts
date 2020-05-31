@@ -1108,7 +1108,7 @@ import * as types from "../tools/terser";
         });
     }
 
-    function map(moztype, mytype, propmap?) {
+    function map(moztype: string, mytype: typeof types.AST_Node, propmap?: string | undefined) {
         var moz_to_me = "function From_Moz_" + moztype + "(M){\n";
         moz_to_me += "return new U2." + mytype.name + "({\n" +
             "start: my_start_token(M),\n" +
@@ -1149,14 +1149,14 @@ import * as types from "../tools/terser";
         moz_to_me += "\n})\n}";
         me_to_moz += "\n}\n}";
 
-        moz_to_me = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return(" + moz_to_me + ")")(
+        const moz_to_me_func: Function = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return(" + moz_to_me + ")")(
             ast, my_start_token, my_end_token, from_moz
         );
-        me_to_moz = new Function("to_moz", "to_moz_block", "to_moz_scope", "return(" + me_to_moz + ")")(
+        const me_to_moz_func: Function = new Function("to_moz", "to_moz_block", "to_moz_scope", "return(" + me_to_moz + ")")(
             to_moz, to_moz_block, to_moz_scope
         );
-        MOZ_TO_ME[moztype] = moz_to_me;
-        def_to_moz(mytype, me_to_moz);
+        MOZ_TO_ME[moztype] = moz_to_me_func;
+        def_to_moz(mytype, me_to_moz_func);
     }
 
     var FROM_MOZ_STACK: any[] | null = null;
@@ -1176,7 +1176,7 @@ import * as types from "../tools/terser";
         return ast;
     };
 
-    function set_moz_loc(mynode, moznode) {
+    function set_moz_loc(mynode: types.AST_Node, moznode) {
         var start = mynode.start;
         var end = mynode.end;
         if (!(start && end)) {
@@ -1197,15 +1197,15 @@ import * as types from "../tools/terser";
         return moznode;
     }
 
-    function def_to_moz(mytype, handler) {
-        mytype.DEFMETHOD("to_mozilla_ast", function(parent) {
+    function def_to_moz(mytype: typeof types.AST_Node, handler: Function) {
+        mytype.DEFMETHOD("to_mozilla_ast", function(parent: types.AST_Node) {
             return set_moz_loc(this, handler(this, parent));
         });
     }
 
-    var TO_MOZ_STACK: any[] | null = null;
+    var TO_MOZ_STACK: types.AST_Node[] | null = null;
 
-    function to_moz(node) {
+    function to_moz(node: types.AST_Node) {
         if (TO_MOZ_STACK === null) { TO_MOZ_STACK = []; }
         TO_MOZ_STACK.push(node);
         var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null;
@@ -1231,9 +1231,9 @@ import * as types from "../tools/terser";
         };
     }
 
-    function to_moz_scope(type, node) {
+    function to_moz_scope(type: string, node: types.AST_Block) {
         var body = node.body.map(to_moz);
-        if (node.body[0] instanceof AST_SimpleStatement && node.body[0].body instanceof AST_String) {
+        if (node.body[0] instanceof AST_SimpleStatement && (node.body[0] as types.AST_Block).body instanceof AST_String) {
             body.unshift(to_moz(new AST_EmptyStatement(node.body[0])));
         }
         return {
