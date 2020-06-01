@@ -88,7 +88,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
             ctor.prototype[i] = methods[i];
         }
     }
-    ctor.DEFMETHOD = function(name, method) {
+    ctor.DEFMETHOD = function(name: string, method: Function) {
         this.prototype[name] = method;
     };
     return ctor;
@@ -98,7 +98,7 @@ var AST_Token = DEFNODE("Token", "type value line col pos endline endcol endpos 
 }, null);
 
 var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
-    _clone: function(deep) {
+    _clone: function(deep: boolean) {
         if (deep) {
             var self = this.clone();
             return self.transform(new TreeTransformer(function(node: types.AST_Node) {
@@ -109,7 +109,7 @@ var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
         }
         return new this.CTOR(this);
     },
-    clone: function(deep) {
+    clone: function(deep: boolean) {
         return this._clone(deep);
     },
     $documentation: "Base class of all AST nodes",
@@ -160,19 +160,19 @@ var AST_SimpleStatement: typeof types.AST_SimpleStatement = DEFNODE("SimpleState
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
     }
 }, AST_Statement);
 
-function walk_body(node, visitor) {
+function walk_body(node: types.AST_Block, visitor: TreeWalker) {
     const body = node.body;
     for (var i = 0, len = body.length; i < len; i++) {
         body[i]._walk(visitor);
     }
 }
 
-function clone_block_scope(deep) {
+function clone_block_scope(deep: boolean) {
     var clone = this._clone(deep);
     if (this.block_scope) {
         // TODO this is sometimes undefined during compression.
@@ -193,7 +193,7 @@ var AST_Block: typeof types.AST_Block = DEFNODE("Block", "body block_scope", {
             walk_body(this, visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.body.length;
         while (i--) push(this.body[i]);
     },
@@ -226,11 +226,11 @@ var AST_LabeledStatement: typeof types.AST_LabeledStatement = DEFNODE("LabeledSt
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
         push(this.label);
     },
-    clone: function(deep) {
+    clone: function(deep: boolean) {
         var node = this._clone(deep);
         if (deep) {
             var label = node.label;
@@ -270,7 +270,7 @@ var AST_Do: typeof types.AST_Do = DEFNODE("Do", null, {
             this.condition._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.condition);
         push(this.body);
     }
@@ -284,7 +284,7 @@ var AST_While: typeof types.AST_While = DEFNODE("While", null, {
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
         push(this.condition);
     },
@@ -305,7 +305,7 @@ var AST_For: typeof types.AST_For = DEFNODE("For", "init condition step", {
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
         if (this.step) push(this.step);
         if (this.condition) push(this.condition);
@@ -326,7 +326,7 @@ var AST_ForIn: typeof types.AST_ForIn = DEFNODE("ForIn", "init object", {
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
         if (this.object) push(this.object);
         if (this.init) push(this.init);
@@ -348,7 +348,7 @@ var AST_With: typeof types.AST_With = DEFNODE("With", "expression", {
             this.body._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.body);
         push(this.expression);
     },
@@ -392,7 +392,7 @@ var AST_Toplevel: typeof types.AST_Toplevel = DEFNODE("Toplevel", "globals", {
     $propdoc: {
         globals: "[Map/S] a map of name -> SymbolDef for all undeclared names",
     },
-    wrap_commonjs: function(name) {
+    wrap_commonjs: function(name: string) {
         var body = this.body;
         var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + "={}):" + name + ");";
         var wrapped_tl = parse(_wrapped_tl);
@@ -434,7 +434,7 @@ var AST_Expansion: typeof types.AST_Expansion = DEFNODE("Expansion", "expression
             this.expression.walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.expression);
     },
 });
@@ -469,7 +469,7 @@ var AST_Lambda: typeof types.AST_Lambda = DEFNODE("Lambda", "name argnames uses_
             walk_body(this, visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.body.length;
         while (i--) push(this.body[i]);
 
@@ -510,7 +510,7 @@ var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring",
             });
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.names.length;
         while (i--) push(this.names[i]);
     },
@@ -537,7 +537,7 @@ var AST_PrefixedTemplateString: typeof types.AST_PrefixedTemplateString = DEFNOD
             this.template_string._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.template_string);
         push(this.prefix);
     },
@@ -555,7 +555,7 @@ var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateStrin
             });
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.segments.length;
         while (i--) push(this.segments[i]);
     }
@@ -585,7 +585,7 @@ var AST_Exit: typeof types.AST_Exit = DEFNODE("Exit", "value", {
             this.value._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.value) push(this.value);
     },
 }, AST_Jump);
@@ -608,7 +608,7 @@ var AST_LoopControl: typeof types.AST_LoopControl = DEFNODE("LoopControl", "labe
             this.label._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.label) push(this.label);
     },
 }, AST_Jump);
@@ -631,7 +631,7 @@ var AST_Await: typeof types.AST_Await = DEFNODE("Await", "expression", {
             this.expression._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.expression);
     },
 });
@@ -647,7 +647,7 @@ var AST_Yield: typeof types.AST_Yield = DEFNODE("Yield", "expression is_star", {
             this.expression._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.expression) push(this.expression);
     }
 });
@@ -667,7 +667,7 @@ var AST_If: typeof types.AST_If = DEFNODE("If", "condition alternative", {
             if (this.alternative) this.alternative._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.alternative) {
             push(this.alternative);
         }
@@ -689,7 +689,7 @@ var AST_Switch: typeof types.AST_Switch = DEFNODE("Switch", "expression", {
             walk_body(this, visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.body.length;
         while (i--) push(this.body[i]);
         push(this.expression);
@@ -715,7 +715,7 @@ var AST_Case: typeof types.AST_Case = DEFNODE("Case", "expression", {
             walk_body(this, visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.body.length;
         while (i--) push(this.body[i]);
         push(this.expression);
@@ -737,7 +737,7 @@ var AST_Try: typeof types.AST_Try = DEFNODE("Try", "bcatch bfinally", {
             if (this.bfinally) this.bfinally._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.bfinally) push(this.bfinally);
         if (this.bcatch) push(this.bcatch);
         let i = this.body.length;
@@ -756,7 +756,7 @@ var AST_Catch: typeof types.AST_Catch = DEFNODE("Catch", "argname", {
             walk_body(this, visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.body.length;
         while (i--) push(this.body[i]);
         if (this.argname) push(this.argname);
@@ -782,7 +782,7 @@ var AST_Definitions: typeof types.AST_Definitions = DEFNODE("Definitions", "defi
             }
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.definitions.length;
         while (i--) push(this.definitions[i]);
     },
@@ -812,7 +812,7 @@ var AST_VarDef: typeof types.AST_VarDef = DEFNODE("VarDef", "name value", {
             if (this.value) this.value._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.value) push(this.value);
         push(this.name);
     },
@@ -830,7 +830,7 @@ var AST_NameMapping: typeof types.AST_NameMapping = DEFNODE("NameMapping", "fore
             this.name._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.name);
         push(this.foreign_name);
     },
@@ -856,7 +856,7 @@ var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name impor
             this.module_name._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.module_name);
         if (this.imported_names) {
             let i = this.imported_names.length;
@@ -893,7 +893,7 @@ var AST_Export: typeof types.AST_Export = DEFNODE("Export", "exported_definition
             }
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.module_name) push(this.module_name);
         if (this.exported_names) {
             let i = this.exported_names.length;
@@ -925,7 +925,7 @@ var AST_Call: typeof types.AST_Call = DEFNODE("Call", "expression args _annotati
             this.expression._walk(visitor);  // TODO why do we need to crawl this last?
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.args.length;
         while (i--) push(this.args[i]);
         push(this.expression);
@@ -948,7 +948,7 @@ var AST_Sequence: typeof types.AST_Sequence = DEFNODE("Sequence", "expressions",
             });
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.expressions.length;
         while (i--) push(this.expressions[i]);
     },
@@ -972,7 +972,7 @@ var AST_Dot: typeof types.AST_Dot = DEFNODE("Dot", "quote", {
             this.expression._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.expression);
     },
 }, AST_PropAccess);
@@ -985,7 +985,7 @@ var AST_Sub: typeof types.AST_Sub = DEFNODE("Sub", null, {
             this.property._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.property);
         push(this.expression);
     },
@@ -1002,7 +1002,7 @@ var AST_Unary: typeof types.AST_Unary = DEFNODE("Unary", "operator expression", 
             this.expression._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.expression);
     },
 });
@@ -1028,7 +1028,7 @@ var AST_Binary: typeof types.AST_Binary = DEFNODE("Binary", "operator left right
             this.right._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.right);
         push(this.left);
     },
@@ -1048,7 +1048,7 @@ var AST_Conditional: typeof types.AST_Conditional = DEFNODE("Conditional", "cond
             this.alternative._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.alternative);
         push(this.consequent);
         push(this.condition);
@@ -1078,7 +1078,7 @@ var AST_Array: typeof types.AST_Array = DEFNODE("Array", "elements", {
             }
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.elements.length;
         while (i--) push(this.elements[i]);
     },
@@ -1097,7 +1097,7 @@ var AST_Object: typeof types.AST_Object = DEFNODE("Object", "properties", {
             }
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.properties.length;
         while (i--) push(this.properties[i]);
     },
@@ -1116,7 +1116,7 @@ var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectPropert
             this.value._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         push(this.value);
         if (this.key instanceof AST_Node) push(this.key);
     }
@@ -1185,7 +1185,7 @@ var AST_Class: typeof types.AST_Class = DEFNODE("Class", "name extends propertie
             this.properties.forEach((prop) => prop._walk(visitor));
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         let i = this.properties.length;
         while (i--) push(this.properties[i]);
         if (this.extends) push(this.extends);
@@ -1207,7 +1207,7 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
                 this.value._walk(visitor);
         });
     },
-    _children_backwards(push) {
+    _children_backwards(push: Function) {
         if (this.value instanceof AST_Node) push(this.value);
         if (this.key instanceof AST_Node) push(this.key);
     },
