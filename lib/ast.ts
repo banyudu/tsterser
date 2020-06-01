@@ -117,10 +117,10 @@ var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
         start: "[AST_Token] The first token of this node",
         end: "[AST_Token] The last token of this node"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this);
     },
-    walk: function(visitor) {
+    walk: function(visitor: TreeWalker) {
         return this._walk(visitor); // not sure the indirection will be any help
     },
     _children_backwards: () => {}
@@ -155,7 +155,7 @@ var AST_SimpleStatement: typeof types.AST_SimpleStatement = DEFNODE("SimpleState
     $propdoc: {
         body: "[AST_Node] an expression node (should not be instanceof AST_Statement)"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.body._walk(visitor);
         });
@@ -188,7 +188,7 @@ var AST_Block: typeof types.AST_Block = DEFNODE("Block", "body block_scope", {
         body: "[AST_Statement*] an array of statements",
         block_scope: "[AST_Scope] the block scope"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             walk_body(this, visitor);
         });
@@ -220,7 +220,7 @@ var AST_LabeledStatement: typeof types.AST_LabeledStatement = DEFNODE("LabeledSt
     $propdoc: {
         label: "[AST_Label] a label definition"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.label._walk(visitor);
             this.body._walk(visitor);
@@ -264,7 +264,7 @@ var AST_DWLoop: typeof types.AST_DWLoop = DEFNODE("DWLoop", "condition", {
 
 var AST_Do: typeof types.AST_Do = DEFNODE("Do", null, {
     $documentation: "A `do` statement",
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.body._walk(visitor);
             this.condition._walk(visitor);
@@ -278,7 +278,7 @@ var AST_Do: typeof types.AST_Do = DEFNODE("Do", null, {
 
 var AST_While: typeof types.AST_While = DEFNODE("While", null, {
     $documentation: "A `while` statement",
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.condition._walk(visitor);
             this.body._walk(visitor);
@@ -297,7 +297,7 @@ var AST_For: typeof types.AST_For = DEFNODE("For", "init condition step", {
         condition: "[AST_Node?] the `for` termination clause, or null if empty",
         step: "[AST_Node?] the `for` update clause, or null if empty"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.init) this.init._walk(visitor);
             if (this.condition) this.condition._walk(visitor);
@@ -319,7 +319,7 @@ var AST_ForIn: typeof types.AST_ForIn = DEFNODE("ForIn", "init object", {
         init: "[AST_Node] the `for/in` initialization code",
         object: "[AST_Node] the object that we're looping through"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.init._walk(visitor);
             this.object._walk(visitor);
@@ -342,7 +342,7 @@ var AST_With: typeof types.AST_With = DEFNODE("With", "expression", {
     $propdoc: {
         expression: "[AST_Node] the `with` expression"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
             this.body._walk(visitor);
@@ -429,7 +429,7 @@ var AST_Expansion: typeof types.AST_Expansion = DEFNODE("Expansion", "expression
     $propdoc: {
         expression: "[AST_Node] the thing to be expanded"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression.walk(visitor);
         });
@@ -459,7 +459,7 @@ var AST_Lambda: typeof types.AST_Lambda = DEFNODE("Lambda", "name argnames uses_
         }
         return out;
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.name) this.name._walk(visitor);
             var argnames = this.argnames;
@@ -503,7 +503,7 @@ var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring",
         "names": "[AST_Node*] Array of properties or elements",
         "is_array": "[Boolean] Whether the destructuring represents an object or array"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.names.forEach(function(name) {
                 name._walk(visitor);
@@ -531,7 +531,7 @@ var AST_PrefixedTemplateString: typeof types.AST_PrefixedTemplateString = DEFNOD
         template_string: "[AST_TemplateString] The template string",
         prefix: "[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`."
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function () {
             this.prefix._walk(visitor);
             this.template_string._walk(visitor);
@@ -548,7 +548,7 @@ var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateStrin
     $propdoc: {
         segments: "[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment."
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.segments.forEach(function(seg) {
                 seg._walk(visitor);
@@ -580,7 +580,7 @@ var AST_Exit: typeof types.AST_Exit = DEFNODE("Exit", "value", {
     $propdoc: {
         value: "[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, this.value && function() {
             this.value._walk(visitor);
         });
@@ -603,7 +603,7 @@ var AST_LoopControl: typeof types.AST_LoopControl = DEFNODE("LoopControl", "labe
     $propdoc: {
         label: "[AST_LabelRef?] the label, or null if none",
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, this.label && function() {
             this.label._walk(visitor);
         });
@@ -626,7 +626,7 @@ var AST_Await: typeof types.AST_Await = DEFNODE("Await", "expression", {
     $propdoc: {
         expression: "[AST_Node] the mandatory expression being awaited",
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
         });
@@ -642,7 +642,7 @@ var AST_Yield: typeof types.AST_Yield = DEFNODE("Yield", "expression is_star", {
         expression: "[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false",
         is_star: "[Boolean] Whether this is a yield or yield* statement"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, this.expression && function() {
             this.expression._walk(visitor);
         });
@@ -660,7 +660,7 @@ var AST_If: typeof types.AST_If = DEFNODE("If", "condition alternative", {
         condition: "[AST_Node] the `if` condition",
         alternative: "[AST_Statement?] the `else` part, or null if not present"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.condition._walk(visitor);
             this.body._walk(visitor);
@@ -683,7 +683,7 @@ var AST_Switch: typeof types.AST_Switch = DEFNODE("Switch", "expression", {
     $propdoc: {
         expression: "[AST_Node] the `switch` “discriminant”"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
             walk_body(this, visitor);
@@ -709,7 +709,7 @@ var AST_Case: typeof types.AST_Case = DEFNODE("Case", "expression", {
     $propdoc: {
         expression: "[AST_Node] the `case` expression"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
             walk_body(this, visitor);
@@ -730,7 +730,7 @@ var AST_Try: typeof types.AST_Try = DEFNODE("Try", "bcatch bfinally", {
         bcatch: "[AST_Catch?] the catch block, or null if not present",
         bfinally: "[AST_Finally?] the finally block, or null if not present"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             walk_body(this, visitor);
             if (this.bcatch) this.bcatch._walk(visitor);
@@ -750,7 +750,7 @@ var AST_Catch: typeof types.AST_Catch = DEFNODE("Catch", "argname", {
     $propdoc: {
         argname: "[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.argname) this.argname._walk(visitor);
             walk_body(this, visitor);
@@ -774,7 +774,7 @@ var AST_Definitions: typeof types.AST_Definitions = DEFNODE("Definitions", "defi
     $propdoc: {
         definitions: "[AST_VarDef*] array of variable definitions"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             var definitions = this.definitions;
             for (var i = 0, len = definitions.length; i < len; i++) {
@@ -806,7 +806,7 @@ var AST_VarDef: typeof types.AST_VarDef = DEFNODE("VarDef", "name value", {
         name: "[AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar] name of the variable",
         value: "[AST_Node?] initializer, or null of there's no initializer"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.name._walk(visitor);
             if (this.value) this.value._walk(visitor);
@@ -843,7 +843,7 @@ var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name impor
         imported_names: "[AST_NameMapping*] The names of non-default imported variables",
         module_name: "[AST_String] String literal describing where this module came from",
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.imported_name) {
                 this.imported_name._walk(visitor);
@@ -941,7 +941,7 @@ var AST_Sequence: typeof types.AST_Sequence = DEFNODE("Sequence", "expressions",
     $propdoc: {
         expressions: "[AST_Node*] array of expressions (at least two)"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expressions.forEach(function(node: types.AST_Node) {
                 node._walk(visitor);
@@ -967,7 +967,7 @@ var AST_Dot: typeof types.AST_Dot = DEFNODE("Dot", "quote", {
     $propdoc: {
         quote: "[string] the original quote character when transformed from AST_Sub",
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
         });
@@ -979,7 +979,7 @@ var AST_Dot: typeof types.AST_Dot = DEFNODE("Dot", "quote", {
 
 var AST_Sub: typeof types.AST_Sub = DEFNODE("Sub", null, {
     $documentation: "Index-style property access, i.e. `a[\"foo\"]`",
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
             this.property._walk(visitor);
@@ -997,7 +997,7 @@ var AST_Unary: typeof types.AST_Unary = DEFNODE("Unary", "operator expression", 
         operator: "[string] the operator",
         expression: "[AST_Node] expression that this unary operator applies to"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.expression._walk(visitor);
         });
@@ -1022,7 +1022,7 @@ var AST_Binary: typeof types.AST_Binary = DEFNODE("Binary", "operator left right
         operator: "[string] the operator",
         right: "[AST_Node] right-hand side expression"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.left._walk(visitor);
             this.right._walk(visitor);
@@ -1041,7 +1041,7 @@ var AST_Conditional: typeof types.AST_Conditional = DEFNODE("Conditional", "cond
         consequent: "[AST_Node]",
         alternative: "[AST_Node]"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.condition._walk(visitor);
             this.consequent._walk(visitor);
@@ -1070,7 +1070,7 @@ var AST_Array: typeof types.AST_Array = DEFNODE("Array", "elements", {
     $propdoc: {
         elements: "[AST_Node*] array of elements"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             var elements = this.elements;
             for (var i = 0, len = elements.length; i < len; i++) {
@@ -1089,7 +1089,7 @@ var AST_Object: typeof types.AST_Object = DEFNODE("Object", "properties", {
     $propdoc: {
         properties: "[AST_ObjectProperty*] array of properties"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             var properties = this.properties;
             for (var i = 0, len = properties.length; i < len; i++) {
@@ -1109,7 +1109,7 @@ var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectPropert
         key: "[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.",
         value: "[AST_Node] property value.  For getters and setters this is an AST_Accessor."
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.key instanceof AST_Node)
                 this.key._walk(visitor);
@@ -1174,7 +1174,7 @@ var AST_Class: typeof types.AST_Class = DEFNODE("Class", "name extends propertie
         properties: "[AST_ObjectProperty*] array of properties"
     },
     $documentation: "An ES6 class",
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.name) {
                 this.name._walk(visitor);
@@ -1199,7 +1199,7 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
         static: "[boolean] whether this is a static key",
         quote: "[string] which quote is being used"
     },
-    _walk: function(visitor) {
+    _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
             if (this.key instanceof AST_Node)
                 this.key._walk(visitor);
@@ -1513,7 +1513,7 @@ class TreeWalker implements types.TreeWalker {
         this.directives = Object.create(null);
     }
 
-    _visit(node: types.AST_Node, descend: Function) {
+    _visit(node: types.AST_Node, descend?: Function) {
         this.push(node);
         var ret = this.visit(node, descend ? function() {
             descend.call(node);
