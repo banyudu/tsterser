@@ -843,7 +843,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
             : token("keyword", word);
     }
 
-    function with_eof_error(eof_error, cont) {
+    function with_eof_error(eof_error: string, cont: Function) {
         return function(x?) {
             try {
                 return cont(x);
