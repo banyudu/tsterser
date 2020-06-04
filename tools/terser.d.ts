@@ -91,7 +91,7 @@ export interface MangleOptions {
     reserved?: string[];
     safari10?: boolean;
     toplevel?: boolean;
-    cache?: boolean;
+    cache?: false | AnyObject;
 }
 
 export interface ManglePropertiesOptions {

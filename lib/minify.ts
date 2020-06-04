@@ -22,10 +22,10 @@ import {
 } from "./propmangle";
 import { MinifyOptions, MinifyOutput } from "../tools/terser";
 
-var to_ascii = typeof atob == "undefined" ? function(b64) {
+var to_ascii = typeof atob == "undefined" ? function(b64: string) {
     return Buffer.from(b64, "base64").toString();
 } : atob;
-var to_base64 = typeof btoa == "undefined" ? function(str) {
+var to_base64 = typeof btoa == "undefined" ? function(str: string) {
     return Buffer.from(str).toString("base64");
 } : btoa;
 
@@ -38,7 +38,7 @@ function read_source_map(code: string) {
     return to_ascii(match[2]);
 }
 
-function set_shorthand(name: string, options, keys: string[]) {
+function set_shorthand(name: string, options: MinifyOptions, keys: string[]) {
     if (options[name]) {
         keys.forEach(function(key) {
             if (options[key]) {
@@ -49,7 +49,7 @@ function set_shorthand(name: string, options, keys: string[]) {
     }
 }
 
-function init_cache(cache) {
+function init_cache(cache: AnyObject | false | undefined) {
     if (!cache) return;
     if (!("props" in cache)) {
         cache.props = new Map();
