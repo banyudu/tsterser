@@ -230,7 +230,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
     var labels = new Map();
     var defun: any = null;
     var in_destructuring: any = null;
-    var for_scopes: any[] = [];
+    var for_scopes: types.AST_Scope[] = [];
     var tw = new TreeWalker((node, descend) => {
         if (node.is_block_scope()) {
             const save_scope = scope;
@@ -477,7 +477,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
     // https://bugs.webkit.org/show_bug.cgi?id=171041
     if (options.safari10) {
         for (const scope of for_scopes) {
-            scope.parent_scope.variables.forEach(function(def) {
+            scope.parent_scope?.variables.forEach(function(def) {
                 push_uniq(scope.enclosed, def);
             });
         }
@@ -497,7 +497,7 @@ AST_Toplevel.DEFMETHOD("def_global", function(node: types.AST_Node) {
     }
 });
 
-AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope) {
+AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope: types.AST_Scope) {
     this.variables = new Map();         // map name to AST_SymbolVar (variables defined in this scope; includes functions)
     this.functions = new Map();         // map name to AST_SymbolDefun (functions defined in this scope)
     this.uses_with = false;             // will be set to true if this or some nested scope uses the `with` statement
@@ -508,7 +508,7 @@ AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope) {
     this._var_name_cache = null;
 });
 
-AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope) {
+AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope): Set<string> | null {
     var var_names = this._var_name_cache;
     if (!var_names) {
         this._var_name_cache = var_names = new Set(
@@ -527,7 +527,7 @@ AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope) {
     return var_names;
 });
 
-AST_Scope.DEFMETHOD("add_var_name", function (name) {
+AST_Scope.DEFMETHOD("add_var_name", function (name: string) {
     // TODO change enclosed too
     if (!this._added_var_names) {
         // TODO stop adding var names entirely
@@ -618,20 +618,20 @@ AST_Symbol.DEFMETHOD("reference", function() {
     this.mark_enclosed();
 });
 
-AST_Scope.DEFMETHOD("find_variable", function(name) {
+AST_Scope.DEFMETHOD("find_variable", function(name: types.AST_Node | string) {
     if (name instanceof AST_Symbol) name = name.name;
     return this.variables.get(name)
         || (this.parent_scope && this.parent_scope.find_variable(name));
 });
 
-AST_Scope.DEFMETHOD("def_function", function(symbol, init) {
+AST_Scope.DEFMETHOD("def_function", function(this: types.AST_Scope, symbol: types.AST_Symbol, init: boolean) {
     var def = this.def_variable(symbol, init);
     if (!def.init || def.init instanceof AST_Defun) def.init = init;
     this.functions.set(symbol.name, def);
     return def;
 });
 
-AST_Scope.DEFMETHOD("def_variable", function(symbol, init) {
+AST_Scope.DEFMETHOD("def_variable", function(symbol: types.AST_Symbol, init: boolean) {
     var def = this.variables.get(symbol.name);
     if (def) {
         def.orig.push(symbol);
@@ -646,7 +646,7 @@ AST_Scope.DEFMETHOD("def_variable", function(symbol, init) {
     return symbol.thedef = def;
 });
 
-function next_mangled(scope, options) {
+function next_mangled(scope: types.AST_Scope, options: types.MangleOptions) {
     var ext = scope.enclosed;
     out: while (true) {
         var m = base54(++scope.cname);
@@ -654,7 +654,7 @@ function next_mangled(scope, options) {
 
         // https://github.com/mishoo/UglifyJS2/issues/242 -- do not
         // shadow a name reserved from mangling.
-        if (options.reserved.has(m)) continue;
+        if (options.reserved?.has(m)) continue;
 
         // Functions with short names might collide with base54 output
         // and therefore cause collisions when keep_fnames is true.
@@ -672,11 +672,11 @@ function next_mangled(scope, options) {
     }
 }
 
-AST_Scope.DEFMETHOD("next_mangled", function(options) {
+AST_Scope.DEFMETHOD("next_mangled", function(options: types.MangleOptions) {
     return next_mangled(this, options);
 });
 
-AST_Toplevel.DEFMETHOD("next_mangled", function(options) {
+AST_Toplevel.DEFMETHOD("next_mangled", function(options: types.MangleOptions) {
     let name;
     const mangled_names = this.mangled_names;
     do {
@@ -685,7 +685,7 @@ AST_Toplevel.DEFMETHOD("next_mangled", function(options) {
     return name;
 });
 
-AST_Function.DEFMETHOD("next_mangled", function(options, def) {
+AST_Function.DEFMETHOD("next_mangled", function(options: types.MangleOptions, def: types.SymbolDef) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
@@ -702,7 +702,7 @@ AST_Function.DEFMETHOD("next_mangled", function(options, def) {
     }
 });
 
-AST_Symbol.DEFMETHOD("unmangleable", function(options) {
+AST_Symbol.DEFMETHOD("unmangleable", function(options: types.MangleOptions) {
     var def = this.definition();
     return !def || def.unmangleable(options);
 });
@@ -722,7 +722,7 @@ AST_Symbol.DEFMETHOD("global", function() {
     return this.thedef.global;
 });
 
-AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options) {
+AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options: types.MangleOptions) {
     options = defaults(options, {
         eval        : false,
         ie8         : false,
@@ -733,12 +733,13 @@ AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options) {
         toplevel    : false,
     });
     if (options.module) options.toplevel = true;
+    let reserved: string[] | Set<string> | undefined = options.reserved;
     if (!Array.isArray(options.reserved)
         && !(options.reserved instanceof Set)
     ) {
-        options.reserved = [];
+        reserved = [];
     }
-    options.reserved = new Set(options.reserved);
+    options.reserved = new Set(reserved);
     // Never mangle arguments
     options.reserved.add("arguments");
     return options;
@@ -846,11 +847,11 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options) {
     }));
     return avoid;
 
-    function to_avoid(name) {
+    function to_avoid(name: string) {
         avoid.add(name);
     }
 
-    function add_def(def) {
+    function add_def(def: types.SymbolDef) {
         var name = def.name;
         if (def.global && cache && cache.has(name)) name = cache.get(name);
         else if (!def.unmangleable(options)) return;
@@ -858,7 +859,7 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options) {
     }
 });
 
-AST_Toplevel.DEFMETHOD("expand_names", function(options) {
+AST_Toplevel.DEFMETHOD("expand_names", function(options: types.MangleOptions) {
     base54.reset();
     base54.sort();
     options = this._default_mangler_options(options);
@@ -878,10 +879,10 @@ AST_Toplevel.DEFMETHOD("expand_names", function(options) {
         return name;
     }
 
-    function rename(def) {
+    function rename(def: types.SymbolDef) {
         if (def.global && options.cache) return;
         if (def.unmangleable(options)) return;
-        if (options.reserved.has(def.name)) return;
+        if (options.reserved?.has(def.name)) return;
         const redefinition = redefined_catch_def(def);
         const name = def.name = redefinition ? redefinition.name : next_name();
         def.orig.forEach(function(sym) {
@@ -898,7 +899,7 @@ AST_Sequence.DEFMETHOD("tail_node", function() {
     return this.expressions[this.expressions.length - 1];
 });
 
-AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options) {
+AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleOptions) {
     options = this._default_mangler_options(options);
     try {
         AST_Node.prototype.print = function(stream, force_parens) {

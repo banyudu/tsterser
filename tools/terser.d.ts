@@ -295,6 +295,7 @@ declare class SymbolDef {
     mangled_name: null | string;
     undeclared: boolean;
     id: number;
+    unmangleable: Function;
 }
 
 type ArgType = AST_SymbolFunarg | AST_DefaultAssign | AST_Destructuring | AST_Expansion;
@@ -332,7 +333,7 @@ declare class AST_BlockStatement extends AST_Block {
 
 declare class AST_Scope extends AST_Block {
     constructor(props?: object);
-    variables: any;
+    variables: Map<string, SymbolDef>;
     functions: any;
     uses_with: boolean;
     uses_eval: boolean;
