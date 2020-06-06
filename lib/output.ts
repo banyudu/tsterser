@@ -162,7 +162,12 @@ const CODE_SPACE = 32;
 
 const r_annotation = /[@#]__(PURE|INLINE|NOINLINE)__/g;
 
-function is_some_comments(comment) {
+interface Comment {
+    type: string;
+    value: string;
+}
+
+function is_some_comments(comment: Comment) {
     // multiline comment
     return (
         (comment.type === "comment2" || comment.type === "comment1")
@@ -170,10 +175,10 @@ function is_some_comments(comment) {
     );
 }
 
-function OutputStream(options?) {
+function OutputStream(opt?: types.OutputOptions) {
 
-    var readonly = !options;
-    options = defaults(options, {
+    var readonly = !opt;
+    const options: types.OutputOptions = defaults(opt, {
         ascii_only           : false,
         beautify             : false,
         braces               : false,
@@ -202,7 +207,7 @@ function OutputStream(options?) {
     }, true);
 
     if (options.shorthand === undefined)
-        options.shorthand = options.ecma > 5;
+        options.shorthand = options.ecma as number > 5;
 
     // Convert comment option to RegExp if neccessary and set up comments filter
     var comment_filter: any = return_false; // Default case, throw all comments away
@@ -216,12 +221,12 @@ function OutputStream(options?) {
             );
         }
         if (comments instanceof RegExp) {
-            comment_filter = function(comment) {
-                return comment.type != "comment5" && comments.test(comment.value);
+            comment_filter = function(comment: Comment) {
+                return comment.type != "comment5" && (comments as RegExp).test(comment.value);
             };
         } else if (typeof comments === "function") {
-            comment_filter = function(comment) {
-                return comment.type != "comment5" && comments(this, comment);
+            comment_filter = function(comment: Comment) {
+                return comment.type != "comment5" && (comments as Function)(this, comment);
             };
         } else if (comments === "some") {
             comment_filter = is_some_comments;
@@ -237,8 +242,8 @@ function OutputStream(options?) {
     var OUTPUT = "";
     let printed_comments = new Set();
 
-    var to_utf8 = options.ascii_only ? function(str, identifier?) {
-        if (options.ecma >= 2015) {
+    var to_utf8 = options.ascii_only ? function(str: string, identifier?: boolean) {
+        if (options.ecma as number >= 2015) {
             str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, function(ch) {
                 var code = get_full_char_code(ch, 0).toString(16);
                 return "\\u{" + code + "}";
@@ -254,7 +259,7 @@ function OutputStream(options?) {
                 return "\\u" + code;
             }
         });
-    } : function(str) {
+    } : function(str: string) {
         return str.replace(/[\ud800-\udbff][\udc00-\udfff]|([\ud800-\udbff]|[\udc00-\udfff])/g, function(match, lone) {
             if (lone) {
                 return "\\u" + lone.charCodeAt(0).toString(16);
@@ -325,7 +330,7 @@ function OutputStream(options?) {
     }
 
     function make_indent(back: number) {
-        return " ".repeat(options.indent_start + indentation - back * options.indent_level);
+        return " ".repeat((options.indent_start as number) + indentation - back * (options.indent_level as number));
     }
 
     /* -----[ beautification/minification ]----- */
@@ -364,7 +369,7 @@ function OutputStream(options?) {
     } : noop;
 
     var ensure_line_len = options.max_line_len ? function() {
-        if (current_col > options.max_line_len) {
+        if (current_col > (options.max_line_len as number)) {
             if (might_add_newline) {
                 var left = OUTPUT.slice(0, might_add_newline);
                 var right = OUTPUT.slice(might_add_newline);
@@ -380,7 +385,7 @@ function OutputStream(options?) {
                 current_pos++;
                 current_col = right.length;
             }
-            if (current_col > options.max_line_len) {
+            if (current_col > (options.max_line_len as number)) {
                 AST_Node.warn?.("Output exceeds {max_line_len} characters", options);
             }
         }
@@ -392,7 +397,7 @@ function OutputStream(options?) {
 
     var requireSemicolonChars = makePredicate("( [ + * / - , . `");
 
-    function print(str) {
+    function print(str: string) {
         str = String(str);
         var ch = get_full_char(str, 0);
         if (need_newline_indented && ch) {
@@ -526,7 +531,7 @@ function OutputStream(options?) {
     }
 
     function next_indent() {
-        return indentation + options.indent_level;
+        return indentation + (options.indent_level as number);
     }
 
     function with_block(cont) {
@@ -596,7 +601,7 @@ function OutputStream(options?) {
         return true;
     }
 
-    function filter_comment(comment) {
+    function filter_comment(comment: string) {
         if (!options.preserve_annotations) {
             comment = comment.replace(r_annotation, " ");
         }
@@ -798,7 +803,7 @@ function OutputStream(options?) {
         with_parens     : with_parens,
         with_square     : with_square,
         add_mapping     : add_mapping,
-        option          : function(opt) { return options[opt]; },
+        option          : function(opt: string) { return options[opt]; },
         printed_comments: printed_comments,
         prepend_comments: readonly ? noop : prepend_comments,
         append_comments : readonly || comment_filter === return_false ? noop : append_comments,
