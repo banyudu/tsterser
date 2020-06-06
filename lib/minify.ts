@@ -58,13 +58,13 @@ function init_cache(cache: AnyObject | false | undefined) {
     }
 }
 
-function cache_to_json(cache) {
+function cache_to_json(cache: any) {
     return {
         props: map_to_object(cache.props)
     };
 }
 
-function minify(files, options: MinifyOptions): MinifyOutput {
+function minify(files: any, options: MinifyOptions): MinifyOutput {
     var warn_function = AST_Node.warn_function;
     try {
         options = defaults(options, {
@@ -104,7 +104,7 @@ function minify(files, options: MinifyOptions): MinifyOutput {
         set_shorthand("safari10", options, [ "mangle", "output" ]);
         set_shorthand("toplevel", options, [ "compress", "mangle" ]);
         set_shorthand("warnings", options, [ "compress" ]);
-        var quoted_props;
+        var quoted_props: string[] | undefined;
         if (options.mangle) {
             options.mangle = defaults(options.mangle, {
                 cache: options.nameCache && (options.nameCache.vars || {}),
@@ -146,7 +146,7 @@ function minify(files, options: MinifyOptions): MinifyOutput {
         }
         var warnings: any[] = [];
         if (options.warnings && !AST_Node.warn_function) {
-            AST_Node.warn_function = function(warning) {
+            AST_Node.warn_function = function(warning: any) {
                 warnings.push(warning);
             };
         }

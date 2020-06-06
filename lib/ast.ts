@@ -404,7 +404,7 @@ var AST_Toplevel: typeof types.AST_Toplevel = DEFNODE("Toplevel", "globals", {
         }));
         return wrapped_tl;
     },
-    wrap_enclose: function(args_values) {
+    wrap_enclose: function(args_values: string) {
         if (typeof args_values != "string") args_values = "";
         var index = args_values.indexOf(":");
         if (index < 0) index = args_values.length;
@@ -505,7 +505,7 @@ var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring",
     },
     _walk: function(visitor: TreeWalker) {
         return visitor._visit(this, function() {
-            this.names.forEach(function(name) {
+            this.names.forEach(function(name: types.AST_Node) {
                 name._walk(visitor);
             });
         });
@@ -549,7 +549,7 @@ var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateStrin
         segments: "[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment."
     },
     _walk: function(visitor: TreeWalker) {
-        return visitor._visit(this, function() {
+        return visitor._visit(this, function(this: types.AST_TemplateString) {
             this.segments.forEach(function(seg) {
                 seg._walk(visitor);
             });
@@ -824,7 +824,7 @@ var AST_NameMapping: typeof types.AST_NameMapping = DEFNODE("NameMapping", "fore
         foreign_name: "[AST_SymbolExportForeign|AST_SymbolImportForeign] The name being exported/imported (as specified in the module)",
         name: "[AST_SymbolExport|AST_SymbolImport] The name as it is visible to this module."
     },
-    _walk: function (visitor) {
+    _walk: function (visitor: TreeWalker) {
         return visitor._visit(this, function() {
             this.foreign_name._walk(visitor);
             this.name._walk(visitor);
@@ -844,7 +844,7 @@ var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name impor
         module_name: "[AST_String] String literal describing where this module came from",
     },
     _walk: function(visitor: TreeWalker) {
-        return visitor._visit(this, function() {
+        return visitor._visit(this, function(this: types.AST_Import) {
             if (this.imported_name) {
                 this.imported_name._walk(visitor);
             }
@@ -875,8 +875,8 @@ var AST_Export: typeof types.AST_Export = DEFNODE("Export", "exported_definition
         module_name: "[AST_String?] Name of the file to load exports from",
         is_default: "[Boolean] Whether this is the default exported value of this module"
     },
-    _walk: function (visitor) {
-        return visitor._visit(this, function () {
+    _walk: function (visitor: TreeWalker) {
+        return visitor._visit(this, function (this: types.AST_Export) {
             if (this.exported_definition) {
                 this.exported_definition._walk(visitor);
             }
@@ -1175,7 +1175,7 @@ var AST_Class: typeof types.AST_Class = DEFNODE("Class", "name extends propertie
     },
     $documentation: "An ES6 class",
     _walk: function(visitor: TreeWalker) {
-        return visitor._visit(this, function() {
+        return visitor._visit(this, function(this: types.AST_Class) {
             if (this.name) {
                 this.name._walk(visitor);
             }
@@ -1437,13 +1437,13 @@ function walk(node: types.AST_Node, cb, to_visit = [node]) {
     return false;
 }
 
-function walk_parent(node: types.AST_Node, cb, initial_stack?) {
+function walk_parent(node: types.AST_Node, cb: Function, initial_stack?: any[]) {
     const to_visit = [node];
     const push = to_visit.push.bind(to_visit);
     const stack = initial_stack ? initial_stack.slice() : [];
     const parent_pop_indices: any[] = [];
 
-    let current;
+    let current: types.AST_Node | undefined;
 
     const info = {
         parent: (n = 0) => {
@@ -1483,7 +1483,7 @@ function walk_parent(node: types.AST_Node, cb, initial_stack?) {
 
         const visit_length = to_visit.length;
 
-        current._children_backwards(push);
+        current?._children_backwards(push);
 
         // Push only if we're going to traverse the children
         if (to_visit.length > visit_length) {
@@ -1507,7 +1507,7 @@ class TreeWalker implements types.TreeWalker {
     in_loop: any;
     loop_ids: Map<any, any> | undefined;
     defs_to_safe_ids: Map<any, any> | undefined;
-    constructor(callback?) {
+    constructor(callback?: Function) {
         this.visit = callback;
         this.stack = [];
         this.directives = Object.create(null);
