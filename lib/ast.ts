@@ -1507,7 +1507,7 @@ class TreeWalker implements types.TreeWalker {
     in_loop: any;
     loop_ids: Map<any, any> | undefined;
     defs_to_safe_ids: Map<any, any> | undefined;
-    constructor(callback?: Function) {
+    constructor(callback?: (node: types.AST_Node, descend: Function) => any) {
         this.visit = callback;
         this.stack = [];
         this.directives = Object.create(null);

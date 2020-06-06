@@ -89,10 +89,10 @@ export interface MangleOptions {
     keep_fnames?: boolean | RegExp;
     module?: boolean;
     properties?: false | ManglePropertiesOptions;
-    reserved?: string[];
+    reserved?: Set<string>;
     safari10?: boolean;
     toplevel?: boolean;
-    cache?: false | AnyObject;
+    cache?: false | { props: Map<string, string> };
 }
 
 export interface ManglePropertiesOptions {
@@ -345,6 +345,11 @@ declare class AST_Scope extends AST_Block {
     find_variable: Function;
     is_block_scope: Function;
     get_defun_scope: Function;
+    def_variable: Function;
+    add_var_name: Function;
+    _block_scope: boolean;
+    _var_name_cache: Set<string> | null;
+    _added_var_names: Set<string> | null;
 }
 
 declare class AST_Toplevel extends AST_Scope {
@@ -362,7 +367,6 @@ declare class AST_Lambda extends AST_Scope {
     async: boolean;
     pinned?: Function;
     make_var_name: Function;
-    def_variable: Function;
 }
 
 declare class AST_Accessor extends AST_Lambda {

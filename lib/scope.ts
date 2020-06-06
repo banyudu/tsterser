@@ -214,7 +214,7 @@ function redefined_catch_def(def: types.SymbolDef) {
     }
 }
 
-AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null, toplevel = this } = {}) {
+AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, { parent_scope = null, toplevel = this } = {}) {
     options = defaults(options, {
         cache: null,
         ie8: false,
@@ -226,7 +226,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
     }
 
     // pass 1: setup scope chaining and handle definitions
-    var scope: any = this.parent_scope = parent_scope;
+    var scope: types.AST_Scope = this.parent_scope = parent_scope as any;
     var labels = new Map();
     var defun: any = null;
     var in_destructuring: any = null;
@@ -300,7 +300,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             return true;        // no descend again
         }
         if (node instanceof AST_With) {
-            for (var s = scope; s; s = s.parent_scope)
+            for (var s: types.AST_Scope | null = scope; s; s = s.parent_scope)
                 s.uses_with = true;
             return;
         }
@@ -335,14 +335,14 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             || node instanceof AST_SymbolConst
             || node instanceof AST_SymbolCatch
         ) {
-            var def;
+            var def: types.SymbolDef;
             if (node instanceof AST_SymbolBlockDeclaration) {
                 def = scope.def_variable(node, null);
             } else {
                 def = defun.def_variable(node, node.TYPE == "SymbolVar" ? null : undefined);
             }
             if (!def.orig.every((sym) => {
-                if (sym === node) return true;
+                if (sym === node as any) return true;
                 if (node instanceof AST_SymbolBlockDeclaration) {
                     return sym instanceof AST_SymbolLambda;
                 }
@@ -359,7 +359,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
             if (!(node instanceof AST_SymbolFunarg)) mark_export(def, 2);
             if (defun !== scope) {
                 node.mark_enclosed();
-                var def = scope.find_variable(node);
+                const def = scope.find_variable(node);
                 if (node.thedef !== def) {
                     node.thedef = def;
                     node.reference();
@@ -386,7 +386,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options, { parent_scope = null,
     });
     this.walk(tw);
 
-    function mark_export(def, level) {
+    function mark_export(def: types.SymbolDef, level: number) {
         if (in_destructuring) {
             var i = 0;
             do {
@@ -508,20 +508,20 @@ AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope) {
     this._var_name_cache = null;
 });
 
-AST_Scope.DEFMETHOD("var_names", function varNames() {
+AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope) {
     var var_names = this._var_name_cache;
     if (!var_names) {
         this._var_name_cache = var_names = new Set(
             this.parent_scope ? varNames.call(this.parent_scope) : null
         );
         if (this._added_var_names) {
-            this._added_var_names.forEach(name => { var_names.add(name); });
+            this._added_var_names.forEach(name => { var_names?.add(name); });
         }
-        this.enclosed.forEach(function(def) {
-            var_names.add(def.name);
+        this.enclosed.forEach(function(def: types.SymbolDef) {
+            var_names?.add(def.name);
         });
-        this.variables.forEach(function(def, name) {
-            var_names.add(name);
+        this.variables.forEach(function(_, name: string) {
+            var_names?.add(name);
         });
     }
     return var_names;
@@ -540,7 +540,7 @@ AST_Scope.DEFMETHOD("add_var_name", function (name) {
 
 // TODO create function that asks if we can inline
 
-AST_Scope.DEFMETHOD("add_child_scope", function (scope) {
+AST_Scope.DEFMETHOD("add_child_scope", function (scope: types.AST_Scope) {
     // `scope` is going to be moved into wherever the compressor is
     // right now. Update the required scopes' information
 
@@ -744,7 +744,7 @@ AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options) {
     return options;
 });
 
-AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
+AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
     options = this._default_mangler_options(options);
 
     // We only need to mangle declaration nodes.  Special logic wired
@@ -827,7 +827,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options) {
     unmangleable_names = null;
 
     function collect(symbol) {
-        const should_mangle = !options.reserved.has(symbol.name)
+        const should_mangle = !options.reserved?.has(symbol.name)
             && !(symbol.export & MASK_EXPORT_DONT_MANGLE);
         if (should_mangle) {
             to_mangle.push(symbol);
