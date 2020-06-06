@@ -38,7 +38,7 @@ function read_source_map(code: string) {
     return to_ascii(match[2]);
 }
 
-function set_shorthand(name: string, options: MinifyOptions, keys: string[]) {
+function set_shorthand(name: string, options: any, keys: string[]) {
     if (options[name]) {
         keys.forEach(function(key) {
             if (options[key]) {

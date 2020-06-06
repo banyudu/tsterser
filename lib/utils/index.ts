@@ -47,21 +47,21 @@ import * as types from "../../tools/terser";
 
 class AtTop {
     v: any
-    constructor (val) {
+    constructor (val: any) {
         this.v = val;
     }
 }
 
 class Splice {
     v: any
-    constructor (val) {
+    constructor (val: any) {
         this.v = val;
     }
 }
 
 class Last {
     v: any
-    constructor (val) {
+    constructor (val: any) {
         this.v = val;
     }
 }
@@ -76,7 +76,7 @@ function member<T>(name: T, array: T[]) {
 
 export class DefaultsError extends Error {
     defs: any
-    constructor(msg, defs) {
+    constructor(msg: string, defs: any) {
         super();
 
         this.name = "DefaultsError";
@@ -85,7 +85,7 @@ export class DefaultsError extends Error {
     }
 }
 
-function defaults(args, defs, croak?): typeof args {
+function defaults(args: any, defs: AnyObject, croak?: boolean): typeof args {
     if (args === true)
         args = {};
     const ret = args || {};
@@ -112,10 +112,10 @@ function return_this() { return this; }
 function return_null() { return null; }
 
 var MAP = (function() {
-    function MAP(a: types.AST_Node[] | object, f: Function, backwards?: boolean) {
-        var ret: any[] = [], top: any[] = [], i;
+    function MAP(a: types.AST_Node[] | AnyObject, f: Function, backwards?: boolean) {
+        var ret: any[] = [], top: any[] = [], i: string | number;
         function doit() {
-            var val: any = f(a[i], i);
+            var val: any = f((a as any)[i], i);
             var is_last = val instanceof Last;
             if (is_last) val = val.v;
             if (val instanceof AtTop) {
@@ -147,9 +147,9 @@ var MAP = (function() {
         }
         return top.concat(ret);
     }
-    MAP.at_top = function(val) { return new AtTop(val); };
-    MAP.splice = function(val) { return new Splice(val); };
-    MAP.last = function(val) { return new Last(val); };
+    MAP.at_top = function(val: any) { return new AtTop(val); };
+    MAP.splice = function(val: any) { return new Splice(val); };
+    MAP.last = function(val: any) { return new Last(val); };
     var skip = MAP.skip = {};
     return MAP;
 })();
@@ -182,7 +182,7 @@ function remove<T = types.AST_Node>(array: T[], el: T) {
 
 function mergeSort<T>(array: T[], cmp: (a: T, b: T) => number) {
     if (array.length < 2) return array.slice();
-    function merge(a, b) {
+    function merge(a: any[], b: any[]) {
         var r: any[] = [], ai = 0, bi = 0, i = 0;
         while (ai < a.length && bi < b.length) {
             cmp(a[ai], b[bi]) <= 0
@@ -210,9 +210,9 @@ function makePredicate(words: string | string[]) {
     return new Set(words);
 }
 
-function map_add(map, key, value) {
+function map_add(map: Map<string, any[]>, key: string, value: any) {
     if (map.has(key)) {
-        map.get(key).push(value);
+        map.get(key)?.push(value);
     } else {
         map.set(key, [ value ]);
     }
@@ -228,7 +228,7 @@ function map_from_object(obj: object) {
     return map;
 }
 
-function map_to_object(map) {
+function map_to_object(map: Map<any, any>) {
     var obj = Object.create(null);
     map.forEach(function (value, key) {
         obj["$" + key] = value;
@@ -236,7 +236,7 @@ function map_to_object(map) {
     return obj;
 }
 
-function HOP(obj, prop) {
+function HOP(obj: AnyObject, prop: string) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
@@ -245,13 +245,13 @@ function keep_name(keep_setting: boolean | RegExp, name: string) {
         || (keep_setting instanceof RegExp && keep_setting.test(name));
 }
 
-var lineTerminatorEscape = {
+var lineTerminatorEscape: AnyObject<string> = {
     "\n": "n",
     "\r": "r",
     "\u2028": "u2028",
     "\u2029": "u2029",
 };
-function regexp_source_fix(source) {
+function regexp_source_fix(source: string) {
     // V8 does not escape line terminators in regexp patterns in node 12
     return source.replace(/[\n\r\u2028\u2029]/g, function (match, offset) {
         var escaped = source[offset - 1] == "\\"

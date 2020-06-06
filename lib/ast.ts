@@ -374,7 +374,7 @@ var AST_Scope: typeof types.AST_Scope = DEFNODE("Scope", "variables functions us
         }
         return self;
     },
-    clone: function(deep) {
+    clone: function(deep: boolean) {
         var node = this._clone(deep);
         if (this.variables) node.variables = new Map(this.variables);
         if (this.functions) node.functions = new Map(this.functions);
