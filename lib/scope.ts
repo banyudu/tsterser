@@ -138,7 +138,7 @@ class SymbolDef {
     should_replace: any;
     single_use: boolean;
     fixed: any;
-    constructor(scope: types.AST_Scope | null, orig, init?) {
+    constructor(scope: types.AST_Scope | null, orig: { name: string }, init?: boolean) {
         this.name = orig.name;
         this.orig = [ orig ];
         this.init = init;
@@ -165,7 +165,7 @@ class SymbolDef {
         if (!this.fixed || this.fixed instanceof AST_Node) return this.fixed;
         return this.fixed();
     }
-    unmangleable(options) {
+    unmangleable(options: types.MangleOptions) {
         if (!options) options = {};
 
         if (

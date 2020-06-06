@@ -168,7 +168,7 @@ function push_uniq<T>(array: T[], el: T) {
         array.push(el);
 }
 
-function string_template(text: string, props: object) {
+function string_template(text: string, props: AnyObject) {
     return text.replace(/{(.+?)}/g, function(_, p) {
         return props && props[p];
     });
@@ -218,7 +218,7 @@ function map_add(map: Map<string, any[]>, key: string, value: any) {
     }
 }
 
-function map_from_object(obj: object) {
+function map_from_object(obj: AnyObject) {
     var map = new Map();
     for (var key in obj) {
         if (HOP(obj, key) && key.charAt(0) === "$") {
@@ -240,7 +240,7 @@ function HOP(obj: AnyObject, prop: string) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-function keep_name(keep_setting: boolean | RegExp, name: string) {
+function keep_name(keep_setting: boolean | RegExp | undefined, name: string) {
     return keep_setting === true
         || (keep_setting instanceof RegExp && keep_setting.test(name));
 }
@@ -277,11 +277,11 @@ function sort_regexp_flags(flags: string) {
     return out;
 }
 
-function has_annotation(node: types.AST_Node, annotation) {
+function has_annotation(node: types.AST_Node, annotation: number) {
     return node._annotations & annotation;
 }
 
-function set_annotation(node: types.AST_Node, annotation) {
+function set_annotation(node: types.AST_Node, annotation: number) {
     node._annotations |= annotation;
 }
 

@@ -191,9 +191,9 @@ declare function parse(text: string, options?: ParseOptions): AST_Node;
 
 export class TreeWalker {
     constructor(callback: (node: AST_Node, descend?: (node: AST_Node) => void) => boolean | undefined);
-    directives: object;
-    find_parent(type: AST_Node): AST_Node | undefined;
-    has_directive(type: string): boolean;
+    directives: AnyObject;
+    find_parent(type: typeof AST_Node): AST_Node | undefined;
+    has_directive(type: string): any;
     loopcontrol_target(node: AST_Node): AST_Node | undefined;
     parent(n: number): AST_Node | undefined;
     pop(): void;
@@ -201,6 +201,7 @@ export class TreeWalker {
     self(): AST_Node | undefined;
     stack: AST_Node[];
     visit: (node: AST_Node, descend: boolean) => any;
+    _visit: (node: AST_Node, descend?: Function) => any;
 }
 
 export class TreeTransformer extends TreeWalker {
@@ -208,8 +209,8 @@ export class TreeTransformer extends TreeWalker {
         before: (node: AST_Node, descend?: (node: AST_Node, tw: TreeWalker) => void, in_list?: boolean) => AST_Node | undefined,
         after?: (node: AST_Node, in_list?: boolean) => AST_Node | undefined
     );
-    before: (node: AST_Node) => AST_Node;
-    after?: (node: AST_Node) => AST_Node;
+    before: (node: AST_Node, descend: Function, in_list?: boolean) => AST_Node;
+    after?: (node: AST_Node, in_list?: boolean) => AST_Node;
 }
 
 export function push_uniq<T>(array: T[], el: T): void;
