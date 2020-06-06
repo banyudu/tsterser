@@ -64,13 +64,13 @@ import {
 import { domprops } from "../tools/domprops";
 import * as types from "../tools/terser";
 
-function find_builtins(reserved) {
+function find_builtins(reserved: Set<string | undefined>) {
     domprops.forEach(add);
 
     // Compatibility fix for some standard defined globals not defined on every js environment
     var new_globals = ["Symbol", "Map", "Promise", "Proxy", "Reflect", "Set", "WeakMap", "WeakSet"];
     var objects: any = {};
-    var global_ref = typeof global === "object" ? global : self;
+    var global_ref: AnyObject = typeof global === "object" ? global : self;
 
     new_globals.forEach(function (new_global) {
         objects[new_global] = global_ref[new_global] || new Function();
@@ -102,13 +102,13 @@ function find_builtins(reserved) {
             Object.getOwnPropertyNames(ctor.prototype).map(add);
         }
     });
-    function add(name) {
+    function add(name: string) {
         reserved.add(name);
     }
 }
 
-function reserve_quoted_keys(ast, reserved) {
-    function add(name) {
+function reserve_quoted_keys(ast: types.AST_Node, reserved: string[]) {
+    function add(name: string) {
         push_uniq(reserved, name);
     }
 
@@ -118,12 +118,12 @@ function reserve_quoted_keys(ast, reserved) {
         } else if (node instanceof AST_ObjectProperty && node.quote) {
             add(node.key.name);
         } else if (node instanceof AST_Sub) {
-            addStrings(node.property, add);
+            addStrings(node.property as types.AST_Node, add);
         }
     }));
 }
 
-function addStrings(node, add) {
+function addStrings(node: types.AST_Node, add: Function) {
     node.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_Sequence) {
             addStrings(node.tail_node?.(), add);
@@ -137,7 +137,7 @@ function addStrings(node, add) {
     }));
 }
 
-function mangle_properties(ast, options: types.ManglePropertiesOptions) {
+function mangle_properties(ast: types.AST_Node, options: types.ManglePropertiesOptions) {
     options = defaults(options, {
         builtins: false,
         cache: null,
@@ -154,7 +154,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     if (!options.builtins) find_builtins(reserved);
 
     var cname = -1;
-    var cache;
+    var cache: Map<string, any>;
     if (options.cache) {
         cache = options.cache.props;
         cache.forEach(function(mangled_name) {
@@ -170,9 +170,9 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
     // note debug may be enabled as an empty string, which is falsey. Also treat passing 'true'
     // the same as passing an empty string.
     var debug = options.debug !== false;
-    var debug_name_suffix;
+    var debug_name_suffix: string;
     if (debug) {
-        debug_name_suffix = (options.debug === true ? "" : options.debug);
+        debug_name_suffix = (options.debug === true ? "" : options.debug as string);
     }
 
     var names_to_mangle = new Set();
@@ -208,7 +208,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
             }
         } else if (node instanceof AST_Sub) {
             if (!keep_quoted_strict) {
-                addStrings(node.property, add);
+                addStrings(node.property as types.AST_Node, add);
             }
         } else if (node instanceof AST_Call
             && node.expression.print_to_string() == "Object.defineProperty") {
@@ -230,7 +230,7 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
             }
         } else if (node instanceof AST_Dot) {
             if (!keep_quoted_strict || !node.quote) {
-                node.property = mangle(node.property);
+                node.property = mangle(node.property as string); // TODO: check type
             }
         } else if (!options.keep_quoted && node instanceof AST_Sub) {
             node.property = mangleStrings(node.property as types.AST_Node); // TODO: check type
@@ -268,8 +268,8 @@ function mangle_properties(ast, options: types.ManglePropertiesOptions) {
         }
     }
 
-    function mangle(name: string | types.AST_Node) {
-        if (!should_mangle(name as string)) { // TODO: check type
+    function mangle(name: string) {
+        if (!should_mangle(name)) {
             return name;
         }
 

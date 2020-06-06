@@ -83,6 +83,7 @@ export enum InlineFunctions {
 }
 
 export interface MangleOptions {
+    ie8?: boolean;
     eval?: boolean;
     keep_classnames?: boolean | RegExp;
     keep_fnames?: boolean | RegExp;
@@ -96,7 +97,7 @@ export interface MangleOptions {
 
 export interface ManglePropertiesOptions {
     builtins?: boolean;
-    debug?: boolean;
+    debug?: boolean | string;
     keep_quoted?: boolean | "strict";
     regex?: RegExp | string;
     reserved?: string[];
@@ -290,7 +291,7 @@ declare class SymbolDef {
     references: AST_SymbolRef[];
     replaced: number;
     global: boolean;
-    export: boolean;
+    export: number;
     mangled_name: null | string;
     undeclared: boolean;
     id: number;

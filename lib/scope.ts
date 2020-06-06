@@ -116,7 +116,7 @@ const MASK_EXPORT_WANT_MANGLE = 1 << 1;
 let function_defs: Set<any> | null = null;
 let unmangleable_names: Set<any> | null = null;
 
-class SymbolDef {
+class SymbolDef implements types.SymbolDef {
     name: any;
     orig: any[];
     init: any;
@@ -184,7 +184,7 @@ class SymbolDef {
             || (this.orig[0] instanceof AST_SymbolClass
                   || this.orig[0] instanceof AST_SymbolDefClass) && keep_name(options.keep_classnames, this.orig[0].name);
     }
-    mangle(options) {
+    mangle(options: types.MangleOptions) {
         const cache = options.cache && options.cache.props;
         if (this.global && cache && cache.has(this.name)) {
             this.mangled_name = cache.get(this.name);
@@ -206,7 +206,7 @@ class SymbolDef {
 
 SymbolDef.next_id = 1;
 
-function redefined_catch_def(def) {
+function redefined_catch_def(def: types.SymbolDef) {
     if (def.orig[0] instanceof AST_SymbolCatch
         && def.scope.is_block_scope()
     ) {
