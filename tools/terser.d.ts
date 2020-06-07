@@ -313,7 +313,8 @@ export class AST_Node {
     _do_print_body: Function;
     _do_print: Function;
     loc: any;
-    argument: any;
+    argument: any[];
+    optimize: Function;
 }
 
 declare class SymbolDef {
@@ -376,6 +377,7 @@ declare class AST_Scope extends AST_Block {
     cname: any;
     init_scope_vars: Function;
     hoist_properties: Function;
+    hoist_declarations: Function;
     drop_unused: Function;
     find_variable: Function;
     is_block_scope: Function;
@@ -656,7 +658,6 @@ declare class AST_PropAccess extends AST_Node {
     constructor(props?: object);
     expression: AST_Node;
     property: AST_Node | string;
-    optimize: Function;
 }
 
 declare class AST_Dot extends AST_PropAccess {

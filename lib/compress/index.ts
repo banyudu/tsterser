@@ -332,11 +332,11 @@ class Compressor extends TreeWalker {
         this.evaluated_regexps = new Map();
     }
 
-    option(key) {
+    option<T extends keyof types.CompressOptions>(key: T) {
         return this.options[key];
     }
 
-    exposed(def) {
+    exposed(def: types.SymbolDef) {
         if (def.export) return true;
         if (def.global) for (var i = 0, len = def.orig.length; i < len; i++)
             if (!this.toplevel[def.orig[i] instanceof AST_SymbolDefun ? "funcs" : "vars"])
@@ -433,12 +433,12 @@ class Compressor extends TreeWalker {
         this.warnings_produced = {};
     }
 
-    before(node, descend) {
+    before(node: types.AST_Node, descend) {
         if (has_flag(node, SQUEEZED)) return node;
         var was_scope = false;
         if (node instanceof AST_Scope) {
             node = node.hoist_properties?.(this);
-            node = node.hoist_declarations(this);
+            node = (node as types.AST_Scope).hoist_declarations(this);
             was_scope = true;
         }
         // Before https://github.com/mishoo/UglifyJS2/pull/1602 AST_Node.optimize()
@@ -2662,11 +2662,11 @@ function is_lhs(node, parent) {
     });
     def_find_defs(AST_SymbolDeclaration, function(compressor: Compressor) {
         if (!this.global()) return;
-        if (HOP(compressor.option("global_defs"), this.name)) warn(compressor, this);
+        if (HOP(compressor.option("global_defs") as object, this.name)) warn(compressor, this);
     });
     def_find_defs(AST_SymbolRef, function(compressor: Compressor, suffix) {
         if (!this.global()) return;
-        var defines = compressor.option("global_defs");
+        var defines = compressor.option("global_defs") as AnyObject;
         var name = this.name + suffix;
         if (HOP(defines, name)) return to_node(defines[name], this);
     });
@@ -3674,7 +3674,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
     if (self.pinned()) return;
     var drop_funcs = !(self instanceof AST_Toplevel) || compressor.toplevel.funcs;
     var drop_vars = !(self instanceof AST_Toplevel) || compressor.toplevel.vars;
-    const assign_as_unused = r_keep_assign.test(compressor.option("unused")) ? return_false : function(node: types.AST_Node) {
+    const assign_as_unused = r_keep_assign.test(compressor.option("unused") as any) ? return_false : function(node: types.AST_Node) {
         if (node instanceof AST_Assign
             && (has_flag(node, WRITE_ONLY) || node.operator == "=")
         ) {

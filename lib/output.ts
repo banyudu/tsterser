@@ -1129,7 +1129,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
     /* -----[ statements ]----- */
 
-    function display_body(body, is_toplevel, output, allow_directives) {
+    function display_body(body: types.AST_Statement[], is_toplevel: boolean, output: types.OutputStreamReturnType, allow_directives: boolean) {
         var last = body.length - 1;
         output.in_directive = allow_directives;
         body.forEach(function(stmt, i) {
@@ -1166,7 +1166,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         output.semicolon();
     });
     DEFPRINT(AST_Toplevel, function(self, output) {
-        display_body(self.body, true, output, true);
+        display_body(self.body as types.AST_Statement[], true, output, true);
         output.print("");
     });
     DEFPRINT(AST_LabeledStatement, function(self, output) {
@@ -1178,17 +1178,17 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         (self.body as types.AST_Node).print(output);
         output.semicolon();
     });
-    function print_braced_empty(self, output) {
+    function print_braced_empty(self: types.AST_Node, output: types.OutputStreamReturnType) {
         output.print("{");
         output.with_indent(output.next_indent(), function() {
             output.append_comments(self, true);
         });
         output.print("}");
     }
-    function print_braced(self, output, allow_directives?) {
-        if (self.body.length > 0) {
+    function print_braced(self: types.AST_Statement, output: types.OutputStreamReturnType, allow_directives?: boolean) {
+        if ((self.body as types.AST_Statement[]).length > 0) {
             output.with_block(function() {
-                display_body(self.body, false, output, allow_directives);
+                display_body((self.body as types.AST_Statement[]), false, output, !!allow_directives);
             });
         } else print_braced_empty(self, output);
     }
