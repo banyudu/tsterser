@@ -220,7 +220,7 @@ class Compressor extends TreeWalker {
     top_retain: ((def: any) => any) | undefined;
     toplevel: { funcs: any; vars: any; };
     sequences_limit: number;
-    warnings_produced: {};
+    warnings_produced: AnyObject;
     evaluated_regexps: Map<any, any>;
     constructor(options: types.CompressOptions, false_by_default?: boolean) {
         super();
@@ -282,7 +282,7 @@ class Compressor extends TreeWalker {
             unused        : !false_by_default,
             warnings      : false,
         }, true);
-        var global_defs = this.options["global_defs"];
+        var global_defs = this.options["global_defs"] as AnyObject;
         if (typeof global_defs == "object") for (var key in global_defs) {
             if (key[0] === "@" && HOP(global_defs, key)) {
                 global_defs[key.slice(1)] = parse(global_defs[key], {
@@ -412,13 +412,13 @@ class Compressor extends TreeWalker {
         return toplevel;
     }
 
-    info(text, props?) {
+    info(text: string, props?: AnyObject<any>) {
         if (this.options.warnings == "verbose") {
             AST_Node.warn?.(text, props);
         }
     }
 
-    warn(text, props) {
+    warn(text: string, props: AnyObject<any>) {
         if (this.options.warnings) {
             // only emit unique warnings
             var message = string_template(text, props);

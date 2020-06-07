@@ -168,7 +168,7 @@ function push_uniq<T>(array: T[], el: T) {
         array.push(el);
 }
 
-function string_template(text: string, props: AnyObject) {
+function string_template(text: string, props?: AnyObject) {
     return text.replace(/{(.+?)}/g, function(_, p) {
         return props && props[p];
     });

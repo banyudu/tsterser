@@ -252,7 +252,7 @@ export class AST_Node {
     static documentation: string;
     static propdoc?: Record<string, string>;
     static expressions?: AST_Node[];
-    static warn?: (text: string, props?: any) => void;
+    static warn?: (text: string, props?: AnyObject) => void;
     static warn_function: Function | null;
     static from_mozilla_ast?: (node: AST_Node) => any;
     static DEFMETHOD: (name: string, func: Function) => any;
@@ -313,6 +313,7 @@ export class AST_Node {
     _do_print_body: Function;
     _do_print: Function;
     loc: any;
+    argument: any;
 }
 
 declare class SymbolDef {

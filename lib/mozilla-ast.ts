@@ -175,14 +175,14 @@ import * as types from "../tools/terser";
     };
 
     var MOZ_TO_ME: any = {
-        Program: function(M) {
+        Program: function(M: types.AST_Statement) {
             return new AST_Toplevel({
                 start: my_start_token(M),
                 end: my_end_token(M),
-                body: normalize_directives(M.body.map(from_moz))
+                body: normalize_directives((M.body as types.AST_Node[]).map(from_moz))
             });
         },
-        ArrayPattern: function(M) {
+        ArrayPattern: function(M: types.AST_Array) {
             return new AST_Destructuring({
                 start: my_start_token(M),
                 end: my_end_token(M),
@@ -195,7 +195,7 @@ import * as types from "../tools/terser";
                 is_array: true
             });
         },
-        ObjectPattern: function(M) {
+        ObjectPattern: function(M: types.AST_Node) {
             return new AST_Destructuring({
                 start: my_start_token(M),
                 end: my_end_token(M),
@@ -203,7 +203,7 @@ import * as types from "../tools/terser";
                 is_array: false
             });
         },
-        AssignmentPattern: function(M) {
+        AssignmentPattern: function(M: types.AST_Node) {
             return new AST_DefaultAssign({
                 start: my_start_token(M),
                 end: my_end_token(M),
@@ -212,7 +212,7 @@ import * as types from "../tools/terser";
                 right: from_moz(M.right)
             });
         },
-        SpreadElement: function(M) {
+        SpreadElement: function(M: types.AST_Node) {
             return new AST_Expansion({
                 start: my_start_token(M),
                 end: my_end_token(M),
