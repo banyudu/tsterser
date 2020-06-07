@@ -146,6 +146,7 @@ export interface OutputOptions {
     wrap_func_args?: boolean;
     ast?: any;
     code?: any;
+    keep_numbers?: boolean;
 }
 
 export enum OutputQuoteStyle {
@@ -202,7 +203,7 @@ export class TreeWalker {
     find_parent(type: typeof AST_Node): AST_Node | undefined;
     has_directive(type: string): any;
     loopcontrol_target(node: AST_Node): AST_Node | undefined;
-    parent(n: number): AST_Node | undefined;
+    parent(n?: number): AST_Node | undefined;
     pop(): void;
     push(node: AST_Node): void;
     self(): AST_Node | undefined;
@@ -224,6 +225,16 @@ export function push_uniq<T>(array: T[], el: T): void;
 
 export function minify(files: string | string[] | { [file: string]: string } | AST_Node, options?: MinifyOptions): MinifyOutput;
 
+interface NodeStartOrEnd extends Comment {
+    file: string;
+    raw: string;
+    endpos: number | null;
+    endline: number | null;
+    endcol: number | null;
+    comments_before: Comment[];
+    comments_after: Comment[];
+}
+
 export class AST_Node {
     constructor(props?: object);
     static BASE?: AST_Node;
@@ -236,7 +247,7 @@ export class AST_Node {
     static warn?: (text: string, props?: any) => void;
     static warn_function: Function | null;
     static from_mozilla_ast?: (node: AST_Node) => any;
-    static DEFMETHOD: any;
+    static DEFMETHOD: (name: string, func: Function) => any;
     print: Function;
     _print: Function;
     _eval: Function;
@@ -253,12 +264,8 @@ export class AST_Node {
     shallow_cmp?: Function;
     CTOR: typeof AST_Node;
     to_mozilla_ast: Function;
-    start: {
-        file: string;
-        raw: string;
-        comments_before: Comment[]
-    } & Comment;
-    end: any;
+    start: NodeStartOrEnd;
+    end: NodeStartOrEnd;
     expression: AST_Node;
     name: any;
     drop_side_effect_free: Function;
@@ -291,6 +298,13 @@ export class AST_Node {
     is_boolean: () => boolean;
     flags: number;
     quote: string;
+    range: any;
+    _codegen: (node: AST_Node, output: OutputStreamReturnType) => any;
+    add_source_map: (output: OutputStreamReturnType) => any;
+    needs_parens: (output: OutputStreamReturnType) => any;
+    _do_print_body: Function;
+    _do_print: Function;
+    loc: any;
 }
 
 declare class SymbolDef {
@@ -340,7 +354,6 @@ declare class AST_Block extends AST_Statement {
 
 declare class AST_BlockStatement extends AST_Block {
     constructor(props?: object);
-    _codegen: Function;
 }
 
 declare class AST_Scope extends AST_Block {
@@ -489,11 +502,11 @@ declare class AST_ForIn extends AST_IterationStatement {
     constructor(props?: object);
     init: AST_Node | null;
     object: AST_Node;
+    await: boolean;
 }
 
 declare class AST_ForOf extends AST_ForIn {
     constructor(props?: object);
-    await: boolean;
 }
 
 declare class AST_With extends AST_StatementWithBody {
@@ -617,7 +630,6 @@ declare class AST_Call extends AST_Node {
     constructor(props?: object);
     expression: AST_Node;
     args: AST_Node[];
-    _codegen: Function;
     is_expr_pure: Function;
 }
 
@@ -701,6 +713,7 @@ declare class AST_ObjectProperty extends AST_Node {
     quote: string;
     is_generator: boolean;
     static: boolean;
+    _print_getter_setter: Function;
 }
 
 declare class AST_ObjectKeyVal extends AST_ObjectProperty {
@@ -900,4 +913,47 @@ declare class AST_Yield extends AST_Node {
     constructor(props?: object);
     expression: AST_Node;
     is_star: boolean;
+}
+
+export interface OutputStreamReturnType {
+    get: () => string;
+    active_scope: AST_Scope | null;
+    use_asm: AST_Scope | null;
+    pop_node: Function;
+    prepend_comments: (node: AST_Node) => any;
+    append_comments: ((node: AST_Node, tail?: boolean) => any) | (() => void);
+    push_node: (node: AST_Node) => any;
+    with_parens: (func: () => any) => any;
+    print_string: Function;
+    semicolon: () => void;
+    print: (str: string) => any;
+    comma: () => void;
+    colon: () => void;
+    space: () => void;
+    star: () => void;
+    force_semicolon: () => void;
+    print_template_string_chars: Function;
+    with_block: Function;
+    indent: Function;
+    newline: Function;
+    add_mapping: Function;
+    print_name: Function;
+    last: Function;
+    with_square: Function;
+    option: (option: keyof OutputOptions) => any;
+    in_directive: boolean;
+    to_utf8: (str: string) => string;
+    toString: () => string;
+    indentation: () => number;
+    current_width: () => number;
+    next_indent: () => number;
+    should_break: () => boolean;
+    has_parens: () => boolean;
+    encode_string: (str: string, quote: string) => string;
+    with_indent: (col: boolean | number, cont: Function) => any
+    printed_comments: Set<Comment[]>;
+    line: () => number;
+    col: () => number;
+    pos: () => number;
+    parent: (n?: number) => any;
 }

@@ -170,7 +170,7 @@ function is_some_comments(comment: types.Comment) {
     );
 }
 
-function OutputStream(opt?: types.OutputOptions) {
+function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
     var readonly = !opt;
     const options: types.OutputOptions = defaults(opt, {
@@ -235,7 +235,7 @@ function OutputStream(opt?: types.OutputOptions) {
     var current_line = 1;
     var current_pos = 0;
     var OUTPUT = "";
-    let printed_comments = new Set();
+    let printed_comments: Set<types.Comment[]> = new Set();
 
     var to_utf8 = options.ascii_only ? function(str: string, identifier?: boolean) {
         if (options.ecma as number >= 2015) {
@@ -710,7 +710,7 @@ function OutputStream(opt?: types.OutputOptions) {
         }
     }
 
-    function append_comments(node: types.AST_Node, tail: boolean) {
+    function append_comments(node: types.AST_Node, tail?: boolean) {
         var self = this;
         var token = node.end;
         if (!token) return;
@@ -763,7 +763,7 @@ function OutputStream(opt?: types.OutputOptions) {
         active_scope    : null,
         indentation     : function() { return indentation; },
         current_width   : function() { return current_col - indentation; },
-        should_break    : function() { return options.width && this.current_width() >= options.width; },
+        should_break    : function() { return !!(options.width && this.current_width() >= options.width); },
         has_parens      : function() { return has_parens; },
         newline         : newline,
         print           : print,
@@ -807,7 +807,7 @@ function OutputStream(opt?: types.OutputOptions) {
         pos             : function() { return current_pos; },
         push_node       : function(node: types.AST_Node) { stack.push(node); },
         pop_node        : function() { return stack.pop(); },
-        parent          : function(n) {
+        parent          : function(n?: number) {
             return stack[stack.length - 2 - (n || 0)];
         }
     };
@@ -820,11 +820,11 @@ function OutputStream(opt?: types.OutputOptions) {
 
     /* -----[ utils ]----- */
 
-    function DEFPRINT(nodetype, generator) {
+    function DEFPRINT<T extends typeof types.AST_Node>(nodetype: T, generator: (node: InstanceType<T>, output: ReturnType<typeof OutputStream>) => any) {
         nodetype.DEFMETHOD("_codegen", generator);
     }
 
-    AST_Node.DEFMETHOD("print", function(output, force_parens) {
+    AST_Node.DEFMETHOD("print", function(this: types.AST_Node, output: ReturnType<typeof OutputStream>, force_parens) {
         var self = this, generator = self._codegen;
         if (self instanceof AST_Scope) {
             output.active_scope = self;
@@ -1162,7 +1162,7 @@ function OutputStream(opt?: types.OutputOptions) {
     });
 
     DEFPRINT(AST_Statement, function(self, output) {
-        self.body.print(output);
+        (self.body as types.AST_Node).print(output);
         output.semicolon();
     });
     DEFPRINT(AST_Toplevel, function(self, output) {
@@ -1172,10 +1172,10 @@ function OutputStream(opt?: types.OutputOptions) {
     DEFPRINT(AST_LabeledStatement, function(self, output) {
         self.label.print(output);
         output.colon();
-        self.body.print(output);
+        (self.body as types.AST_Node).print(output);
     });
     DEFPRINT(AST_SimpleStatement, function(self, output) {
-        self.body.print(output);
+        (self.body as types.AST_Node).print(output);
         output.semicolon();
     });
     function print_braced_empty(self, output) {
@@ -1256,7 +1256,7 @@ function OutputStream(opt?: types.OutputOptions) {
         }
         output.space();
         output.with_parens(function() {
-            self.init.print(output);
+            self.init?.print(output);
             output.space();
             output.print(self instanceof AST_ForOf ? "of" : "in");
             output.space();
@@ -1512,7 +1512,7 @@ function OutputStream(opt?: types.OutputOptions) {
         var last = self.body.length - 1;
         if (last < 0) print_braced_empty(self, output);
         else output.with_block(function() {
-            self.body.forEach(function(branch, i) {
+            (self.body as types.AST_SwitchBranch[]).forEach(function(branch, i) {
                 output.indent(true);
                 branch.print(output);
                 if (i < last && branch.body.length > 0)
@@ -1774,10 +1774,10 @@ function OutputStream(opt?: types.OutputOptions) {
     DEFPRINT(AST_Dot, function(self, output) {
         var expr = self.expression;
         expr.print(output);
-        var prop = self.property;
+        var prop: string = self.property as string;
         var print_computed = RESERVED_WORDS.has(prop)
             ? output.option("ie8")
-            : !is_identifier_string(prop, output.option("ecma") >= 2015);
+            : !is_identifier_string(prop, (output.option("ecma") as unknown as number) >= 2015);
         if (print_computed) {
             output.print("[");
             output.add_mapping(self.end);
@@ -1798,7 +1798,7 @@ function OutputStream(opt?: types.OutputOptions) {
     DEFPRINT(AST_Sub, function(self, output) {
         self.expression.print(output);
         output.print("[");
-        self.property.print(output);
+        (self.property as types.AST_Node).print(output);
         output.print("]");
     });
     DEFPRINT(AST_UnaryPrefix, function(self, output) {
@@ -1959,7 +1959,7 @@ function OutputStream(opt?: types.OutputOptions) {
         var allowShortHand = output.option("shorthand");
         if (allowShortHand &&
             self.value instanceof AST_Symbol &&
-            is_identifier_string(self.key, output.option("ecma") >= 2015) &&
+            is_identifier_string(self.key, (output.option("ecma") as unknown as number) >= 2015) &&
             get_name(self.value) === self.key &&
             !RESERVED_WORDS.has(self.key)
         ) {
@@ -1968,7 +1968,7 @@ function OutputStream(opt?: types.OutputOptions) {
         } else if (allowShortHand &&
             self.value instanceof AST_DefaultAssign &&
             self.value.left instanceof AST_Symbol &&
-            is_identifier_string(self.key, output.option("ecma") >= 2015) &&
+            is_identifier_string(self.key, (output.option("ecma") as unknown as number) >= 2015) &&
             get_name(self.value.left) === self.key
         ) {
             print_property_name(self.key, self.quote, output);
@@ -2083,7 +2083,7 @@ function OutputStream(opt?: types.OutputOptions) {
         source = regexp_source_fix(source);
         flags = flags ? sort_regexp_flags(flags) : "";
         source = source.replace(r_slash_script, slash_script_replace);
-        output.print(output.to_utf8(`/${source}/${flags}`));
+        output.print?.(output.to_utf8(`/${source}/${flags}`));
         const parent = output.parent();
         if (
             parent instanceof AST_Binary

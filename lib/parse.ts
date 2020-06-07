@@ -586,7 +586,7 @@ function tokenizer($TEXT: string, filename: string | undefined, html5_comments: 
                     parse_error("Unicode reference out of bounds");
                 }
                 next(true);
-                return from_char_code(result);
+                return from_char_code(Number(result));
             }
             return String.fromCharCode(hex_bytes(4, strict_hex) as number);
           case 10  : return ""; // newline

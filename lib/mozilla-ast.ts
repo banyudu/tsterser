@@ -1079,7 +1079,7 @@ import * as types from "../tools/terser";
         }
     }
 
-    function my_start_token(moznode) {
+    function my_start_token(moznode: types.AST_Node) {
         var loc = moznode.loc, start = loc && loc.start;
         var range = moznode.range;
         return new AST_Token({
