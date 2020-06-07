@@ -1022,9 +1022,9 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                          ? tokenizer($TEXT, options.filename,
                                      options.html5_comments as boolean, options.shebang as boolean)
                          : $TEXT),
-        token         : null as any,
-        prev          : null as any,
-        peeked        : null,
+        token         : null as types.Token | null,
+        prev          : null as types.Token | null,
+        peeked        : null as types.Token | null,
         in_function   : 0,
         in_async      : -1,
         in_generator  : -1,
@@ -1048,7 +1048,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         S.token = S.peeked;
         S.peeked = null;
         S.in_directives = S.in_directives && (
-            S.token.type == "string" || is("punc", ";")
+            S.token?.type == "string" || is("punc", ";")
         );
         return S.token;
     }
@@ -1057,7 +1057,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         return S.prev;
     }
 
-    function croak(msg, line?, col?, pos?) {
+    function croak(msg: string, line?: number | null, col?: number | null, pos?: number | null) {
         var ctx = S.input.context();
         js_error(msg,
                  ctx.filename,
@@ -1066,21 +1066,21 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                  pos != null ? pos : ctx.tokpos);
     }
 
-    function token_error(token, msg) {
-        croak(msg, token.line, token.col);
+    function token_error(token: types.Token | null, msg: string) {
+        croak(msg, token?.line, token?.col);
     }
 
-    function unexpected(token?) {
+    function unexpected(token?: types.Token | null | undefined) {
         if (token == null)
             token = S.token;
-        token_error(token, "Unexpected token: " + token.type + " (" + token.value + ")");
+        token_error(token, "Unexpected token: " + token?.type + " (" + token?.value + ")");
     }
 
     function expect_token(type, val) {
         if (is(type, val)) {
             return next();
         }
-        token_error(S.token, "Unexpected token " + S.token.type + " «" + S.token.value + "»" + ", expected " + type + " «" + val + "»");
+        token_error(S.token, "Unexpected token " + S.token?.type + " «" + S.token?.value + "»" + ", expected " + type + " «" + val + "»");
     }
 
     function expect(punc) { return expect_token("punc", punc); }
@@ -1127,22 +1127,22 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     function handle_regexp() {
         if (is("operator", "/") || is("operator", "/=")) {
             S.peeked = null;
-            S.token = S.input(S.token.value.substr(1)); // force regexp
+            S.token = S.input(S.token?.value.substr(1)); // force regexp
         }
     }
 
     var statement = embed_tokens(function(is_export_default, is_for_body, is_if_body) {
         handle_regexp();
-        switch (S.token.type) {
+        switch (S.token?.type) {
           case "string":
             if (S.in_directives) {
                 var token = peek();
-                if (!S.token.raw.includes("\\")
+                if (!S.token?.raw.includes("\\")
                     && (is_token(token, "punc", ";")
                         || is_token(token, "punc", "}")
                         || has_newline_before(token)
                         || is_token(token, "eof"))) {
-                    S.input.add_directive(S.token.value);
+                    S.input.add_directive(S.token?.value);
                 } else {
                     S.in_directives = false;
                 }
@@ -1158,7 +1158,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             return simple_statement();
 
           case "name":
-            if (S.token.value == "async" && is_token(peek(), "keyword", "function")) {
+            if (S.token?.value == "async" && is_token(peek(), "keyword", "function")) {
                 next();
                 next();
                 if (is_for_body) {
@@ -1166,7 +1166,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                 }
                 return function_(AST_Defun, false, true, is_export_default);
             }
-            if (S.token.value == "import" && !is_token(peek(), "punc", "(")) {
+            if (S.token?.value == "import" && !is_token(peek(), "punc", "(")) {
                 next();
                 var node = import_();
                 semicolon();
@@ -1177,7 +1177,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                 : simple_statement();
 
           case "punc":
-            switch (S.token.value) {
+            switch (S.token?.value) {
               case "{":
                 return new AST_BlockStatement({
                     start : S.token,
@@ -1196,7 +1196,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             }
 
           case "keyword":
-            switch (S.token.value) {
+            switch (S.token?.value) {
               case "break":
                 next();
                 return break_cont(AST_Break);
@@ -1388,8 +1388,8 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
     function for_() {
         var for_await_error = "`for await` invalid in this context";
-        var await_tok = S.token;
-        if (await_tok.type == "name" && await_tok.value == "await") {
+        var await_tok: types.Token | false | null = S.token;
+        if (await_tok?.type == "name" && await_tok.value == "await") {
             if (!is_in_async()) {
                 token_error(await_tok, for_await_error);
             }
@@ -1604,7 +1604,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
     function parameter(used_parameters, symbol_type?) {
         var param;
-        var expand = false;
+        var expand: types.Token | null | false = false;
         if (used_parameters === undefined) {
             used_parameters = track_used_binding_identifiers(true, S.input.has_directive("use strict"));
         }
@@ -1668,7 +1668,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                     next();
                 }
                 if (is("punc")) {
-                    switch (S.token.value) {
+                    switch (S.token?.value) {
                       case ",":
                         elements.push(new AST_Hole({
                             start: S.token,
@@ -1774,7 +1774,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                         expect(":");
                         elements.push(new AST_ObjectKeyVal({
                             start: property_token,
-                            quote: property_token.quote,
+                            quote: property_token?.quote,
                             key: property,
                             value: binding_element(used_parameters, symbol_type),
                             end: prev()
@@ -1892,7 +1892,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         // Previous token must be "await" and not be interpreted as an identifier
         if (!is_in_async()) {
             croak("Unexpected await expression outside async function",
-                S.prev.line, S.prev.col, S.prev.pos);
+                S.prev?.line, S.prev?.col, S.prev?.pos);
         }
         // the await expression is parsed as a unary expression in Babel
         return new AST_Await({
@@ -1906,7 +1906,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         // Previous token must be keyword yield and not be interpret as an identifier
         if (!is_in_generator()) {
             croak("Unexpected yield expression outside generator function",
-                S.prev.line, S.prev.col, S.prev.pos);
+                S.prev?.line, S.prev?.col, S.prev?.pos);
         }
         var start = S.token;
         var star = false;
@@ -1923,7 +1923,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         // Note 2: If there is a nlb between yield and star, it is interpret as
         //         yield <explicit undefined> <inserted automatic semicolon> *
         if (can_insert_semicolon() ||
-            (is("punc") && PUNC_AFTER_EXPRESSION.has(S.token.value))) {
+            (is("punc") && PUNC_AFTER_EXPRESSION.has(S.token?.value as string))) {
             has_expression = false;
 
         } else if (is("operator", "*")) {
@@ -2123,7 +2123,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
     function as_atom_node() {
         var tok = S.token, ret;
-        switch (tok.type) {
+        switch (tok?.type) {
           case "name":
             ret = _make_symbol(AST_SymbolRef);
             break;
@@ -2227,7 +2227,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             && peeked.type != "arrow"
             && as_atom_node();
         if (is("punc")) {
-            switch (S.token.value) {
+            switch (S.token?.value) {
               case "(":
                 if (async && !allow_calls) break;
                 var exprs = params_or_seq_(allow_arrows, !async);
@@ -2241,18 +2241,19 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                     expressions: exprs
                 });
                 if (ex.start) {
-                    const outer_comments_before = start.comments_before.length;
+                    const startToken = start as types.Token;
+                    const outer_comments_before = startToken.comments_before.length;
                     outer_comments_before_counts.set(start, outer_comments_before);
-                    ex.start.comments_before.unshift(...start.comments_before);
-                    start.comments_before = ex.start.comments_before;
-                    if (outer_comments_before == 0 && start.comments_before.length > 0) {
-                        var comment = start.comments_before[0];
+                    ex.start.comments_before.unshift(...startToken.comments_before);
+                    startToken.comments_before = ex.start.comments_before;
+                    if (outer_comments_before == 0 && startToken.comments_before.length > 0) {
+                        var comment = startToken.comments_before[0];
                         if (!comment.nlb) {
-                            comment.nlb = start.nlb;
-                            start.nlb = false;
+                            comment.nlb = startToken.nlb;
+                            startToken.nlb = false;
                         }
                     }
-                    start.comments_after = ex.start.comments_after;
+                    startToken.comments_after = ex.start.comments_after;
                 }
                 ex.start = start;
                 var end: any = prev();
@@ -2273,7 +2274,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         }
         if (allow_arrows && is("name") && is_token(peek(), "arrow")) {
             var param = new AST_SymbolFunarg({
-                name: S.token.value,
+                name: S.token?.value,
                 start: start,
                 end: start,
             });
@@ -2298,7 +2299,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         if (is("template_head")) {
             return subscripts(template_string(false), allow_calls);
         }
-        if (ATOMIC_START_TOKEN.has(S.token.type)) {
+        if (ATOMIC_START_TOKEN.has(S.token?.type as string)) {
             return subscripts(as_atom_node(), allow_calls);
         }
         unexpected();
@@ -2312,11 +2313,11 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
         segments.push(new AST_TemplateSegment({
             start: S.token,
-            raw: S.token.raw,
-            value: S.token.value,
+            raw: S.token?.raw,
+            value: S.token?.value,
             end: S.token
         }));
-        while (!S.token.end) {
+        while (!S.token?.end) {
             next();
             handle_regexp();
             segments.push(expression(true));
@@ -2327,8 +2328,8 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
             segments.push(new AST_TemplateSegment({
                 start: S.token,
-                raw: S.token.raw,
-                value: S.token.value,
+                raw: S.token?.raw,
+                value: S.token?.value,
                 end: S.token
             }));
         }
@@ -2380,7 +2381,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                 break;
 
             start = S.token;
-            if (start.type == "expand") {
+            if (start?.type == "expand") {
                 next();
                 a.push(new AST_Expansion({
                     start: start,
@@ -2428,7 +2429,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             // Create property
             a.push(new AST_ObjectKeyVal({
                 start: start,
-                quote: start.quote,
+                quote: start?.quote,
                 key: name instanceof AST_Node ? name : "" + name,
                 value: value,
                 end: prev()
@@ -2444,7 +2445,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         S.input.push_directives_stack(); // Push directive stack, but not scope stack
         S.input.add_directive("use strict");
 
-        if (S.token.type == "name" && S.token.value != "extends") {
+        if (S.token?.type == "name" && S.token?.value != "extends") {
             class_name = as_symbol(KindOfClass === AST_DefClass ? AST_SymbolDefClass : AST_SymbolClass);
         }
 
@@ -2452,7 +2453,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             unexpected();
         }
 
-        if (S.token.value == "extends") {
+        if (S.token?.value == "extends") {
             next();
             extends_ = expression(true);
         }
@@ -2555,7 +2556,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                     static: is_static,
                     key   : name,
                     quote : name instanceof AST_SymbolMethod ?
-                            setter_token.quote : undefined,
+                            setter_token?.quote : undefined,
                     value : create_accessor(),
                     end   : prev()
                 });
@@ -2568,7 +2569,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                     static: is_static,
                     key   : name,
                     quote : name instanceof AST_SymbolMethod ?
-                            setter_token.quote : undefined,
+                            setter_token?.quote : undefined,
                     value : create_accessor(),
                     end   : prev()
                 });
@@ -2618,7 +2619,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         if (imported_names || imported_name) {
             expect_token("name", "from");
         }
-        var mod_str = S.token;
+        var mod_str: types.Token = S.token as types.Token;
         if (mod_str.type !== "string") {
             unexpected();
         }
@@ -2741,7 +2742,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             if (is("name", "from")) {
                 next();
 
-                var mod_str = S.token;
+                var mod_str = S.token as types.Token;
                 if (mod_str.type !== "string") {
                     unexpected();
                 }
@@ -2798,7 +2799,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     function as_property_name() {
-        var tmp = S.token;
+        var tmp = S.token as types.Token;
         switch (tmp.type) {
           case "punc":
             if (tmp.value === "[") {
@@ -2839,14 +2840,14 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     function as_name() {
-        var tmp = S.token;
+        var tmp = S.token as types.Token;
         if (tmp.type != "name") unexpected();
         next();
         return tmp.value;
     }
 
     function _make_symbol(type) {
-        var name = S.token.value;
+        var name = S.token?.value;
         return new (name == "this" ? AST_This :
                     name == "super" ? AST_Super :
                     type)({
@@ -2974,7 +2975,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     var maybe_unary = function(allow_calls, allow_arrows?) {
-        var start = S.token;
+        var start = S.token as types.Token;
         if (start.type == "name" && start.value == "await") {
             if (is_in_async()) {
                 next();
@@ -2992,7 +2993,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             return ex;
         }
         var val = expr_atom(allow_calls, allow_arrows);
-        while (is("operator") && UNARY_POSTFIX.has(S.token.value) && !has_newline_before(S.token)) {
+        while (is("operator") && UNARY_POSTFIX.has(S.token?.value as string) && !has_newline_before(S.token)) {
             if (val instanceof AST_Arrow) unexpected();
             val = make_unary(AST_UnaryPostfix, S.token, val);
             val.start = start;
@@ -3019,7 +3020,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     var expr_op = function(left: types.AST_Node, min_prec: number, no_in: boolean) {
-        var op = is("operator") ? S.token.value : null;
+        var op = is("operator") ? S.token?.value : null;
         if (op == "in" && no_in) op = null;
         if (op == "**" && left instanceof AST_UnaryPrefix
             /* unary token in front not allowed - parenthesis required */
@@ -3113,7 +3114,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     // In ES6, AssignmentExpression can also be an ArrowFunction
     var maybe_assign = function(no_in) {
         handle_regexp();
-        var start = S.token;
+        var start = S.token as types.Token;
 
         if (start.type == "name" && start.value == "yield") {
             if (is_in_generator()) {
@@ -3125,9 +3126,9 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         }
 
         var left = maybe_conditional(no_in);
-        var val = S.token.value;
+        var val = S.token?.value;
 
-        if (is("operator") && ASSIGNMENT.has(val)) {
+        if (is("operator") && ASSIGNMENT.has(val as string)) {
             if (is_assignable(left) || (left = to_destructuring(left)) instanceof AST_Destructuring) {
                 next();
                 return new AST_Assign({

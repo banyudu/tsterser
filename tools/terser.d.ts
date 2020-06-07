@@ -225,14 +225,22 @@ export function push_uniq<T>(array: T[], el: T): void;
 
 export function minify(files: string | string[] | { [file: string]: string } | AST_Node, options?: MinifyOptions): MinifyOutput;
 
-interface NodeStartOrEnd extends Comment {
+interface Token {
+    value: string;
+    type: string;
+    pos: number;
+    line: number;
+    col: number;
+    nlb?: boolean
     file: string;
     raw: string;
+    quote: string;
     endpos: number | null;
     endline: number | null;
     endcol: number | null;
     comments_before: Comment[];
     comments_after: Comment[];
+    end: any;
 }
 
 export class AST_Node {
@@ -264,8 +272,8 @@ export class AST_Node {
     shallow_cmp?: Function;
     CTOR: typeof AST_Node;
     to_mozilla_ast: Function;
-    start: NodeStartOrEnd;
-    end: NodeStartOrEnd;
+    start: Token;
+    end: Token;
     expression: AST_Node;
     name: any;
     drop_side_effect_free: Function;
