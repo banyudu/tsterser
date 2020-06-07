@@ -24,6 +24,9 @@ export interface ParseOptions {
     shebang?: boolean;
     toplevel?: any;
     filename?: string;
+    strict?: boolean;
+    expression?: boolean;
+    module?: boolean;
 }
 
 export interface CompressOptions {

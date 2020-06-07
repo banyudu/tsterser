@@ -354,11 +354,11 @@ function parse_js_number(num: string, allow_e = true) {
 }
 
 class JS_Parse_Error extends Error {
-    filename: string;
+    filename: string | undefined;
     line: number;
     col: number;
     pos: number;
-    constructor(message: string, filename: string, line: number, col: number, pos: number) {
+    constructor(message: string, filename: string | undefined, line: number, col: number, pos: number) {
         super();
 
         // Object.setPrototypeOf(this, JS_Parse_Error.prototype);
@@ -372,17 +372,17 @@ class JS_Parse_Error extends Error {
     }
 }
 
-function js_error(message: string, filename: string, line: number, col: number, pos: number) {
+function js_error(message: string, filename: string | undefined, line: number, col: number, pos: number) {
     throw new JS_Parse_Error(message, filename, line, col, pos);
 }
 
-function is_token(token, type?, val?) {
+function is_token(token: any, type?: string, val?: string) {
     return token.type == type && (val == null || token.value == val);
 }
 
 var EX_EOF = {};
 
-function tokenizer($TEXT, filename, html5_comments, shebang) {
+function tokenizer($TEXT: string, filename: string | undefined, html5_comments: boolean, shebang: boolean) {
     var S = {
         text            : $TEXT,
         filename        : filename,
@@ -397,7 +397,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         brace_counter   : 0,
         template_braces : [] as any[],
         comments_before : [] as any[],
-        directives      : {},
+        directives      : {} as AnyObject,
         directive_stack : [] as any[]
     };
 
@@ -426,11 +426,11 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return ch;
     }
 
-    function forward(i) {
+    function forward(i: number) {
         while (i--) next();
     }
 
-    function looking_at(str) {
+    function looking_at(str: string) {
         return S.text.substr(S.pos, str.length) == str;
     }
 
@@ -444,7 +444,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return -1;
     }
 
-    function find(what, signal_eof) {
+    function find(what: string, signal_eof: boolean) {
         var pos = S.text.indexOf(what, S.pos);
         if (signal_eof && pos == -1) throw EX_EOF;
         return pos;
@@ -498,7 +498,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
             next();
     }
 
-    function read_while(pred) {
+    function read_while(pred: (ch: string, i: number) => boolean) {
         var ret = "", ch, i = 0;
         while ((ch = peek()) && pred(ch, i++))
             ret += next();
@@ -563,7 +563,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         return ch >= "0" && ch <= "7";
     }
 
-    function read_escaped_char(in_string, strict_hex, template_string?) {
+    function read_escaped_char(in_string: boolean, strict_hex: boolean, template_string?: boolean) {
         var ch = next(true, in_string);
         switch (ch.charCodeAt(0)) {
           case 110 : return "\n";
@@ -784,7 +784,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
     });
 
     function read_operator(prefix?: string | undefined) {
-        function grow(op) {
+        function grow(op: string): string {
             if (!peek()) return op;
             var bigger = op + peek();
             if (OPERATORS.has(bigger)) {
@@ -854,7 +854,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         };
     }
 
-    function next_token(force_regexp) {
+    function next_token(force_regexp?: any) {
         if (force_regexp != null)
             return read_regexp(force_regexp);
         if (shebang && S.pos == 0 && looking_at("#!")) {
@@ -912,12 +912,12 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
     next_token.next = next;
     next_token.peek = peek;
 
-    next_token.context = function(nc) {
+    next_token.context = function(nc?: typeof S) {
         if (nc) S = nc;
         return S;
     };
 
-    next_token.add_directive = function(directive) {
+    next_token.add_directive = function(directive: string) {
         S.directive_stack[S.directive_stack.length - 1].push(directive);
 
         if (S.directives[directive] === undefined) {
@@ -941,7 +941,7 @@ function tokenizer($TEXT, filename, html5_comments, shebang) {
         S.directive_stack.pop();
     };
 
-    next_token.has_directive = function(directive) {
+    next_token.has_directive = function(directive: string) {
         return S.directives[directive] > 0;
     };
 
@@ -967,7 +967,7 @@ var UNARY_POSTFIX = makePredicate([ "--", "++" ]);
 
 var ASSIGNMENT = makePredicate([ "=", "+=", "-=", "/=", "*=", "**=", "%=", ">>=", "<<=", ">>>=", "|=", "^=", "&=" ]);
 
-var PRECEDENCE = (function(a, ret) {
+var PRECEDENCE = (function(a: string[][], ret: AnyObject) {
     for (var i = 0; i < a.length; ++i) {
         var b = a[i];
         for (var j = 0; j < b.length; ++j) {
@@ -997,7 +997,7 @@ var ATOMIC_START_TOKEN = makePredicate([ "atom", "num", "big_int", "string", "re
 
 /* -----[ Parser ]----- */
 
-function parse($TEXT, options?) {
+function parse($TEXT: string, opt?: types.ParseOptions) {
     // maps start tokens to count of comments found outside of their parens
     // Example: /* I count */ ( /* I don't */ foo() )
     // Useful because comments_before property of call with parens outside
@@ -1005,7 +1005,7 @@ function parse($TEXT, options?) {
     // right #__PURE__ comments for an expression
     const outer_comments_before_counts = new Map();
 
-    options = defaults(options, {
+    const options: types.ParseOptions = defaults(opt, {
         bare_returns   : false,
         ecma           : 2017,
         expression     : false,
@@ -1020,7 +1020,7 @@ function parse($TEXT, options?) {
     var S = {
         input         : (typeof $TEXT == "string"
                          ? tokenizer($TEXT, options.filename,
-                                     options.html5_comments, options.shebang)
+                                     options.html5_comments as boolean, options.shebang as boolean)
                          : $TEXT),
         token         : null as any,
         prev          : null as any,
@@ -1102,7 +1102,7 @@ function parse($TEXT, options?) {
         return S.in_async === S.in_function;
     }
 
-    function semicolon(optional?) {
+    function semicolon(optional?: boolean) {
         if (is("punc", ";")) next();
         else if (!optional && !can_insert_semicolon()) unexpected();
     }
@@ -1114,8 +1114,8 @@ function parse($TEXT, options?) {
         return exp;
     }
 
-    function embed_tokens(parser) {
-        return function(...args) {
+    function embed_tokens(parser: Function) {
+        return function(...args: any[]) {
             const start = S.token;
             const expr = parser(...args);
             expr.start = start;
@@ -1430,7 +1430,7 @@ function parse($TEXT, options?) {
         return regular_for(init);
     }
 
-    function regular_for(init) {
+    function regular_for(init: any) {
         expect(";");
         var test = is("punc", ";") ? null : expression(true);
         expect(";");
@@ -1522,7 +1522,7 @@ function parse($TEXT, options?) {
         });
     };
 
-    function track_used_binding_identifiers(is_parameter, strict) {
+    function track_used_binding_identifiers(is_parameter: boolean, strict: boolean) {
         var parameters = new Set();
         var duplicate: any = false;
         var default_assignment = false;
@@ -1591,7 +1591,7 @@ function parse($TEXT, options?) {
 
             if (!is("punc", ")")) {
                 expect(",");
-                if (is("punc", ")") && options.ecma < 2017) unexpected();
+                if (is("punc", ")") && (options.ecma as number) < 2017) unexpected();
             }
 
             if (param instanceof AST_Expansion) {
@@ -1836,7 +1836,7 @@ function parse($TEXT, options?) {
             if (!is("punc", ")")) {
                 expect(",");
                 if (is("punc", ")")) {
-                    if (options.ecma < 2017) unexpected();
+                    if ((options.ecma as number) < 2017) unexpected();
                     trailing_comma = prev();
                     if (maybe_sequence) invalid_sequence = trailing_comma;
                 }
@@ -2107,7 +2107,7 @@ function parse($TEXT, options?) {
         var newexp = expr_atom(false), args;
         if (is("punc", "(")) {
             next();
-            args = expr_list(")", options.ecma >= 2017);
+            args = expr_list(")", (options.ecma as number) >= 2017);
         } else {
             args = [];
         }
@@ -2966,7 +2966,7 @@ function parse($TEXT, options?) {
             }
             if (!is("punc", ")")) {
                 expect(",");
-                if (is("punc", ")") && options.ecma < 2017) unexpected();
+                if (is("punc", ")") && (options.ecma as number) < 2017) unexpected();
             }
         }
         next();
@@ -3018,7 +3018,7 @@ function parse($TEXT, options?) {
         return new ctor({ operator: op, expression: expr });
     }
 
-    var expr_op = function(left, min_prec, no_in) {
+    var expr_op = function(left: types.AST_Node, min_prec: number, no_in: boolean) {
         var op = is("operator") ? S.token.value : null;
         if (op == "in" && no_in) op = null;
         if (op == "**" && left instanceof AST_UnaryPrefix
@@ -3143,7 +3143,7 @@ function parse($TEXT, options?) {
         return left;
     };
 
-    var expression = function(commas?, no_in?) {
+    var expression = function(commas?: boolean, no_in?) {
         var start = S.token;
         var exprs: any[] = [];
         while (true) {
