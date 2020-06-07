@@ -215,7 +215,7 @@ const set_flag = (node: types.AST_Node, flag: number) => { node.flags |= flag; }
 const clear_flag = (node: types.AST_Node, flag: number) => { node.flags &= ~flag; };
 
 class Compressor extends TreeWalker {
-    options: any;
+    options: types.CompressOptions;
     pure_funcs: any;
     top_retain: ((def: any) => any) | undefined;
     toplevel: { funcs: any; vars: any; };
@@ -296,13 +296,13 @@ class Compressor extends TreeWalker {
             this.pure_funcs = pure_funcs;
         } else {
             this.pure_funcs = pure_funcs ? function(node: types.AST_Node) {
-                return !pure_funcs.includes(node.expression.print_to_string());
+                return !pure_funcs?.includes(node.expression.print_to_string());
             } : return_true;
         }
         var top_retain = this.options["top_retain"];
         if (top_retain instanceof RegExp) {
             this.top_retain = function(def) {
-                return top_retain.test(def.name);
+                return (top_retain as RegExp).test(def.name);
             };
         } else if (typeof top_retain == "function") {
             this.top_retain = top_retain;
@@ -311,7 +311,7 @@ class Compressor extends TreeWalker {
                 top_retain = top_retain.split(/,/);
             }
             this.top_retain = function(def) {
-                return top_retain.includes(def.name);
+                return (top_retain as string[]).includes(def.name);
             };
         }
         if (this.options["module"]) {
@@ -327,7 +327,7 @@ class Compressor extends TreeWalker {
             vars: toplevel
         };
         var sequences = this.options["sequences"];
-        this.sequences_limit = sequences == 1 ? 800 : sequences | 0;
+        this.sequences_limit = sequences == 1 ? 800 : sequences as number | 0;
         this.warnings_produced = {};
         this.evaluated_regexps = new Map();
     }
@@ -378,7 +378,7 @@ class Compressor extends TreeWalker {
         if (this.option("expression")) {
             toplevel.process_expression(true);
         }
-        var passes = +this.options.passes || 1;
+        var passes = Number(this.options.passes) || 1;
         var min_count = 1 / 0;
         var stopping = false;
         var mangle = { ie8: this.option("ie8") };

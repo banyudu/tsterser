@@ -15,7 +15,7 @@ import * as types from "../../tools/terser";
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
 // a statement.
-function first_in_statement(stack: types.TreeWalker) {
+function first_in_statement(stack: types.OutputStreamReturnType) {
     let node = stack.parent(-1);
     for (let i = 0, p; p = stack.parent(i); i++) {
         if (p instanceof AST_Statement && p.body === node)
@@ -38,7 +38,7 @@ function first_in_statement(stack: types.TreeWalker) {
 }
 
 // Returns whether the leftmost item in the expression is an object
-function left_is_object(node: types.AST_Node) {
+function left_is_object(node: types.AST_Node): boolean {
     if (node instanceof AST_Object) return true;
     if (node instanceof AST_Sequence) return left_is_object(node.expressions[0]);
     if (node.TYPE === "Call") return left_is_object(node.expression);

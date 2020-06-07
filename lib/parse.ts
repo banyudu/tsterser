@@ -759,7 +759,7 @@ function tokenizer($TEXT: string, filename: string | undefined, html5_comments: 
         return name;
     });
 
-    var read_regexp = with_eof_error("Unterminated regular expression", function(source) {
+    var read_regexp = with_eof_error("Unterminated regular expression", function(source: string) {
         var prev_backslash = false, ch, in_class = false;
         while ((ch = next(true))) if (NEWLINE_CHARS.has(ch)) {
             parse_error("Unexpected line terminator");
@@ -844,7 +844,7 @@ function tokenizer($TEXT: string, filename: string | undefined, html5_comments: 
     }
 
     function with_eof_error(eof_error: string, cont: Function) {
-        return function(x?) {
+        return function(x?: any) {
             try {
                 return cont(x);
             } catch(ex) {

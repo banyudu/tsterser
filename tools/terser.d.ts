@@ -84,7 +84,7 @@ export interface CompressOptions {
     unsafe_regexp?: boolean;
     unsafe_undefined?: boolean;
     unused?: boolean;
-    warnings?: boolean;
+    warnings?: boolean | "verbose";
 }
 
 export enum InlineFunctions {

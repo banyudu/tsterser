@@ -824,7 +824,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         nodetype.DEFMETHOD("_codegen", generator);
     }
 
-    AST_Node.DEFMETHOD("print", function(this: types.AST_Node, output: ReturnType<typeof OutputStream>, force_parens) {
+    AST_Node.DEFMETHOD("print", function(this: types.AST_Node, output: types.OutputStreamReturnType, force_parens: boolean) {
         var self = this, generator = self._codegen;
         if (self instanceof AST_Scope) {
             output.active_scope = self;
@@ -850,7 +850,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
     AST_Node.DEFMETHOD("_print", AST_Node.prototype.print);
 
-    AST_Node.DEFMETHOD("print_to_string", function(options) {
+    AST_Node.DEFMETHOD("print_to_string", function(options: types.OutputOptions) {
         var output = OutputStream(options);
         this.print(output);
         return output.get();
@@ -858,7 +858,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
     /* -----[ PARENTHESES ]----- */
 
-    function PARENS<T extends typeof types.AST_Node>(nodetype: T | T[], func: ((node: T, output: types.TreeWalker) => any) | ((outout: types.TreeWalker) => any)) {
+    function PARENS<T extends typeof types.AST_Node>(nodetype: T | T[], func: ((node: T, output: types.OutputStreamReturnType) => any) | ((outout: types.OutputStreamReturnType) => any)) {
         if (Array.isArray(nodetype)) {
             nodetype.forEach(function(nodetype) {
                 PARENS(nodetype, func);
@@ -872,7 +872,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
     // a function expression needs parens around it when it's provably
     // the first token to appear in a statement.
-    PARENS(AST_Function, function(output) {
+    PARENS(AST_Function, function(output: types.OutputStreamReturnType) {
         if (!output.has_parens() && first_in_statement(output)) {
             return true;
         }
@@ -901,20 +901,20 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return false;
     });
 
-    PARENS(AST_Arrow, function(output) {
+    PARENS(AST_Arrow, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this;
     });
 
     // same goes for an object literal, because otherwise it would be
     // interpreted as a block of code.
-    PARENS(AST_Object, function(output) {
+    PARENS(AST_Object, function(output: types.OutputStreamReturnType) {
         return !output.has_parens() && first_in_statement(output);
     });
 
     PARENS(AST_ClassExpression, first_in_statement);
 
-    PARENS(AST_Unary, function(output) {
+    PARENS(AST_Unary, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this
             || p instanceof AST_Call && p.expression === this
@@ -926,14 +926,14 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
                 && this.operator !== "--";
     });
 
-    PARENS(AST_Await, function(output) {
+    PARENS(AST_Await, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this
             || p instanceof AST_Call && p.expression === this
             || output.option("safari10") && p instanceof AST_UnaryPrefix;
     });
 
-    PARENS(AST_Sequence, function(output) {
+    PARENS(AST_Sequence, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
             || p instanceof AST_Unary                         // !(foo, bar, baz)
@@ -953,7 +953,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         ;
     });
 
-    PARENS(AST_Binary, function(output) {
+    PARENS(AST_Binary, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         // (foo && bar)()
         if (p instanceof AST_Call && p.expression === this)
@@ -984,7 +984,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS(AST_Yield, function(output) {
+    PARENS(AST_Yield, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         // (yield 1) + (yield 2)
         // a = yield 3
@@ -1007,7 +1007,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS(AST_PropAccess, function(output) {
+    PARENS(AST_PropAccess, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         if (p instanceof AST_New && p.expression === this) {
             // i.e. new (foo.bar().baz)
@@ -1027,7 +1027,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS(AST_Call, function(output) {
+    PARENS(AST_Call, function(output: types.OutputStreamReturnType) {
         var p = output.parent(), p1;
         if (p instanceof AST_New && p.expression === this
             || p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function)
@@ -1042,7 +1042,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             && p1.left === p;
     });
 
-    PARENS(AST_New, function(output) {
+    PARENS(AST_New, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         if (this.args.length === 0
             && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
@@ -1051,7 +1051,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS(AST_Number, function(output) {
+    PARENS(AST_Number, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         if (p instanceof AST_PropAccess && p.expression === this) {
             var value = this.getValue();
@@ -1062,7 +1062,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS(AST_BigInt, function(output) {
+    PARENS(AST_BigInt, function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         if (p instanceof AST_PropAccess && p.expression === this) {
             var value = this.getValue();
@@ -1073,7 +1073,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return undefined;
     });
 
-    PARENS([ AST_Assign, AST_Conditional ], function(output) {
+    PARENS([ AST_Assign, AST_Conditional ], function(output: types.OutputStreamReturnType) {
         var p = output.parent();
         // !(a = false) → true
         if (p instanceof AST_Unary)
@@ -1157,7 +1157,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         output.in_directive = false;
     }
 
-    AST_StatementWithBody.DEFMETHOD("_do_print_body", function(output) {
+    AST_StatementWithBody.DEFMETHOD("_do_print_body", function(output: types.OutputStreamReturnType) {
         force_statement(this.body, output);
     });
 
@@ -1342,7 +1342,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         output.print("`");
     });
 
-    AST_Arrow.DEFMETHOD("_do_print", function(output) {
+    AST_Arrow.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType) {
         var self = this;
         var parent = output.parent();
         var needs_parens = (parent instanceof AST_Binary && !(parent instanceof AST_Assign)) ||
@@ -1520,7 +1520,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             });
         });
     });
-    AST_SwitchBranch.DEFMETHOD("_do_print_body", function(output) {
+    AST_SwitchBranch.DEFMETHOD("_do_print_body", function(output: types.OutputStreamReturnType) {
         output.newline();
         this.body.forEach(function(stmt) {
             output.indent();
@@ -1748,7 +1748,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         AST_Call.prototype._codegen?.(self, output);
     });
 
-    AST_Sequence.DEFMETHOD("_do_print", function(output) {
+    AST_Sequence.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType) {
         this.expressions.forEach(function(node, index) {
             if (index > 0) {
                 output.comma();
@@ -2045,7 +2045,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         }
         self._print_getter_setter(type, output);
     });
-    AST_Symbol.DEFMETHOD("_do_print", function(output) {
+    AST_Symbol.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType) {
         var def = this.definition();
         output.print_name(def ? def.mangled_name || def.name : this.name);
     });
@@ -2192,18 +2192,18 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         AST_TemplateString,
         AST_TemplateSegment,
         AST_Try,
-    ], function(output) {
+    ], function(output: types.OutputStreamReturnType) {
         output.add_mapping(this.start);
     });
 
     DEFMAP([
         AST_ObjectGetter,
         AST_ObjectSetter,
-    ], function(output) {
+    ], function(output: types.OutputStreamReturnType) {
         output.add_mapping(this.start, this.key.name);
     });
 
-    DEFMAP([ AST_ObjectProperty ], function(output) {
+    DEFMAP([ AST_ObjectProperty ], function(output: types.OutputStreamReturnType) {
         output.add_mapping(this.start, this.key);
     });
 })();
