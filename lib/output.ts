@@ -1935,7 +1935,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             if (output.option("keep_numbers")) {
                 return output.print(key);
             }
-            return output.print(make_num(key));
+            return output.print(make_num(Number(key)));
         }
         var print_string = RESERVED_WORDS.has(key)
             ? output.option("ie8")
@@ -2105,7 +2105,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         }
     }
 
-    function best_of(a) {
+    function best_of(a: string[]) {
         var best = a[0], len = best.length;
         for (var i = 1; i < a.length; ++i) {
             if (a[i].length < len) {
@@ -2116,7 +2116,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return best;
     }
 
-    function make_num(num) {
+    function make_num(num: number) {
         var str = num.toString(10).replace(/^0\./, ".").replace("e+", "e");
         var candidates = [ str ];
         if (Math.floor(num) === num) {
@@ -2126,7 +2126,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
                 candidates.push("0x" + num.toString(16).toLowerCase());
             }
         }
-        var match, len, digits;
+        var match: RegExpExecArray | null, len, digits;
         if (match = /^\.0+/.exec(str)) {
             len = match[0].length;
             digits = str.slice(len);
@@ -2135,7 +2135,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             len = match[0].length;
             candidates.push(str.slice(0, -len) + "e" + len);
         } else if (match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str)) {
-            candidates.push(match[1] + match[2] + "e" + (match[3] - match[2].length));
+            candidates.push(match[1] + match[2] + "e" + (Number(match[3]) - match[2].length));
         }
         return best_of(candidates);
     }
@@ -2154,7 +2154,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
     /* -----[ source map generators ]----- */
 
-    function DEFMAP(nodetype, generator) {
+    function DEFMAP<T extends typeof types.AST_Node>(nodetype: T[], generator: (output: ReturnType<typeof OutputStream>) => any) {
         nodetype.forEach(function(nodetype) {
             nodetype.DEFMETHOD("add_source_map", generator);
         });

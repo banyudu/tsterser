@@ -268,7 +268,7 @@ import * as types from "../tools/terser";
                 body: normalize_directives(from_moz(M.body).body)
             });
         },
-        FunctionExpression: function(M) {
+        FunctionExpression: function(M: any) {
             return new AST_Function({
                 start: my_start_token(M),
                 end: my_end_token(M),

@@ -1076,7 +1076,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         token_error(token, "Unexpected token: " + token?.type + " (" + token?.value + ")");
     }
 
-    function expect_token(type, val) {
+    function expect_token(type: string, val: string | undefined) {
         if (is(type, val)) {
             return next();
         }
