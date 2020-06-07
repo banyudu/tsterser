@@ -1201,7 +1201,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     DEFPRINT(AST_Do, function(self, output) {
         output.print("do");
         output.space();
-        make_block(self.body, output);
+        make_block(self.body as types.AST_Statement, output);
         output.space();
         output.print("while");
         output.space();
@@ -1276,7 +1276,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     /* -----[ functions ]----- */
-    AST_Lambda.DEFMETHOD("_do_print", function(output, nokeyword) {
+    AST_Lambda.DEFMETHOD("_do_print", function(this: types.AST_Lambda, output: types.OutputStreamReturnType, nokeyword: boolean) {
         var self = this;
         if (!nokeyword) {
             if (self.async) {
@@ -1295,7 +1295,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             self.name.print(output);
         } else if (nokeyword && self.name instanceof AST_Node) {
             output.with_square(function() {
-                self.name.print(output); // Computed method name
+                self.name?.print(output); // Computed method name
             });
         }
         output.with_parens(function() {
@@ -1342,7 +1342,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         output.print("`");
     });
 
-    AST_Arrow.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType) {
+    AST_Arrow.DEFMETHOD("_do_print", function(this: types.AST_Arrow, output: types.OutputStreamReturnType) {
         var self = this;
         var parent = output.parent();
         var needs_parens = (parent instanceof AST_Binary && !(parent instanceof AST_Assign)) ||
@@ -1388,7 +1388,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     /* -----[ exits ]----- */
-    AST_Exit.DEFMETHOD("_do_print", function(output, kind) {
+    AST_Exit.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType, kind: string) {
         output.print(kind);
         if (this.value) {
             output.space();
@@ -1438,7 +1438,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     /* -----[ loop control ]----- */
-    AST_LoopControl.DEFMETHOD("_do_print", function(output, kind) {
+    AST_LoopControl.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType, kind: string) {
         output.print(kind);
         if (this.label) {
             output.space();
@@ -1454,11 +1454,11 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     /* -----[ if ]----- */
-    function make_then(self, output) {
+    function make_then(self: types.AST_If, output: types.OutputStreamReturnType) {
         var b = self.body;
         if (output.option("braces")
             || output.option("ie8") && b instanceof AST_Do)
-            return make_block(b, output);
+            return make_block(b as types.AST_Statement, output);
         // The squeezer replaces "block"-s that contain only a single
         // statement with the statement itself; technically, the AST
         // is correct, but this can create problems when we output an
@@ -1470,7 +1470,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         while (true) {
             if (b instanceof AST_If) {
                 if (!b.alternative) {
-                    make_block(self.body, output);
+                    make_block(self.body as types.AST_Statement, output);
                     return;
                 }
                 b = b.alternative;
@@ -1478,7 +1478,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
                 b = b.body;
             } else break;
         }
-        force_statement(self.body, output);
+        force_statement(self.body as types.AST_Statement, output);
     }
     DEFPRINT(AST_If, function(self, output) {
         output.print("if");
@@ -1495,7 +1495,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             if (self.alternative instanceof AST_If)
                 self.alternative.print(output);
             else
-                force_statement(self.alternative, output);
+                force_statement(self.alternative as types.AST_Statement, output);
         } else {
             self._do_print_body(output);
         }
@@ -1520,7 +1520,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
             });
         });
     });
-    AST_SwitchBranch.DEFMETHOD("_do_print_body", function(output: types.OutputStreamReturnType) {
+    AST_SwitchBranch.DEFMETHOD("_do_print_body", function(this: types.AST_SwitchBranch, output: types.OutputStreamReturnType) {
         output.newline();
         this.body.forEach(function(stmt) {
             output.indent();
@@ -1572,7 +1572,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     /* -----[ var/const ]----- */
-    AST_Definitions.DEFMETHOD("_do_print", function(output, kind) {
+    AST_Definitions.DEFMETHOD("_do_print", function(this: types.AST_Definitions, output: types.OutputStreamReturnType, kind: string) {
         output.print(kind);
         output.space();
         this.definitions.forEach(function(def, i) {
@@ -1699,7 +1699,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         }
     });
 
-    function parenthesize_for_noin(node, output, noin) {
+    function parenthesize_for_noin(node: types.AST_Node, output: types.OutputStreamReturnType, noin: boolean) {
         var parens = false;
         // need to take some precautions here:
         //    https://github.com/mishoo/UglifyJS2/issues/60
@@ -1748,7 +1748,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         AST_Call.prototype._codegen?.(self, output);
     });
 
-    AST_Sequence.DEFMETHOD("_do_print", function(output: types.OutputStreamReturnType) {
+    AST_Sequence.DEFMETHOD("_do_print", function(this: types.AST_Sequence, output: types.OutputStreamReturnType) {
         this.expressions.forEach(function(node, index) {
             if (index > 0) {
                 output.comma();
@@ -1927,11 +1927,11 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         output.print("new.target");
     });
 
-    function print_property_name(key, quote, output) {
+    function print_property_name(key: string, quote: string, output: types.OutputStreamReturnType) {
         if (output.option("quote_keys")) {
             return output.print_string(key);
         }
-        if ("" + +key == key && key >= 0) {
+        if ("" + +key == key && Number(key) >= 0) {
             if (output.option("keep_numbers")) {
                 return output.print(key);
             }
@@ -1951,7 +1951,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     }
 
     DEFPRINT(AST_ObjectKeyVal, function(self, output) {
-        function get_name(self) {
+        function get_name(self: types.AST_Node) {
             var def = self.definition();
             return def ? def.mangled_name || def.name : self.name;
         }
@@ -2009,7 +2009,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
 
         output.semicolon();
     });
-    AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(type, output) {
+    AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(this: types.AST_ObjectProperty, type: string, output: types.OutputStreamReturnType) {
         var self = this;
         if (self.static) {
             output.print("static");
@@ -2077,7 +2077,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
     });
 
     const r_slash_script = /(<\s*\/\s*script)/i;
-    const slash_script_replace = (_, $1) => $1.replace("/", "\\/");
+    const slash_script_replace = (_: any, $1: string) => $1.replace("/", "\\/");
     DEFPRINT(AST_RegExp, function(self, output) {
         let { source, flags } = self.getValue();
         source = regexp_source_fix(source);
@@ -2094,7 +2094,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         }
     });
 
-    function force_statement(stat, output) {
+    function force_statement(stat: types.AST_Statement, output: types.OutputStreamReturnType) {
         if (output.option("braces")) {
             make_block(stat, output);
         } else {
@@ -2140,7 +2140,7 @@ function OutputStream(opt?: types.OutputOptions): types.OutputStreamReturnType {
         return best_of(candidates);
     }
 
-    function make_block(stmt, output) {
+    function make_block(stmt: types.AST_Statement, output: types.OutputStreamReturnType) {
         if (!stmt || stmt instanceof AST_EmptyStatement)
             output.print("{}");
         else if (stmt instanceof AST_BlockStatement)

@@ -219,14 +219,14 @@ import * as types from "../tools/terser";
                 expression: from_moz(M.argument)
             });
         },
-        RestElement: function(M) {
+        RestElement: function(M: types.AST_Node) {
             return new AST_Expansion({
                 start: my_start_token(M),
                 end: my_end_token(M),
                 expression: from_moz(M.argument)
             });
         },
-        TemplateElement: function(M) {
+        TemplateElement: function(M: types.AST_Node) {
             return new AST_TemplateSegment({
                 start: my_start_token(M),
                 end: my_end_token(M),
@@ -234,10 +234,11 @@ import * as types from "../tools/terser";
                 raw: M.value.raw
             });
         },
-        TemplateLiteral: function(M) {
-            var segments: any[] = [];
-            for (var i = 0; i < M.quasis.length; i++) {
-                segments.push(from_moz(M.quasis[i]));
+        TemplateLiteral: function(M: types.AST_Sequence) {
+            var segments: types.AST_Node[] = [];
+            const quasis = (M as any).quasis as any[];
+            for (var i = 0; i < quasis.length; i++) {
+                segments.push(from_moz(quasis[i]));
                 if (M.expressions[i]) {
                     segments.push(from_moz(M.expressions[i]));
                 }
@@ -248,15 +249,15 @@ import * as types from "../tools/terser";
                 segments: segments
             });
         },
-        TaggedTemplateExpression: function(M) {
+        TaggedTemplateExpression: function(M: types.AST_Node) {
             return new AST_PrefixedTemplateString({
                 start: my_start_token(M),
                 end: my_end_token(M),
-                template_string: from_moz(M.quasi),
-                prefix: from_moz(M.tag)
+                template_string: from_moz((M as any).quasi),
+                prefix: from_moz((M as any).tag)
             });
         },
-        FunctionDeclaration: function(M) {
+        FunctionDeclaration: function(M: any) {
             return new AST_Defun({
                 start: my_start_token(M),
                 end: my_end_token(M),

@@ -373,7 +373,7 @@ class Compressor extends TreeWalker {
         }
     }
 
-    compress(toplevel) {
+    compress(toplevel: types.AST_Toplevel) {
         toplevel = toplevel.resolve_defines(this);
         if (this.option("expression")) {
             toplevel.process_expression(true);
@@ -391,7 +391,7 @@ class Compressor extends TreeWalker {
             if (pass > 0 || this.option("reduce_vars")) {
                 toplevel.reset_opt_flags(this);
             }
-            toplevel = toplevel.transform(this);
+            toplevel = toplevel.transform(this) as types.AST_Toplevel;
             if (passes > 1) {
                 let count = 0;
                 walk(toplevel, () => { count++; });
@@ -433,7 +433,7 @@ class Compressor extends TreeWalker {
         this.warnings_produced = {};
     }
 
-    before(node: types.AST_Node, descend) {
+    before(node: types.AST_Node, descend: Function) {
         if (has_flag(node, SQUEEZED)) return node;
         var was_scope = false;
         if (node instanceof AST_Scope) {
@@ -463,7 +463,7 @@ class Compressor extends TreeWalker {
     }
 }
 
-function def_optimize(node, optimizer) {
+function def_optimize(node: typeof types.AST_Node, optimizer: Function) {
     node.DEFMETHOD("optimize", function(compressor: Compressor) {
         var self = this;
         if (has_flag(self, OPTIMIZED)) return self;

@@ -393,11 +393,16 @@ declare class AST_Toplevel extends AST_Scope {
     constructor(props?: object);
     globals: any;
     def_global?: Function;
+    process_expression: Function;
+    resolve_defines: Function;
+    figure_out_scope: Function;
+    drop_console: Function;
+    reset_opt_flags: Function;
 }
 
 declare class AST_Lambda extends AST_Scope {
     constructor(props?: object);
-    name: AST_SymbolDeclaration | null;
+    name: AST_SymbolDeclaration | AST_Node | null;
     argnames: ArgType[];
     uses_arguments: boolean;
     is_generator: boolean;
