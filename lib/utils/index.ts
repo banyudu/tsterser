@@ -180,10 +180,10 @@ function remove<T = types.AST_Node>(array: T[], el: T) {
     }
 }
 
-function mergeSort<T>(array: T[], cmp: (a: T, b: T) => number) {
+function mergeSort<T>(array: T[], cmp: (a: T, b: T) => number): T[] {
     if (array.length < 2) return array.slice();
-    function merge(a: any[], b: any[]) {
-        var r: any[] = [], ai = 0, bi = 0, i = 0;
+    function merge(a: T[], b: T[]) {
+        var r: T[] = [], ai = 0, bi = 0, i = 0;
         while (ai < a.length && bi < b.length) {
             cmp(a[ai], b[bi]) <= 0
                 ? r[i++] = a[ai++]

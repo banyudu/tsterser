@@ -208,11 +208,11 @@ const TOP       = 0b0000010000000000;
 const CLEAR_BETWEEN_PASSES = SQUEEZED | OPTIMIZED | TOP;
 
 /*@__INLINE__*/
-const has_flag = (node, flag) => node.flags & flag;
+const has_flag = (node: types.AST_Node, flag: number) => node.flags & flag;
 /*@__INLINE__*/
-const set_flag = (node, flag) => { node.flags |= flag; };
+const set_flag = (node: types.AST_Node, flag: number) => { node.flags |= flag; };
 /*@__INLINE__*/
-const clear_flag = (node, flag) => { node.flags &= ~flag; };
+const clear_flag = (node: types.AST_Node, flag: number) => { node.flags &= ~flag; };
 
 class Compressor extends TreeWalker {
     options: any;

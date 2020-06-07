@@ -8,6 +8,15 @@ type ECMA_UNOFFICIAL = 6 | 7 | 8 | 9 | 10 | 11;
 
 export type ECMA = 5 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 | ECMA_UNOFFICIAL;
 
+export interface Comment {
+    value: string;
+    type: "comment1" | "comment2" | "comment3" | "comment4" | "comment5";
+    pos: number;
+    line: number;
+    col: number;
+    nlb?: boolean;
+}
+
 export interface ParseOptions {
     bare_returns?: boolean;
     ecma?: ECMA;
@@ -110,13 +119,7 @@ export interface OutputOptions {
     ascii_only?: boolean;
     beautify?: boolean;
     braces?: boolean;
-    comments?: boolean | "all" | "some" | RegExp | ( (node: AST_Node, comment: {
-        value: string,
-        type: "comment1" | "comment2" | "comment3" | "comment4",
-        pos: number,
-        line: number,
-        col: number,
-    }) => boolean );
+    comments?: boolean | "all" | "some" | RegExp | ( (node: AST_Node, comment: Comment) => boolean );
     ecma?: ECMA;
     ie8?: boolean;
     indent_level?: number;
@@ -247,7 +250,11 @@ export class AST_Node {
     shallow_cmp?: Function;
     CTOR: typeof AST_Node;
     to_mozilla_ast: Function;
-    start: any;
+    start: {
+        file: string;
+        raw: string;
+        comments_before: Comment[]
+    } & Comment;
     end: any;
     expression: AST_Node;
     name: any;
@@ -279,6 +286,8 @@ export class AST_Node {
     key: any;
     _find_defs: Function;
     is_boolean: () => boolean;
+    flags: number;
+    quote: string;
 }
 
 declare class SymbolDef {
@@ -572,7 +581,8 @@ declare class AST_PrefixedTemplateString extends AST_Node {
 
 declare class AST_TemplateString extends AST_Node {
     constructor(props?: object);
-    segments: AST_Node[];
+    // segments: AST_Node[];
+    segments: AST_TemplateSegment[];
 }
 
 declare class AST_TemplateSegment extends AST_Node {
@@ -627,7 +637,6 @@ declare class AST_PropAccess extends AST_Node {
 
 declare class AST_Dot extends AST_PropAccess {
     constructor(props?: object);
-    quote?: any;
 }
 
 declare class AST_Sub extends AST_PropAccess {
@@ -686,8 +695,9 @@ declare class AST_ObjectProperty extends AST_Node {
     // key: string | number | AST_Node;
     key: any;
     value: AST_Node;
-    quote: any;
+    quote: string;
     is_generator: boolean;
+    static: boolean;
 }
 
 declare class AST_ObjectKeyVal extends AST_ObjectProperty {
@@ -698,19 +708,16 @@ declare class AST_ObjectKeyVal extends AST_ObjectProperty {
 declare class AST_ObjectSetter extends AST_ObjectProperty {
     constructor(props?: object);
     quote: string;
-    static: boolean;
 }
 
 declare class AST_ObjectGetter extends AST_ObjectProperty {
     constructor(props?: object);
     quote: string;
-    static: boolean;
 }
 
 declare class AST_ConciseMethod extends AST_ObjectProperty {
     constructor(props?: object);
     quote: string;
-    static: boolean;
     is_generator: boolean;
     async: boolean;
 }
@@ -720,6 +727,7 @@ declare class AST_Symbol extends AST_Node {
     scope: AST_Scope;
     name: string;
     thedef: SymbolDef;
+    unmangleable: Function;
 }
 
 declare class AST_SymbolDeclaration extends AST_Symbol {

@@ -162,12 +162,7 @@ const CODE_SPACE = 32;
 
 const r_annotation = /[@#]__(PURE|INLINE|NOINLINE)__/g;
 
-interface Comment {
-    type: string;
-    value: string;
-}
-
-function is_some_comments(comment: Comment) {
+function is_some_comments(comment: types.Comment) {
     // multiline comment
     return (
         (comment.type === "comment2" || comment.type === "comment1")
@@ -221,11 +216,11 @@ function OutputStream(opt?: types.OutputOptions) {
             );
         }
         if (comments instanceof RegExp) {
-            comment_filter = function(comment: Comment) {
+            comment_filter = function(comment: types.Comment) {
                 return comment.type != "comment5" && (comments as RegExp).test(comment.value);
             };
         } else if (typeof comments === "function") {
-            comment_filter = function(comment: Comment) {
+            comment_filter = function(comment: types.Comment) {
                 return comment.type != "comment5" && (comments as Function)(this, comment);
             };
         } else if (comments === "some") {
@@ -323,7 +318,7 @@ function OutputStream(opt?: types.OutputOptions) {
         return ret;
     }
 
-    function make_name(name) {
+    function make_name(name: string) {
         name = name.toString();
         name = to_utf8(name, true);
         return name;
@@ -343,7 +338,7 @@ function OutputStream(opt?: types.OutputOptions) {
     var need_space = false;
     var newline_insert = -1;
     var last = "";
-    var mapping_token, mapping_name, mappings: any[] = options.source_map && [];
+    var mapping_token: false | string, mapping_name: string, mappings: any[] = options.source_map && [];
 
     var do_add_mapping = mappings ? function() {
         mappings.forEach(function(mapping) {
@@ -491,20 +486,20 @@ function OutputStream(opt?: types.OutputOptions) {
         might_need_space = true;
     };
 
-    var indent = options.beautify ? function(half?) {
+    var indent = options.beautify ? function(half?: boolean) {
         if (options.beautify) {
             print(make_indent(half ? 0.5 : 0));
         }
     } : noop;
 
-    var with_indent = options.beautify ? function(col, cont) {
+    var with_indent = options.beautify ? function(col: boolean | number, cont: Function) {
         if (col === true) col = next_indent();
         var save_indentation = indentation;
-        indentation = col;
+        indentation = col as number;
         var ret = cont();
         indentation = save_indentation;
         return ret;
-    } : function(_col, cont) { return cont(); };
+    } : function(_col: boolean | number, cont: Function) { return cont(); };
 
     var newline = options.beautify ? function() {
         if (newline_insert < 0) return print("\n");
@@ -534,7 +529,7 @@ function OutputStream(opt?: types.OutputOptions) {
         return indentation + (options.indent_level as number);
     }
 
-    function with_block(cont) {
+    function with_block(cont: Function) {
         var ret;
         print("{");
         newline();
@@ -546,7 +541,7 @@ function OutputStream(opt?: types.OutputOptions) {
         return ret;
     }
 
-    function with_parens(cont) {
+    function with_parens(cont: () => any) {
         print("(");
         //XXX: still nice to have that for argument lists
         //var ret = with_indent(current_col, cont);
@@ -555,7 +550,7 @@ function OutputStream(opt?: types.OutputOptions) {
         return ret;
     }
 
-    function with_square(cont) {
+    function with_square(cont: Function) {
         print("[");
         //var ret = with_indent(current_col, cont);
         var ret = cont();
@@ -573,7 +568,7 @@ function OutputStream(opt?: types.OutputOptions) {
         space();
     }
 
-    var add_mapping = mappings ? function(token, name) {
+    var add_mapping = mappings ? function(token: string, name: string) {
         mapping_token = token;
         mapping_name = name;
     } : noop;
@@ -666,7 +661,7 @@ function OutputStream(opt?: types.OutputOptions) {
         if (current_pos == 0) {
             if (comments.length > 0 && options.shebang && comments[0].type === "comment5"
                 && !printed_comments.has(comments[0])) {
-                print("#!" + comments.shift().value + "\n");
+                print("#!" + comments.shift()?.value + "\n");
                 indent();
             }
             var preamble = options.preamble;
@@ -715,7 +710,7 @@ function OutputStream(opt?: types.OutputOptions) {
         }
     }
 
-    function append_comments(node, tail) {
+    function append_comments(node: types.AST_Node, tail: boolean) {
         var self = this;
         var token = node.end;
         if (!token) return;
@@ -780,8 +775,8 @@ function OutputStream(opt?: types.OutputOptions) {
         semicolon       : semicolon,
         force_semicolon : force_semicolon,
         to_utf8         : to_utf8,
-        print_name      : function(name) { print(make_name(name)); },
-        print_string    : function(str, quote, escape_directive) {
+        print_name      : function(name: string) { print(make_name(name)); },
+        print_string    : function(str: string, quote: string, escape_directive: boolean) {
             var encoded = encode_string(str, quote);
             if (escape_directive === true && !encoded.includes("\\")) {
                 // Insert semicolons to break directive prologue
@@ -792,7 +787,7 @@ function OutputStream(opt?: types.OutputOptions) {
             }
             print(encoded);
         },
-        print_template_string_chars: function(str) {
+        print_template_string_chars: function(str: string) {
             var encoded = encode_string(str, "`").replace(/\${/g, "\\${");
             return print(encoded.substr(1, encoded.length - 2));
         },
@@ -803,7 +798,7 @@ function OutputStream(opt?: types.OutputOptions) {
         with_parens     : with_parens,
         with_square     : with_square,
         add_mapping     : add_mapping,
-        option          : function(opt: string) { return options[opt]; },
+        option          : function(opt: keyof types.OutputOptions) { return options[opt]; },
         printed_comments: printed_comments,
         prepend_comments: readonly ? noop : prepend_comments,
         append_comments : readonly || comment_filter === return_false ? noop : append_comments,
@@ -863,7 +858,7 @@ function OutputStream(opt?: types.OutputOptions) {
 
     /* -----[ PARENTHESES ]----- */
 
-    function PARENS(nodetype, func) {
+    function PARENS<T extends typeof types.AST_Node>(nodetype: T | T[], func: ((node: T, output: types.TreeWalker) => any) | ((outout: types.TreeWalker) => any)) {
         if (Array.isArray(nodetype)) {
             nodetype.forEach(function(nodetype) {
                 PARENS(nodetype, func);

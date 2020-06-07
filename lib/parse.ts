@@ -304,11 +304,11 @@ function is_identifier_start(ch: string) {
     return UNICODE.ID_Start.test(ch);
 }
 
-function is_identifier_char(ch) {
+function is_identifier_char(ch: string) {
     return UNICODE.ID_Continue.test(ch);
 }
 
-function is_basic_identifier_string(str) {
+function is_basic_identifier_string(str: string) {
     return /^[a-z_$][a-z0-9_$]*$/i.test(str);
 }
 

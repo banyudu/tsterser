@@ -827,7 +827,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
     function_defs = null;
     unmangleable_names = null;
 
-    function collect(symbol) {
+    function collect(symbol: types.SymbolDef) {
         const should_mangle = !options.reserved?.has(symbol.name)
             && !(symbol.export & MASK_EXPORT_DONT_MANGLE);
         if (should_mangle) {
@@ -836,10 +836,10 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
     }
 });
 
-AST_Toplevel.DEFMETHOD("find_colliding_names", function(options) {
+AST_Toplevel.DEFMETHOD("find_colliding_names", function(options: types.MangleOptions) {
     const cache = options.cache && options.cache.props;
     const avoid = new Set();
-    options.reserved.forEach(to_avoid);
+    options.reserved?.forEach(to_avoid);
     this.globals.forEach(add_def);
     this.walk(new TreeWalker(function(node: types.AST_Node) {
         if (node instanceof AST_Scope) node.variables.forEach(add_def);
@@ -853,7 +853,7 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options) {
 
     function add_def(def: types.SymbolDef) {
         var name = def.name;
-        if (def.global && cache && cache.has(name)) name = cache.get(name);
+        if (def.global && cache && cache.has(name)) name = cache.get(name) as string;
         else if (!def.unmangleable(options)) return;
         to_avoid(name);
     }
@@ -902,15 +902,15 @@ AST_Sequence.DEFMETHOD("tail_node", function() {
 AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleOptions) {
     options = this._default_mangler_options(options);
     try {
-        AST_Node.prototype.print = function(stream, force_parens) {
+        AST_Node.prototype.print = function(this: types.AST_Node, stream: any, force_parens: boolean) {
             this._print(stream, force_parens);
             if (this instanceof AST_Symbol && !this.unmangleable(options)) {
                 base54.consider(this.name, -1);
             } else if (options.properties) {
                 if (this instanceof AST_Dot) {
-                    base54.consider(this.property, -1);
+                    base54.consider(this.property as string, -1);
                 } else if (this instanceof AST_Sub) {
-                    skip_string(this.property);
+                    skip_string(this.property as types.AST_Node);
                 }
             }
         };
@@ -935,8 +935,8 @@ AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleO
 const base54 = (() => {
     const leading = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_".split("");
     const digits = "0123456789".split("");
-    let chars;
-    let frequency;
+    let chars: string[];
+    let frequency: Map<string, number>;
     function reset() {
         frequency = new Map();
         leading.forEach(function(ch) {
@@ -946,20 +946,20 @@ const base54 = (() => {
             frequency.set(ch, 0);
         });
     }
-    base54.consider = function(str, delta) {
+    base54.consider = function(str: string, delta: number) {
         for (var i = str.length; --i >= 0;) {
-            frequency.set(str[i], frequency.get(str[i]) + delta);
+            frequency.set(str[i], (frequency.get(str[i]) as number) + delta); // TODO: check type
         }
     };
-    function compare(a, b) {
-        return frequency.get(b) - frequency.get(a);
+    function compare(a: string, b: string) {
+        return (frequency.get(b) as number) - (frequency.get(a) as number);
     }
     base54.sort = function() {
         chars = mergeSort(leading, compare).concat(mergeSort(digits, compare));
     };
     base54.reset = reset;
     reset();
-    function base54(num) {
+    function base54(num: number) {
         var ret = "", base = 54;
         num++;
         do {

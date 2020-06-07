@@ -155,17 +155,18 @@ import * as types from "../tools/terser";
 
 (function() {
 
-    var normalize_directives = function(body) {
+    var normalize_directives = function(body: types.AST_Node[]) {
         var in_directive = true;
 
         for (var i = 0; i < body.length; i++) {
-            if (in_directive && body[i] instanceof AST_Statement && body[i].body instanceof AST_String) {
+            const item = body[i];
+            if (in_directive && item instanceof AST_Statement && item.body instanceof AST_String) {
                 body[i] = new AST_Directive({
                     start: body[i].start,
                     end: body[i].end,
-                    value: body[i].body.value
+                    value: item.body.value
                 });
-            } else if (in_directive && !(body[i] instanceof AST_Statement && body[i].body instanceof AST_String)) {
+            } else if (in_directive && !(item instanceof AST_Statement && item.body instanceof AST_String)) {
                 in_directive = false;
             }
         }
@@ -740,7 +741,7 @@ import * as types from "../tools/terser";
     def_to_moz(AST_SimpleStatement, function To_Moz_ExpressionStatement(M) {
         return {
             type: "ExpressionStatement",
-            expression: to_moz(M.body)
+            expression: to_moz(M.body as types.AST_Node) // TODO: check type
         };
     });
 
@@ -850,11 +851,11 @@ import * as types from "../tools/terser";
             type: "MemberExpression",
             object: to_moz(M.expression),
             computed: isComputed,
-            property: isComputed ? to_moz(M.property) : {type: "Identifier", name: M.property}
+            property: isComputed ? to_moz(M.property as types.AST_Node) : {type: "Identifier", name: M.property}
         };
     });
 
-    def_to_moz(AST_Unary, function To_Moz_Unary(M) {
+    def_to_moz(AST_Unary, function To_Moz_Unary(M: types.AST_Unary) {
         return {
             type: M.operator == "++" || M.operator == "--" ? "UpdateExpression" : "UnaryExpression",
             operator: M.operator,
@@ -863,7 +864,7 @@ import * as types from "../tools/terser";
         };
     });
 
-    def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M) {
+    def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: types.AST_Binary) {
         if (M.operator == "=" && to_moz_in_destructuring()) {
             return {
                 type: "AssignmentPattern",
@@ -884,14 +885,14 @@ import * as types from "../tools/terser";
         };
     });
 
-    def_to_moz(AST_Array, function To_Moz_ArrayExpression(M) {
+    def_to_moz(AST_Array, function To_Moz_ArrayExpression(M: types.AST_Array) {
         return {
             type: "ArrayExpression",
             elements: M.elements.map(to_moz)
         };
     });
 
-    def_to_moz(AST_Object, function To_Moz_ObjectExpression(M) {
+    def_to_moz(AST_Object, function To_Moz_ObjectExpression(M: types.AST_Object) {
         return {
             type: "ObjectExpression",
             properties: M.properties.map(to_moz)
@@ -1149,10 +1150,10 @@ import * as types from "../tools/terser";
         moz_to_me += "\n})\n}";
         me_to_moz += "\n}\n}";
 
-        const moz_to_me_func: Function = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return(" + moz_to_me + ")")(
+        const moz_to_me_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return(" + moz_to_me + ")")(
             ast, my_start_token, my_end_token, from_moz
         );
-        const me_to_moz_func: Function = new Function("to_moz", "to_moz_block", "to_moz_scope", "return(" + me_to_moz + ")")(
+        const me_to_moz_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("to_moz", "to_moz_block", "to_moz_scope", "return(" + me_to_moz + ")")(
             to_moz, to_moz_block, to_moz_scope
         );
         MOZ_TO_ME[moztype] = moz_to_me_func;
@@ -1197,15 +1198,15 @@ import * as types from "../tools/terser";
         return moznode;
     }
 
-    function def_to_moz(mytype: typeof types.AST_Node, handler: Function) {
-        mytype.DEFMETHOD("to_mozilla_ast", function(parent: types.AST_Node) {
+    function def_to_moz<T extends typeof types.AST_Node>(mytype: T, handler: (M: InstanceType<T>, parent: InstanceType<T>) => any) {
+        mytype.DEFMETHOD("to_mozilla_ast", function(parent: InstanceType<T>) {
             return set_moz_loc(this, handler(this, parent));
         });
     }
 
-    var TO_MOZ_STACK: types.AST_Node[] | null = null;
+    var TO_MOZ_STACK: Array<types.AST_Node | null> | null = null;
 
-    function to_moz(node: types.AST_Node) {
+    function to_moz(node: types.AST_Node | null) {
         if (TO_MOZ_STACK === null) { TO_MOZ_STACK = []; }
         TO_MOZ_STACK.push(node);
         var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null;
