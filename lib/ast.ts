@@ -59,22 +59,26 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
         props = props.concat(base.PROPS);
     const proto = base && Object.create(base.prototype);
     const name = `AST_${type}`;
+    const BasicClass = base || class {};
     const factory = () => {
         return {
-            [name]: function (args) {
-            if (args) {
-                for (let i = props.length; --i >= 0;) {
-                    this[props[i]] = args[props[i]];
+            [name]: class extends BasicClass {
+                constructor (args) {
+                    super(args);
+                    if (args) {
+                        for (let i = props.length; --i >= 0;) {
+                            this[props[i]] = args[props[i]];
+                        }
+                    }
+                    if (proto && proto.initialize || (methods && methods.initialize))
+                        (this as any).initialize();
+                    (this as any).flags = 0;
                 }
             }
-            if (proto && proto.initialize || (methods && methods.initialize))
-                this.initialize();
-            this.flags = 0;
-        }}[name];
+        }[name];
     };
     var Node: any = factory();
     if (proto) {
-        Node.prototype = proto;
         Node.BASE = base;
     }
     if (base) base.SUBCLASSES.push(Node);
