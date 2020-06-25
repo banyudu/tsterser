@@ -1151,10 +1151,10 @@ import * as types from "../tools/terser";
         moz_to_me += "\n})\n}";
         me_to_moz += "\n}\n}";
 
-        const moz_to_me_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return(" + moz_to_me + ")")(
+        const moz_to_me_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return (" + moz_to_me + ")")(
             ast, my_start_token, my_end_token, from_moz
         );
-        const me_to_moz_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("to_moz", "to_moz_block", "to_moz_scope", "return(" + me_to_moz + ")")(
+        const me_to_moz_func: (M: types.AST_Node, parent: types.AST_Node) => any = new Function("to_moz", "to_moz_block", "to_moz_scope", "return (" + me_to_moz + ")")(
             to_moz, to_moz_block, to_moz_scope
         );
         MOZ_TO_ME[moztype] = moz_to_me_func;
