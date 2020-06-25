@@ -67,31 +67,31 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
     code += "}";
     code += "this.flags = 0;";
     code += "}";
-    var ctor = new Function(code)();
+    var Node = new Function(code)();
     if (proto) {
-        ctor.prototype = proto;
-        ctor.BASE = base;
+        Node.prototype = proto;
+        Node.BASE = base;
     }
-    if (base) base.SUBCLASSES.push(ctor);
-    ctor.prototype.CTOR = ctor;
-    ctor.prototype.constructor = ctor;
-    ctor.PROPS = props || null;
-    ctor.SELF_PROPS = self_props;
-    ctor.SUBCLASSES = [];
+    if (base) base.SUBCLASSES.push(Node);
+    Node.prototype.CTOR = Node;
+    Node.prototype.constructor = Node;
+    Node.PROPS = props || null;
+    Node.SELF_PROPS = self_props;
+    Node.SUBCLASSES = [];
     if (type) {
-        ctor.prototype.TYPE = ctor.TYPE = type;
+        Node.prototype.TYPE = Node.TYPE = type;
     }
     if (methods) for (let i in methods) if (HOP(methods, i)) {
         if (i[0] === "$") {
-            ctor[i.substr(1)] = methods[i];
+            Node[i.substr(1)] = methods[i];
         } else {
-            ctor.prototype[i] = methods[i];
+            Node.prototype[i] = methods[i];
         }
     }
-    ctor.DEFMETHOD = function(name: string, method: Function) {
+    Node.DEFMETHOD = function(name: string, method: Function) {
         this.prototype[name] = method;
     };
-    return ctor;
+    return Node;
 }
 
 var AST_Token = DEFNODE("Token", "type value line col pos endline endcol endpos nlb comments_before comments_after file raw quote end", {
