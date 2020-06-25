@@ -57,16 +57,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
     var self_props = props;
     if (base && base.PROPS)
         props = props.concat(base.PROPS);
-    // var code = "return function AST_" + type + "(props){ if (props) { ";
-    // for (let i = props.length; --i >= 0;) {
-    //     code += "this." + props[i] + " = props." + props[i] + ";";
-    // }
     const proto = base && Object.create(base.prototype);
-    // if (proto && proto.initialize || (methods && methods.initialize))
-    //     code += "this.initialize();";
-    // code += "}";
-    // code += "this.flags = 0;";
-    // code += "}";
     const name = `AST_${type}`;
     const factory = () => {
         return {
@@ -81,7 +72,6 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base
             this.flags = 0;
         }}[name];
     };
-    // var Node = new Function(code)();
     var Node: any = factory();
     if (proto) {
         Node.prototype = proto;
