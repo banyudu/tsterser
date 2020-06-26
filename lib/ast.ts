@@ -57,12 +57,30 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
     var self_props = props;
     if (base && base.PROPS)
         props = props.concat(base.PROPS);
-    const proto = base && Object.create(base.prototype);
     const name = `AST_${type}`;
-    const BasicClass = base || class {};
     const factory = () => {
-        return {
+        const proto = base && Object.create(base.prototype);
+        const BasicClass = base || class {};
+        const obj = {
             [name]: class extends BasicClass {
+                CTOR: Function;
+                static _SUBCLASSES: any;
+                flags: number;
+                initialize: any;
+
+                static get SELF_PROPS() { return self_props; }
+                static set SELF_PROPS(val) { self_props = val; }
+                static get SUBCLASSES () {
+                    if (!this._SUBCLASSES) {
+                        this._SUBCLASSES = [];
+                    }
+                    return this._SUBCLASSES;
+                }
+                static get PROPS() { return props || null; }
+                static set PROPS(val) { props = val; }
+                static get BASE() { return proto ? base : undefined; }
+                static get TYPE() { return type || undefined; }
+                get TYPE() { return type || undefined; }
                 constructor (args) {
                     super(args);
                     if (args) {
@@ -71,34 +89,26 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                         }
                     }
                     if (proto && proto.initialize || (methods && methods.initialize))
-                        (this as any).initialize();
-                    (this as any).flags = 0;
+                        this.initialize();
+                    this.flags = 0;
+                    this.CTOR = this.constructor;
+                }
+
+                static DEFMETHOD (name: string, method: Function) {
+                    this.prototype[name] = method;
                 }
             }
-        }[name];
+        };
+        return obj[name];
     };
     var Node: any = factory();
-    if (proto) {
-        Node.BASE = base;
-    }
     if (base) base.SUBCLASSES.push(Node);
-    Node.prototype.CTOR = Node;
-    Node.prototype.constructor = Node;
-    Node.PROPS = props || null;
-    Node.SELF_PROPS = self_props;
-    Node.SUBCLASSES = [];
-    if (type) {
-        Node.prototype.TYPE = Node.TYPE = type;
-    }
     if (methods) for (let i in methods) if (HOP(methods, i)) {
         Node.prototype[i] = methods[i];
     }
     if (staticMethods) for (let i in staticMethods) if (HOP(staticMethods, i)) {
         Node[i] = staticMethods[i];
     }
-    Node.DEFMETHOD = function(name: string, method: Function) {
-        this.prototype[name] = method;
-    };
     return Node;
 }
 
