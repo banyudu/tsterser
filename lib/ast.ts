@@ -52,7 +52,7 @@ import {
 import { parse } from "./parse";
 import * as types from "../tools/terser";
 
-function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base: typeof types.AST_Node | null = AST_Node) {
+function DEFNODE(type: string, strProps: string | null, methods: AnyObject, base: typeof types.AST_Node | null) {
     let props = strProps ? strProps.split(/\s+/) : [];
     var self_props = props;
     if (base && base.PROPS)
@@ -145,7 +145,7 @@ AST_Node.warn = function(txt, props) {
 
 var AST_Statement: typeof types.AST_Statement = DEFNODE("Statement", null, {
     $documentation: "Base class of all statements",
-});
+}, AST_Node);
 
 var AST_Debugger: typeof types.AST_Debugger = DEFNODE("Debugger", null, {
     $documentation: "Represents a debugger statement",
@@ -446,7 +446,7 @@ var AST_Expansion: typeof types.AST_Expansion = DEFNODE("Expansion", "expression
     _children_backwards(push: Function) {
         push(this.expression);
     },
-});
+}, AST_Node);
 
 var AST_Lambda: typeof types.AST_Lambda = DEFNODE("Lambda", "name argnames uses_arguments is_generator async", {
     $documentation: "Base class for functions",
@@ -532,7 +532,7 @@ var AST_Destructuring: typeof types.AST_Destructuring = DEFNODE("Destructuring",
         }));
         return out;
     }
-});
+}, AST_Node);
 
 var AST_PrefixedTemplateString: typeof types.AST_PrefixedTemplateString = DEFNODE("PrefixedTemplateString", "template_string prefix", {
     $documentation: "A templatestring with a prefix, such as String.raw`foobarbaz`",
@@ -550,7 +550,7 @@ var AST_PrefixedTemplateString: typeof types.AST_PrefixedTemplateString = DEFNOD
         push(this.template_string);
         push(this.prefix);
     },
-});
+}, AST_Node);
 
 var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateString", "segments", {
     $documentation: "A template string literal",
@@ -568,7 +568,7 @@ var AST_TemplateString: typeof types.AST_TemplateString = DEFNODE("TemplateStrin
         let i = this.segments.length;
         while (i--) push(this.segments[i]);
     }
-});
+}, AST_Node);
 
 var AST_TemplateSegment: typeof types.AST_TemplateSegment = DEFNODE("TemplateSegment", "value raw", {
     $documentation: "A segment of a template string literal",
@@ -576,7 +576,7 @@ var AST_TemplateSegment: typeof types.AST_TemplateSegment = DEFNODE("TemplateSeg
         value: "Content of the segment",
         raw: "Raw content of the segment"
     }
-});
+}, AST_Node);
 
 /* -----[ JUMPS ]----- */
 
@@ -643,7 +643,7 @@ var AST_Await: typeof types.AST_Await = DEFNODE("Await", "expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
-});
+}, AST_Node);
 
 var AST_Yield: typeof types.AST_Yield = DEFNODE("Yield", "expression is_star", {
     $documentation: "A `yield` statement",
@@ -659,7 +659,7 @@ var AST_Yield: typeof types.AST_Yield = DEFNODE("Yield", "expression is_star", {
     _children_backwards(push: Function) {
         if (this.expression) push(this.expression);
     }
-});
+}, AST_Node);
 
 /* -----[ IF ]----- */
 
@@ -825,7 +825,7 @@ var AST_VarDef: typeof types.AST_VarDef = DEFNODE("VarDef", "name value", {
         if (this.value) push(this.value);
         push(this.name);
     },
-});
+}, AST_Node);
 
 var AST_NameMapping: typeof types.AST_NameMapping = DEFNODE("NameMapping", "foreign_name name", {
     $documentation: "The part of the export/import statement that declare names from a module.",
@@ -843,7 +843,7 @@ var AST_NameMapping: typeof types.AST_NameMapping = DEFNODE("NameMapping", "fore
         push(this.name);
         push(this.foreign_name);
     },
-});
+}, AST_Node);
 
 var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name imported_names module_name", {
     $documentation: "An `import` statement",
@@ -873,7 +873,7 @@ var AST_Import: typeof types.AST_Import = DEFNODE("Import", "imported_name impor
         }
         if (this.imported_name) push(this.imported_name);
     },
-});
+}, AST_Node);
 
 var AST_Export: typeof types.AST_Export = DEFNODE("Export", "exported_definition exported_value is_default exported_names module_name", {
     $documentation: "An `export` statement",
@@ -939,7 +939,7 @@ var AST_Call: typeof types.AST_Call = DEFNODE("Call", "expression args _annotati
         while (i--) push(this.args[i]);
         push(this.expression);
     },
-});
+}, AST_Node);
 
 var AST_New: typeof types.AST_New = DEFNODE("New", null, {
     $documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
@@ -961,7 +961,7 @@ var AST_Sequence: typeof types.AST_Sequence = DEFNODE("Sequence", "expressions",
         let i = this.expressions.length;
         while (i--) push(this.expressions[i]);
     },
-});
+}, AST_Node);
 
 var AST_PropAccess: typeof types.AST_PropAccess = DEFNODE("PropAccess", "expression property", {
     $documentation: "Base class for property access expressions, i.e. `a.foo` or `a[\"foo\"]`",
@@ -969,7 +969,7 @@ var AST_PropAccess: typeof types.AST_PropAccess = DEFNODE("PropAccess", "express
         expression: "[AST_Node] the “container” expression",
         property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
     }
-});
+}, AST_Node);
 
 var AST_Dot: typeof types.AST_Dot = DEFNODE("Dot", "quote", {
     $documentation: "A dotted property access expression",
@@ -1014,7 +1014,7 @@ var AST_Unary: typeof types.AST_Unary = DEFNODE("Unary", "operator expression", 
     _children_backwards(push: Function) {
         push(this.expression);
     },
-});
+}, AST_Node);
 
 var AST_UnaryPrefix: typeof types.AST_UnaryPrefix = DEFNODE("UnaryPrefix", null, {
     $documentation: "Unary prefix expression, i.e. `typeof i` or `++i`"
@@ -1041,7 +1041,7 @@ var AST_Binary: typeof types.AST_Binary = DEFNODE("Binary", "operator left right
         push(this.right);
         push(this.left);
     },
-});
+}, AST_Node);
 
 var AST_Conditional: typeof types.AST_Conditional = DEFNODE("Conditional", "condition consequent alternative", {
     $documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
@@ -1062,7 +1062,7 @@ var AST_Conditional: typeof types.AST_Conditional = DEFNODE("Conditional", "cond
         push(this.consequent);
         push(this.condition);
     },
-});
+}, AST_Node);
 
 var AST_Assign: typeof types.AST_Assign = DEFNODE("Assign", null, {
     $documentation: "An assignment expression — `a = b + 5`",
@@ -1091,7 +1091,7 @@ var AST_Array: typeof types.AST_Array = DEFNODE("Array", "elements", {
         let i = this.elements.length;
         while (i--) push(this.elements[i]);
     },
-});
+}, AST_Node);
 
 var AST_Object: typeof types.AST_Object = DEFNODE("Object", "properties", {
     $documentation: "An object literal",
@@ -1110,7 +1110,7 @@ var AST_Object: typeof types.AST_Object = DEFNODE("Object", "properties", {
         let i = this.properties.length;
         while (i--) push(this.properties[i]);
     },
-});
+}, AST_Node);
 
 var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectProperty", "key value", {
     $documentation: "Base class for literal object properties",
@@ -1129,7 +1129,7 @@ var AST_ObjectProperty: typeof types.AST_ObjectProperty = DEFNODE("ObjectPropert
         push(this.value);
         if (this.key instanceof AST_Node) push(this.key);
     }
-});
+}, AST_Node);
 
 var AST_ObjectKeyVal: typeof types.AST_ObjectKeyVal = DEFNODE("ObjectKeyVal", "quote", {
     $documentation: "A key: value object property",
@@ -1240,11 +1240,11 @@ var AST_Symbol: typeof types.AST_Symbol = DEFNODE("Symbol", "scope name thedef",
         thedef: "[SymbolDef/S] the definition of this symbol"
     },
     $documentation: "Base class for all symbols"
-});
+}, AST_Node);
 
 var AST_NewTarget: typeof types.AST_NewTarget = DEFNODE("NewTarget", null, {
     $documentation: "A reference to new.target"
-});
+}, AST_Node);
 
 var AST_SymbolDeclaration: typeof types.AST_SymbolDeclaration = DEFNODE("SymbolDeclaration", "init", {
     $documentation: "A declaration symbol (symbol in var/const, function name or argument, symbol in catch)",
@@ -1346,7 +1346,7 @@ var AST_Constant: typeof types.AST_Constant = DEFNODE("Constant", null, {
     getValue: function() {
         return this.value;
     }
-});
+}, AST_Node);
 
 var AST_String: typeof types.AST_String = DEFNODE("String", "value quote", {
     $documentation: "A string literal",
