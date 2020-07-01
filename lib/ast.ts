@@ -88,8 +88,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                             this[props[i]] = args[props[i]];
                         }
                     }
-                    if (proto && proto.initialize || (methods && methods.initialize))
-                        this.initialize();
+                    this.initialize?.();
                     this.flags = 0;
                     this.CTOR = this.constructor;
                 }
