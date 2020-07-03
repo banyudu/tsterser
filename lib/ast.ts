@@ -105,8 +105,54 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
     return Node;
 }
 
-var AST_Token = DEFNODE("Token", "type value line col pos endline endcol endpos nlb comments_before comments_after file raw quote end", {}, {
-}, null);
+class AST_Token {
+    static _SUBCLASSES: any;
+    initialize: any;
+    static get SELF_PROPS() {
+      return [
+        "type",
+        "value",
+        "line",
+        "col",
+        "pos",
+        "endline",
+        "endcol",
+        "endpos",
+        "nlb",
+        "comments_before",
+        "comments_after",
+        "file",
+        "raw",
+        "quote",
+        "end",
+      ];
+    }
+    static get SUBCLASSES() {
+      if (!this._SUBCLASSES) {
+        this._SUBCLASSES = [];
+      }
+      return this._SUBCLASSES;
+    }
+    static get PROPS() {
+      return AST_Token.SELF_PROPS;
+    }
+    static get BASE() {
+      return undefined;
+    }
+    static get TYPE() {
+      return "Token";
+    }
+    static DEFMETHOD(name: string, method: Function) {
+      this.prototype[name] = method;
+    }
+  
+    constructor(args: any = {}) {
+      if (args) {
+        AST_Token.SELF_PROPS.map((item) => (this[item] = args[item]));
+      }
+      this.initialize?.();
+    }
+  }
 
 var AST_Node: typeof types.AST_Node = DEFNODE("Node", "start end", {
     _clone: function(deep: boolean) {
