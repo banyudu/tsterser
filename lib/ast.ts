@@ -88,9 +88,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                 constructor (args) {
                     super(args);
                     if (args) {
-                        for (let i = props.length; --i >= 0;) {
-                            this[props[i]] = args[props[i]];
-                        }
+                        obj[name].SELF_PROPS.forEach(item => this[item] = args[item]);
                     }
                     this.initialize?.();
                 }
