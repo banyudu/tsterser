@@ -63,13 +63,14 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
         const BasicClass = base || class {};
         const obj = {
             [name]: class extends BasicClass {
-                CTOR: Function;
                 static _SUBCLASSES: any;
-                flags: number;
                 initialize: any;
 
+                CTOR = this.constructor;
+                flags = 0;
+                TYPE = type || undefined;
+
                 static get SELF_PROPS() { return self_props; }
-                static set SELF_PROPS(val) { self_props = val; }
                 static get SUBCLASSES () {
                     if (!this._SUBCLASSES) {
                         this._SUBCLASSES = [];
@@ -77,10 +78,13 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                     return this._SUBCLASSES;
                 }
                 static get PROPS() { return props || null; }
-                static set PROPS(val) { props = val; }
                 static get BASE() { return proto ? base : undefined; }
                 static get TYPE() { return type || undefined; }
-                get TYPE() { return type || undefined; }
+
+                static DEFMETHOD (name: string, method: Function) {
+                    this.prototype[name] = method;
+                }
+
                 constructor (args) {
                     super(args);
                     if (args) {
@@ -89,13 +93,8 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                         }
                     }
                     this.initialize?.();
-                    this.flags = 0;
-                    this.CTOR = this.constructor;
                 }
 
-                static DEFMETHOD (name: string, method: Function) {
-                    this.prototype[name] = method;
-                }
             }
         };
         return obj[name];
