@@ -53,10 +53,7 @@ import { parse } from "./parse";
 import * as types from "../tools/terser";
 
 function DEFNODE(type: string, strProps: string | null, methods: AnyObject, staticMethods: AnyObject, base: typeof types.AST_Node | null) {
-    let props = strProps ? strProps.split(/\s+/) : [];
-    var self_props = props;
-    if (base && base.PROPS)
-        props = props.concat(base.PROPS);
+    let self_props = strProps ? strProps.split(/\s+/) : [];
     const name = `AST_${type}`;
     const factory = () => {
         const proto = base && Object.create(base.prototype);
@@ -77,7 +74,7 @@ function DEFNODE(type: string, strProps: string | null, methods: AnyObject, stat
                     }
                     return this._SUBCLASSES;
                 }
-                static get PROPS() { return props || null; }
+                static get PROPS() { return obj[name].SELF_PROPS.concat((BasicClass as any).PROPS || []); }
                 static get BASE() { return proto ? base : undefined; }
                 static get TYPE() { return type || undefined; }
 
