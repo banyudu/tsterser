@@ -20,7 +20,6 @@ import {
     mangle_properties,
     reserve_quoted_keys,
 } from "./propmangle";
-import { MinifyOptions, MinifyOutput } from "../tools/terser";
 
 var to_ascii = typeof atob == "undefined" ? function(b64: string) {
     return Buffer.from(b64, "base64").toString();
@@ -64,7 +63,7 @@ function cache_to_json(cache: any) {
     };
 }
 
-function minify(files: any, options: MinifyOptions): MinifyOutput {
+function minify(files: any, options: any): any {
     var warn_function = AST_Node.warn_function;
     try {
         options = defaults(options, {

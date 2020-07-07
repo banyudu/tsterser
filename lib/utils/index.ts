@@ -43,8 +43,6 @@
 
 "use strict";
 
-import * as types from "../../tools/terser";
-
 class AtTop {
     v: any
     constructor (val: any) {
@@ -112,7 +110,7 @@ function return_this() { return this; }
 function return_null() { return null; }
 
 var MAP = (function() {
-    function MAP(a: types.AST_Node[] | AnyObject, f: Function, backwards?: boolean) {
+    function MAP(a: any[] | AnyObject, f: Function, backwards?: boolean) {
         var ret: any[] = [], top: any[] = [], i: string | number;
         function doit() {
             var val: any = f((a as any)[i], i);
@@ -174,7 +172,7 @@ function string_template(text: string, props?: AnyObject) {
     });
 }
 
-function remove<T = types.AST_Node>(array: T[], el: T) {
+function remove<T = any>(array: T[], el: T) {
     for (var i = array.length; --i >= 0;) {
         if (array[i] === el) array.splice(i, 1);
     }
@@ -277,11 +275,11 @@ function sort_regexp_flags(flags: string) {
     return out;
 }
 
-function has_annotation(node: types.AST_Node, annotation: number) {
+function has_annotation(node: any, annotation: number) {
     return node._annotations & annotation;
 }
 
-function set_annotation(node: types.AST_Node, annotation: number) {
+function set_annotation(node: any, annotation: number) {
     node._annotations |= annotation;
 }
 

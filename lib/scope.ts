@@ -108,7 +108,6 @@ import {
     RESERVED_WORDS,
     js_error,
 } from "./parse";
-import * as types from "../tools/terser";
 
 const MASK_EXPORT_DONT_MANGLE = 1 << 0;
 const MASK_EXPORT_WANT_MANGLE = 1 << 1;
@@ -116,7 +115,7 @@ const MASK_EXPORT_WANT_MANGLE = 1 << 1;
 let function_defs: Set<any> | null = null;
 let unmangleable_names: Set<any> | null = null;
 
-class SymbolDef implements types.SymbolDef {
+class SymbolDef {
     name: any;
     orig: any[];
     init: any;
@@ -138,7 +137,7 @@ class SymbolDef implements types.SymbolDef {
     should_replace: any;
     single_use: boolean;
     fixed: any;
-    constructor(scope: types.AST_Scope | null, orig: { name: string }, init?: boolean) {
+    constructor(scope: any | null, orig: { name: string }, init?: boolean) {
         this.name = orig.name;
         this.orig = [ orig ];
         this.init = init;
@@ -165,7 +164,7 @@ class SymbolDef implements types.SymbolDef {
         if (!this.fixed || this.fixed instanceof AST_Node) return this.fixed;
         return this.fixed();
     }
-    unmangleable(options: types.MangleOptions) {
+    unmangleable(options: any) {
         if (!options) options = {};
 
         if (
@@ -184,7 +183,7 @@ class SymbolDef implements types.SymbolDef {
             || (this.orig[0] instanceof AST_SymbolClass
                   || this.orig[0] instanceof AST_SymbolDefClass) && keep_name(options.keep_classnames, this.orig[0].name);
     }
-    mangle(options: types.MangleOptions) {
+    mangle(options: any) {
         const cache = options.cache && options.cache.props;
         if (this.global && cache && cache.has(this.name)) {
             this.mangled_name = cache.get(this.name);
@@ -206,7 +205,7 @@ class SymbolDef implements types.SymbolDef {
 
 SymbolDef.next_id = 1;
 
-function redefined_catch_def(def: types.SymbolDef) {
+function redefined_catch_def(def: any) {
     if (def.orig[0] instanceof AST_SymbolCatch
         && def.scope.is_block_scope()
     ) {
@@ -214,7 +213,7 @@ function redefined_catch_def(def: types.SymbolDef) {
     }
 }
 
-AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, { parent_scope = null, toplevel = this } = {}) {
+AST_Scope.DEFMETHOD("figure_out_scope", function(options: any, { parent_scope = null, toplevel = this } = {}) {
     options = defaults(options, {
         cache: null,
         ie8: false,
@@ -226,11 +225,11 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
     }
 
     // pass 1: setup scope chaining and handle definitions
-    var scope: types.AST_Scope = this.parent_scope = parent_scope as any;
+    var scope: any = this.parent_scope = parent_scope as any;
     var labels = new Map();
     var defun: any = null;
     var in_destructuring: any = null;
-    var for_scopes: types.AST_Scope[] = [];
+    var for_scopes: any[] = [];
     var tw = new TreeWalker((node, descend) => {
         if (node.is_block_scope()) {
             const save_scope = scope;
@@ -300,7 +299,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
             return true;        // no descend again
         }
         if (node instanceof AST_With) {
-            for (var s: types.AST_Scope | null = scope; s; s = s.parent_scope)
+            for (var s: any | null = scope; s; s = s.parent_scope)
                 s.uses_with = true;
             return;
         }
@@ -335,7 +334,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
             || node instanceof AST_SymbolConst
             || node instanceof AST_SymbolCatch
         ) {
-            var def: types.SymbolDef;
+            var def: any;
             if (node instanceof AST_SymbolBlockDeclaration) {
                 def = scope.def_variable(node, null);
             } else {
@@ -386,7 +385,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
     });
     this.walk(tw);
 
-    function mark_export(def: types.SymbolDef, level: number) {
+    function mark_export(def: any, level: number) {
         if (in_destructuring) {
             var i = 0;
             do {
@@ -408,7 +407,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
         this.globals = new Map();
     }
 
-    var tw = new TreeWalker((node: types.AST_Node) => {
+    var tw = new TreeWalker((node: any) => {
         if (node instanceof AST_LoopControl && node.label) {
             node.label.thedef.references.push(node as any); // TODO: check type
             return true;
@@ -452,7 +451,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
 
     // pass 3: work around IE8 and Safari catch scope bugs
     if (options.ie8 || options.safari10) {
-        walk(this, (node: types.AST_Node) => {
+        walk(this, (node: any) => {
             if (node instanceof AST_SymbolCatch) {
                 var name = node.name;
                 var refs = node.thedef.references;
@@ -484,7 +483,7 @@ AST_Scope.DEFMETHOD("figure_out_scope", function(options: types.MangleOptions, {
     }
 });
 
-AST_Toplevel.DEFMETHOD("def_global", function(node: types.AST_Node) {
+AST_Toplevel.DEFMETHOD("def_global", function(node: any) {
     var globals = this.globals, name = node.name;
     if (globals.has(name)) {
         return globals.get(name);
@@ -497,7 +496,7 @@ AST_Toplevel.DEFMETHOD("def_global", function(node: types.AST_Node) {
     }
 });
 
-AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope: types.AST_Scope) {
+AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope: any) {
     this.variables = new Map();         // map name to AST_SymbolVar (variables defined in this scope; includes functions)
     this.functions = new Map();         // map name to AST_SymbolDefun (functions defined in this scope)
     this.uses_with = false;             // will be set to true if this or some nested scope uses the `with` statement
@@ -508,7 +507,7 @@ AST_Scope.DEFMETHOD("init_scope_vars", function(parent_scope: types.AST_Scope) {
     this._var_name_cache = null;
 });
 
-AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope): Set<string> | null {
+AST_Scope.DEFMETHOD("var_names", function varNames(this: any): Set<string> | null {
     var var_names = this._var_name_cache;
     if (!var_names) {
         this._var_name_cache = var_names = new Set(
@@ -517,7 +516,7 @@ AST_Scope.DEFMETHOD("var_names", function varNames(this: types.AST_Scope): Set<s
         if (this._added_var_names) {
             this._added_var_names.forEach(name => { var_names?.add(name); });
         }
-        this.enclosed.forEach(function(def: types.SymbolDef) {
+        this.enclosed.forEach(function(def: any) {
             var_names?.add(def.name);
         });
         this.variables.forEach(function(_, name: string) {
@@ -540,7 +539,7 @@ AST_Scope.DEFMETHOD("add_var_name", function (name: string) {
 
 // TODO create function that asks if we can inline
 
-AST_Scope.DEFMETHOD("add_child_scope", function (scope: types.AST_Scope) {
+AST_Scope.DEFMETHOD("add_child_scope", function (scope: any) {
     // `scope` is going to be moved into wherever the compressor is
     // right now. Update the required scopes' information
 
@@ -618,20 +617,20 @@ AST_Symbol.DEFMETHOD("reference", function() {
     this.mark_enclosed();
 });
 
-AST_Scope.DEFMETHOD("find_variable", function(name: types.AST_Node | string) {
+AST_Scope.DEFMETHOD("find_variable", function(name: any | string) {
     if (name instanceof AST_Symbol) name = name.name;
     return this.variables.get(name)
         || (this.parent_scope && this.parent_scope.find_variable(name));
 });
 
-AST_Scope.DEFMETHOD("def_function", function(this: types.AST_Scope, symbol: types.AST_Symbol, init: boolean) {
+AST_Scope.DEFMETHOD("def_function", function(this: any, symbol: any, init: boolean) {
     var def = this.def_variable(symbol, init);
     if (!def.init || def.init instanceof AST_Defun) def.init = init;
     this.functions.set(symbol.name, def);
     return def;
 });
 
-AST_Scope.DEFMETHOD("def_variable", function(symbol: types.AST_Symbol, init: boolean) {
+AST_Scope.DEFMETHOD("def_variable", function(symbol: any, init: boolean) {
     var def = this.variables.get(symbol.name);
     if (def) {
         def.orig.push(symbol);
@@ -646,7 +645,7 @@ AST_Scope.DEFMETHOD("def_variable", function(symbol: types.AST_Symbol, init: boo
     return symbol.thedef = def;
 });
 
-function next_mangled(scope: types.AST_Scope, options: types.MangleOptions) {
+function next_mangled(scope: any, options: any) {
     var ext = scope.enclosed;
     out: while (true) {
         var m = base54(++scope.cname);
@@ -672,11 +671,11 @@ function next_mangled(scope: types.AST_Scope, options: types.MangleOptions) {
     }
 }
 
-AST_Scope.DEFMETHOD("next_mangled", function(options: types.MangleOptions) {
+AST_Scope.DEFMETHOD("next_mangled", function(options: any) {
     return next_mangled(this, options);
 });
 
-AST_Toplevel.DEFMETHOD("next_mangled", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("next_mangled", function(options: any) {
     let name;
     const mangled_names = this.mangled_names;
     do {
@@ -685,7 +684,7 @@ AST_Toplevel.DEFMETHOD("next_mangled", function(options: types.MangleOptions) {
     return name;
 });
 
-AST_Function.DEFMETHOD("next_mangled", function(options: types.MangleOptions, def: types.SymbolDef) {
+AST_Function.DEFMETHOD("next_mangled", function(options: any, def: any) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
@@ -702,7 +701,7 @@ AST_Function.DEFMETHOD("next_mangled", function(options: types.MangleOptions, de
     }
 });
 
-AST_Symbol.DEFMETHOD("unmangleable", function(options: types.MangleOptions) {
+AST_Symbol.DEFMETHOD("unmangleable", function(options: any) {
     var def = this.definition();
     return !def || def.unmangleable(options);
 });
@@ -722,7 +721,7 @@ AST_Symbol.DEFMETHOD("global", function() {
     return this.thedef.global;
 });
 
-AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options: any) {
     options = defaults(options, {
         eval        : false,
         ie8         : false,
@@ -745,7 +744,7 @@ AST_Toplevel.DEFMETHOD("_default_mangler_options", function(options: types.Mangl
     return options;
 });
 
-AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("mangle_names", function(options: any) {
     options = this._default_mangler_options(options);
 
     // We only need to mangle declaration nodes.  Special logic wired
@@ -769,7 +768,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
         }
     }
 
-    var tw = new TreeWalker(function(node: types.AST_Node, descend) {
+    var tw = new TreeWalker(function(node: any, descend) {
         if (node instanceof AST_LabeledStatement) {
             // lname is incremented when we get to the AST_Label
             var save_nesting = lname;
@@ -827,7 +826,7 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
     function_defs = null;
     unmangleable_names = null;
 
-    function collect(symbol: types.SymbolDef) {
+    function collect(symbol: any) {
         const should_mangle = !options.reserved?.has(symbol.name)
             && !(symbol.export & MASK_EXPORT_DONT_MANGLE);
         if (should_mangle) {
@@ -836,12 +835,12 @@ AST_Toplevel.DEFMETHOD("mangle_names", function(options: types.MangleOptions) {
     }
 });
 
-AST_Toplevel.DEFMETHOD("find_colliding_names", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("find_colliding_names", function(options: any) {
     const cache = options.cache && options.cache.props;
     const avoid = new Set();
     options.reserved?.forEach(to_avoid);
     this.globals.forEach(add_def);
-    this.walk(new TreeWalker(function(node: types.AST_Node) {
+    this.walk(new TreeWalker(function(node: any) {
         if (node instanceof AST_Scope) node.variables.forEach(add_def);
         if (node instanceof AST_SymbolCatch) add_def(node.definition());
     }));
@@ -851,7 +850,7 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options: types.MangleOpt
         avoid.add(name);
     }
 
-    function add_def(def: types.SymbolDef) {
+    function add_def(def: any) {
         var name = def.name;
         if (def.global && cache && cache.has(name)) name = cache.get(name) as string;
         else if (!def.unmangleable(options)) return;
@@ -859,14 +858,14 @@ AST_Toplevel.DEFMETHOD("find_colliding_names", function(options: types.MangleOpt
     }
 });
 
-AST_Toplevel.DEFMETHOD("expand_names", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("expand_names", function(options: any) {
     base54.reset();
     base54.sort();
     options = this._default_mangler_options(options);
     var avoid = this.find_colliding_names(options);
     var cname = 0;
     this.globals.forEach(rename);
-    this.walk(new TreeWalker(function(node: types.AST_Node) {
+    this.walk(new TreeWalker(function(node: any) {
         if (node instanceof AST_Scope) node.variables.forEach(rename);
         if (node instanceof AST_SymbolCatch) rename(node.definition());
     }));
@@ -879,7 +878,7 @@ AST_Toplevel.DEFMETHOD("expand_names", function(options: types.MangleOptions) {
         return name;
     }
 
-    function rename(def: types.SymbolDef) {
+    function rename(def: any) {
         if (def.global && options.cache) return;
         if (def.unmangleable(options)) return;
         if (options.reserved?.has(def.name)) return;
@@ -899,10 +898,10 @@ AST_Sequence.DEFMETHOD("tail_node", function() {
     return this.expressions[this.expressions.length - 1];
 });
 
-AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleOptions) {
+AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: any) {
     options = this._default_mangler_options(options);
     try {
-        AST_Node.prototype.print = function(this: types.AST_Node, stream: any, force_parens: boolean) {
+        AST_Node.prototype.print = function(this: any, stream: any, force_parens: boolean) {
             this._print(stream, force_parens);
             if (this instanceof AST_Symbol && !this.unmangleable(options)) {
                 base54.consider(this.name, -1);
@@ -910,7 +909,7 @@ AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleO
                 if (this instanceof AST_Dot) {
                     base54.consider(this.property as string, -1);
                 } else if (this instanceof AST_Sub) {
-                    skip_string(this.property as types.AST_Node);
+                    skip_string(this.property as any);
                 }
             }
         };
@@ -920,7 +919,7 @@ AST_Toplevel.DEFMETHOD("compute_char_frequency", function(options: types.MangleO
     }
     base54.sort();
 
-    function skip_string(node: types.AST_Node) {
+    function skip_string(node: any) {
         if (node instanceof AST_String) {
             base54.consider(node.value, -1);
         } else if (node instanceof AST_Conditional) {

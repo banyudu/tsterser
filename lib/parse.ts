@@ -154,7 +154,6 @@ import {
     _NOINLINE,
     _PURE
 } from "./ast";
-import * as types from "../tools/terser";
 
 var _KEYWORDS = "break case catch class const continue debugger default delete do else export extends finally for function if in instanceof let new return switch throw try typeof var void while with";
 var _KEYWORDS_ATOM = "false null true";
@@ -997,7 +996,7 @@ var ATOMIC_START_TOKEN = makePredicate([ "atom", "num", "big_int", "string", "re
 
 /* -----[ Parser ]----- */
 
-function parse($TEXT: string, opt?: types.ParseOptions) {
+function parse($TEXT: string, opt?: any) {
     // maps start tokens to count of comments found outside of their parens
     // Example: /* I count */ ( /* I don't */ foo() )
     // Useful because comments_before property of call with parens outside
@@ -1005,7 +1004,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     // right #__PURE__ comments for an expression
     const outer_comments_before_counts = new Map();
 
-    const options: types.ParseOptions = defaults(opt, {
+    const options: any = defaults(opt, {
         bare_returns   : false,
         ecma           : 2017,
         expression     : false,
@@ -1022,9 +1021,9 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                          ? tokenizer($TEXT, options.filename,
                                      options.html5_comments as boolean, options.shebang as boolean)
                          : $TEXT),
-        token         : null as types.Token | null,
-        prev          : null as types.Token | null,
-        peeked        : null as types.Token | null,
+        token         : null as any | null,
+        prev          : null as any | null,
+        peeked        : null as any | null,
         in_function   : 0,
         in_async      : -1,
         in_generator  : -1,
@@ -1066,11 +1065,11 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                  pos != null ? pos : ctx.tokpos);
     }
 
-    function token_error(token: types.Token | null, msg: string) {
+    function token_error(token: any | null, msg: string) {
         croak(msg, token?.line, token?.col);
     }
 
-    function unexpected(token?: types.Token | null | undefined) {
+    function unexpected(token?: any | null | undefined) {
         if (token == null)
             token = S.token;
         token_error(token, "Unexpected token: " + token?.type + " (" + token?.value + ")");
@@ -1388,7 +1387,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
     function for_() {
         var for_await_error = "`for await` invalid in this context";
-        var await_tok: types.Token | false | null = S.token;
+        var await_tok: any | false | null = S.token;
         if (await_tok?.type == "name" && await_tok.value == "await") {
             if (!is_in_async()) {
                 token_error(await_tok, for_await_error);
@@ -1604,7 +1603,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
 
     function parameter(used_parameters, symbol_type?) {
         var param;
-        var expand: types.Token | null | false = false;
+        var expand: any | null | false = false;
         if (used_parameters === undefined) {
             used_parameters = track_used_binding_identifiers(true, S.input.has_directive("use strict"));
         }
@@ -2241,7 +2240,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
                     expressions: exprs
                 });
                 if (ex.start) {
-                    const startToken = start as types.Token;
+                    const startToken = start as any;
                     const outer_comments_before = startToken.comments_before.length;
                     outer_comments_before_counts.set(start, outer_comments_before);
                     ex.start.comments_before.unshift(...startToken.comments_before);
@@ -2619,7 +2618,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         if (imported_names || imported_name) {
             expect_token("name", "from");
         }
-        var mod_str: types.Token = S.token as types.Token;
+        var mod_str: any = S.token as any;
         if (mod_str.type !== "string") {
             unexpected();
         }
@@ -2742,7 +2741,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
             if (is("name", "from")) {
                 next();
 
-                var mod_str = S.token as types.Token;
+                var mod_str = S.token as any;
                 if (mod_str.type !== "string") {
                     unexpected();
                 }
@@ -2799,7 +2798,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     function as_property_name() {
-        var tmp = S.token as types.Token;
+        var tmp = S.token as any;
         switch (tmp.type) {
           case "punc":
             if (tmp.value === "[") {
@@ -2840,7 +2839,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     function as_name() {
-        var tmp = S.token as types.Token;
+        var tmp = S.token as any;
         if (tmp.type != "name") unexpected();
         next();
         return tmp.value;
@@ -2884,7 +2883,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     // Annotate AST_Call, AST_Lambda or AST_New with the special comments
-    function annotate(node: types.AST_Node) {
+    function annotate(node: any) {
         var start = node.start;
         var comments = start.comments_before;
         const comments_outside_parens = outer_comments_before_counts.get(start);
@@ -2975,7 +2974,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     }
 
     var maybe_unary = function(allow_calls, allow_arrows?) {
-        var start = S.token as types.Token;
+        var start = S.token as any;
         if (start.type == "name" && start.value == "await") {
             if (is_in_async()) {
                 next();
@@ -3019,7 +3018,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         return new ctor({ operator: op, expression: expr });
     }
 
-    var expr_op = function(left: types.AST_Node, min_prec: number, no_in: boolean) {
+    var expr_op = function(left: any, min_prec: number, no_in: boolean) {
         var op = is("operator") ? S.token?.value : null;
         if (op == "in" && no_in) op = null;
         if (op == "**" && left instanceof AST_UnaryPrefix
@@ -3068,7 +3067,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
         return expr instanceof AST_PropAccess || expr instanceof AST_SymbolRef;
     }
 
-    function to_destructuring(node: types.AST_Node) {
+    function to_destructuring(node: any) {
         if (node instanceof AST_Object) {
             node = new AST_Destructuring({
                 start: node.start,
@@ -3114,7 +3113,7 @@ function parse($TEXT: string, opt?: types.ParseOptions) {
     // In ES6, AssignmentExpression can also be an ArrowFunction
     var maybe_assign = function(no_in) {
         handle_regexp();
-        var start = S.token as types.Token;
+        var start = S.token as any;
 
         if (start.type == "name" && start.value == "yield") {
             if (is_in_generator()) {

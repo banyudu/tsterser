@@ -190,7 +190,6 @@ import {
     SymbolDef,
 } from "../scope";
 import "../size";
-import * as types from "../../tools/terser";
 
 const UNUSED    = 0b00000001;
 const TRUTHY    = 0b00000010;
@@ -208,21 +207,21 @@ const TOP       = 0b0000010000000000;
 const CLEAR_BETWEEN_PASSES = SQUEEZED | OPTIMIZED | TOP;
 
 /*@__INLINE__*/
-const has_flag = (node: types.AST_Node, flag: number) => node.flags & flag;
+const has_flag = (node: any, flag: number) => node.flags & flag;
 /*@__INLINE__*/
-const set_flag = (node: types.AST_Node, flag: number) => { node.flags |= flag; };
+const set_flag = (node: any, flag: number) => { node.flags |= flag; };
 /*@__INLINE__*/
-const clear_flag = (node: types.AST_Node, flag: number) => { node.flags &= ~flag; };
+const clear_flag = (node: any, flag: number) => { node.flags &= ~flag; };
 
 class Compressor extends TreeWalker {
-    options: types.CompressOptions;
+    options: any;
     pure_funcs: any;
     top_retain: ((def: any) => any) | undefined;
     toplevel: { funcs: any; vars: any; };
     sequences_limit: number;
     warnings_produced: AnyObject;
     evaluated_regexps: Map<any, any>;
-    constructor(options: types.CompressOptions, false_by_default?: boolean) {
+    constructor(options: any, false_by_default?: boolean) {
         super();
         if (options.defaults !== undefined && !options.defaults) false_by_default = true;
         this.options = defaults(options, {
@@ -295,7 +294,7 @@ class Compressor extends TreeWalker {
         if (typeof pure_funcs == "function") {
             this.pure_funcs = pure_funcs;
         } else {
-            this.pure_funcs = pure_funcs ? function(node: types.AST_Node) {
+            this.pure_funcs = pure_funcs ? function(node: any) {
                 return !pure_funcs?.includes(node.expression.print_to_string());
             } : return_true;
         }
@@ -332,11 +331,11 @@ class Compressor extends TreeWalker {
         this.evaluated_regexps = new Map();
     }
 
-    option<T extends keyof types.CompressOptions>(key: T) {
+    option<T extends keyof any>(key: T) {
         return this.options[key];
     }
 
-    exposed(def: types.SymbolDef) {
+    exposed(def: any) {
         if (def.export) return true;
         if (def.global) for (var i = 0, len = def.orig.length; i < len; i++)
             if (!this.toplevel[def.orig[i] instanceof AST_SymbolDefun ? "funcs" : "vars"])
@@ -373,7 +372,7 @@ class Compressor extends TreeWalker {
         }
     }
 
-    compress(toplevel: types.AST_Toplevel) {
+    compress(toplevel: any) {
         toplevel = toplevel.resolve_defines(this);
         if (this.option("expression")) {
             toplevel.process_expression(true);
@@ -391,7 +390,7 @@ class Compressor extends TreeWalker {
             if (pass > 0 || this.option("reduce_vars")) {
                 toplevel.reset_opt_flags(this);
             }
-            toplevel = toplevel.transform(this) as types.AST_Toplevel;
+            toplevel = toplevel.transform(this) as any;
             if (passes > 1) {
                 let count = 0;
                 walk(toplevel, () => { count++; });
@@ -433,12 +432,12 @@ class Compressor extends TreeWalker {
         this.warnings_produced = {};
     }
 
-    before(node: types.AST_Node, descend: Function) {
+    before(node: any, descend: Function) {
         if (has_flag(node, SQUEEZED)) return node;
         var was_scope = false;
         if (node instanceof AST_Scope) {
             node = node.hoist_properties?.(this);
-            node = (node as types.AST_Scope).hoist_declarations(this);
+            node = (node as any).hoist_declarations(this);
             was_scope = true;
         }
         // Before https://github.com/mishoo/UglifyJS2/pull/1602 AST_Node.optimize()
@@ -463,7 +462,7 @@ class Compressor extends TreeWalker {
     }
 }
 
-function def_optimize(node: typeof types.AST_Node, optimizer: Function) {
+function def_optimize(node: any, optimizer: Function) {
     node.DEFMETHOD("optimize", function(compressor: Compressor) {
         var self = this;
         if (has_flag(self, OPTIMIZED)) return self;
@@ -495,13 +494,13 @@ AST_Toplevel.DEFMETHOD("drop_console", function() {
     }));
 });
 
-AST_Node.DEFMETHOD("equivalent_to", function(node: types.AST_Node) {
+AST_Node.DEFMETHOD("equivalent_to", function(node: any) {
     return equivalent_to(this, node);
 });
 
 AST_Scope.DEFMETHOD("process_expression", function(insert, compressor) {
     var self = this;
-    var tt = new TreeTransformer(function(node: types.AST_Node) {
+    var tt = new TreeTransformer(function(node: any) {
         if (insert && node instanceof AST_SimpleStatement) {
             return make_node(AST_Return, node, {
                 value: node.body
@@ -532,12 +531,12 @@ AST_Scope.DEFMETHOD("process_expression", function(insert, compressor) {
                 node.body[index] = node.body[index].transform(tt);
             }
         } else if (node instanceof AST_If) {
-            node.body = (node.body as types.AST_Node).transform(tt);
+            node.body = (node.body as any).transform(tt);
             if (node.alternative) {
                 node.alternative = node.alternative.transform(tt);
             }
         } else if (node instanceof AST_With) {
-            node.body = (node.body as types.AST_Node).transform(tt);
+            node.body = (node.body as any).transform(tt);
         }
         return node;
     });
@@ -729,7 +728,7 @@ function is_modified(compressor, tw, node, value, level, immutable?) {
         d.direct_access = true;
     }
 
-    const suppress = node => walk(node, (node: types.AST_Node) => {
+    const suppress = node => walk(node, (node: any) => {
         if (!(node instanceof AST_Symbol)) return;
         var d = node.definition?.();
         if (!d) return;
@@ -1058,7 +1057,7 @@ AST_Toplevel.DEFMETHOD("reset_opt_flags", function(compressor: Compressor) {
     const self = this;
     const reduce_vars = compressor.option("reduce_vars");
 
-    const preparation = new TreeWalker(function(node: types.AST_Node, descend) {
+    const preparation = new TreeWalker(function(node: any, descend) {
         clear_flag(node, CLEAR_BETWEEN_PASSES);
         if (reduce_vars) {
             if (compressor.top_retain
@@ -1091,7 +1090,7 @@ AST_SymbolRef.DEFMETHOD("is_immutable", function() {
     return orig.length == 1 && orig[0] instanceof AST_SymbolLambda;
 });
 
-function is_func_expr(node: types.AST_Node) {
+function is_func_expr(node: any) {
     return node instanceof AST_Arrow || node instanceof AST_Function;
 }
 
@@ -1225,7 +1224,7 @@ function is_empty(thing) {
     return false;
 }
 
-function can_be_evicted_from_block(node: types.AST_Node) {
+function can_be_evicted_from_block(node: any) {
     return !(
         node instanceof AST_DefClass ||
         node instanceof AST_Defun ||
@@ -1243,14 +1242,14 @@ function loop_body(x) {
     return x;
 }
 
-function is_iife_call(node: types.AST_Node) {
+function is_iife_call(node: any) {
     // Used to determine whether the node can benefit from negation.
     // Not the case with arrow functions (you need an extra set of parens).
     if (node.TYPE != "Call") return false;
     return node.expression instanceof AST_Function || is_iife_call(node.expression);
 }
 
-function is_undeclared_ref(node: types.AST_Node) {
+function is_undeclared_ref(node: any) {
     return node instanceof AST_SymbolRef && node.definition?.().undeclared;
 }
 
@@ -1261,7 +1260,7 @@ AST_SymbolRef.DEFMETHOD("is_declared", function(compressor: Compressor) {
 });
 
 var identifier_atom = makePredicate("Infinity NaN undefined");
-function is_identifier_atom(node: types.AST_Node | null) {
+function is_identifier_atom(node: any | null) {
     return node instanceof AST_Infinity
         || node instanceof AST_NaN
         || node instanceof AST_Undefined;
@@ -1323,7 +1322,7 @@ function tighten_body(statements, compressor) {
         var args;
         var candidates: any[] = [];
         var stat_index = statements.length;
-        var scanner = new TreeTransformer(function(node: types.AST_Node) {
+        var scanner = new TreeTransformer(function(node: any) {
             if (abort) return node;
             // Skip nodes before `candidate` as quickly as possible
             if (!hit) {
@@ -1438,12 +1437,12 @@ function tighten_body(statements, compressor) {
                 if (node instanceof AST_Scope) abort = true;
             }
             return handle_custom_scan_order(node);
-        }, function(node: types.AST_Node) {
+        }, function(node: any) {
             if (abort) return;
             if (stop_after === node) abort = true;
             if (stop_if_hit === node) stop_if_hit = null;
         });
-        var multi_replacer = new TreeTransformer(function(node: types.AST_Node) {
+        var multi_replacer = new TreeTransformer(function(node: any) {
             if (abort) return node;
             // Skip nodes before `candidate` as quickly as possible
             if (!hit) {
@@ -1519,7 +1518,7 @@ function tighten_body(statements, compressor) {
             }
         }
 
-        function handle_custom_scan_order(node: types.AST_Node) {
+        function handle_custom_scan_order(node: any) {
             // Skip (non-executed) functions
             if (node instanceof AST_Scope) return node;
 
@@ -1554,7 +1553,7 @@ function tighten_body(statements, compressor) {
 
         function has_overlapping_symbol(fn, arg, fn_strict) {
             var found = false, scan_this = !(fn instanceof AST_Arrow);
-            arg.walk(new TreeWalker(function(node: types.AST_Node, descend) {
+            arg.walk(new TreeWalker(function(node: any, descend) {
                 if (found) return true;
                 if (node instanceof AST_SymbolRef && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
                     var s = node.definition?.().scope;
@@ -1793,7 +1792,7 @@ function tighten_body(statements, compressor) {
         function get_lvalues(expr) {
             var lvalues = new Map();
             if (expr instanceof AST_Unary) return lvalues;
-            var tw = new TreeWalker(function(node: types.AST_Node) {
+            var tw = new TreeWalker(function(node: any) {
                 var sym = node;
                 while (sym instanceof AST_PropAccess) sym = sym.expression;
                 if (sym instanceof AST_SymbolRef || sym instanceof AST_This) {
@@ -1831,7 +1830,7 @@ function tighten_body(statements, compressor) {
                     }
                     return in_list ? MAP.skip : null;
                 }
-            }, function(node: types.AST_Node) {
+            }, function(node: any) {
                 if (node instanceof AST_Sequence) switch (node.expressions.length) {
                   case 0: return null;
                   case 1: return node.expressions[0];
@@ -2126,7 +2125,7 @@ function tighten_body(statements, compressor) {
                     || stat instanceof AST_Continue
                         && loop_body(lct) === self) {
                     if (stat.label) {
-                        remove<types.AST_Node>(stat.label.thedef.references, stat);
+                        remove<any>(stat.label.thedef.references, stat);
                     }
                 } else {
                     statements[n++] = stat;
@@ -2146,7 +2145,7 @@ function tighten_body(statements, compressor) {
         });
     }
 
-    function declarations_only(node: types.AST_Node) {
+    function declarations_only(node: any) {
         return node.definitions.every((var_def) =>
             !var_def.value
         );
@@ -2165,7 +2164,7 @@ function tighten_body(statements, compressor) {
             var stat = statements[i];
             if (stat instanceof AST_SimpleStatement) {
                 if (seq.length >= compressor.sequences_limit) push_seq();
-                var body = stat.body as types.AST_Node;
+                var body = stat.body as any;
                 if (seq.length > 0) body = body.drop_side_effect_free(compressor);
                 if (body) merge_sequence(seq, body);
             } else if (stat instanceof AST_Definitions && declarations_only(stat)
@@ -2212,7 +2211,7 @@ function tighten_body(statements, compressor) {
                     stat.value = cons_seq(stat.value || make_node(AST_Undefined, stat).transform(compressor));
                 } else if (stat instanceof AST_For) {
                     if (!(stat.init instanceof AST_Definitions)) {
-                        const abort = walk(prev.body, (node: types.AST_Node) => {
+                        const abort = walk(prev.body, (node: any) => {
                             if (node instanceof AST_Scope) return true;
                             if (
                                 node instanceof AST_Binary
@@ -2296,9 +2295,9 @@ function tighten_body(statements, compressor) {
             if (prop instanceof AST_Node) break;
             prop = "" + prop;
             var diff = compressor.option("ecma") < 2015
-                && compressor.has_directive("use strict") ? function(node: types.AST_Node) {
+                && compressor.has_directive("use strict") ? function(node: any) {
                 return node.key != prop && (node.key && node.key.name != prop);
-            } : function(node: types.AST_Node) {
+            } : function(node: any) {
                 return node.key && node.key.name != prop;
             };
             if (!def.value.properties.every(diff)) break;
@@ -2404,7 +2403,7 @@ function extract_declarations_from_unreachable_code(compressor, stat, target) {
     if (!(stat instanceof AST_Defun)) {
         compressor.warn("Dropping unreachable code [{file}:{line},{col}]", stat.start);
     }
-    walk(stat, (node: types.AST_Node) => {
+    walk(stat, (node: any) => {
         if (node instanceof AST_Var) {
             compressor.warn("Declarations in unreachable code! [{file}:{line},{col}]", node.start);
             node.remove_initializers();
@@ -2640,7 +2639,7 @@ function is_lhs(node, parent) {
     AST_Toplevel.DEFMETHOD("resolve_defines", function(compressor: Compressor) {
         if (!compressor.option("global_defs")) return this;
         this.figure_out_scope({ ie8: compressor.option("ie8") });
-        return this.transform(new TreeTransformer(function(node: types.AST_Node) {
+        return this.transform(new TreeTransformer(function(node: any) {
             var def = node._find_defs(compressor, "");
             if (!def) return;
             var level = 0, child = node, parent;
@@ -3506,7 +3505,7 @@ const pure_prop_access_globals = new Set([
 (function(def_is_constant_expression) {
     function all_refs_local(scope) {
         let result: any = true;
-        walk(this, (node: types.AST_Node) => {
+        walk(this, (node: any) => {
             if (node instanceof AST_SymbolRef) {
                 if (has_flag(this, INLINED)) {
                     result = false;
@@ -3631,7 +3630,7 @@ def_optimize(AST_Block, function(self, compressor) {
     return self;
 });
 
-function can_be_extracted_from_if_block(node: types.AST_Node) {
+function can_be_extracted_from_if_block(node: any) {
     return !(
         node instanceof AST_Const ||
         node instanceof AST_Let ||
@@ -3674,7 +3673,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
     if (self.pinned()) return;
     var drop_funcs = !(self instanceof AST_Toplevel) || compressor.toplevel.funcs;
     var drop_vars = !(self instanceof AST_Toplevel) || compressor.toplevel.vars;
-    const assign_as_unused = r_keep_assign.test(compressor.option("unused") as any) ? return_false : function(node: types.AST_Node) {
+    const assign_as_unused = r_keep_assign.test(compressor.option("unused") as any) ? return_false : function(node: any) {
         if (node instanceof AST_Assign
             && (has_flag(node, WRITE_ONLY) || node.operator == "=")
         ) {
@@ -3698,7 +3697,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
     var scope = this;
-    var tw = new TreeWalker(function(node: types.AST_Node, descend) {
+    var tw = new TreeWalker(function(node: any, descend) {
         if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive("use strict")) {
             node.argnames.forEach(function(argname) {
                 if (!(argname instanceof AST_SymbolDeclaration)) return;
@@ -3747,7 +3746,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
                     map_add(var_defs_by_id, def.name.definition?.().id, def);
                 }
                 if (in_export || !drop_vars) {
-                    walk(def.name, (node: types.AST_Node) => {
+                    walk(def.name, (node: any) => {
                         if (node instanceof AST_SymbolDeclaration) {
                             const def = node.definition?.();
                             if (
@@ -3978,7 +3977,7 @@ AST_Scope.DEFMETHOD("drop_unused", function(compressor: Compressor) {
                 }
                 if (node.init instanceof AST_SimpleStatement) {
                     // TODO: check type
-                    node.init = node.init.body as types.AST_Node;
+                    node.init = node.init.body as any;
                 } else if (is_empty(node.init)) {
                     node.init = null;
                 }
@@ -4076,7 +4075,7 @@ AST_Scope.DEFMETHOD("hoist_declarations", function(compressor: Compressor) {
         var vars = new Map(), vars_found = 0, var_decl = 0;
         // let's count var_decl first, we seem to waste a lot of
         // space if we hoist `var` when there's only one.
-        walk(self, (node: types.AST_Node) => {
+        walk(self, (node: any) => {
             if (node instanceof AST_Scope && node !== self)
                 return true;
             if (node instanceof AST_Var) {
@@ -4086,7 +4085,7 @@ AST_Scope.DEFMETHOD("hoist_declarations", function(compressor: Compressor) {
         });
         hoist_vars = hoist_vars && var_decl > 1;
         var tt = new TreeTransformer(
-            function before(node: types.AST_Node) {
+            function before(node: any) {
                 if (node !== self) {
                     if (node instanceof AST_Directive) {
                         dirs.push(node);
@@ -4211,7 +4210,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
     if (!compressor.option("hoist_props") || compressor.has_directive("use asm")) return self;
     var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false;
     var defs_by_id = new Map();
-    var hoister = new TreeTransformer(function(node: types.AST_Node, descend) {
+    var hoister = new TreeTransformer(function(node: any, descend) {
         if (node instanceof AST_Definitions
             && hoister.parent() instanceof AST_Export) return node;
         if (node instanceof AST_VarDef) {
@@ -4257,7 +4256,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
             }
         }
 
-        function make_sym(sym: types.AST_Symbol | types.AST_Destructuring, key: string, defs: Map<string, any>) {
+        function make_sym(sym: any | any, key: string, defs: Map<string, any>) {
             const new_var = make_node(sym.CTOR, sym, {
                 name: self.make_var_name(sym.name + "_" + key),
                 scope: self
@@ -4278,7 +4277,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
     // Returns an array of expressions with side-effects or null
     // if all elements were dropped. Note: original array may be
     // returned if nothing changed.
-    function trim(nodes: types.AST_Node[], compressor: Compressor, first_in_statement?) {
+    function trim(nodes: any[], compressor: Compressor, first_in_statement?) {
         var len = nodes.length;
         if (!len) return null;
         var ret: any[] = [], changed = false;
@@ -4470,7 +4469,7 @@ AST_Scope.DEFMETHOD("hoist_properties", function(compressor: Compressor) {
         var values = trim(this.segments, compressor, first_in_statement);
         return values && make_sequence(this, values);
     });
-})(function(node: typeof types.AST_Node, func: Function) {
+})(function(node: any, func: Function) {
     node.DEFMETHOD("drop_side_effect_free", func);
 });
 
@@ -4495,7 +4494,7 @@ def_optimize(AST_While, function(self, compressor: Compressor) {
 
 function has_break_or_continue(loop, parent?) {
     var found = false;
-    var tw = new TreeWalker(function(node: types.AST_Node) {
+    var tw = new TreeWalker(function(node: any) {
         if (found || node instanceof AST_Scope) return true;
         if (node instanceof AST_LoopControl && tw.loopcontrol_target(node) === loop) {
             return found = true;
@@ -4557,7 +4556,7 @@ function if_break_in_loop(self, compressor) {
         });
     }
     if (first instanceof AST_If) {
-        if (is_break(first.body as types.AST_Node)) { // TODO: check type
+        if (is_break(first.body as any)) { // TODO: check type
             if (self.condition) {
                 self.condition = make_node(AST_Binary, self.condition, {
                     left: self.condition,
@@ -4583,7 +4582,7 @@ function if_break_in_loop(self, compressor) {
     }
     return self;
 
-    function is_break(node: types.AST_Node | null) {
+    function is_break(node: any | null) {
         return node instanceof AST_Break
             && compressor.loopcontrol_target(node) === compressor.self();
     }
@@ -4857,7 +4856,7 @@ def_optimize(AST_Switch, function(self, compressor) {
     }
     if (body.length == 1 && (body[0] === exact_match || body[0] === default_branch)) {
         var has_break = false;
-        var tw = new TreeWalker(function(node: types.AST_Node) {
+        var tw = new TreeWalker(function(node: any) {
             if (has_break
                 || node instanceof AST_Lambda
                 || node instanceof AST_SimpleStatement) return true;
@@ -4913,7 +4912,7 @@ AST_Definitions.DEFMETHOD("remove_initializers", function() {
             def.value = null;
             decls.push(def);
         } else {
-            walk(def.name, (node: types.AST_Node) => {
+            walk(def.name, (node: any) => {
                 if (node instanceof AST_SymbolDeclaration) {
                     decls.push(make_node(AST_VarDef, def, {
                         name: node,
@@ -5260,7 +5259,7 @@ def_optimize(AST_Call, function(self, compressor) {
                 ast.compute_char_frequency(mangle);
                 ast.mangle_names(mangle);
                 var fun;
-                walk(ast, (node: types.AST_Node) => {
+                walk(ast, (node: any) => {
                     if (is_func_expr(node)) {
                         fun = node;
                         return walk_abort;
@@ -5400,7 +5399,7 @@ def_optimize(AST_Call, function(self, compressor) {
         if (stat instanceof AST_SimpleStatement) {
             return make_node(AST_UnaryPrefix, stat, {
                 operator: "void",
-                expression: (stat.body as types.AST_Node).clone(true)
+                expression: (stat.body as any).clone(true)
             });
         }
     }
@@ -5455,7 +5454,7 @@ def_optimize(AST_Call, function(self, compressor) {
 
     function can_inject_args_values() {
         var arg_vals_outer_refs = new Set();
-        const value_walker = (node: types.AST_Node) => {
+        const value_walker = (node: any) => {
             if (node instanceof AST_Scope) {
                 var scope_outer_refs = new Set();
                 node.enclosed.forEach(function(def) {
@@ -5801,7 +5800,7 @@ AST_Binary.DEFMETHOD("lift_sequences", function(compressor: Compressor) {
 });
 
 var commutativeOperators = makePredicate("== === != !== * & | ^");
-function is_object(node: types.AST_Node) {
+function is_object(node: any) {
     return node instanceof AST_Array
         || node instanceof AST_Lambda
         || node instanceof AST_Object
@@ -6422,7 +6421,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
                     fixed.name = name;
                     lambda_def = fixed.def_function(name);
                 }
-                walk(fixed, (node: types.AST_Node) => {
+                walk(fixed, (node: any) => {
                     if (node instanceof AST_SymbolRef && node.definition?.() === defun_def) {
                         node.thedef = lambda_def;
                         lambda_def.references.push(node);
@@ -6481,7 +6480,7 @@ def_optimize(AST_SymbolRef, function(self, compressor) {
     return self;
 
     function has_symbol_ref(value) {
-        return walk(value, (node: types.AST_Node) => {
+        return walk(value, (node: any) => {
             if (node instanceof AST_SymbolRef) return walk_abort;
         });
     }
@@ -6567,7 +6566,7 @@ def_optimize(AST_NaN, function(self, compressor) {
 });
 
 function is_reachable(self, defs) {
-    const find_ref = (node: types.AST_Node) => {
+    const find_ref = (node: any) => {
         if (node instanceof AST_SymbolRef && member(node.definition?.(), defs)) {
             return walk_abort;
         }
@@ -6663,7 +6662,7 @@ def_optimize(AST_DefaultAssign, function(self, compressor) {
     return self;
 });
 
-function is_nullish(node: types.AST_Node) {
+function is_nullish(node: any) {
     let fixed;
     return (
         node instanceof AST_Null
@@ -6968,7 +6967,7 @@ def_optimize(AST_Conditional, function(self, compressor) {
 
     return self;
 
-    function booleanize(node: types.AST_Node) {
+    function booleanize(node: any) {
         if (node.is_boolean()) return node;
         // !!expression
         return make_node(AST_UnaryPrefix, node, {
@@ -6978,7 +6977,7 @@ def_optimize(AST_Conditional, function(self, compressor) {
     }
 
     // AST_True or !0
-    function is_true(node: types.AST_Node) {
+    function is_true(node: any) {
         return node instanceof AST_True
             || in_bool
                 && node instanceof AST_Constant
@@ -6989,7 +6988,7 @@ def_optimize(AST_Conditional, function(self, compressor) {
                 && !node.expression.getValue());
     }
     // AST_False or !1
-    function is_false(node: types.AST_Node) {
+    function is_false(node: any) {
         return node instanceof AST_False
             || in_bool
                 && node instanceof AST_Constant
@@ -7193,7 +7192,7 @@ def_optimize(AST_Sub, function(self, compressor) {
 });
 
 AST_Lambda.DEFMETHOD("contains_this", function() {
-    return walk(this, (node: types.AST_Node) => {
+    return walk(this, (node: any) => {
         if (node instanceof AST_This) return walk_abort;
         if (
             node !== this
@@ -7381,7 +7380,7 @@ def_optimize(AST_Function, function(self, compressor) {
         && !self.is_generator
         && !self.uses_arguments
         && !self.pinned()) {
-        const has_special_symbol = walk(self, (node: types.AST_Node) => {
+        const has_special_symbol = walk(self, (node: any) => {
             if (node instanceof AST_This) return walk_abort;
         });
         if (!has_special_symbol) return make_node(AST_Arrow, self, self).optimize(compressor);
