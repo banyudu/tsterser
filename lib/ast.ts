@@ -1971,3 +1971,174 @@ AST_Continue.prototype._size = function () {
 
 AST_If.prototype._size = () => 4;
 
+AST_Dot.prototype._size = function (): number {
+    return this.property.length + 1;
+};
+
+AST_Sub.prototype._size = () => 2;
+
+AST_Unary.prototype._size = function (): number {
+    if (this.operator === "typeof") return 7;
+    if (this.operator === "void") return 5;
+    return this.operator.length;
+};
+
+AST_Binary.prototype._size = function (info): number {
+    if (this.operator === "in") return 4;
+
+    let size = this.operator.length;
+
+    if (
+        (this.operator === "+" || this.operator === "-")
+        && this.right instanceof AST_Unary && this.right.operator === this.operator
+    ) {
+        // 1+ +a > needs space between the +
+        size += 1;
+    }
+
+    if (this.needs_parens(info)) {
+        size += 2;
+    }
+
+    return size;
+};
+
+AST_Conditional.prototype._size = () => 3;
+
+/*#__INLINE__*/
+const key_size = key =>
+    typeof key === "string" ? key.length : 0;
+
+/*#__INLINE__*/
+const lambda_modifiers = func =>
+    (func.is_generator ? 1 : 0) + (func.async ? 6 : 0);
+
+/*#__INLINE__*/
+const static_size = is_static => is_static ? 7 : 0;
+
+AST_ObjectGetter.prototype._size = function (): number {
+    return 5 + static_size(this.static) + key_size(this.key);
+};
+
+AST_ObjectSetter.prototype._size = function (): number {
+    return 5 + static_size(this.static) + key_size(this.key);
+};
+
+AST_ConciseMethod.prototype._size = function (): number {
+    return static_size(this.static) + key_size(this.key) + lambda_modifiers(this);
+};
+
+AST_Class.prototype._size = function (): number {
+    return (
+        (this.name ? 8 : 7)
+        + (this.extends ? 8 : 0)
+    );
+};
+
+AST_ClassProperty.prototype._size = function (): number {
+    return (
+        static_size(this.static)
+        + (typeof this.key === "string" ? this.key.length + 2 : 0)
+        + (this.value ? 1 : 0)
+    );
+};
+
+// TODO take propmangle into account
+AST_SymbolClassProperty.prototype._size = function (): number {
+    return this.name.length;
+};
+
+AST_SymbolRef.prototype._size = function (): number {
+    const { name, thedef } = this;
+
+    if (thedef && thedef.global) return name.length;
+
+    if (name === "arguments") return 9;
+
+    return 2;
+};
+
+const list_overhead = (array) => array.length && array.length - 1;
+
+/*#__INLINE__*/
+const def_size = (size, def) => size + list_overhead(def.definitions);
+
+AST_Var.prototype._size = function (): number {
+    return def_size(4, this);
+};
+
+AST_Let.prototype._size = function (): number {
+    return def_size(4, this);
+};
+
+AST_Const.prototype._size = function (): number {
+    return def_size(6, this);
+};
+
+AST_ObjectKeyVal.prototype._size = function (): number {
+    return key_size(this.key) + 1;
+};
+
+AST_Call.prototype._size = function (): number {
+    return 2 + list_overhead(this.args);
+};
+
+AST_New.prototype._size = function (): number {
+    return 6 + list_overhead(this.args);
+};
+
+AST_Sequence.prototype._size = function (): number {
+    return list_overhead(this.expressions);
+};
+
+AST_Array.prototype._size = function (): number {
+    return 2 + list_overhead(this.elements);
+};
+
+AST_Destructuring.prototype._size = () => 2;
+
+AST_TemplateString.prototype._size = function (): number {
+    return 2 + (Math.floor(this.segments.length / 2) * 3);  /* "${}" */
+};
+
+AST_TemplateSegment.prototype._size = function (): number {
+    return this.value.length;
+};
+
+AST_Switch.prototype._size = function (): number {
+    return 8 + list_overhead(this.body);
+};
+
+AST_Case.prototype._size = function (): number {
+    return 5 + list_overhead(this.body);
+};
+
+AST_Default.prototype._size = function (): number {
+    return 8 + list_overhead(this.body);
+};
+
+AST_Try.prototype._size = function (): number {
+    return 3 + list_overhead(this.body);
+};
+
+AST_Catch.prototype._size = function (): number {
+    let size = 7 + list_overhead(this.body);
+    if (this.argname) {
+        size += 2;
+    }
+    return size;
+};
+
+AST_Finally.prototype._size = function (): number {
+    return 7 + list_overhead(this.body);
+};
+
+AST_VarDef.prototype._size = function (): number {
+    return this.value ? 1 : 0;
+};
+
+AST_NameMapping.prototype._size = function (): number {
+    // foreign name isn't mangled
+    return this.name ? 4 : 0;
+};
+
