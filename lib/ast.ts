@@ -2272,3 +2272,24 @@ AST_Directive.prototype._size = function (): number {
     return 2 + this.value.length;
 };
 
+let mangle_options = undefined;
+
+AST_Symbol.prototype._size = function (): number {
+    return !mangle_options || this.definition().unmangleable(mangle_options)
+        ? this.name.length
+        : 2;
+};
+
+AST_Node.prototype.size = function (compressor, stack) {
+    // mangle_options = (default_options as any).mangle;
+
+    let size = 0;
+    walk_parent(this, (node, info) => {
+        size += node._size(info);
+    }, stack || (compressor && compressor.stack));
+
+    // just to save a bit of memory
+    // mangle_options = undefined;
+
+    return size;
+};
