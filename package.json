@@ -9,7 +9,7 @@
     "node": ">=6.0.0"
   },
   "maintainers": [],
-  "repository": "https://github.com/terser/terser",
+  "repository": "https://github.com/banyudu/tsterser",
   "main": "dist/bundle.min.js",
   "module": "main.js",
   "exports": {
