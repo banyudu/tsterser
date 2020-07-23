@@ -51,6 +51,46 @@ import {
 } from "./utils/index";
 import { parse } from "./parse";
 
+// return true if the node at the top of the stack (that means the
+// innermost node in the current output) is lexically the first in
+// a statement.
+export function first_in_statement(stack: any) {
+    let node = stack.parent(-1);
+    for (let i = 0, p; p = stack.parent(i); i++) {
+        if (p instanceof AST_Statement && p.body === node)
+            return true;
+        if ((p instanceof AST_Sequence && p.expressions[0] === node) ||
+            (p.TYPE === "Call" && p.expression === node) ||
+            (p instanceof AST_PrefixedTemplateString && p.prefix === node) ||
+            (p instanceof AST_Dot && p.expression === node) ||
+            (p instanceof AST_Sub && p.expression === node) ||
+            (p instanceof AST_Conditional && p.condition === node) ||
+            (p instanceof AST_Binary && p.left === node) ||
+            (p instanceof AST_UnaryPostfix && p.expression === node)
+        ) {
+            node = p;
+        } else {
+            return false;
+        }
+    }
+    return undefined;
+}
+
+// Returns whether the leftmost item in the expression is an object
+export function left_is_object(node: any): boolean {
+    if (node instanceof AST_Object) return true;
+    if (node instanceof AST_Sequence) return left_is_object(node.expressions[0]);
+    if (node.TYPE === "Call") return left_is_object(node.expression);
+    if (node instanceof AST_PrefixedTemplateString) return left_is_object(node.prefix);
+    if (node instanceof AST_Dot || node instanceof AST_Sub) return left_is_object(node.expression);
+    if (node instanceof AST_Conditional) return left_is_object(node.condition);
+    if (node instanceof AST_Binary) return left_is_object(node.left);
+    if (node instanceof AST_UnaryPostfix) return left_is_object(node.expression);
+    return false;
+}
+
+
+
 function DEFNODE(type: string, strProps: string | null, methods: AnyObject, staticMethods: AnyObject, base: any | null) {
     let self_props = strProps ? strProps.split(/\s+/) : [];
     const name = `AST_${type}`;
