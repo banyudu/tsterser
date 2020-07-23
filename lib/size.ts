@@ -2,11 +2,8 @@ import {
     AST_Accessor,
     AST_Array,
     AST_Arrow,
-    AST_Await,
-    AST_BigInt,
     AST_Binary,
     AST_Block,
-    AST_Break,
     AST_Call,
     AST_Case,
     AST_Class,
@@ -14,66 +11,38 @@ import {
     AST_ConciseMethod,
     AST_Conditional,
     AST_Const,
-    AST_Continue,
     AST_Debugger,
     AST_Default,
     AST_Defun,
     AST_Destructuring,
     AST_Directive,
-    AST_Do,
     AST_Dot,
-    AST_EmptyStatement,
-    AST_Expansion,
     AST_Export,
-    AST_False,
-    AST_For,
-    AST_ForIn,
     AST_Function,
-    AST_Hole,
-    AST_If,
     AST_Import,
-    AST_Infinity,
-    AST_LabeledStatement,
     AST_Let,
     AST_NameMapping,
-    AST_NaN,
     AST_New,
-    AST_NewTarget,
     AST_Node,
-    AST_Null,
-    AST_Number,
     AST_Object,
     AST_ObjectKeyVal,
     AST_ObjectGetter,
     AST_ObjectSetter,
-    AST_RegExp,
-    AST_Return,
     AST_Sequence,
-    AST_String,
     AST_Sub,
-    AST_Super,
     AST_Switch,
     AST_Symbol,
     AST_SymbolClassProperty,
-    AST_SymbolExportForeign,
-    AST_SymbolImportForeign,
     AST_SymbolRef,
     AST_TemplateSegment,
     AST_TemplateString,
-    AST_This,
-    AST_Throw,
     AST_Toplevel,
-    AST_True,
     AST_Try,
     AST_Catch,
     AST_Finally,
     AST_Unary,
-    AST_Undefined,
     AST_Var,
     AST_VarDef,
-    AST_While,
-    AST_With,
-    AST_Yield,
     walk_parent
 } from "./ast";
 import { default_options } from "../tools/node";
@@ -112,23 +81,6 @@ AST_Block.prototype._size = function () {
 AST_Toplevel.prototype._size = function() {
     return list_overhead(this.body);
 };
-
-AST_EmptyStatement.prototype._size = () => 1;
-
-AST_LabeledStatement.prototype._size = () => 2;  // x:
-
-AST_Do.prototype._size = () => 9;
-
-AST_While.prototype._size = () => 7;
-
-AST_For.prototype._size = () => 8;
-
-AST_ForIn.prototype._size = () => 8;
-// AST_ForOf inherits ^
-
-AST_With.prototype._size = () => 6;
-
-AST_Expansion.prototype._size = () => 3;
 
 /*#__INLINE__*/
 const lambda_modifiers = func =>
@@ -171,22 +123,6 @@ AST_TemplateString.prototype._size = function (): number {
 AST_TemplateSegment.prototype._size = function (): number {
     return this.value.length;
 };
-
-AST_Return.prototype._size = function () {
-    return this.value ? 7 : 6;
-};
-
-AST_Throw.prototype._size = () => 6;
-
-AST_Break.prototype._size = function () {
-    return this.label ? 6 : 5;
-};
-
-AST_Continue.prototype._size = function () {
-    return this.label ? 9 : 8;
-};
-
-AST_If.prototype._size = () => 4;
 
 AST_Switch.prototype._size = function (): number {
     return 8 + list_overhead(this.body);
@@ -393,56 +329,3 @@ AST_SymbolRef.prototype._size = function (): number {
 
     return 2;
 };
-
-AST_NewTarget.prototype._size = () => 10;
-
-AST_SymbolImportForeign.prototype._size = function (): number {
-    return this.name.length;
-};
-
-AST_SymbolExportForeign.prototype._size = function (): number {
-    return this.name.length;
-};
-
-AST_This.prototype._size = () => 4;
-
-AST_Super.prototype._size = () => 5;
-
-AST_String.prototype._size = function (): number {
-    return this.value.length + 2;
-};
-
-AST_Number.prototype._size = function (): number {
-    const { value } = this;
-    if (value === 0) return 1;
-    if (value > 0 && Math.floor(value) === value) {
-        return Math.floor(Math.log10(value) + 1);
-    }
-    return value.toString().length;
-};
-
-AST_BigInt.prototype._size = function (): number {
-    return this.value.length;
-};
-
-AST_RegExp.prototype._size = function (): number {
-    return this.value.toString().length;
-};
-
-AST_Null.prototype._size = () => 4;
-
-AST_NaN.prototype._size = () => 3;
-
-AST_Undefined.prototype._size = () => 6; // "void 0"
-
-AST_Hole.prototype._size = () => 0;  // comma is taken into account
-
-AST_Infinity.prototype._size = () => 8;
-
-AST_True.prototype._size = () => 4;
-
-AST_False.prototype._size = () => 5;
-
-AST_Await.prototype._size = () => 6;
-
-AST_Yield.prototype._size = () => 6;
