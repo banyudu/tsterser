@@ -214,20 +214,33 @@ var AST_Node: any = DEFNODE("Node", "start end", {
     walk: function(visitor: any) {
         return this._walk(visitor); // not sure the indirection will be any help
     },
-    _children_backwards: () => {}
+    _children_backwards: () => {},
+    _size: () => 0,
+    size: function (compressor, stack) {
+        // mangle_options = (default_options as any).mangle;
+
+        let size = 0;
+        walk_parent(this, (node, info) => {
+            size += node._size(info);
+        }, stack || (compressor && compressor.stack));
+
+        // just to save a bit of memory
+        // mangle_options = undefined;
+
+        return size;
+    }
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
         start: "[AST_Token] The first token of this node",
         end: "[AST_Token] The last token of this node"
     },
+    warn_function: null,
+    warn: function(txt, props) {
+        if (AST_Node.warn_function)
+            AST_Node.warn_function(string_template(txt, props));
+    }
 }, null);
-
-AST_Node.warn_function = null;
-AST_Node.warn = function(txt, props) {
-    if (AST_Node.warn_function)
-        AST_Node.warn_function(string_template(txt, props));
-};
 
 /* -----[ statements ]----- */
 
@@ -2263,7 +2276,6 @@ AST_Arrow.prototype._size = function (): number {
     return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
 };
 
-AST_Node.prototype._size = () => 0;
 
 AST_Debugger.prototype._size = () => 8;
 
@@ -2278,18 +2290,4 @@ AST_Symbol.prototype._size = function (): number {
     return !mangle_options || this.definition().unmangleable(mangle_options)
         ? this.name.length
         : 2;
-};
-
-AST_Node.prototype.size = function (compressor, stack) {
-    // mangle_options = (default_options as any).mangle;
-
-    let size = 0;
-    walk_parent(this, (node, info) => {
-        size += node._size(info);
-    }, stack || (compressor && compressor.stack));
-
-    // just to save a bit of memory
-    // mangle_options = undefined;
-
-    return size;
 };
