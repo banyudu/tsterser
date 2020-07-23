@@ -4,12 +4,11 @@
   "homepage": "https://github.com/banyudu/tsterser",
   "author": "Yudu Ban <banyudu@gmail.com>",
   "license": "BSD-2-Clause",
-  "version": "4.7.0",
+  "version": "5.0.0",
   "engines": {
     "node": ">=6.0.0"
   },
-  "maintainers": [
-  ],
+  "maintainers": [],
   "repository": "https://github.com/terser/terser",
   "main": "dist/bundle.min.js",
   "module": "main.js",
@@ -120,7 +119,8 @@
       "no-debugger": "error",
       "no-undef": "error",
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
         {
           "varsIgnorePattern": "^_$"
         }
