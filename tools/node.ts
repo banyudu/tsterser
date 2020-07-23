@@ -1,5 +1,4 @@
 import { minify } from "../lib/minify";
-import * as types from "./terser";
 
 export function default_options() {
     const defs: AnyObject = {};
@@ -14,7 +13,7 @@ export function default_options() {
     return defs;
 }
 
-function infer_options(options: types.MinifyOptions) {
+function infer_options(options: any) {
     var result = minify("", options);
     return result.error && result.error.defs;
 }
