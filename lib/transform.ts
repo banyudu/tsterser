@@ -90,8 +90,8 @@ import {
     noop,
 } from "./utils/index";
 
-function def_transform(node: any, descend: (node: any, tw: any) => any) {
-    node.DEFMETHOD("transform", function(this: any, tw: any, in_list: boolean) {
+const get_transformer = descend => {
+    return function(this: any, tw: any, in_list: boolean) {
         let transformed: any | undefined = undefined;
         tw.push(this);
         if (tw.before) transformed = tw.before(this, descend, in_list);
@@ -105,7 +105,11 @@ function def_transform(node: any, descend: (node: any, tw: any) => any) {
         }
         tw.pop();
         return transformed;
-    });
+    };
+};
+
+function def_transform(node: any, descend: (node: any, tw: any) => any) {
+    node.DEFMETHOD("transform", get_transformer(descend));
 }
 
 function do_list(list: any[], tw: any) {
