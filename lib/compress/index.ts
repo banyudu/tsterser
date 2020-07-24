@@ -189,7 +189,6 @@ import {
     base54,
     SymbolDef,
 } from "../scope";
-import "../size";
 
 const UNUSED    = 0b00000001;
 const TRUTHY    = 0b00000010;
