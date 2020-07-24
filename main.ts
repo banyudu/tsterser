@@ -1,5 +1,4 @@
 // API
-import "./lib/transform";
 export { minify } from "./lib/minify";
 
 // CLI
