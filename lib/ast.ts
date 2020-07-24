@@ -89,7 +89,21 @@ export function left_is_object(node: any): boolean {
     return false;
 }
 
+/*#__INLINE__*/
+const key_size = key =>
+    typeof key === "string" ? key.length : 0;
 
+/*#__INLINE__*/
+const lambda_modifiers = func =>
+    (func.is_generator ? 1 : 0) + (func.async ? 6 : 0);
+
+/*#__INLINE__*/
+const static_size = is_static => is_static ? 7 : 0;
+
+const list_overhead = (array) => array.length && array.length - 1;
+
+/*#__INLINE__*/
+const def_size = (size, def) => size + list_overhead(def.definitions);
 
 function DEFNODE(type: string, strProps: string | null, methods: AnyObject, staticMethods: AnyObject, base: any | null) {
     let self_props = strProps ? strProps.split(/\s+/) : [];
@@ -248,11 +262,18 @@ var AST_Statement: any = DEFNODE("Statement", null, {}, {
     documentation: "Base class of all statements",
 }, AST_Node);
 
-var AST_Debugger: any = DEFNODE("Debugger", null, {}, {
+var AST_Debugger: any = DEFNODE("Debugger", null, {
+    _size: () => 8
+}, {
     documentation: "Represents a debugger statement",
 }, AST_Statement);
 
-var AST_Directive: any = DEFNODE("Directive", "value quote", {}, {
+var AST_Directive: any = DEFNODE("Directive", "value quote", {
+    _size: function (): number {
+        // TODO string encoding stuff
+        return 2 + this.value.length;
+    }
+}, {
     documentation: "Represents a directive, like \"use strict\";",
     propdoc: {
         value: "[string] The value of this directive as a plain string (it's not an AST_String!)",
@@ -303,7 +324,10 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
         let i = this.body.length;
         while (i--) push(this.body[i]);
     },
-    clone: clone_block_scope
+    clone: clone_block_scope,
+    _size: function () {
+        return 2 + list_overhead(this.body);
+    }
 }, {
     documentation: "A body of statements (usually braced)",
     propdoc: {
@@ -537,6 +561,9 @@ var AST_Toplevel: any = DEFNODE("Toplevel", "globals", {
             }
             return undefined;
         }));
+    },
+    _size: function() {
+        return list_overhead(this.body);
     }
 }, {
     documentation: "The toplevel scope",
@@ -603,19 +630,47 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
     },
 }, AST_Scope);
 
-var AST_Accessor: any = DEFNODE("Accessor", null, {}, {
+var AST_Accessor: any = DEFNODE("Accessor", null, {
+    _size: function () {
+        return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body);
+    }
+}, {
     documentation: "A setter/getter function.  The `name` property is always null."
 }, AST_Lambda);
 
-var AST_Function: any = DEFNODE("Function", null, {}, {
+var AST_Function: any = DEFNODE("Function", null, {
+    _size: function (info) {
+        const first: any = !!first_in_statement(info);
+        return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
+    }
+}, {
     documentation: "A function expression"
 }, AST_Lambda);
 
-var AST_Arrow: any = DEFNODE("Arrow", null, {}, {
+var AST_Arrow: any = DEFNODE("Arrow", null, {
+    _size: function (): number {
+        let args_and_arrow = 2 + list_overhead(this.argnames);
+
+        if (
+            !(
+                this.argnames.length === 1
+                && this.argnames[0] instanceof AST_Symbol
+            )
+        ) {
+            args_and_arrow += 2;
+        }
+
+        return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
+}
+}, {
     documentation: "An ES6 Arrow function ((a) => b)"
 }, AST_Lambda);
 
-var AST_Defun: any = DEFNODE("Defun", null, {}, {
+var AST_Defun: any = DEFNODE("Defun", null, {
+    _size: function () {
+        return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body);
+    }
+}, {
     documentation: "A function definition"
 }, AST_Lambda);
 
@@ -640,7 +695,8 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
             }
         }));
         return out;
-    }
+    },
+    _size: () => 2
 }, {
     documentation: "A destructuring of several names. Used in destructuring assignment and with destructuring function argument names",
     propdoc: {
@@ -679,6 +735,9 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
     _children_backwards(push: Function) {
         let i = this.segments.length;
         while (i--) push(this.segments[i]);
+    },
+    _size: function (): number {
+        return 2 + (Math.floor(this.segments.length / 2) * 3);  /* "${}" */
     }
 }, {
     documentation: "A template string literal",
@@ -688,7 +747,11 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
 
 }, AST_Node);
 
-var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {}, {
+var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {
+    _size: function (): number {
+        return this.value.length;
+    }
+}, {
     documentation: "A segment of a template string literal",
     propdoc: {
         value: "Content of the segment",
@@ -826,6 +889,9 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
         let i = this.body.length;
         while (i--) push(this.body[i]);
         push(this.expression);
+    },
+    _size: function (): number {
+        return 8 + list_overhead(this.body);
     }
 }, {
     documentation: "A `switch` statement",
@@ -839,7 +905,11 @@ var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {}, {
     documentation: "Base class for `switch` branches",
 }, AST_Block);
 
-var AST_Default: any = DEFNODE("Default", null, {}, {
+var AST_Default: any = DEFNODE("Default", null, {
+    _size: function (): number {
+        return 8 + list_overhead(this.body);
+    }
+}, {
     documentation: "A `default` switch branch",
 }, AST_SwitchBranch);
 
@@ -855,6 +925,9 @@ var AST_Case: any = DEFNODE("Case", "expression", {
         while (i--) push(this.body[i]);
         push(this.expression);
     },
+    _size: function (): number {
+        return 5 + list_overhead(this.body);
+    }
 }, {
     documentation: "A `case` switch branch",
     propdoc: {
@@ -879,6 +952,9 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
         let i = this.body.length;
         while (i--) push(this.body[i]);
     },
+    _size: function (): number {
+        return 3 + list_overhead(this.body);
+    }
 }, {
     documentation: "A `try` statement",
     propdoc: {
@@ -900,6 +976,13 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
         while (i--) push(this.body[i]);
         if (this.argname) push(this.argname);
     },
+    _size: function (): number {
+        let size = 7 + list_overhead(this.body);
+        if (this.argname) {
+            size += 2;
+        }
+        return size;
+    }
 }, {
     documentation: "A `catch` node; only makes sense as part of a `try` statement",
     propdoc: {
@@ -908,7 +991,11 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
 
 }, AST_Block);
 
-var AST_Finally: any = DEFNODE("Finally", null, {}, {
+var AST_Finally: any = DEFNODE("Finally", null, {
+    _size: function (): number {
+        return 7 + list_overhead(this.body);
+    }
+}, {
     documentation: "A `finally` node; only makes sense as part of a `try` statement"
 }, AST_Block);
 
@@ -935,15 +1022,27 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
 
 }, AST_Statement);
 
-var AST_Var: any = DEFNODE("Var", null, {}, {
+var AST_Var: any = DEFNODE("Var", null, {
+    _size: function (): number {
+        return def_size(4, this);
+    }
+}, {
     documentation: "A `var` statement"
 }, AST_Definitions);
 
-var AST_Let: any = DEFNODE("Let", null, {}, {
+var AST_Let: any = DEFNODE("Let", null, {
+    _size: function (): number {
+        return def_size(4, this);
+    }
+}, {
     documentation: "A `let` statement"
 }, AST_Definitions);
 
-var AST_Const: any = DEFNODE("Const", null, {}, {
+var AST_Const: any = DEFNODE("Const", null, {
+    _size: function (): number {
+        return def_size(6, this);
+    }
+}, {
     documentation: "A `const` statement"
 }, AST_Definitions);
 
@@ -958,6 +1057,9 @@ var AST_VarDef: any = DEFNODE("VarDef", "name value", {
         if (this.value) push(this.value);
         push(this.name);
     },
+    _size: function (): number {
+        return this.value ? 1 : 0;
+    }
 }, {
     documentation: "A variable declaration; only appears in a AST_Definitions node",
     propdoc: {
@@ -978,6 +1080,10 @@ var AST_NameMapping: any = DEFNODE("NameMapping", "foreign_name name", {
         push(this.name);
         push(this.foreign_name);
     },
+    _size: function (): number {
+        // foreign name isn't mangled
+        return this.name ? 4 : 0;
+    }
 }, {
     documentation: "The part of the export/import statement that declare names from a module.",
     propdoc: {
@@ -1009,6 +1115,22 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
         }
         if (this.imported_name) push(this.imported_name);
     },
+    _size: function (): number {
+        // import
+        let size = 6;
+
+        if (this.imported_name) size += 1;
+
+        // from
+        if (this.imported_name || this.imported_names) size += 5;
+
+        // braces, and the commas
+        if (this.imported_names) {
+            size += 2 + list_overhead(this.imported_names);
+        }
+
+        return size;
+    }
 }, {
     documentation: "An `import` statement",
     propdoc: {
@@ -1046,6 +1168,25 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
         }
         if (this.exported_value) push(this.exported_value);
         if (this.exported_definition) push(this.exported_definition);
+    },
+    _size: function (): number {
+        let size = 7 + (this.is_default ? 8 : 0);
+
+        if (this.exported_value) {
+            size += this.exported_value._size();
+        }
+
+        if (this.exported_names) {
+            // Braces and commas
+            size += 2 + list_overhead(this.exported_names);
+        }
+
+        if (this.module_name) {
+            // "from "
+            size += 5;
+        }
+
+        return size;
     }
 }, {
     documentation: "An `export` statement",
@@ -1079,6 +1220,9 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
         while (i--) push(this.args[i]);
         push(this.expression);
     },
+    _size: function (): number {
+        return 2 + list_overhead(this.args);
+    }
 }, {
     documentation: "A function call expression",
     propdoc: {
@@ -1089,7 +1233,11 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
 
 }, AST_Node);
 
-var AST_New: any = DEFNODE("New", null, {}, {
+var AST_New: any = DEFNODE("New", null, {
+    _size: function (): number {
+        return 6 + list_overhead(this.args);
+    }
+}, {
     documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
 }, AST_Call);
 
@@ -1105,6 +1253,9 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
         let i = this.expressions.length;
         while (i--) push(this.expressions[i]);
     },
+    _size: function (): number {
+        return list_overhead(this.expressions);
+    }
 }, {
     documentation: "A sequence expression (comma-separated expressions)",
     propdoc: {
@@ -1244,6 +1395,9 @@ var AST_Array: any = DEFNODE("Array", "elements", {
         let i = this.elements.length;
         while (i--) push(this.elements[i]);
     },
+    _size: function (): number {
+        return 2 + list_overhead(this.elements);
+    }
 }, {
     documentation: "An array literal",
     propdoc: {
@@ -1265,6 +1419,13 @@ var AST_Object: any = DEFNODE("Object", "properties", {
         let i = this.properties.length;
         while (i--) push(this.properties[i]);
     },
+    _size: function (info): number {
+        let base = 2;
+        if (first_in_statement(info)) {
+            base += 2; // parens
+        }
+        return base + list_overhead(this.properties);
+    }
 }, {
     documentation: "An object literal",
     propdoc: {
@@ -1295,6 +1456,9 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
 var AST_ObjectKeyVal: any = DEFNODE("ObjectKeyVal", "quote", {
     computed_key() {
         return this.key instanceof AST_Node;
+    },
+    _size: function (): number {
+        return key_size(this.key) + 1;
     }
 }, {
     documentation: "A key: value object property",
@@ -1330,6 +1494,9 @@ var AST_ObjectGetter: any = DEFNODE("ObjectGetter", "quote static", {
 var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator async", {
     computed_key() {
         return !(this.key instanceof AST_SymbolMethod);
+    },
+    _size: function (): number {
+        return static_size(this.static) + key_size(this.key) + lambda_modifiers(this);
     }
 }, {
     propdoc: {
@@ -1359,6 +1526,12 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
         if (this.extends) push(this.extends);
         if (this.name) push(this.name);
     },
+    _size: function (): number {
+        return (
+            (this.name ? 8 : 7)
+            + (this.extends ? 8 : 0)
+        );
+    }
 }, {
     propdoc: {
         name: "[AST_SymbolClass|AST_SymbolDefClass?] optional class name.",
@@ -1384,6 +1557,13 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
     },
     computed_key() {
         return !(this.key instanceof AST_SymbolClassProperty);
+    },
+    _size: function (): number {
+        return (
+            static_size(this.static)
+            + (typeof this.key === "string" ? this.key.length + 2 : 0)
+            + (this.value ? 1 : 0)
+        );
     }
 }, {
     documentation: "A class property",
@@ -1401,7 +1581,15 @@ var AST_ClassExpression: any = DEFNODE("ClassExpression", null, {}, {
     documentation: "A class expression."
 }, AST_Class);
 
-var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {}, {
+let mangle_options = undefined;
+
+var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
+    _size: function (): number {
+        return !mangle_options || this.definition().unmangleable(mangle_options)
+            ? this.name.length
+            : 2;
+    }
+}, {
     propdoc: {
         name: "[string] name of this symbol",
         scope: "[AST_Scope/S] the current scope (not necessarily the definition scope)",
@@ -1446,7 +1634,12 @@ var AST_SymbolMethod: any = DEFNODE("SymbolMethod", null, {}, {
     documentation: "Symbol in an object defining a method",
 }, AST_Symbol);
 
-var AST_SymbolClassProperty = DEFNODE("SymbolClassProperty", null, {}, {
+var AST_SymbolClassProperty = DEFNODE("SymbolClassProperty", null, {
+    // TODO take propmangle into account
+    _size: function (): number {
+        return this.name.length;
+    }
+}, {
     documentation: "Symbol for a class property",
 }, AST_Symbol);
 
@@ -1486,7 +1679,17 @@ var AST_Label: any = DEFNODE("Label", "references", {
     },
 }, AST_Symbol);
 
-var AST_SymbolRef: any = DEFNODE("SymbolRef", null, {}, {
+var AST_SymbolRef: any = DEFNODE("SymbolRef", null, {
+    _size: function (): number {
+        const { name, thedef } = this;
+
+        if (thedef && thedef.global) return name.length;
+
+        if (name === "arguments") return 9;
+
+        return 2;
+    }
+}, {
     documentation: "Reference to some symbol (not definition/declaration)",
 }, AST_Symbol);
 
@@ -2058,17 +2261,6 @@ AST_Binary.prototype._size = function (info): number {
 
 AST_Conditional.prototype._size = () => 3;
 
-/*#__INLINE__*/
-const key_size = key =>
-    typeof key === "string" ? key.length : 0;
-
-/*#__INLINE__*/
-const lambda_modifiers = func =>
-    (func.is_generator ? 1 : 0) + (func.async ? 6 : 0);
-
-/*#__INLINE__*/
-const static_size = is_static => is_static ? 7 : 0;
-
 AST_ObjectGetter.prototype._size = function (): number {
     return 5 + static_size(this.static) + key_size(this.key);
 };
@@ -2077,217 +2269,3 @@ AST_ObjectSetter.prototype._size = function (): number {
     return 5 + static_size(this.static) + key_size(this.key);
 };
 
-AST_ConciseMethod.prototype._size = function (): number {
-    return static_size(this.static) + key_size(this.key) + lambda_modifiers(this);
-};
-
-AST_Class.prototype._size = function (): number {
-    return (
-        (this.name ? 8 : 7)
-        + (this.extends ? 8 : 0)
-    );
-};
-
-AST_ClassProperty.prototype._size = function (): number {
-    return (
-        static_size(this.static)
-        + (typeof this.key === "string" ? this.key.length + 2 : 0)
-        + (this.value ? 1 : 0)
-    );
-};
-
-// TODO take propmangle into account
-AST_SymbolClassProperty.prototype._size = function (): number {
-    return this.name.length;
-};
-
-AST_SymbolRef.prototype._size = function (): number {
-    const { name, thedef } = this;
-
-    if (thedef && thedef.global) return name.length;
-
-    if (name === "arguments") return 9;
-
-    return 2;
-};
-
-const list_overhead = (array) => array.length && array.length - 1;
-
-/*#__INLINE__*/
-const def_size = (size, def) => size + list_overhead(def.definitions);
-
-AST_Var.prototype._size = function (): number {
-    return def_size(4, this);
-};
-
-AST_Let.prototype._size = function (): number {
-    return def_size(4, this);
-};
-
-AST_Const.prototype._size = function (): number {
-    return def_size(6, this);
-};
-
-AST_ObjectKeyVal.prototype._size = function (): number {
-    return key_size(this.key) + 1;
-};
-
-AST_Call.prototype._size = function (): number {
-    return 2 + list_overhead(this.args);
-};
-
-AST_New.prototype._size = function (): number {
-    return 6 + list_overhead(this.args);
-};
-
-AST_Sequence.prototype._size = function (): number {
-    return list_overhead(this.expressions);
-};
-
-AST_Array.prototype._size = function (): number {
-    return 2 + list_overhead(this.elements);
-};
-
-AST_Destructuring.prototype._size = () => 2;
-
-AST_TemplateString.prototype._size = function (): number {
-    return 2 + (Math.floor(this.segments.length / 2) * 3);  /* "${}" */
-};
-
-AST_TemplateSegment.prototype._size = function (): number {
-    return this.value.length;
-};
-
-AST_Switch.prototype._size = function (): number {
-    return 8 + list_overhead(this.body);
-};
-
-AST_Case.prototype._size = function (): number {
-    return 5 + list_overhead(this.body);
-};
-
-AST_Default.prototype._size = function (): number {
-    return 8 + list_overhead(this.body);
-};
-
-AST_Try.prototype._size = function (): number {
-    return 3 + list_overhead(this.body);
-};
-
-AST_Catch.prototype._size = function (): number {
-    let size = 7 + list_overhead(this.body);
-    if (this.argname) {
-        size += 2;
-    }
-    return size;
-};
-
-AST_Finally.prototype._size = function (): number {
-    return 7 + list_overhead(this.body);
-};
-
-AST_VarDef.prototype._size = function (): number {
-    return this.value ? 1 : 0;
-};
-
-AST_NameMapping.prototype._size = function (): number {
-    // foreign name isn't mangled
-    return this.name ? 4 : 0;
-};
-
-AST_Import.prototype._size = function (): number {
-    // import
-    let size = 6;
-
-    if (this.imported_name) size += 1;
-
-    // from
-    if (this.imported_name || this.imported_names) size += 5;
-
-    // braces, and the commas
-    if (this.imported_names) {
-        size += 2 + list_overhead(this.imported_names);
-    }
-
-    return size;
-};
-
-AST_Export.prototype._size = function (): number {
-    let size = 7 + (this.is_default ? 8 : 0);
-
-    if (this.exported_value) {
-        size += this.exported_value._size();
-    }
-
-    if (this.exported_names) {
-        // Braces and commas
-        size += 2 + list_overhead(this.exported_names);
-    }
-
-    if (this.module_name) {
-        // "from "
-        size += 5;
-    }
-
-    return size;
-};
-
-AST_Object.prototype._size = function (info): number {
-    let base = 2;
-    if (first_in_statement(info)) {
-        base += 2; // parens
-    }
-    return base + list_overhead(this.properties);
-};
-
-AST_Accessor.prototype._size = function () {
-    return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body);
-};
-
-AST_Function.prototype._size = function (info) {
-    const first: any = !!first_in_statement(info);
-    return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
-};
-
-AST_Defun.prototype._size = function () {
-    return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body);
-};
-
-AST_Block.prototype._size = function () {
-    return 2 + list_overhead(this.body);
-};
-
-AST_Toplevel.prototype._size = function() {
-    return list_overhead(this.body);
-};
-
-AST_Arrow.prototype._size = function (): number {
-    let args_and_arrow = 2 + list_overhead(this.argnames);
-
-    if (
-        !(
-            this.argnames.length === 1
-            && this.argnames[0] instanceof AST_Symbol
-        )
-    ) {
-        args_and_arrow += 2;
-    }
-
-    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
-};
-
-
-AST_Debugger.prototype._size = () => 8;
-
-AST_Directive.prototype._size = function (): number {
-    // TODO string encoding stuff
-    return 2 + this.value.length;
-};
-
-let mangle_options = undefined;
-
-AST_Symbol.prototype._size = function (): number {
-    return !mangle_options || this.definition().unmangleable(mangle_options)
-        ? this.name.length
-        : 2;
-};
