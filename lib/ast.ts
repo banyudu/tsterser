@@ -340,7 +340,9 @@ var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {}, {
     documentation: "A block statement",
 }, AST_Block);
 
-var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {}, {
+var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
+    _size: () => 1
+}, {
     documentation: "The empty statement (empty block or simply a semicolon)"
 }, AST_Statement);
 
@@ -376,7 +378,8 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
             }));
         }
         return node;
-    }
+    },
+    _size: () => 2
 }, {
     documentation: "Statement with a label",
     propdoc: {
@@ -410,7 +413,8 @@ var AST_Do: any = DEFNODE("Do", null, {
     _children_backwards(push: Function) {
         push(this.condition);
         push(this.body);
-    }
+    },
+    _size: () => 9
 }, {
     documentation: "A `do` statement",
 }, AST_DWLoop);
@@ -426,6 +430,7 @@ var AST_While: any = DEFNODE("While", null, {
         push(this.body);
         push(this.condition);
     },
+    _size: () => 7
 }, {
     documentation: "A `while` statement",
 }, AST_DWLoop);
@@ -445,6 +450,7 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         if (this.condition) push(this.condition);
         if (this.init) push(this.init);
     },
+    _size: () => 8
 }, {
     documentation: "A `for` statement",
     propdoc: {
@@ -467,6 +473,7 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
         if (this.object) push(this.object);
         if (this.init) push(this.init);
     },
+    _size: () => 8
 }, {
     documentation: "A `for ... in` statement",
     propdoc: {
@@ -490,6 +497,7 @@ var AST_With: any = DEFNODE("With", "expression", {
         push(this.body);
         push(this.expression);
     },
+    _size: () => 6
 }, {
     documentation: "A `with` statement",
     propdoc: {
@@ -581,6 +589,7 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
+    _size: () => 3
 }, {
     documentation: "An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list",
     propdoc: {
@@ -782,11 +791,17 @@ var AST_Exit: any = DEFNODE("Exit", "value", {
 
 }, AST_Jump);
 
-var AST_Return: any = DEFNODE("Return", null, {}, {
+var AST_Return: any = DEFNODE("Return", null, {
+    _size: function () {
+        return this.value ? 7 : 6;
+    }
+}, {
     documentation: "A `return` statement"
 }, AST_Exit);
 
-var AST_Throw: any = DEFNODE("Throw", null, {}, {
+var AST_Throw: any = DEFNODE("Throw", null, {
+    _size: () => 6
+}, {
     documentation: "A `throw` statement"
 }, AST_Exit);
 
@@ -807,11 +822,19 @@ var AST_LoopControl: any = DEFNODE("LoopControl", "label", {
 
 }, AST_Jump);
 
-var AST_Break: any = DEFNODE("Break", null, {}, {
+var AST_Break: any = DEFNODE("Break", null, {
+    _size: function () {
+        return this.label ? 6 : 5;
+    }
+}, {
     documentation: "A `break` statement"
 }, AST_LoopControl);
 
-var AST_Continue: any = DEFNODE("Continue", null, {}, {
+var AST_Continue: any = DEFNODE("Continue", null, {
+    _size: function () {
+        return this.label ? 9 : 8;
+    }
+}, {
     documentation: "A `continue` statement"
 }, AST_LoopControl);
 
@@ -824,6 +847,7 @@ var AST_Await: any = DEFNODE("Await", "expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
+    _size: () => 6
 }, {
     documentation: "An `await` statement",
     propdoc: {
@@ -840,7 +864,8 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
     },
     _children_backwards(push: Function) {
         if (this.expression) push(this.expression);
-    }
+    },
+    _size: () => 6
 }, {
     documentation: "A `yield` statement",
     propdoc: {
@@ -866,7 +891,8 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         }
         push(this.body);
         push(this.condition);
-    }
+    },
+    _size: () => 4
 }, {
     documentation: "A `if` statement",
     propdoc: {
@@ -1281,6 +1307,9 @@ var AST_Dot: any = DEFNODE("Dot", "quote", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
+    _size: function (): number {
+        return this.property.length + 1;
+    }
 }, {
     documentation: "A dotted property access expression",
     propdoc: {
@@ -1299,6 +1328,7 @@ var AST_Sub: any = DEFNODE("Sub", null, {
         push(this.property);
         push(this.expression);
     },
+    _size: () => 2
 }, {
     documentation: "Index-style property access, i.e. `a[\"foo\"]`",
 
@@ -1313,6 +1343,11 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
+    _size: function (): number {
+        if (this.operator === "typeof") return 7;
+        if (this.operator === "void") return 5;
+        return this.operator.length;
+    }
 }, {
     documentation: "Base class for unary expressions",
     propdoc: {
@@ -1340,6 +1375,25 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
         push(this.right);
         push(this.left);
     },
+    _size: function (info): number {
+        if (this.operator === "in") return 4;
+
+        let size = this.operator.length;
+
+        if (
+            (this.operator === "+" || this.operator === "-")
+            && this.right instanceof AST_Unary && this.right.operator === this.operator
+        ) {
+            // 1+ +a > needs space between the +
+            size += 1;
+        }
+
+        if (this.needs_parens(info)) {
+            size += 2;
+        }
+
+        return size;
+    }
 }, {
     documentation: "Binary expression, i.e. `a + b`",
     propdoc: {
@@ -1363,6 +1417,7 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         push(this.consequent);
         push(this.condition);
     },
+    _size: () => 3
 }, {
     documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
     propdoc: {
@@ -1470,6 +1525,9 @@ var AST_ObjectKeyVal: any = DEFNODE("ObjectKeyVal", "quote", {
 var AST_ObjectSetter: any = DEFNODE("ObjectSetter", "quote static", {
     computed_key() {
         return !(this.key instanceof AST_SymbolMethod);
+    },
+    _size: function (): number {
+        return 5 + static_size(this.static) + key_size(this.key);
     }
 }, {
     propdoc: {
@@ -1482,6 +1540,9 @@ var AST_ObjectSetter: any = DEFNODE("ObjectSetter", "quote static", {
 var AST_ObjectGetter: any = DEFNODE("ObjectGetter", "quote static", {
     computed_key() {
         return !(this.key instanceof AST_SymbolMethod);
+    },
+    _size: function (): number {
+        return 5 + static_size(this.static) + key_size(this.key);
     }
 }, {
     propdoc: {
@@ -1598,7 +1659,9 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
     documentation: "Base class for all symbols"
 }, AST_Node);
 
-var AST_NewTarget: any = DEFNODE("NewTarget", null, {}, {
+var AST_NewTarget: any = DEFNODE("NewTarget", null, {
+    _size: () => 10
+}, {
     documentation: "A reference to new.target"
 }, AST_Node);
 
@@ -1663,7 +1726,11 @@ var AST_SymbolImport: any = DEFNODE("SymbolImport", null, {}, {
     documentation: "Symbol referring to an imported name",
 }, AST_SymbolBlockDeclaration);
 
-var AST_SymbolImportForeign: any = DEFNODE("SymbolImportForeign", null, {}, {
+var AST_SymbolImportForeign: any = DEFNODE("SymbolImportForeign", null, {
+    _size: function (): number {
+        return this.name.length;
+    }
+}, {
     documentation: "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes",
 }, AST_Symbol);
 
@@ -1697,7 +1764,11 @@ var AST_SymbolExport: any = DEFNODE("SymbolExport", null, {}, {
     documentation: "Symbol referring to a name to export",
 }, AST_SymbolRef);
 
-var AST_SymbolExportForeign: any = DEFNODE("SymbolExportForeign", null, {}, {
+var AST_SymbolExportForeign: any = DEFNODE("SymbolExportForeign", null, {
+    _size: function (): number {
+        return this.name.length;
+    }
+}, {
     documentation: "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes",
 }, AST_Symbol);
 
@@ -1705,11 +1776,15 @@ var AST_LabelRef: any = DEFNODE("LabelRef", null, {}, {
     documentation: "Reference to a label symbol",
 }, AST_Symbol);
 
-var AST_This: any = DEFNODE("This", null, {}, {
+var AST_This: any = DEFNODE("This", null, {
+    _size: () => 4
+}, {
     documentation: "The `this` symbol",
 }, AST_Symbol);
 
-var AST_Super: any = DEFNODE("Super", null, {}, {
+var AST_Super: any = DEFNODE("Super", null, {
+    _size: () => 5
+}, {
     documentation: "The `super` symbol",
 }, AST_This);
 
@@ -1721,7 +1796,11 @@ var AST_Constant: any = DEFNODE("Constant", null, {
     documentation: "Base class for all constants",
 }, AST_Node);
 
-var AST_String: any = DEFNODE("String", "value quote", {}, {
+var AST_String: any = DEFNODE("String", "value quote", {
+    _size: function (): number {
+        return this.value.length + 2;
+    }
+}, {
     documentation: "A string literal",
     propdoc: {
         value: "[string] the contents of this string",
@@ -1729,7 +1808,16 @@ var AST_String: any = DEFNODE("String", "value quote", {}, {
     }
 }, AST_Constant);
 
-var AST_Number: any = DEFNODE("Number", "value literal", {}, {
+var AST_Number: any = DEFNODE("Number", "value literal", {
+    _size: function (): number {
+        const { value } = this;
+        if (value === 0) return 1;
+        if (value > 0 && Math.floor(value) === value) {
+            return Math.floor(Math.log10(value) + 1);
+        }
+        return value.toString().length;
+    }
+}, {
     documentation: "A number literal",
     propdoc: {
         value: "[number] the numeric value",
@@ -1737,14 +1825,22 @@ var AST_Number: any = DEFNODE("Number", "value literal", {}, {
     }
 }, AST_Constant);
 
-var AST_BigInt = DEFNODE("BigInt", "value", {}, {
+var AST_BigInt = DEFNODE("BigInt", "value", {
+    _size: function (): number {
+        return this.value.length;
+    }
+}, {
     documentation: "A big int literal",
     propdoc: {
         value: "[string] big int value"
     }
 }, AST_Constant);
 
-var AST_RegExp: any = DEFNODE("RegExp", "value", {}, {
+var AST_RegExp: any = DEFNODE("RegExp", "value", {
+    _size: function (): number {
+        return this.value.toString().length;
+    }
+}, {
     documentation: "A regexp literal",
     propdoc: {
         value: "[RegExp] the actual regexp",
@@ -1756,31 +1852,36 @@ var AST_Atom: any = DEFNODE("Atom", null, {}, {
 }, AST_Constant);
 
 var AST_Null: any = DEFNODE("Null", null, {
-    value: null
+    value: null,
+    _size: () => 4
 }, {
     documentation: "The `null` atom",
 }, AST_Atom);
 
 var AST_NaN: any = DEFNODE("NaN", null, {
-    value: 0/0
+    value: 0/0,
+    _size: () => 3
 }, {
     documentation: "The impossible value",
 }, AST_Atom);
 
 var AST_Undefined: any = DEFNODE("Undefined", null, {
-    value: (function() {}())
+    value: (function() {}()),
+    _size: () => 6 // "void 0"
 }, {
     documentation: "The `undefined` value",
 }, AST_Atom);
 
 var AST_Hole: any = DEFNODE("Hole", null, {
-    value: (function() {}())
+    value: (function() {}()),
+    _size: () => 0  // comma is taken into account
 }, {
     documentation: "A hole in an array",
 }, AST_Atom);
 
 var AST_Infinity: any = DEFNODE("Infinity", null, {
-    value: 1/0
+    value: 1/0,
+    _size: () => 8
 }, {
     documentation: "The `Infinity` value",
 }, AST_Atom);
@@ -1790,13 +1891,15 @@ var AST_Boolean: any = DEFNODE("Boolean", null, {}, {
 }, AST_Atom);
 
 var AST_False: any = DEFNODE("False", null, {
-    value: false
+    value: false,
+    _size: () => 5
 }, {
     documentation: "The `false` atom",
 }, AST_Boolean);
 
 var AST_True: any = DEFNODE("True", null, {
-    value: true
+    value: true,
+    _size: () => 4
 }, {
     documentation: "The `true` atom",
 }, AST_Boolean);
@@ -2123,149 +2226,3 @@ export {
     _NOINLINE,
     _PURE,
 };
-
-AST_NewTarget.prototype._size = () => 10;
-
-AST_SymbolImportForeign.prototype._size = function (): number {
-    return this.name.length;
-};
-
-AST_SymbolExportForeign.prototype._size = function (): number {
-    return this.name.length;
-};
-
-AST_This.prototype._size = () => 4;
-
-AST_Super.prototype._size = () => 5;
-
-AST_String.prototype._size = function (): number {
-    return this.value.length + 2;
-};
-
-AST_Number.prototype._size = function (): number {
-    const { value } = this;
-    if (value === 0) return 1;
-    if (value > 0 && Math.floor(value) === value) {
-        return Math.floor(Math.log10(value) + 1);
-    }
-    return value.toString().length;
-};
-
-AST_BigInt.prototype._size = function (): number {
-    return this.value.length;
-};
-
-AST_RegExp.prototype._size = function (): number {
-    return this.value.toString().length;
-};
-
-AST_Number.prototype._size = function (): number {
-    const { value } = this;
-    if (value === 0) return 1;
-    if (value > 0 && Math.floor(value) === value) {
-        return Math.floor(Math.log10(value) + 1);
-    }
-    return value.toString().length;
-};
-
-AST_BigInt.prototype._size = function (): number {
-    return this.value.length;
-};
-
-AST_RegExp.prototype._size = function (): number {
-    return this.value.toString().length;
-};
-
-AST_Null.prototype._size = () => 4;
-
-AST_NaN.prototype._size = () => 3;
-
-AST_Undefined.prototype._size = () => 6; // "void 0"
-
-AST_Hole.prototype._size = () => 0;  // comma is taken into account
-
-AST_Infinity.prototype._size = () => 8;
-
-AST_True.prototype._size = () => 4;
-
-AST_False.prototype._size = () => 5;
-
-AST_Await.prototype._size = () => 6;
-
-AST_Yield.prototype._size = () => 6;
-
-AST_EmptyStatement.prototype._size = () => 1;
-
-AST_LabeledStatement.prototype._size = () => 2;  // x:
-
-AST_Do.prototype._size = () => 9;
-
-AST_While.prototype._size = () => 7;
-
-AST_For.prototype._size = () => 8;
-
-AST_ForIn.prototype._size = () => 8;
-// AST_ForOf inherits ^
-
-AST_With.prototype._size = () => 6;
-
-AST_Expansion.prototype._size = () => 3;
-
-AST_Return.prototype._size = function () {
-    return this.value ? 7 : 6;
-};
-
-AST_Throw.prototype._size = () => 6;
-
-AST_Break.prototype._size = function () {
-    return this.label ? 6 : 5;
-};
-
-AST_Continue.prototype._size = function () {
-    return this.label ? 9 : 8;
-};
-
-AST_If.prototype._size = () => 4;
-
-AST_Dot.prototype._size = function (): number {
-    return this.property.length + 1;
-};
-
-AST_Sub.prototype._size = () => 2;
-
-AST_Unary.prototype._size = function (): number {
-    if (this.operator === "typeof") return 7;
-    if (this.operator === "void") return 5;
-    return this.operator.length;
-};
-
-AST_Binary.prototype._size = function (info): number {
-    if (this.operator === "in") return 4;
-
-    let size = this.operator.length;
-
-    if (
-        (this.operator === "+" || this.operator === "-")
-        && this.right instanceof AST_Unary && this.right.operator === this.operator
-    ) {
-        // 1+ +a > needs space between the +
-        size += 1;
-    }
-
-    if (this.needs_parens(info)) {
-        size += 2;
-    }
-
-    return size;
-};
-
-AST_Conditional.prototype._size = () => 3;
-
-AST_ObjectGetter.prototype._size = function (): number {
-    return 5 + static_size(this.static) + key_size(this.key);
-};
-
-AST_ObjectSetter.prototype._size = function (): number {
-    return 5 + static_size(this.static) + key_size(this.key);
-};
-
