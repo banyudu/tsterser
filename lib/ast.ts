@@ -106,6 +106,26 @@ const list_overhead = (array) => array.length && array.length - 1;
 /*#__INLINE__*/
 const def_size = (size, def) => size + list_overhead(def.definitions);
 
+const pass_through = () => true;
+
+// Creates a shallow compare function
+const mkshallow = (props) => {
+    const comparisons = Object
+        .keys(props)
+        .map(key => {
+            if (props[key] === "eq") {
+                return `this.${key} === other.${key}`;
+            } else if (props[key] === "exist") {
+                return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`;
+            } else {
+                throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`);
+            }
+        })
+        .join(" && ");
+
+    return new Function("other", "return " + comparisons);
+};
+
 const get_transformer = descend => {
     return function(this: any, tw: any, in_list: boolean) {
         let transformed: any | undefined = undefined;
@@ -262,7 +282,10 @@ var AST_Node: any = DEFNODE("Node", "start end", {
 
         return size;
     },
-    transform: get_transformer(noop)
+    transform: get_transformer(noop),
+    shallow_cmp: function () {
+        throw new Error("did not find a shallow_cmp function for " + this.constructor.name);
+    }
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
@@ -283,12 +306,14 @@ var AST_Statement: any = DEFNODE("Statement", null, {}, {
 }, AST_Node);
 
 var AST_Debugger: any = DEFNODE("Debugger", null, {
+    shallow_cmp: pass_through,
     _size: () => 8
 }, {
     documentation: "Represents a debugger statement",
 }, AST_Statement);
 
 var AST_Directive: any = DEFNODE("Directive", "value quote", {
+    shallow_cmp: mkshallow({ value: "eq" }),
     _size: function (): number {
         // TODO string encoding stuff
         return 2 + this.value.length;
@@ -310,6 +335,7 @@ var AST_SimpleStatement: any = DEFNODE("SimpleStatement", "body", {
     _children_backwards(push: Function) {
         push(this.body);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.body = (self.body as any).transform(tw);
     })
@@ -351,6 +377,7 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
     _size: function () {
         return 2 + list_overhead(this.body);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.body = do_list(self.body, tw);
     })
@@ -367,6 +394,7 @@ var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {}, {
 }, AST_Block);
 
 var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
+    shallow_cmp: pass_through,
     _size: () => 1
 }, {
     documentation: "The empty statement (empty block or simply a semicolon)"
@@ -406,6 +434,7 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
         return node;
     },
     _size: () => 2,
+    shallow_cmp: mkshallow({ "label.name": "eq" }),
     transform: get_transformer(function(self, tw: any) {
         self.label = self.label.transform(tw) as any;
         self.body = (self.body as any).transform(tw); // TODO: check type
@@ -445,6 +474,7 @@ var AST_Do: any = DEFNODE("Do", null, {
         push(this.body);
     },
     _size: () => 9,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.body = (self.body as any).transform(tw);
         self.condition = self.condition.transform(tw);
@@ -465,6 +495,7 @@ var AST_While: any = DEFNODE("While", null, {
         push(this.condition);
     },
     _size: () => 7,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
@@ -489,6 +520,11 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         if (this.init) push(this.init);
     },
     _size: () => 8,
+    shallow_cmp: mkshallow({
+        init: "exist",
+        condition: "exist",
+        step: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.init) self.init = self.init.transform(tw);
         if (self.condition) self.condition = self.condition.transform(tw);
@@ -518,6 +554,7 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
         if (this.init) push(this.init);
     },
     _size: () => 8,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.init = self.init?.transform(tw) || null;
         self.object = self.object.transform(tw);
@@ -531,7 +568,9 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
     },
 }, AST_IterationStatement);
 
-var AST_ForOf: any = DEFNODE("ForOf", "await", {}, {
+var AST_ForOf: any = DEFNODE("ForOf", "await", {
+    shallow_cmp: pass_through,
+}, {
     documentation: "A `for ... of` statement",
 }, AST_ForIn);
 
@@ -547,6 +586,7 @@ var AST_With: any = DEFNODE("With", "expression", {
         push(this.expression);
     },
     _size: () => 6,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.body = (self.body as any).transform(tw);
@@ -623,6 +663,7 @@ var AST_Toplevel: any = DEFNODE("Toplevel", "globals", {
             return undefined;
         }));
     },
+    shallow_cmp: pass_through,
     _size: function() {
         return list_overhead(this.body);
     }
@@ -643,6 +684,7 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
         push(this.expression);
     },
     _size: () => 3,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     })
@@ -684,6 +726,10 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
 
         if (this.name) push(this.name);
     },
+    shallow_cmp: mkshallow({
+        is_generator: "eq",
+        async: "eq"
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.name) self.name = self.name.transform(tw) as any;
         self.argnames = do_list(self.argnames, tw);
@@ -771,6 +817,9 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
         return out;
     },
     _size: () => 2,
+    shallow_cmp: mkshallow({
+        is_array: "eq"
+    }),
     transform: get_transformer(function(self, tw: any) {
         self.names = do_list(self.names, tw);
     })
@@ -793,6 +842,7 @@ var AST_PrefixedTemplateString: any = DEFNODE("PrefixedTemplateString", "templat
         push(this.template_string);
         push(this.prefix);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.prefix = self.prefix.transform(tw);
         self.template_string = self.template_string.transform(tw) as any;
@@ -820,6 +870,7 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
     _size: function (): number {
         return 2 + (Math.floor(this.segments.length / 2) * 3);  /* "${}" */
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.segments = do_list(self.segments, tw);
     })
@@ -832,6 +883,9 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
 }, AST_Node);
 
 var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {
+    shallow_cmp: mkshallow({
+        "value": "eq"
+    }),
     _size: function (): number {
         return this.value.length;
     }
@@ -845,7 +899,9 @@ var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {
 
 /* -----[ JUMPS ]----- */
 
-var AST_Jump: any = DEFNODE("Jump", null, {}, {
+var AST_Jump: any = DEFNODE("Jump", null, {
+    shallow_cmp: pass_through,
+}, {
     documentation: "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
 }, AST_Statement);
 
@@ -892,6 +948,7 @@ var AST_LoopControl: any = DEFNODE("LoopControl", "label", {
     _children_backwards(push: Function) {
         if (this.label) push(this.label);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         if (self.label) self.label = self.label.transform(tw) as any;
     })
@@ -929,6 +986,7 @@ var AST_Await: any = DEFNODE("Await", "expression", {
         push(this.expression);
     },
     _size: () => 6,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     })
@@ -950,6 +1008,9 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
         if (this.expression) push(this.expression);
     },
     _size: () => 6,
+    shallow_cmp: mkshallow({
+        is_star: "eq"
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.expression) self.expression = self.expression.transform(tw);
     })
@@ -980,6 +1041,9 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         push(this.condition);
     },
     _size: () => 4,
+    shallow_cmp: mkshallow({
+        alternative: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
@@ -1011,6 +1075,7 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
     _size: function (): number {
         return 8 + list_overhead(this.body);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.body = do_list(self.body, tw);
@@ -1023,7 +1088,9 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
 
 }, AST_Block);
 
-var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {}, {
+var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {
+    shallow_cmp: pass_through,
+}, {
     documentation: "Base class for `switch` branches",
 }, AST_Block);
 
@@ -1081,6 +1148,10 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
     _size: function (): number {
         return 3 + list_overhead(this.body);
     },
+    shallow_cmp: mkshallow({
+        bcatch: "exist",
+        bfinally: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         self.body = do_list(self.body, tw);
         if (self.bcatch) self.bcatch = self.bcatch.transform(tw) as any;
@@ -1114,6 +1185,9 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
         }
         return size;
     },
+    shallow_cmp: mkshallow({
+        argname: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.argname) self.argname = self.argname.transform(tw);
         self.body = do_list(self.body, tw);
@@ -1127,6 +1201,7 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
 }, AST_Block);
 
 var AST_Finally: any = DEFNODE("Finally", null, {
+    shallow_cmp: pass_through,
     _size: function (): number {
         return 7 + list_overhead(this.body);
     }
@@ -1149,6 +1224,7 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
         let i = this.definitions.length;
         while (i--) push(this.definitions[i]);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.definitions = do_list(self.definitions, tw);
     })
@@ -1198,6 +1274,9 @@ var AST_VarDef: any = DEFNODE("VarDef", "name value", {
     _size: function (): number {
         return this.value ? 1 : 0;
     },
+    shallow_cmp: mkshallow({
+        value: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         self.name = self.name.transform(tw) as any;
         if (self.value) self.value = self.value.transform(tw);
@@ -1226,6 +1305,7 @@ var AST_NameMapping: any = DEFNODE("NameMapping", "foreign_name name", {
         // foreign name isn't mangled
         return this.name ? 4 : 0;
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.foreign_name = self.foreign_name.transform(tw) as any;
         self.name = self.name.transform(tw) as any;
@@ -1277,6 +1357,10 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
 
         return size;
     },
+    shallow_cmp: mkshallow({
+        imported_name: "exist",
+        imported_names: "exist"
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.imported_name) self.imported_name = self.imported_name.transform(tw) as any;
         if (self.imported_names) do_list(self.imported_names, tw);
@@ -1339,6 +1423,13 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
 
         return size;
     },
+    shallow_cmp: mkshallow({
+        exported_definition: "exist",
+        exported_value: "exist",
+        exported_names: "exist",
+        module_name: "eq",
+        is_default: "eq",
+    }),
     transform: get_transformer(function(self, tw: any) {
         if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw) as any;
         if (self.exported_value) self.exported_value = self.exported_value.transform(tw);
@@ -1380,6 +1471,7 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
     _size: function (): number {
         return 2 + list_overhead(this.args);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.args = do_list(self.args, tw);
@@ -1417,6 +1509,7 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
     _size: function (): number {
         return list_overhead(this.expressions);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         const result = do_list(self.expressions, tw);
         self.expressions = result.length
@@ -1431,7 +1524,9 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
 
 }, AST_Node);
 
-var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {}, {
+var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {
+    shallow_cmp: pass_through,
+}, {
     documentation: "Base class for property access expressions, i.e. `a.foo` or `a[\"foo\"]`",
     propdoc: {
         expression: "[AST_Node] the “container” expression",
@@ -1451,6 +1546,7 @@ var AST_Dot: any = DEFNODE("Dot", "quote", {
     _size: function (): number {
         return this.property.length + 1;
     },
+    shallow_cmp: mkshallow({ property: "eq" }),
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     })
@@ -1496,6 +1592,7 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
         if (this.operator === "void") return 5;
         return this.operator.length;
     },
+    shallow_cmp: mkshallow({ operator: "eq" }),
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     })
@@ -1526,6 +1623,7 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
         push(this.right);
         push(this.left);
     },
+    shallow_cmp: mkshallow({ operator: "eq" }),
     _size: function (info): number {
         if (this.operator === "in") return 4;
 
@@ -1573,6 +1671,7 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         push(this.condition);
     },
     _size: () => 3,
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.condition = self.condition.transform(tw);
         self.consequent = self.consequent.transform(tw);
@@ -1613,6 +1712,7 @@ var AST_Array: any = DEFNODE("Array", "elements", {
     _size: function (): number {
         return 2 + list_overhead(this.elements);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.elements = do_list(self.elements, tw);
     })
@@ -1644,6 +1744,7 @@ var AST_Object: any = DEFNODE("Object", "properties", {
         }
         return base + list_overhead(this.properties);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.properties = do_list(self.properties, tw);
     })
@@ -1666,6 +1767,7 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
         push(this.value);
         if (this.key instanceof AST_Node) push(this.key);
     },
+    shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         if (self.key instanceof AST_Node) {
             self.key = self.key.transform(tw);
@@ -1684,6 +1786,7 @@ var AST_ObjectKeyVal: any = DEFNODE("ObjectKeyVal", "quote", {
     computed_key() {
         return this.key instanceof AST_Node;
     },
+    shallow_cmp: mkshallow({ key: "eq" }),
     _size: function (): number {
         return key_size(this.key) + 1;
     }
@@ -1700,7 +1803,10 @@ var AST_ObjectSetter: any = DEFNODE("ObjectSetter", "quote static", {
     },
     _size: function (): number {
         return 5 + static_size(this.static) + key_size(this.key);
-    }
+    },
+    shallow_cmp: mkshallow({
+        static: "eq"
+    })
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -1715,7 +1821,10 @@ var AST_ObjectGetter: any = DEFNODE("ObjectGetter", "quote static", {
     },
     _size: function (): number {
         return 5 + static_size(this.static) + key_size(this.key);
-    }
+    },
+    shallow_cmp: mkshallow({
+        static: "eq"
+    })
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -1730,7 +1839,12 @@ var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator
     },
     _size: function (): number {
         return static_size(this.static) + key_size(this.key) + lambda_modifiers(this);
-    }
+    },
+    shallow_cmp: mkshallow({
+        static: "eq",
+        is_generator: "eq",
+        async: "eq",
+    })
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -1769,6 +1883,10 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
         if (self.name) self.name = self.name.transform(tw) as any;
         if (self.extends) self.extends = self.extends.transform(tw);
         self.properties = do_list(self.properties, tw);
+    }),
+    shallow_cmp: mkshallow({
+        name: "exist",
+        extends: "exist",
     })
 }, {
     propdoc: {
@@ -1802,7 +1920,10 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
             + (typeof this.key === "string" ? this.key.length + 2 : 0)
             + (this.value ? 1 : 0)
         );
-    }
+    },
+    shallow_cmp: mkshallow({
+        static: "eq"
+    })
 }, {
     documentation: "A class property",
     propdoc: {
@@ -1826,7 +1947,10 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
         return !mangle_options || this.definition().unmangleable(mangle_options)
             ? this.name.length
             : 2;
-    }
+    },
+    shallow_cmp: mkshallow({
+        name: "eq"
+    })
 }, {
     propdoc: {
         name: "[string] name of this symbol",
@@ -1837,7 +1961,8 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
 }, AST_Node);
 
 var AST_NewTarget: any = DEFNODE("NewTarget", null, {
-    _size: () => 10
+    _size: () => 10,
+    shallow_cmp: pass_through
 }, {
     documentation: "A reference to new.target"
 }, AST_Node);
@@ -1954,13 +2079,15 @@ var AST_LabelRef: any = DEFNODE("LabelRef", null, {}, {
 }, AST_Symbol);
 
 var AST_This: any = DEFNODE("This", null, {
-    _size: () => 4
+    _size: () => 4,
+    shallow_cmp: pass_through
 }, {
     documentation: "The `this` symbol",
 }, AST_Symbol);
 
 var AST_Super: any = DEFNODE("Super", null, {
-    _size: () => 5
+    _size: () => 5,
+    shallow_cmp: pass_through
 }, {
     documentation: "The `super` symbol",
 }, AST_This);
@@ -1976,7 +2103,10 @@ var AST_Constant: any = DEFNODE("Constant", null, {
 var AST_String: any = DEFNODE("String", "value quote", {
     _size: function (): number {
         return this.value.length + 2;
-    }
+    },
+    shallow_cmp: mkshallow({
+        value: "eq"
+    })
 }, {
     documentation: "A string literal",
     propdoc: {
@@ -1993,7 +2123,10 @@ var AST_Number: any = DEFNODE("Number", "value literal", {
             return Math.floor(Math.log10(value) + 1);
         }
         return value.toString().length;
-    }
+    },
+    shallow_cmp: mkshallow({
+        value: "eq"
+    })
 }, {
     documentation: "A number literal",
     propdoc: {
@@ -2005,7 +2138,10 @@ var AST_Number: any = DEFNODE("Number", "value literal", {
 var AST_BigInt = DEFNODE("BigInt", "value", {
     _size: function (): number {
         return this.value.length;
-    }
+    },
+    shallow_cmp: mkshallow({
+        value: "eq"
+    })
 }, {
     documentation: "A big int literal",
     propdoc: {
@@ -2016,6 +2152,12 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
 var AST_RegExp: any = DEFNODE("RegExp", "value", {
     _size: function (): number {
         return this.value.toString().length;
+    },
+    shallow_cmp: function (other) {
+        return (
+            this.value.flags === other.value.flags
+            && this.value.source === other.value.source
+        );
     }
 }, {
     documentation: "A regexp literal",
@@ -2024,7 +2166,9 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
     }
 }, AST_Constant);
 
-var AST_Atom: any = DEFNODE("Atom", null, {}, {
+var AST_Atom: any = DEFNODE("Atom", null, {
+    shallow_cmp: pass_through
+}, {
     documentation: "Base class for atoms",
 }, AST_Constant);
 
@@ -2409,210 +2553,3 @@ function do_list(list: any[], tw: any) {
         return node.transform(tw, true);
     });
 }
-
-// Creates a shallow compare function
-const mkshallow = (props) => {
-    const comparisons = Object
-        .keys(props)
-        .map(key => {
-            if (props[key] === "eq") {
-                return `this.${key} === other.${key}`;
-            } else if (props[key] === "exist") {
-                return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`;
-            } else {
-                throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`);
-            }
-        })
-        .join(" && ");
-
-    return new Function("other", "return " + comparisons);
-};
-
-const pass_through = () => true;
-
-AST_Node.prototype.shallow_cmp = function () {
-    throw new Error("did not find a shallow_cmp function for " + this.constructor.name);
-};
-
-AST_Debugger.prototype.shallow_cmp = pass_through;
-
-AST_Directive.prototype.shallow_cmp = mkshallow({ value: "eq" });
-
-AST_SimpleStatement.prototype.shallow_cmp = pass_through;
-
-AST_Block.prototype.shallow_cmp = pass_through;
-
-AST_EmptyStatement.prototype.shallow_cmp = pass_through;
-
-AST_LabeledStatement.prototype.shallow_cmp = mkshallow({ "label.name": "eq" });
-
-AST_Do.prototype.shallow_cmp = pass_through;
-
-AST_While.prototype.shallow_cmp = pass_through;
-
-AST_For.prototype.shallow_cmp = mkshallow({
-    init: "exist",
-    condition: "exist",
-    step: "exist"
-});
-
-AST_ForIn.prototype.shallow_cmp = pass_through;
-
-AST_ForOf.prototype.shallow_cmp = pass_through;
-
-AST_With.prototype.shallow_cmp = pass_through;
-
-AST_Toplevel.prototype.shallow_cmp = pass_through;
-
-AST_Expansion.prototype.shallow_cmp = pass_through;
-
-AST_Lambda.prototype.shallow_cmp = mkshallow({
-    is_generator: "eq",
-    async: "eq"
-});
-
-AST_Destructuring.prototype.shallow_cmp = mkshallow({
-    is_array: "eq"
-});
-
-AST_PrefixedTemplateString.prototype.shallow_cmp = pass_through;
-
-AST_TemplateString.prototype.shallow_cmp = pass_through;
-
-AST_TemplateSegment.prototype.shallow_cmp = mkshallow({
-    "value": "eq"
-});
-
-AST_Jump.prototype.shallow_cmp = pass_through;
-
-AST_LoopControl.prototype.shallow_cmp = pass_through;
-
-AST_Await.prototype.shallow_cmp = pass_through;
-
-AST_Yield.prototype.shallow_cmp = mkshallow({
-    is_star: "eq"
-});
-
-AST_If.prototype.shallow_cmp = mkshallow({
-    alternative: "exist"
-});
-
-AST_Switch.prototype.shallow_cmp = pass_through;
-
-AST_SwitchBranch.prototype.shallow_cmp = pass_through;
-
-AST_Try.prototype.shallow_cmp = mkshallow({
-    bcatch: "exist",
-    bfinally: "exist"
-});
-
-AST_Catch.prototype.shallow_cmp = mkshallow({
-    argname: "exist"
-});
-
-AST_Finally.prototype.shallow_cmp = pass_through;
-
-AST_Definitions.prototype.shallow_cmp = pass_through;
-
-AST_VarDef.prototype.shallow_cmp = mkshallow({
-    value: "exist"
-});
-
-AST_NameMapping.prototype.shallow_cmp = pass_through;
-
-AST_Import.prototype.shallow_cmp = mkshallow({
-    imported_name: "exist",
-    imported_names: "exist"
-});
-
-AST_Export.prototype.shallow_cmp = mkshallow({
-    exported_definition: "exist",
-    exported_value: "exist",
-    exported_names: "exist",
-    module_name: "eq",
-    is_default: "eq",
-});
-
-AST_Call.prototype.shallow_cmp = pass_through;
-
-AST_Sequence.prototype.shallow_cmp = pass_through;
-
-AST_PropAccess.prototype.shallow_cmp = pass_through;
-
-AST_Dot.prototype.shallow_cmp = mkshallow({
-    property: "eq"
-});
-
-AST_Unary.prototype.shallow_cmp = mkshallow({
-    operator: "eq"
-});
-
-AST_Binary.prototype.shallow_cmp = mkshallow({
-    operator: "eq"
-});
-
-AST_Conditional.prototype.shallow_cmp = pass_through;
-
-AST_Array.prototype.shallow_cmp = pass_through;
-
-AST_Object.prototype.shallow_cmp = pass_through;
-
-AST_ObjectProperty.prototype.shallow_cmp = pass_through;
-
-AST_ObjectKeyVal.prototype.shallow_cmp = mkshallow({
-    key: "eq"
-});
-
-AST_ObjectSetter.prototype.shallow_cmp = mkshallow({
-    static: "eq"
-});
-
-AST_ObjectGetter.prototype.shallow_cmp = mkshallow({
-    static: "eq"
-});
-
-AST_ConciseMethod.prototype.shallow_cmp = mkshallow({
-    static: "eq",
-    is_generator: "eq",
-    async: "eq",
-});
-
-AST_Class.prototype.shallow_cmp = mkshallow({
-    name: "exist",
-    extends: "exist",
-});
-
-AST_ClassProperty.prototype.shallow_cmp = mkshallow({
-    static: "eq"
-});
-
-AST_Symbol.prototype.shallow_cmp = mkshallow({
-    name: "eq"
-});
-
-AST_NewTarget.prototype.shallow_cmp = pass_through;
-
-AST_This.prototype.shallow_cmp = pass_through;
-
-AST_Super.prototype.shallow_cmp = pass_through;
-
-AST_String.prototype.shallow_cmp = mkshallow({
-    value: "eq"
-});
-
-AST_Number.prototype.shallow_cmp = mkshallow({
-    value: "eq"
-});
-
-AST_BigInt.prototype.shallow_cmp = mkshallow({
-    value: "eq"
-});
-
-AST_RegExp.prototype.shallow_cmp = function (other) {
-    return (
-        this.value.flags === other.value.flags
-        && this.value.source === other.value.source
-    );
-};
-
-AST_Atom.prototype.shallow_cmp = pass_through;
