@@ -106,6 +106,24 @@ const list_overhead = (array) => array.length && array.length - 1;
 /*#__INLINE__*/
 const def_size = (size, def) => size + list_overhead(def.definitions);
 
+const get_transformer = descend => {
+    return function(this: any, tw: any, in_list: boolean) {
+        let transformed: any | undefined = undefined;
+        tw.push(this);
+        if (tw.before) transformed = tw.before(this, descend, in_list);
+        if (transformed === undefined) {
+            transformed = this;
+            descend(transformed as any, tw);
+            if (tw.after) {
+                const after_ret = tw.after(transformed, in_list);
+                if (after_ret !== undefined) transformed = after_ret;
+            }
+        }
+        tw.pop();
+        return transformed;
+    };
+};
+
 function DEFNODE(type: string, strProps: string | null, methods: AnyObject, staticMethods: AnyObject, base: any | null) {
     let self_props = strProps ? strProps.split(/\s+/) : [];
     const name = `AST_${type}`;
@@ -243,7 +261,8 @@ var AST_Node: any = DEFNODE("Node", "start end", {
         // mangle_options = undefined;
 
         return size;
-    }
+    },
+    transform: get_transformer(noop)
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
@@ -290,7 +309,10 @@ var AST_SimpleStatement: any = DEFNODE("SimpleStatement", "body", {
     },
     _children_backwards(push: Function) {
         push(this.body);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.body = (self.body as any).transform(tw);
+    })
 }, {
     documentation: "A statement consisting of an expression, i.e. a = 1 + 2",
     propdoc: {
@@ -328,7 +350,10 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
     clone: clone_block_scope,
     _size: function () {
         return 2 + list_overhead(this.body);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.body = do_list(self.body, tw);
+    })
 }, {
     documentation: "A body of statements (usually braced)",
     propdoc: {
@@ -380,7 +405,11 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
         }
         return node;
     },
-    _size: () => 2
+    _size: () => 2,
+    transform: get_transformer(function(self, tw: any) {
+        self.label = self.label.transform(tw) as any;
+        self.body = (self.body as any).transform(tw); // TODO: check type
+    })
 }, {
     documentation: "Statement with a label",
     propdoc: {
@@ -415,7 +444,11 @@ var AST_Do: any = DEFNODE("Do", null, {
         push(this.condition);
         push(this.body);
     },
-    _size: () => 9
+    _size: () => 9,
+    transform: get_transformer(function(self, tw: any) {
+        self.body = (self.body as any).transform(tw);
+        self.condition = self.condition.transform(tw);
+    })
 }, {
     documentation: "A `do` statement",
 }, AST_DWLoop);
@@ -431,7 +464,11 @@ var AST_While: any = DEFNODE("While", null, {
         push(this.body);
         push(this.condition);
     },
-    _size: () => 7
+    _size: () => 7,
+    transform: get_transformer(function(self, tw: any) {
+        self.condition = self.condition.transform(tw);
+        self.body = (self.body as any).transform(tw);
+    })
 }, {
     documentation: "A `while` statement",
 }, AST_DWLoop);
@@ -451,7 +488,13 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         if (this.condition) push(this.condition);
         if (this.init) push(this.init);
     },
-    _size: () => 8
+    _size: () => 8,
+    transform: get_transformer(function(self, tw: any) {
+        if (self.init) self.init = self.init.transform(tw);
+        if (self.condition) self.condition = self.condition.transform(tw);
+        if (self.step) self.step = self.step.transform(tw);
+        self.body = (self.body as any).transform(tw);
+    })
 }, {
     documentation: "A `for` statement",
     propdoc: {
@@ -474,7 +517,12 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
         if (this.object) push(this.object);
         if (this.init) push(this.init);
     },
-    _size: () => 8
+    _size: () => 8,
+    transform: get_transformer(function(self, tw: any) {
+        self.init = self.init?.transform(tw) || null;
+        self.object = self.object.transform(tw);
+        self.body = (self.body as any).transform(tw);
+    })
 }, {
     documentation: "A `for ... in` statement",
     propdoc: {
@@ -498,7 +546,11 @@ var AST_With: any = DEFNODE("With", "expression", {
         push(this.body);
         push(this.expression);
     },
-    _size: () => 6
+    _size: () => 6,
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+        self.body = (self.body as any).transform(tw);
+    })
 }, {
     documentation: "A `with` statement",
     propdoc: {
@@ -590,7 +642,10 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
-    _size: () => 3
+    _size: () => 3,
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+    })
 }, {
     documentation: "An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list",
     propdoc: {
@@ -629,6 +684,15 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
 
         if (this.name) push(this.name);
     },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.name) self.name = self.name.transform(tw) as any;
+        self.argnames = do_list(self.argnames, tw);
+        if (self.body instanceof AST_Node) {
+            self.body = (self.body as any).transform(tw) as any;
+        } else {
+            self.body = do_list(self.body, tw);
+        }
+    })
 }, {
     documentation: "Base class for functions",
     propdoc: {
@@ -706,7 +770,10 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
         }));
         return out;
     },
-    _size: () => 2
+    _size: () => 2,
+    transform: get_transformer(function(self, tw: any) {
+        self.names = do_list(self.names, tw);
+    })
 }, {
     documentation: "A destructuring of several names. Used in destructuring assignment and with destructuring function argument names",
     propdoc: {
@@ -726,6 +793,10 @@ var AST_PrefixedTemplateString: any = DEFNODE("PrefixedTemplateString", "templat
         push(this.template_string);
         push(this.prefix);
     },
+    transform: get_transformer(function(self, tw: any) {
+        self.prefix = self.prefix.transform(tw);
+        self.template_string = self.template_string.transform(tw) as any;
+    })
 }, {
     documentation: "A templatestring with a prefix, such as String.raw`foobarbaz`",
     propdoc: {
@@ -748,7 +819,10 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
     },
     _size: function (): number {
         return 2 + (Math.floor(this.segments.length / 2) * 3);  /* "${}" */
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.segments = do_list(self.segments, tw);
+    })
 }, {
     documentation: "A template string literal",
     propdoc: {
@@ -784,6 +858,9 @@ var AST_Exit: any = DEFNODE("Exit", "value", {
     _children_backwards(push: Function) {
         if (this.value) push(this.value);
     },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.value) self.value = self.value.transform(tw);
+    })
 }, {
     documentation: "Base class for “exits” (`return` and `throw`)",
     propdoc: {
@@ -815,6 +892,9 @@ var AST_LoopControl: any = DEFNODE("LoopControl", "label", {
     _children_backwards(push: Function) {
         if (this.label) push(this.label);
     },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.label) self.label = self.label.transform(tw) as any;
+    })
 }, {
     documentation: "Base class for loop control statements (`break` and `continue`)",
     propdoc: {
@@ -848,7 +928,10 @@ var AST_Await: any = DEFNODE("Await", "expression", {
     _children_backwards(push: Function) {
         push(this.expression);
     },
-    _size: () => 6
+    _size: () => 6,
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+    })
 }, {
     documentation: "An `await` statement",
     propdoc: {
@@ -866,7 +949,10 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
     _children_backwards(push: Function) {
         if (this.expression) push(this.expression);
     },
-    _size: () => 6
+    _size: () => 6,
+    transform: get_transformer(function(self, tw: any) {
+        if (self.expression) self.expression = self.expression.transform(tw);
+    })
 }, {
     documentation: "A `yield` statement",
     propdoc: {
@@ -893,7 +979,12 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         push(this.body);
         push(this.condition);
     },
-    _size: () => 4
+    _size: () => 4,
+    transform: get_transformer(function(self, tw: any) {
+        self.condition = self.condition.transform(tw);
+        self.body = (self.body as any).transform(tw);
+        if (self.alternative) self.alternative = self.alternative.transform(tw);
+    })
 }, {
     documentation: "A `if` statement",
     propdoc: {
@@ -919,7 +1010,11 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
     },
     _size: function (): number {
         return 8 + list_overhead(this.body);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+        self.body = do_list(self.body, tw);
+    })
 }, {
     documentation: "A `switch` statement",
     propdoc: {
@@ -954,7 +1049,11 @@ var AST_Case: any = DEFNODE("Case", "expression", {
     },
     _size: function (): number {
         return 5 + list_overhead(this.body);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+        self.body = do_list(self.body, tw);
+    })
 }, {
     documentation: "A `case` switch branch",
     propdoc: {
@@ -981,7 +1080,12 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
     },
     _size: function (): number {
         return 3 + list_overhead(this.body);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.body = do_list(self.body, tw);
+        if (self.bcatch) self.bcatch = self.bcatch.transform(tw) as any;
+        if (self.bfinally) self.bfinally = self.bfinally.transform(tw) as any;
+    })
 }, {
     documentation: "A `try` statement",
     propdoc: {
@@ -1009,7 +1113,11 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
             size += 2;
         }
         return size;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.argname) self.argname = self.argname.transform(tw);
+        self.body = do_list(self.body, tw);
+    })
 }, {
     documentation: "A `catch` node; only makes sense as part of a `try` statement",
     propdoc: {
@@ -1041,6 +1149,9 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
         let i = this.definitions.length;
         while (i--) push(this.definitions[i]);
     },
+    transform: get_transformer(function(self, tw: any) {
+        self.definitions = do_list(self.definitions, tw);
+    })
 }, {
     documentation: "Base class for `var` or `const` nodes (variable declarations/initializations)",
     propdoc: {
@@ -1086,7 +1197,11 @@ var AST_VarDef: any = DEFNODE("VarDef", "name value", {
     },
     _size: function (): number {
         return this.value ? 1 : 0;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.name = self.name.transform(tw) as any;
+        if (self.value) self.value = self.value.transform(tw);
+    })
 }, {
     documentation: "A variable declaration; only appears in a AST_Definitions node",
     propdoc: {
@@ -1110,7 +1225,11 @@ var AST_NameMapping: any = DEFNODE("NameMapping", "foreign_name name", {
     _size: function (): number {
         // foreign name isn't mangled
         return this.name ? 4 : 0;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.foreign_name = self.foreign_name.transform(tw) as any;
+        self.name = self.name.transform(tw) as any;
+    })
 }, {
     documentation: "The part of the export/import statement that declare names from a module.",
     propdoc: {
@@ -1157,7 +1276,12 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
         }
 
         return size;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.imported_name) self.imported_name = self.imported_name.transform(tw) as any;
+        if (self.imported_names) do_list(self.imported_names, tw);
+        self.module_name = self.module_name.transform(tw) as any;
+    })
 }, {
     documentation: "An `import` statement",
     propdoc: {
@@ -1214,7 +1338,13 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
         }
 
         return size;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw) as any;
+        if (self.exported_value) self.exported_value = self.exported_value.transform(tw);
+        if (self.exported_names) do_list(self.exported_names, tw);
+        if (self.module_name) self.module_name = self.module_name.transform(tw) as any;
+    })
 }, {
     documentation: "An `export` statement",
     propdoc: {
@@ -1249,7 +1379,11 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
     },
     _size: function (): number {
         return 2 + list_overhead(this.args);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+        self.args = do_list(self.args, tw);
+    })
 }, {
     documentation: "A function call expression",
     propdoc: {
@@ -1282,7 +1416,13 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
     },
     _size: function (): number {
         return list_overhead(this.expressions);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        const result = do_list(self.expressions, tw);
+        self.expressions = result.length
+            ? result
+            : [new AST_Number({ value: 0 })];
+    })
 }, {
     documentation: "A sequence expression (comma-separated expressions)",
     propdoc: {
@@ -1310,7 +1450,10 @@ var AST_Dot: any = DEFNODE("Dot", "quote", {
     },
     _size: function (): number {
         return this.property.length + 1;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+    })
 }, {
     documentation: "A dotted property access expression",
     propdoc: {
@@ -1329,7 +1472,11 @@ var AST_Sub: any = DEFNODE("Sub", null, {
         push(this.property);
         push(this.expression);
     },
-    _size: () => 2
+    _size: () => 2,
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+        self.property = (self.property as any).transform(tw);
+    })
 }, {
     documentation: "Index-style property access, i.e. `a[\"foo\"]`",
 
@@ -1348,7 +1495,10 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
         if (this.operator === "typeof") return 7;
         if (this.operator === "void") return 5;
         return this.operator.length;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.expression = self.expression.transform(tw);
+    })
 }, {
     documentation: "Base class for unary expressions",
     propdoc: {
@@ -1394,7 +1544,11 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
         }
 
         return size;
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.left = self.left.transform(tw);
+        self.right = self.right.transform(tw);
+    })
 }, {
     documentation: "Binary expression, i.e. `a + b`",
     propdoc: {
@@ -1418,7 +1572,12 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         push(this.consequent);
         push(this.condition);
     },
-    _size: () => 3
+    _size: () => 3,
+    transform: get_transformer(function(self, tw: any) {
+        self.condition = self.condition.transform(tw);
+        self.consequent = self.consequent.transform(tw);
+        self.alternative = self.alternative.transform(tw);
+    })
 }, {
     documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
     propdoc: {
@@ -1453,7 +1612,10 @@ var AST_Array: any = DEFNODE("Array", "elements", {
     },
     _size: function (): number {
         return 2 + list_overhead(this.elements);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.elements = do_list(self.elements, tw);
+    })
 }, {
     documentation: "An array literal",
     propdoc: {
@@ -1481,7 +1643,10 @@ var AST_Object: any = DEFNODE("Object", "properties", {
             base += 2; // parens
         }
         return base + list_overhead(this.properties);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        self.properties = do_list(self.properties, tw);
+    })
 }, {
     documentation: "An object literal",
     propdoc: {
@@ -1500,7 +1665,13 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
     _children_backwards(push: Function) {
         push(this.value);
         if (this.key instanceof AST_Node) push(this.key);
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.key instanceof AST_Node) {
+            self.key = self.key.transform(tw);
+        }
+        if (self.value) self.value = self.value.transform(tw);
+    })
 }, {
     documentation: "Base class for literal object properties",
     propdoc: {
@@ -1593,7 +1764,12 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
             (this.name ? 8 : 7)
             + (this.extends ? 8 : 0)
         );
-    }
+    },
+    transform: get_transformer(function(self, tw: any) {
+        if (self.name) self.name = self.name.transform(tw) as any;
+        if (self.extends) self.extends = self.extends.transform(tw);
+        self.properties = do_list(self.properties, tw);
+    })
 }, {
     propdoc: {
         name: "[AST_SymbolClass|AST_SymbolDefClass?] optional class name.",
@@ -2228,227 +2404,8 @@ export {
     _PURE,
 };
 
-const get_transformer = descend => {
-    return function(this: any, tw: any, in_list: boolean) {
-        let transformed: any | undefined = undefined;
-        tw.push(this);
-        if (tw.before) transformed = tw.before(this, descend, in_list);
-        if (transformed === undefined) {
-            transformed = this;
-            descend(transformed as any, tw);
-            if (tw.after) {
-                const after_ret = tw.after(transformed, in_list);
-                if (after_ret !== undefined) transformed = after_ret;
-            }
-        }
-        tw.pop();
-        return transformed;
-    };
-};
-
-function def_transform(node: any, descend: (node: any, tw: any) => any) {
-    node.DEFMETHOD("transform", get_transformer(descend));
-}
-
 function do_list(list: any[], tw: any) {
     return MAP(list, function(node: any) {
         return node.transform(tw, true);
     });
 }
-
-def_transform(AST_Node, noop);
-
-def_transform(AST_LabeledStatement, function(self, tw: any) {
-    self.label = self.label.transform(tw) as any;
-    self.body = (self.body as any).transform(tw); // TODO: check type
-});
-
-def_transform(AST_SimpleStatement, function(self, tw: any) {
-    self.body = (self.body as any).transform(tw);
-});
-
-def_transform(AST_Block, function(self, tw: any) {
-    self.body = do_list(self.body, tw);
-});
-
-def_transform(AST_Do, function(self, tw: any) {
-    self.body = (self.body as any).transform(tw);
-    self.condition = self.condition.transform(tw);
-});
-
-def_transform(AST_While, function(self, tw: any) {
-    self.condition = self.condition.transform(tw);
-    self.body = (self.body as any).transform(tw);
-});
-
-def_transform(AST_For, function(self, tw: any) {
-    if (self.init) self.init = self.init.transform(tw);
-    if (self.condition) self.condition = self.condition.transform(tw);
-    if (self.step) self.step = self.step.transform(tw);
-    self.body = (self.body as any).transform(tw);
-});
-
-def_transform(AST_ForIn, function(self, tw: any) {
-    self.init = self.init?.transform(tw) || null;
-    self.object = self.object.transform(tw);
-    self.body = (self.body as any).transform(tw);
-});
-
-def_transform(AST_With, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-    self.body = (self.body as any).transform(tw);
-});
-
-def_transform(AST_Exit, function(self, tw: any) {
-    if (self.value) self.value = self.value.transform(tw);
-});
-
-def_transform(AST_LoopControl, function(self, tw: any) {
-    if (self.label) self.label = self.label.transform(tw) as any;
-});
-
-def_transform(AST_If, function(self, tw: any) {
-    self.condition = self.condition.transform(tw);
-    self.body = (self.body as any).transform(tw);
-    if (self.alternative) self.alternative = self.alternative.transform(tw);
-});
-
-def_transform(AST_Switch, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-    self.body = do_list(self.body, tw);
-});
-
-def_transform(AST_Case, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-    self.body = do_list(self.body, tw);
-});
-
-def_transform(AST_Try, function(self, tw: any) {
-    self.body = do_list(self.body, tw);
-    if (self.bcatch) self.bcatch = self.bcatch.transform(tw) as any;
-    if (self.bfinally) self.bfinally = self.bfinally.transform(tw) as any;
-});
-
-def_transform(AST_Catch, function(self, tw: any) {
-    if (self.argname) self.argname = self.argname.transform(tw);
-    self.body = do_list(self.body, tw);
-});
-
-def_transform(AST_Definitions, function(self, tw: any) {
-    self.definitions = do_list(self.definitions, tw);
-});
-
-def_transform(AST_VarDef, function(self, tw: any) {
-    self.name = self.name.transform(tw) as any;
-    if (self.value) self.value = self.value.transform(tw);
-});
-
-def_transform(AST_Destructuring, function(self, tw: any) {
-    self.names = do_list(self.names, tw);
-});
-
-def_transform(AST_Lambda, function(self, tw: any) {
-    if (self.name) self.name = self.name.transform(tw) as any;
-    self.argnames = do_list(self.argnames, tw);
-    if (self.body instanceof AST_Node) {
-        self.body = (self.body as any).transform(tw) as any;
-    } else {
-        self.body = do_list(self.body, tw);
-    }
-});
-
-def_transform(AST_Call, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-    self.args = do_list(self.args, tw);
-});
-
-def_transform(AST_Sequence, function(self, tw: any) {
-    const result = do_list(self.expressions, tw);
-    self.expressions = result.length
-        ? result
-        : [new AST_Number({ value: 0 })];
-});
-
-def_transform(AST_Dot, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-});
-
-def_transform(AST_Sub, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-    self.property = (self.property as any).transform(tw);
-});
-
-def_transform(AST_Yield, function(self, tw: any) {
-    if (self.expression) self.expression = self.expression.transform(tw);
-});
-
-def_transform(AST_Await, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-});
-
-def_transform(AST_Unary, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-});
-
-def_transform(AST_Binary, function(self, tw: any) {
-    self.left = self.left.transform(tw);
-    self.right = self.right.transform(tw);
-});
-
-def_transform(AST_Conditional, function(self, tw: any) {
-    self.condition = self.condition.transform(tw);
-    self.consequent = self.consequent.transform(tw);
-    self.alternative = self.alternative.transform(tw);
-});
-
-def_transform(AST_Array, function(self, tw: any) {
-    self.elements = do_list(self.elements, tw);
-});
-
-def_transform(AST_Object, function(self, tw: any) {
-    self.properties = do_list(self.properties, tw);
-});
-
-def_transform(AST_ObjectProperty, function(self, tw: any) {
-    if (self.key instanceof AST_Node) {
-        self.key = self.key.transform(tw);
-    }
-    if (self.value) self.value = self.value.transform(tw);
-});
-
-def_transform(AST_Class, function(self, tw: any) {
-    if (self.name) self.name = self.name.transform(tw) as any;
-    if (self.extends) self.extends = self.extends.transform(tw);
-    self.properties = do_list(self.properties, tw);
-});
-
-def_transform(AST_Expansion, function(self, tw: any) {
-    self.expression = self.expression.transform(tw);
-});
-
-def_transform(AST_NameMapping, function(self, tw: any) {
-    self.foreign_name = self.foreign_name.transform(tw) as any;
-    self.name = self.name.transform(tw) as any;
-});
-
-def_transform(AST_Import, function(self, tw: any) {
-    if (self.imported_name) self.imported_name = self.imported_name.transform(tw) as any;
-    if (self.imported_names) do_list(self.imported_names, tw);
-    self.module_name = self.module_name.transform(tw) as any;
-});
-
-def_transform(AST_Export, function(self, tw: any) {
-    if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw) as any;
-    if (self.exported_value) self.exported_value = self.exported_value.transform(tw);
-    if (self.exported_names) do_list(self.exported_names, tw);
-    if (self.module_name) self.module_name = self.module_name.transform(tw) as any;
-});
-
-def_transform(AST_TemplateString, function(self, tw: any) {
-    self.segments = do_list(self.segments, tw);
-});
-
-def_transform(AST_PrefixedTemplateString, function(self, tw: any) {
-    self.prefix = self.prefix.transform(tw);
-    self.template_string = self.template_string.transform(tw) as any;
-});
