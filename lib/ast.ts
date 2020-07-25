@@ -109,6 +109,50 @@ const def_size = (size, def) => size + list_overhead(def.definitions);
 
 const pass_through = () => true;
 
+const get_to_moz = (handler) => function(parent: any) {
+    return set_moz_loc(this, handler(this, parent));
+};
+
+var TO_MOZ_STACK: Array<any | null> | null = null;
+
+function to_moz(node: any | null) {
+    if (TO_MOZ_STACK === null) { TO_MOZ_STACK = []; }
+    TO_MOZ_STACK.push(node);
+    var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null;
+    TO_MOZ_STACK.pop();
+    if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null; }
+    return ast;
+}
+
+function to_moz_in_destructuring() {
+    var i = TO_MOZ_STACK?.length as number;
+    while (i--) {
+        if (TO_MOZ_STACK?.[i] instanceof AST_Destructuring) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function to_moz_block(node: any) {
+    return {
+        type: "BlockStatement",
+        body: node.body.map(to_moz)
+    };
+}
+
+function to_moz_scope(type: string, node: any) {
+    var body = node.body.map(to_moz);
+    if (node.body[0] instanceof AST_SimpleStatement && (node.body[0] as any).body instanceof AST_String) {
+        body.unshift(to_moz(new AST_EmptyStatement(node.body[0])));
+    }
+    return {
+        type: type,
+        body: body
+    };
+}
+
+
 // Creates a shallow compare function
 const mkshallow = (props) => {
     const comparisons = Object
@@ -318,7 +362,18 @@ var AST_Directive: any = DEFNODE("Directive", "value quote", {
     _size: function (): number {
         // TODO string encoding stuff
         return 2 + this.value.length;
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_Directive(M) {
+        return {
+            type: "ExpressionStatement",
+            expression: {
+                type: "Literal",
+                value: M.value,
+                raw: M.print_to_string()
+            },
+            directive: M.value
+        };
+    }),
 }, {
     documentation: "Represents a directive, like \"use strict\";",
     propdoc: {
@@ -339,7 +394,13 @@ var AST_SimpleStatement: any = DEFNODE("SimpleStatement", "body", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.body = (self.body as any).transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ExpressionStatement(M) {
+        return {
+            type: "ExpressionStatement",
+            expression: to_moz(M.body as any) // TODO: check type
+        };
+    }),
 }, {
     documentation: "A statement consisting of an expression, i.e. a = 1 + 2",
     propdoc: {
@@ -667,7 +728,10 @@ var AST_Toplevel: any = DEFNODE("Toplevel", "globals", {
     shallow_cmp: pass_through,
     _size: function() {
         return list_overhead(this.body);
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_Program(M) {
+        return to_moz_scope("Program", M);
+    }),
 }, {
     documentation: "The toplevel scope",
     propdoc: {
@@ -688,7 +752,13 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_Spread(M) {
+        return {
+            type: to_moz_in_destructuring() ? "RestElement" : "SpreadElement",
+            argument: to_moz(M.expression)
+        };
+    }),
 }, {
     documentation: "An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list",
     propdoc: {
@@ -763,7 +833,19 @@ var AST_Function: any = DEFNODE("Function", null, {
     _size: function (info) {
         const first: any = !!first_in_statement(info);
         return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_FunctionExpression(M, parent) {
+        var is_generator = parent.is_generator !== undefined ?
+            parent.is_generator : M.is_generator;
+        return {
+            type: "FunctionExpression",
+            id: to_moz(M.name),
+            params: M.argnames.map(to_moz),
+            generator: is_generator,
+            async: M.async,
+            body: to_moz_scope("BlockStatement", M)
+        };
+    }),
 }, {
     documentation: "A function expression"
 }, AST_Lambda);
@@ -782,7 +864,19 @@ var AST_Arrow: any = DEFNODE("Arrow", null, {
         }
 
         return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
-}
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_ArrowFunctionExpression(M) {
+        var body = {
+            type: "BlockStatement",
+            body: M.body.map(to_moz)
+        };
+        return {
+            type: "ArrowFunctionExpression",
+            params: M.argnames.map(to_moz),
+            async: M.async,
+            body: body
+        };
+    }),
 }, {
     documentation: "An ES6 Arrow function ((a) => b)"
 }, AST_Lambda);
@@ -790,7 +884,17 @@ var AST_Arrow: any = DEFNODE("Arrow", null, {
 var AST_Defun: any = DEFNODE("Defun", null, {
     _size: function () {
         return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body);
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_FunctionDeclaration(M) {
+        return {
+            type: "FunctionDeclaration",
+            id: to_moz(M.name),
+            params: M.argnames.map(to_moz),
+            generator: M.is_generator,
+            async: M.async,
+            body: to_moz_scope("BlockStatement", M)
+        };
+    }),
 }, {
     documentation: "A function definition"
 }, AST_Lambda);
@@ -823,7 +927,19 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
     }),
     transform: get_transformer(function(self, tw: any) {
         self.names = do_list(self.names, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ObjectPattern(M) {
+        if (M.is_array) {
+            return {
+                type: "ArrayPattern",
+                elements: M.names.map(to_moz)
+            };
+        }
+        return {
+            type: "ObjectPattern",
+            properties: M.names.map(to_moz)
+        };
+    }),
 }, {
     documentation: "A destructuring of several names. Used in destructuring assignment and with destructuring function argument names",
     propdoc: {
@@ -847,7 +963,14 @@ var AST_PrefixedTemplateString: any = DEFNODE("PrefixedTemplateString", "templat
     transform: get_transformer(function(self, tw: any) {
         self.prefix = self.prefix.transform(tw);
         self.template_string = self.template_string.transform(tw) as any;
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_TaggedTemplateExpression(M) {
+        return {
+            type: "TaggedTemplateExpression",
+            tag: to_moz(M.prefix),
+            quasi: to_moz(M.template_string)
+        };
+    }),
 }, {
     documentation: "A templatestring with a prefix, such as String.raw`foobarbaz`",
     propdoc: {
@@ -874,7 +997,30 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.segments = do_list(self.segments, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_TemplateLiteral(M) {
+        var quasis: any[] = [];
+        var expressions: any[] = [];
+        for (var i = 0; i < M.segments.length; i++) {
+            if (i % 2 !== 0) {
+                expressions.push(to_moz(M.segments[i]));
+            } else {
+                quasis.push({
+                    type: "TemplateElement",
+                    value: {
+                        raw: M.segments[i].raw,
+                        cooked: M.segments[i].value
+                    },
+                    tail: i === M.segments.length - 1
+                });
+            }
+        }
+        return {
+            type: "TemplateLiteral",
+            quasis: quasis,
+            expressions: expressions
+        };
+    }),
 }, {
     documentation: "A template string literal",
     propdoc: {
@@ -1091,6 +1237,13 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
 
 var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {
     shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(function To_Moz_SwitchCase(M) {
+        return {
+            type: "SwitchCase",
+            test: to_moz(M.expression),
+            consequent: M.body.map(to_moz)
+        };
+    })
 }, {
     documentation: "Base class for `switch` branches",
 }, AST_Block);
@@ -1157,7 +1310,16 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
         self.body = do_list(self.body, tw);
         if (self.bcatch) self.bcatch = self.bcatch.transform(tw) as any;
         if (self.bfinally) self.bfinally = self.bfinally.transform(tw) as any;
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_TryStatement(M) {
+        return {
+            type: "TryStatement",
+            block: to_moz_block(M),
+            handler: to_moz(M.bcatch),
+            guardedHandlers: [],
+            finalizer: to_moz(M.bfinally)
+        };
+    }),
 }, {
     documentation: "A `try` statement",
     propdoc: {
@@ -1192,7 +1354,15 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
     transform: get_transformer(function(self, tw: any) {
         if (self.argname) self.argname = self.argname.transform(tw);
         self.body = do_list(self.body, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_CatchClause(M) {
+        return {
+            type: "CatchClause",
+            param: to_moz(M.argname),
+            guard: null,
+            body: to_moz_block(M)
+        };
+    }),
 }, {
     documentation: "A `catch` node; only makes sense as part of a `try` statement",
     propdoc: {
@@ -1228,7 +1398,16 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.definitions = do_list(self.definitions, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_VariableDeclaration(M) {
+        return {
+            type: "VariableDeclaration",
+            kind:
+                M instanceof AST_Const ? "const" :
+                M instanceof AST_Let ? "let" : "var",
+            declarations: M.definitions.map(to_moz)
+        };
+    }),
 }, {
     documentation: "Base class for `var` or `const` nodes (variable declarations/initializations)",
     propdoc: {
@@ -1366,7 +1545,35 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
         if (self.imported_name) self.imported_name = self.imported_name.transform(tw) as any;
         if (self.imported_names) do_list(self.imported_names, tw);
         self.module_name = self.module_name.transform(tw) as any;
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ImportDeclaration(M) {
+        var specifiers: any[] = [];
+        if (M.imported_name) {
+            specifiers.push({
+                type: "ImportDefaultSpecifier",
+                local: to_moz(M.imported_name)
+            });
+        }
+        if (M.imported_names && M.imported_names[0].foreign_name.name === "*") {
+            specifiers.push({
+                type: "ImportNamespaceSpecifier",
+                local: to_moz(M.imported_names[0].name)
+            });
+        } else if (M.imported_names) {
+            M.imported_names.forEach(function(name_mapping) {
+                specifiers.push({
+                    type: "ImportSpecifier",
+                    local: to_moz(name_mapping.name),
+                    imported: to_moz(name_mapping.foreign_name)
+                });
+            });
+        }
+        return {
+            type: "ImportDeclaration",
+            specifiers: specifiers,
+            source: to_moz(M.module_name)
+        };
+    }),
 }, {
     documentation: "An `import` statement",
     propdoc: {
@@ -1436,7 +1643,33 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
         if (self.exported_value) self.exported_value = self.exported_value.transform(tw);
         if (self.exported_names) do_list(self.exported_names, tw);
         if (self.module_name) self.module_name = self.module_name.transform(tw) as any;
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ExportDeclaration(M) {
+        if (M.exported_names) {
+            if (M.exported_names[0].name.name === "*") {
+                return {
+                    type: "ExportAllDeclaration",
+                    source: to_moz(M.module_name)
+                };
+            }
+            return {
+                type: "ExportNamedDeclaration",
+                specifiers: M.exported_names.map(function (name_mapping) {
+                    return {
+                        type: "ExportSpecifier",
+                        exported: to_moz(name_mapping.foreign_name),
+                        local: to_moz(name_mapping.name)
+                    };
+                }),
+                declaration: to_moz(M.exported_definition),
+                source: to_moz(M.module_name)
+            };
+        }
+        return {
+            type: M.is_default ? "ExportDefaultDeclaration" : "ExportNamedDeclaration",
+            declaration: to_moz(M.exported_value || M.exported_definition)
+        };
+    }),
 }, {
     documentation: "An `export` statement",
     propdoc: {
@@ -1516,7 +1749,13 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
         self.expressions = result.length
             ? result
             : [new AST_Number({ value: 0 })];
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_SequenceExpression(M) {
+        return {
+            type: "SequenceExpression",
+            expressions: M.expressions.map(to_moz)
+        };
+    }),
 }, {
     documentation: "A sequence expression (comma-separated expressions)",
     propdoc: {
@@ -1527,6 +1766,15 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
 
 var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {
     shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(function To_Moz_MemberExpression(M) {
+        var isComputed = M instanceof AST_Sub;
+        return {
+            type: "MemberExpression",
+            object: to_moz(M.expression),
+            computed: isComputed,
+            property: isComputed ? to_moz(M.property as any) : {type: "Identifier", name: M.property}
+        };
+    }),
 }, {
     documentation: "Base class for property access expressions, i.e. `a.foo` or `a[\"foo\"]`",
     propdoc: {
@@ -1596,7 +1844,15 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
     shallow_cmp: mkshallow({ operator: "eq" }),
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_Unary(M: any) {
+        return {
+            type: M.operator == "++" || M.operator == "--" ? "UpdateExpression" : "UnaryExpression",
+            operator: M.operator,
+            prefix: M instanceof AST_UnaryPrefix,
+            argument: to_moz(M.expression)
+        };
+    }),
 }, {
     documentation: "Base class for unary expressions",
     propdoc: {
@@ -1716,7 +1972,13 @@ var AST_Array: any = DEFNODE("Array", "elements", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.elements = do_list(self.elements, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ArrayExpression(M: any) {
+        return {
+            type: "ArrayExpression",
+            elements: M.elements.map(to_moz)
+        };
+    }),
 }, {
     documentation: "An array literal",
     propdoc: {
@@ -1748,6 +2010,12 @@ var AST_Object: any = DEFNODE("Object", "properties", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.properties = do_list(self.properties, tw);
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_ObjectExpression(M: any) {
+        return {
+            type: "ObjectExpression",
+            properties: M.properties.map(to_moz)
+        };
     })
 }, {
     documentation: "An object literal",
@@ -1774,7 +2042,64 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
             self.key = self.key.transform(tw);
         }
         if (self.value) self.value = self.value.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_Property(M, parent) {
+        var key = M.key instanceof AST_Node ? to_moz(M.key) : {
+            type: "Identifier",
+            value: M.key
+        };
+        if (typeof M.key === "number") {
+            key = {
+                type: "Literal",
+                value: Number(M.key)
+            };
+        }
+        if (typeof M.key === "string") {
+            key = {
+                type: "Identifier",
+                name: M.key
+            };
+        }
+        var kind;
+        var string_or_num = typeof M.key === "string" || typeof M.key === "number";
+        var computed = string_or_num ? false : !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef;
+        if (M instanceof AST_ObjectKeyVal) {
+            kind = "init";
+            computed = !string_or_num;
+        } else
+        if (M instanceof AST_ObjectGetter) {
+            kind = "get";
+        } else
+        if (M instanceof AST_ObjectSetter) {
+            kind = "set";
+        }
+        if (M instanceof AST_ClassProperty) {
+            return {
+                type: "FieldDefinition",
+                computed,
+                key,
+                value: to_moz(M.value),
+                static: M.static
+            };
+        }
+        if (parent instanceof AST_Class) {
+            return {
+                type: "MethodDefinition",
+                computed: computed,
+                kind: kind,
+                static: M.static,
+                key: to_moz(M.key),
+                value: to_moz(M.value)
+            };
+        }
+        return {
+            type: "Property",
+            computed: computed,
+            kind: kind,
+            key: key,
+            value: to_moz(M.value)
+        };
+    }),
 }, {
     documentation: "Base class for literal object properties",
     propdoc: {
@@ -1845,7 +2170,28 @@ var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator
         static: "eq",
         is_generator: "eq",
         async: "eq",
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_MethodDefinition(M, parent) {
+        if (parent instanceof AST_Object) {
+            return {
+                type: "Property",
+                computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
+                kind: "init",
+                method: true,
+                shorthand: false,
+                key: to_moz(M.key),
+                value: to_moz(M.value)
+            };
+        }
+        return {
+            type: "MethodDefinition",
+            computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
+            kind: M.key === "constructor" ? "constructor" : "method",
+            static: M.static,
+            key: to_moz(M.key),
+            value: to_moz(M.value)
+        };
+    }),
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -1888,7 +2234,19 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
     shallow_cmp: mkshallow({
         name: "exist",
         extends: "exist",
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_Class(M) {
+        var type = M instanceof AST_ClassExpression ? "ClassExpression" : "ClassDeclaration";
+        return {
+            type: type,
+            superClass: to_moz(M.extends),
+            id: M.name ? to_moz(M.name) : null,
+            body: {
+                type: "ClassBody",
+                body: M.properties.map(to_moz)
+            }
+        };
+    }),
 }, {
     propdoc: {
         name: "[AST_SymbolClass|AST_SymbolDefClass?] optional class name.",
@@ -1951,7 +2309,20 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
     },
     shallow_cmp: mkshallow({
         name: "eq"
-    })
+    }),
+    to_mozilla_ast: get_to_moz(function To_Moz_Identifier(M, parent) {
+        if (M instanceof AST_SymbolMethod && parent.quote) {
+            return {
+                type: "Literal",
+                value: M.name
+            };
+        }
+        var def = M.definition();
+        return {
+            type: "Identifier",
+            name: def ? def.mangled_name || def.name : M.name
+        };
+    }),
 }, {
     propdoc: {
         name: "[string] name of this symbol",
@@ -1963,7 +2334,20 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
 
 var AST_NewTarget: any = DEFNODE("NewTarget", null, {
     _size: () => 10,
-    shallow_cmp: pass_through
+    shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(function To_Moz_MetaProperty() {
+        return {
+            type: "MetaProperty",
+            meta: {
+                type: "Identifier",
+                name: "new"
+            },
+            property: {
+                type: "Identifier",
+                name: "target"
+            }
+        };
+    }),
 }, {
     documentation: "A reference to new.target"
 }, AST_Node);
@@ -2096,7 +2480,27 @@ var AST_Super: any = DEFNODE("Super", null, {
 var AST_Constant: any = DEFNODE("Constant", null, {
     getValue: function() {
         return this.value;
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_Literal(M) {
+        var value = M.value;
+        if (typeof value === "number" && (value < 0 || (value === 0 && 1 / value < 0))) {
+            return {
+                type: "UnaryExpression",
+                operator: "-",
+                prefix: true,
+                argument: {
+                    type: "Literal",
+                    value: -value,
+                    raw: M.start.raw
+                }
+            };
+        }
+        return {
+            type: "Literal",
+            value: value,
+            raw: M.start.raw
+        };
+    }),
 }, {
     documentation: "Base class for all constants",
 }, AST_Node);
@@ -2142,7 +2546,11 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
     },
     shallow_cmp: mkshallow({
         value: "eq"
-    })
+    }),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "BigIntLiteral",
+        value: M.value
+    })),
 }, {
     documentation: "A big int literal",
     propdoc: {
@@ -2159,7 +2567,17 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
             this.value.flags === other.value.flags
             && this.value.source === other.value.source
         );
-    }
+    },
+    to_mozilla_ast: get_to_moz(function To_Moz_RegExpLiteral(M) {
+        const pattern = M.value.source;
+        const flags = M.value.flags;
+        return {
+            type: "Literal",
+            value: null,
+            raw: M.print_to_string(),
+            regex: { pattern, flags }
+        };
+    }),
 }, {
     documentation: "A regexp literal",
     propdoc: {
@@ -2168,7 +2586,13 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
 }, AST_Constant);
 
 var AST_Atom: any = DEFNODE("Atom", null, {
-    shallow_cmp: pass_through
+    shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(function To_Moz_Atom(M) {
+        return {
+            type: "Identifier",
+            name: String(M.value)
+        };
+    }),
 }, {
     documentation: "Base class for atoms",
 }, AST_Constant);
@@ -3164,237 +3588,6 @@ map("ConditionalExpression", AST_Conditional, "test>condition, consequent>conseq
 map("NewExpression", AST_New, "callee>expression, arguments@args");
 map("CallExpression", AST_Call, "callee>expression, arguments@args");
 
-def_to_moz(AST_Toplevel, function To_Moz_Program(M) {
-    return to_moz_scope("Program", M);
-});
-
-def_to_moz(AST_Expansion, function To_Moz_Spread(M) {
-    return {
-        type: to_moz_in_destructuring() ? "RestElement" : "SpreadElement",
-        argument: to_moz(M.expression)
-    };
-});
-
-def_to_moz(AST_PrefixedTemplateString, function To_Moz_TaggedTemplateExpression(M) {
-    return {
-        type: "TaggedTemplateExpression",
-        tag: to_moz(M.prefix),
-        quasi: to_moz(M.template_string)
-    };
-});
-
-def_to_moz(AST_TemplateString, function To_Moz_TemplateLiteral(M) {
-    var quasis: any[] = [];
-    var expressions: any[] = [];
-    for (var i = 0; i < M.segments.length; i++) {
-        if (i % 2 !== 0) {
-            expressions.push(to_moz(M.segments[i]));
-        } else {
-            quasis.push({
-                type: "TemplateElement",
-                value: {
-                    raw: M.segments[i].raw,
-                    cooked: M.segments[i].value
-                },
-                tail: i === M.segments.length - 1
-            });
-        }
-    }
-    return {
-        type: "TemplateLiteral",
-        quasis: quasis,
-        expressions: expressions
-    };
-});
-
-def_to_moz(AST_Defun, function To_Moz_FunctionDeclaration(M) {
-    return {
-        type: "FunctionDeclaration",
-        id: to_moz(M.name),
-        params: M.argnames.map(to_moz),
-        generator: M.is_generator,
-        async: M.async,
-        body: to_moz_scope("BlockStatement", M)
-    };
-});
-
-def_to_moz(AST_Function, function To_Moz_FunctionExpression(M, parent) {
-    var is_generator = parent.is_generator !== undefined ?
-        parent.is_generator : M.is_generator;
-    return {
-        type: "FunctionExpression",
-        id: to_moz(M.name),
-        params: M.argnames.map(to_moz),
-        generator: is_generator,
-        async: M.async,
-        body: to_moz_scope("BlockStatement", M)
-    };
-});
-
-def_to_moz(AST_Arrow, function To_Moz_ArrowFunctionExpression(M) {
-    var body = {
-        type: "BlockStatement",
-        body: M.body.map(to_moz)
-    };
-    return {
-        type: "ArrowFunctionExpression",
-        params: M.argnames.map(to_moz),
-        async: M.async,
-        body: body
-    };
-});
-
-def_to_moz(AST_Destructuring, function To_Moz_ObjectPattern(M) {
-    if (M.is_array) {
-        return {
-            type: "ArrayPattern",
-            elements: M.names.map(to_moz)
-        };
-    }
-    return {
-        type: "ObjectPattern",
-        properties: M.names.map(to_moz)
-    };
-});
-
-def_to_moz(AST_Directive, function To_Moz_Directive(M) {
-    return {
-        type: "ExpressionStatement",
-        expression: {
-            type: "Literal",
-            value: M.value,
-            raw: M.print_to_string()
-        },
-        directive: M.value
-    };
-});
-
-def_to_moz(AST_SimpleStatement, function To_Moz_ExpressionStatement(M) {
-    return {
-        type: "ExpressionStatement",
-        expression: to_moz(M.body as any) // TODO: check type
-    };
-});
-
-def_to_moz(AST_SwitchBranch, function To_Moz_SwitchCase(M) {
-    return {
-        type: "SwitchCase",
-        test: to_moz(M.expression),
-        consequent: M.body.map(to_moz)
-    };
-});
-
-def_to_moz(AST_Try, function To_Moz_TryStatement(M) {
-    return {
-        type: "TryStatement",
-        block: to_moz_block(M),
-        handler: to_moz(M.bcatch),
-        guardedHandlers: [],
-        finalizer: to_moz(M.bfinally)
-    };
-});
-
-def_to_moz(AST_Catch, function To_Moz_CatchClause(M) {
-    return {
-        type: "CatchClause",
-        param: to_moz(M.argname),
-        guard: null,
-        body: to_moz_block(M)
-    };
-});
-
-def_to_moz(AST_Definitions, function To_Moz_VariableDeclaration(M) {
-    return {
-        type: "VariableDeclaration",
-        kind:
-            M instanceof AST_Const ? "const" :
-            M instanceof AST_Let ? "let" : "var",
-        declarations: M.definitions.map(to_moz)
-    };
-});
-
-def_to_moz(AST_Export, function To_Moz_ExportDeclaration(M) {
-    if (M.exported_names) {
-        if (M.exported_names[0].name.name === "*") {
-            return {
-                type: "ExportAllDeclaration",
-                source: to_moz(M.module_name)
-            };
-        }
-        return {
-            type: "ExportNamedDeclaration",
-            specifiers: M.exported_names.map(function (name_mapping) {
-                return {
-                    type: "ExportSpecifier",
-                    exported: to_moz(name_mapping.foreign_name),
-                    local: to_moz(name_mapping.name)
-                };
-            }),
-            declaration: to_moz(M.exported_definition),
-            source: to_moz(M.module_name)
-        };
-    }
-    return {
-        type: M.is_default ? "ExportDefaultDeclaration" : "ExportNamedDeclaration",
-        declaration: to_moz(M.exported_value || M.exported_definition)
-    };
-});
-
-def_to_moz(AST_Import, function To_Moz_ImportDeclaration(M) {
-    var specifiers: any[] = [];
-    if (M.imported_name) {
-        specifiers.push({
-            type: "ImportDefaultSpecifier",
-            local: to_moz(M.imported_name)
-        });
-    }
-    if (M.imported_names && M.imported_names[0].foreign_name.name === "*") {
-        specifiers.push({
-            type: "ImportNamespaceSpecifier",
-            local: to_moz(M.imported_names[0].name)
-        });
-    } else if (M.imported_names) {
-        M.imported_names.forEach(function(name_mapping) {
-            specifiers.push({
-                type: "ImportSpecifier",
-                local: to_moz(name_mapping.name),
-                imported: to_moz(name_mapping.foreign_name)
-            });
-        });
-    }
-    return {
-        type: "ImportDeclaration",
-        specifiers: specifiers,
-        source: to_moz(M.module_name)
-    };
-});
-
-def_to_moz(AST_Sequence, function To_Moz_SequenceExpression(M) {
-    return {
-        type: "SequenceExpression",
-        expressions: M.expressions.map(to_moz)
-    };
-});
-
-def_to_moz(AST_PropAccess, function To_Moz_MemberExpression(M) {
-    var isComputed = M instanceof AST_Sub;
-    return {
-        type: "MemberExpression",
-        object: to_moz(M.expression),
-        computed: isComputed,
-        property: isComputed ? to_moz(M.property as any) : {type: "Identifier", name: M.property}
-    };
-});
-
-def_to_moz(AST_Unary, function To_Moz_Unary(M: any) {
-    return {
-        type: M.operator == "++" || M.operator == "--" ? "UpdateExpression" : "UnaryExpression",
-        operator: M.operator,
-        prefix: M instanceof AST_UnaryPrefix,
-        argument: to_moz(M.expression)
-    };
-});
-
 def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
     if (M.operator == "=" && to_moz_in_destructuring()) {
         return {
@@ -3416,184 +3609,6 @@ def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
     };
 });
 
-def_to_moz(AST_Array, function To_Moz_ArrayExpression(M: any) {
-    return {
-        type: "ArrayExpression",
-        elements: M.elements.map(to_moz)
-    };
-});
-
-def_to_moz(AST_Object, function To_Moz_ObjectExpression(M: any) {
-    return {
-        type: "ObjectExpression",
-        properties: M.properties.map(to_moz)
-    };
-});
-
-def_to_moz(AST_ObjectProperty, function To_Moz_Property(M, parent) {
-    var key = M.key instanceof AST_Node ? to_moz(M.key) : {
-        type: "Identifier",
-        value: M.key
-    };
-    if (typeof M.key === "number") {
-        key = {
-            type: "Literal",
-            value: Number(M.key)
-        };
-    }
-    if (typeof M.key === "string") {
-        key = {
-            type: "Identifier",
-            name: M.key
-        };
-    }
-    var kind;
-    var string_or_num = typeof M.key === "string" || typeof M.key === "number";
-    var computed = string_or_num ? false : !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef;
-    if (M instanceof AST_ObjectKeyVal) {
-        kind = "init";
-        computed = !string_or_num;
-    } else
-    if (M instanceof AST_ObjectGetter) {
-        kind = "get";
-    } else
-    if (M instanceof AST_ObjectSetter) {
-        kind = "set";
-    }
-    if (M instanceof AST_ClassProperty) {
-        return {
-            type: "FieldDefinition",
-            computed,
-            key,
-            value: to_moz(M.value),
-            static: M.static
-        };
-    }
-    if (parent instanceof AST_Class) {
-        return {
-            type: "MethodDefinition",
-            computed: computed,
-            kind: kind,
-            static: M.static,
-            key: to_moz(M.key),
-            value: to_moz(M.value)
-        };
-    }
-    return {
-        type: "Property",
-        computed: computed,
-        kind: kind,
-        key: key,
-        value: to_moz(M.value)
-    };
-});
-
-def_to_moz(AST_ConciseMethod, function To_Moz_MethodDefinition(M, parent) {
-    if (parent instanceof AST_Object) {
-        return {
-            type: "Property",
-            computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
-            kind: "init",
-            method: true,
-            shorthand: false,
-            key: to_moz(M.key),
-            value: to_moz(M.value)
-        };
-    }
-    return {
-        type: "MethodDefinition",
-        computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
-        kind: M.key === "constructor" ? "constructor" : "method",
-        static: M.static,
-        key: to_moz(M.key),
-        value: to_moz(M.value)
-    };
-});
-
-def_to_moz(AST_Class, function To_Moz_Class(M) {
-    var type = M instanceof AST_ClassExpression ? "ClassExpression" : "ClassDeclaration";
-    return {
-        type: type,
-        superClass: to_moz(M.extends),
-        id: M.name ? to_moz(M.name) : null,
-        body: {
-            type: "ClassBody",
-            body: M.properties.map(to_moz)
-        }
-    };
-});
-
-def_to_moz(AST_NewTarget, function To_Moz_MetaProperty() {
-    return {
-        type: "MetaProperty",
-        meta: {
-            type: "Identifier",
-            name: "new"
-        },
-        property: {
-            type: "Identifier",
-            name: "target"
-        }
-    };
-});
-
-def_to_moz(AST_Symbol, function To_Moz_Identifier(M, parent) {
-    if (M instanceof AST_SymbolMethod && parent.quote) {
-        return {
-            type: "Literal",
-            value: M.name
-        };
-    }
-    var def = M.definition();
-    return {
-        type: "Identifier",
-        name: def ? def.mangled_name || def.name : M.name
-    };
-});
-
-def_to_moz(AST_RegExp, function To_Moz_RegExpLiteral(M) {
-    const pattern = M.value.source;
-    const flags = M.value.flags;
-    return {
-        type: "Literal",
-        value: null,
-        raw: M.print_to_string(),
-        regex: { pattern, flags }
-    };
-});
-
-def_to_moz(AST_Constant, function To_Moz_Literal(M) {
-    var value = M.value;
-    if (typeof value === "number" && (value < 0 || (value === 0 && 1 / value < 0))) {
-        return {
-            type: "UnaryExpression",
-            operator: "-",
-            prefix: true,
-            argument: {
-                type: "Literal",
-                value: -value,
-                raw: M.start.raw
-            }
-        };
-    }
-    return {
-        type: "Literal",
-        value: value,
-        raw: M.start.raw
-    };
-});
-
-def_to_moz(AST_Atom, function To_Moz_Atom(M) {
-    return {
-        type: "Identifier",
-        name: String(M.value)
-    };
-});
-
-def_to_moz(AST_BigInt, M => ({
-    type: "BigIntLiteral",
-    value: M.value
-}));
 
 AST_Boolean.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
 AST_Null.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
@@ -3733,43 +3748,4 @@ function def_to_moz(mytype: any, handler: (M: any, parent: any) => any) {
     mytype.DEFMETHOD("to_mozilla_ast", function(parent: any) {
         return set_moz_loc(this, handler(this, parent));
     });
-}
-
-var TO_MOZ_STACK: Array<any | null> | null = null;
-
-function to_moz(node: any | null) {
-    if (TO_MOZ_STACK === null) { TO_MOZ_STACK = []; }
-    TO_MOZ_STACK.push(node);
-    var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null;
-    TO_MOZ_STACK.pop();
-    if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null; }
-    return ast;
-}
-
-function to_moz_in_destructuring() {
-    var i = TO_MOZ_STACK?.length as number;
-    while (i--) {
-        if (TO_MOZ_STACK?.[i] instanceof AST_Destructuring) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function to_moz_block(node: any) {
-    return {
-        type: "BlockStatement",
-        body: node.body.map(to_moz)
-    };
-}
-
-function to_moz_scope(type: string, node: any) {
-    var body = node.body.map(to_moz);
-    if (node.body[0] instanceof AST_SimpleStatement && (node.body[0] as any).body instanceof AST_String) {
-        body.unshift(to_moz(new AST_EmptyStatement(node.body[0])));
-    }
-    return {
-        type: type,
-        body: body
-    };
 }
