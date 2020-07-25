@@ -140,4 +140,3 @@ export {
     reserve_quoted_keys,
 } from "./lib/propmangle";
 export { default_options } from "./tools/node";
-import "./lib/mozilla-ast";
