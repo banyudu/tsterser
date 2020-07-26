@@ -2620,6 +2620,7 @@ var AST_Undefined: any = DEFNODE("Undefined", null, {
 
 var AST_Hole: any = DEFNODE("Hole", null, {
     value: (function() {}()),
+    to_mozilla_ast: function To_Moz_ArrayHole() { return null; },
     _size: () => 0  // comma is taken into account
 }, {
     documentation: "A hole in an array",
@@ -3559,34 +3560,34 @@ MOZ_TO_ME.ClassExpression = function From_Moz_Class(M) {
 };
 
 map("EmptyStatement", AST_EmptyStatement);
-map("BlockStatement", AST_BlockStatement, "body@body");
-map("IfStatement", AST_If, "test>condition, consequent>body, alternate>alternative");
-map("LabeledStatement", AST_LabeledStatement, "label>label, body>body");
-map("BreakStatement", AST_Break, "label>label");
-map("ContinueStatement", AST_Continue, "label>label");
-map("WithStatement", AST_With, "object>expression, body>body");
-map("SwitchStatement", AST_Switch, "discriminant>expression, cases@body");
-map("ReturnStatement", AST_Return, "argument>value");
-map("ThrowStatement", AST_Throw, "argument>value");
-map("WhileStatement", AST_While, "test>condition, body>body");
-map("DoWhileStatement", AST_Do, "test>condition, body>body");
-map("ForStatement", AST_For, "init>init, test>condition, update>step, body>body");
-map("ForInStatement", AST_ForIn, "left>init, right>object, body>body");
-map("ForOfStatement", AST_ForOf, "left>init, right>object, body>body, await=await");
-map("AwaitExpression", AST_Await, "argument>expression");
-map("YieldExpression", AST_Yield, "argument>expression, delegate=is_star");
+map("BlockStatement", AST_BlockStatement, ["body@body"]);
+map("IfStatement", AST_If, ["test>condition", "consequent>body", "alternate>alternative"]);
+map("LabeledStatement", AST_LabeledStatement, ["label>label", "body>body"]);
+map("BreakStatement", AST_Break, ["label>label"]);
+map("ContinueStatement", AST_Continue, ["label>label"]);
+map("WithStatement", AST_With, ["object>expression", "body>body"]);
+map("SwitchStatement", AST_Switch, ["discriminant>expression", "cases@body"]);
+map("ReturnStatement", AST_Return, ["argument>value"]);
+map("ThrowStatement", AST_Throw, ["argument>value"]);
+map("WhileStatement", AST_While, ["test>condition", "body>body"]);
+map("DoWhileStatement", AST_Do, ["test>condition", "body>body"]);
+map("ForStatement", AST_For, ["init>init", "test>condition", "update>step", "body>body"]);
+map("ForInStatement", AST_ForIn, ["left>init", "right>object", "body>body"]);
+map("ForOfStatement", AST_ForOf, ["left>init", "right>object", "body>body", "await=await"]);
+map("AwaitExpression", AST_Await, ["argument>expression"]);
+map("YieldExpression", AST_Yield, ["argument>expression", "delegate=is_star"]);
 map("DebuggerStatement", AST_Debugger);
-map("VariableDeclarator", AST_VarDef, "id>name, init>value");
-map("CatchClause", AST_Catch, "param>argname, body%body");
+map("VariableDeclarator", AST_VarDef, ["id>name", "init>value"]);
+map("CatchClause", AST_Catch, ["param>argname", "body%body"]);
 
 map("ThisExpression", AST_This);
 map("Super", AST_Super);
-map("BinaryExpression", AST_Binary, "operator=operator, left>left, right>right");
-map("LogicalExpression", AST_Binary, "operator=operator, left>left, right>right");
-map("AssignmentExpression", AST_Assign, "operator=operator, left>left, right>right");
-map("ConditionalExpression", AST_Conditional, "test>condition, consequent>consequent, alternate>alternative");
-map("NewExpression", AST_New, "callee>expression, arguments@args");
-map("CallExpression", AST_Call, "callee>expression, arguments@args");
+map("BinaryExpression", AST_Binary, ["operator=operator", "left>left", "right>right"]);
+map("LogicalExpression", AST_Binary, ["operator=operator", "left>left", "right>right"]);
+map("AssignmentExpression", AST_Assign, ["operator=operator", "left>left", "right>right"]);
+map("ConditionalExpression", AST_Conditional, ["test>condition", "consequent>consequent", "alternate>alternative"]);
+map("NewExpression", AST_New, ["callee>expression", "arguments@args"]);
+map("CallExpression", AST_Call, ["callee>expression", "arguments@args"]);
 
 def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
     if (M.operator == "=" && to_moz_in_destructuring()) {
@@ -3612,7 +3613,6 @@ def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
 
 AST_Boolean.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
 AST_Null.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
-AST_Hole.DEFMETHOD("to_mozilla_ast", function To_Moz_ArrayHole() { return null; });
 
 AST_Block.DEFMETHOD("to_mozilla_ast", AST_BlockStatement.prototype.to_mozilla_ast);
 AST_Lambda.DEFMETHOD("to_mozilla_ast", AST_Function.prototype.to_mozilla_ast);
@@ -3655,7 +3655,7 @@ function my_end_token(moznode) {
     });
 }
 
-function map(moztype: string, mytype: any, propmap?: string | undefined) {
+function map(moztype: string, mytype: any, propmap?: string[]) {
     var moz_to_me = "function From_Moz_" + moztype + "(M){\n";
     moz_to_me += "return new U2." + mytype.name + "({\n" +
         "start: my_start_token(M),\n" +
@@ -3665,7 +3665,7 @@ function map(moztype: string, mytype: any, propmap?: string | undefined) {
     me_to_moz += "return {\n" +
         "type: " + JSON.stringify(moztype);
 
-    if (propmap) propmap.split(/\s*,\s*/).forEach(function(prop) {
+    if (propmap) propmap.forEach(function(prop) {
         var m = /([a-z0-9$_]+)([=@>%])([a-z0-9$_]+)/i.exec(prop);
         if (!m) throw new Error("Can't understand property map: " + prop);
         var moz = m[1], how = m[2], my = m[3];
