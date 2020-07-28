@@ -3655,7 +3655,7 @@ function my_end_token(moznode) {
     });
 }
 
-function map(moztype: string, mytype: any, propmap?: Array<string[]>) {
+function map(moztype: string, mytype: any, propmap: string[][] = []) {
     var moz_to_me = "function From_Moz_" + moztype + "(M){\n";
     moz_to_me += "return new U2." + mytype.name + "({\n" +
         "start: my_start_token(M),\n" +
@@ -3665,15 +3665,10 @@ function map(moztype: string, mytype: any, propmap?: Array<string[]>) {
     me_to_moz += "return {\n" +
         "type: " + JSON.stringify(moztype);
 
-    if (propmap) propmap.forEach(function(prop) {
-        let moz, how, my;
-        if (Array.isArray(prop)) {
-            moz = prop[0]; how = prop[1]; my = prop[2] || prop[0];
-        } else {
-            var m = /([a-z0-9$_]+)([=@>%])([a-z0-9$_]+)/i.exec(prop);
-            if (!m) throw new Error("Can't understand property map: " + prop);
-            moz = m[1], how = m[2], my = m[3];
-        }
+    propmap.forEach(function(prop) {
+        const moz = prop[0];
+        const how = prop[1];
+        const my = prop[2] || prop[0];
         moz_to_me += ",\n" + my + ": ";
         me_to_moz += ",\n" + moz + ": ";
         switch (how) {
@@ -3711,16 +3706,43 @@ function map(moztype: string, mytype: any, propmap?: Array<string[]>) {
     // const toFuncName = `To_Moz_${moztype}`;
     // const mozToMeFunc = (U2, my_start_token, my_end_token, from_moz) => ({
     //     [fromFuncName]: function (M) {
-    //         return new U2[mytype.name]({
+    //         const data = {
     //             start: my_start_token(M),
     //             end: my_end_token(M)
+    //         };
+    //         propmap.forEach(function(prop) {
+    //             const moz = prop[0];
+    //             const how = prop[1];
+    //             const my = prop[2] || prop[0];
+    //             data[my] = undefined;
+    //             switch (how) {
+    //                 case "@":
+    //                     data[my] = M[moz].map(from_moz);
+    //                     break;
+    //                 case ">":
+    //                     data[my] = from_moz(M[moz]);
+    //                     break;
+    //                 case "=":
+    //                     data[my] = M[moz];
+    //                     break;
+    //                 case "%":
+    //                     data[my] = from_moz(M[moz]).body;
+    //                     break;
+    //                 default:
+    //                     throw new Error("Can't understand operator in propmap: " + prop);
+    //             }
     //         });
+    //         return new U2[mytype.name](data);
     //     }
     // }[fromFuncName]);
     // const meToMozFunc = (to_moz, to_moz_block, to_moz_scope) => ({
 
     // }[toFuncName]);
     MOZ_TO_ME[moztype] = moz_to_me_func;
+    // console.log(moz_to_me_func.toString());
+    // console.log("x".repeat(50));
+    // console.log(mozToMeFunc.toString());
+    // MOZ_TO_ME[moztype] = mozToMeFunc;
     def_to_moz(mytype, me_to_moz_func);
 }
 
