@@ -3655,9 +3655,8 @@ function my_end_token(moznode) {
     });
 }
 
-function map(moztype: string, mytype: any, propmap: string[][] = []) {
+function getMozToMeFunc (moztype: string, mytype: any, propmap: string[][] = []) {
     const fromFuncName = `From_Moz_${moztype}`;
-    const toFuncName = `To_Moz_${moztype}`;
     const mozToMeFunc = ((U2, my_start_token, my_end_token, from_moz) => ({
         [fromFuncName]: function (M) {
             const data = {
@@ -3689,6 +3688,11 @@ function map(moztype: string, mytype: any, propmap: string[][] = []) {
             return new U2[mytype.name](data);
         }
     }[fromFuncName]))(ast, my_start_token, my_end_token, from_moz);
+    return mozToMeFunc;
+}
+
+function getMetoMozFunc (moztype: string, mytype: any, propmap: string[][] = []) {
+    const toFuncName = `To_Moz_${moztype}`;
     const meToMozFunc = ((to_moz, to_moz_block) => ({
         [toFuncName]: function (M) {
             const data = {
@@ -3718,6 +3722,12 @@ function map(moztype: string, mytype: any, propmap: string[][] = []) {
             return data;
         }
     }[toFuncName]))(to_moz, to_moz_block);
+    return meToMozFunc;
+}
+
+function map(moztype: string, mytype: any, propmap: string[][] = []) {
+    const mozToMeFunc = getMozToMeFunc(moztype, mytype, propmap);
+    const meToMozFunc = getMetoMozFunc(moztype, mytype, propmap);
     MOZ_TO_ME[moztype] = mozToMeFunc;
     def_to_moz(mytype, meToMozFunc);
 }
