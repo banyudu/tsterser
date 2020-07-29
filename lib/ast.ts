@@ -3656,11 +3656,6 @@ function my_end_token(moznode) {
 }
 
 function map(moztype: string, mytype: any, propmap: string[][] = []) {
-    var moz_to_me = "function From_Moz_" + moztype + "(M){\n";
-    moz_to_me += "return new U2." + mytype.name + "({\n" +
-        "start: my_start_token(M),\n" +
-        "end: my_end_token(M)";
-
     var me_to_moz = "function To_Moz_" + moztype + "(M){\n";
     me_to_moz += "return {\n" +
         "type: " + JSON.stringify(moztype);
@@ -3669,23 +3664,18 @@ function map(moztype: string, mytype: any, propmap: string[][] = []) {
         const moz = prop[0];
         const how = prop[1];
         const my = prop[2] || prop[0];
-        moz_to_me += ",\n" + my + ": ";
         me_to_moz += ",\n" + moz + ": ";
         switch (how) {
             case "@":
-                moz_to_me += "M." + moz + ".map(from_moz)";
                 me_to_moz += "M." +  my + ".map(to_moz)";
                 break;
             case ">":
-                moz_to_me += "from_moz(M." + moz + ")";
                 me_to_moz += "to_moz(M." + my + ")";
                 break;
             case "=":
-                moz_to_me += "M." + moz;
                 me_to_moz += "M." + my;
                 break;
             case "%":
-                moz_to_me += "from_moz(M." + moz + ").body";
                 me_to_moz += "to_moz_block(M)";
                 break;
             default:
@@ -3693,56 +3683,48 @@ function map(moztype: string, mytype: any, propmap: string[][] = []) {
         }
     });
 
-    moz_to_me += "\n})\n}";
     me_to_moz += "\n}\n}";
 
-    const moz_to_me_func: (M: any, parent: any) => any = new Function("U2", "my_start_token", "my_end_token", "from_moz", "return (" + moz_to_me + ")")(
-        ast, my_start_token, my_end_token, from_moz
-    );
     const me_to_moz_func: (M: any, parent: any) => any = new Function("to_moz", "to_moz_block", "to_moz_scope", "return (" + me_to_moz + ")")(
         to_moz, to_moz_block, to_moz_scope
     );
-    // const fromFuncName = `From_Moz_${moztype}`;
+    const fromFuncName = `From_Moz_${moztype}`;
     // const toFuncName = `To_Moz_${moztype}`;
-    // const mozToMeFunc = (U2, my_start_token, my_end_token, from_moz) => ({
-    //     [fromFuncName]: function (M) {
-    //         const data = {
-    //             start: my_start_token(M),
-    //             end: my_end_token(M)
-    //         };
-    //         propmap.forEach(function(prop) {
-    //             const moz = prop[0];
-    //             const how = prop[1];
-    //             const my = prop[2] || prop[0];
-    //             data[my] = undefined;
-    //             switch (how) {
-    //                 case "@":
-    //                     data[my] = M[moz].map(from_moz);
-    //                     break;
-    //                 case ">":
-    //                     data[my] = from_moz(M[moz]);
-    //                     break;
-    //                 case "=":
-    //                     data[my] = M[moz];
-    //                     break;
-    //                 case "%":
-    //                     data[my] = from_moz(M[moz]).body;
-    //                     break;
-    //                 default:
-    //                     throw new Error("Can't understand operator in propmap: " + prop);
-    //             }
-    //         });
-    //         return new U2[mytype.name](data);
-    //     }
-    // }[fromFuncName]);
+    const mozToMeFunc = ((U2, my_start_token, my_end_token, from_moz) => ({
+        [fromFuncName]: function (M) {
+            const data = {
+                start: my_start_token(M),
+                end: my_end_token(M)
+            };
+            propmap.forEach(function(prop) {
+                const moz = prop[0];
+                const how = prop[1];
+                const my = prop[2] || prop[0];
+                data[my] = undefined;
+                switch (how) {
+                    case "@":
+                        data[my] = M[moz].map(from_moz);
+                        break;
+                    case ">":
+                        data[my] = from_moz(M[moz]);
+                        break;
+                    case "=":
+                        data[my] = M[moz];
+                        break;
+                    case "%":
+                        data[my] = from_moz(M[moz]).body;
+                        break;
+                    default:
+                        throw new Error("Can't understand operator in propmap: " + prop);
+                }
+            });
+            return new U2[mytype.name](data);
+        }
+    }[fromFuncName]))(ast, my_start_token, my_end_token, from_moz);
     // const meToMozFunc = (to_moz, to_moz_block, to_moz_scope) => ({
 
     // }[toFuncName]);
-    MOZ_TO_ME[moztype] = moz_to_me_func;
-    // console.log(moz_to_me_func.toString());
-    // console.log("x".repeat(50));
-    // console.log(mozToMeFunc.toString());
-    // MOZ_TO_ME[moztype] = mozToMeFunc;
+    MOZ_TO_ME[moztype] = mozToMeFunc;
     def_to_moz(mytype, me_to_moz_func);
 }
 
