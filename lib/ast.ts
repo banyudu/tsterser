@@ -352,7 +352,8 @@ var AST_Statement: any = DEFNODE("Statement", null, {}, {
 
 var AST_Debugger: any = DEFNODE("Debugger", null, {
     shallow_cmp: pass_through,
-    _size: () => 8
+    _size: () => 8,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("DebuggerStatement", AST_Debugger)),
 }, {
     documentation: "Represents a debugger statement",
 }, AST_Statement);
@@ -451,12 +452,15 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
     },
 }, AST_Statement);
 
-var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {}, {
+var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("BlockStatement", AST_BlockStatement, [["body", "@"]]))
+}, {
     documentation: "A block statement",
 }, AST_Block);
 
 var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
     shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("EmptyStatement", AST_EmptyStatement)),
     _size: () => 1
 }, {
     documentation: "The empty statement (empty block or simply a semicolon)"
@@ -500,7 +504,8 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
     transform: get_transformer(function(self, tw: any) {
         self.label = self.label.transform(tw) as any;
         self.body = (self.body as any).transform(tw); // TODO: check type
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("LabeledStatement", AST_LabeledStatement, [["label", ">"], ["body", ">"]])),
 }, {
     documentation: "Statement with a label",
     propdoc: {
@@ -540,7 +545,8 @@ var AST_Do: any = DEFNODE("Do", null, {
     transform: get_transformer(function(self, tw: any) {
         self.body = (self.body as any).transform(tw);
         self.condition = self.condition.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("DoWhileStatement", AST_Do, [["test", ">", "condition"], ["body", ">"]])),
 }, {
     documentation: "A `do` statement",
 }, AST_DWLoop);
@@ -561,7 +567,8 @@ var AST_While: any = DEFNODE("While", null, {
     transform: get_transformer(function(self, tw: any) {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("WhileStatement", AST_While, [["test", ">", "condition"], ["body", ">"]])),
 }, {
     documentation: "A `while` statement",
 }, AST_DWLoop);
@@ -592,7 +599,8 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         if (self.condition) self.condition = self.condition.transform(tw);
         if (self.step) self.step = self.step.transform(tw);
         self.body = (self.body as any).transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ForStatement", AST_For, [["init", ">"], ["test", ">", "condition"], ["update", ">", "step"], ["body", ">"]])),
 }, {
     documentation: "A `for` statement",
     propdoc: {
@@ -621,7 +629,8 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
         self.init = self.init?.transform(tw) || null;
         self.object = self.object.transform(tw);
         self.body = (self.body as any).transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ForInStatement", AST_ForIn, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"]])),
 }, {
     documentation: "A `for ... in` statement",
     propdoc: {
@@ -632,6 +641,7 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
 
 var AST_ForOf: any = DEFNODE("ForOf", "await", {
     shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ForOfStatement", AST_ForOf, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"], ["await", "="]])),
 }, {
     documentation: "A `for ... of` statement",
 }, AST_ForIn);
@@ -652,7 +662,8 @@ var AST_With: any = DEFNODE("With", "expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.body = (self.body as any).transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("WithStatement", AST_With, [["object", ">", "expression"], ["body", ">"]])),
 }, {
     documentation: "A `with` statement",
     propdoc: {
@@ -1075,13 +1086,15 @@ var AST_Exit: any = DEFNODE("Exit", "value", {
 var AST_Return: any = DEFNODE("Return", null, {
     _size: function () {
         return this.value ? 7 : 6;
-    }
+    },
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ReturnStatement", AST_Return, [["argument", ">", "value"]])),
 }, {
     documentation: "A `return` statement"
 }, AST_Exit);
 
 var AST_Throw: any = DEFNODE("Throw", null, {
-    _size: () => 6
+    _size: () => 6,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ThrowStatement", AST_Throw, [["argument", ">", "value"]])),
 }, {
     documentation: "A `throw` statement"
 }, AST_Exit);
@@ -1110,7 +1123,8 @@ var AST_LoopControl: any = DEFNODE("LoopControl", "label", {
 var AST_Break: any = DEFNODE("Break", null, {
     _size: function () {
         return this.label ? 6 : 5;
-    }
+    },
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("BreakStatement", AST_Break, [["label", ">"]])),
 }, {
     documentation: "A `break` statement"
 }, AST_LoopControl);
@@ -1118,7 +1132,8 @@ var AST_Break: any = DEFNODE("Break", null, {
 var AST_Continue: any = DEFNODE("Continue", null, {
     _size: function () {
         return this.label ? 9 : 8;
-    }
+    },
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ContinueStatement", AST_Continue, [["label", ">"]])),
 }, {
     documentation: "A `continue` statement"
 }, AST_LoopControl);
@@ -1136,7 +1151,8 @@ var AST_Await: any = DEFNODE("Await", "expression", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("AwaitExpression", AST_Await, [["argument", ">", "expression"]])),
 }, {
     documentation: "An `await` statement",
     propdoc: {
@@ -1160,7 +1176,8 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
     }),
     transform: get_transformer(function(self, tw: any) {
         if (self.expression) self.expression = self.expression.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("YieldExpression", AST_Yield, [["argument", ">", "expression"], ["delegate", "=", "is_star"]])),
 }, {
     documentation: "A `yield` statement",
     propdoc: {
@@ -1195,7 +1212,8 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
         if (self.alternative) self.alternative = self.alternative.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("IfStatement", AST_If, [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]])),
 }, {
     documentation: "A `if` statement",
     propdoc: {
@@ -1226,7 +1244,8 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.body = do_list(self.body, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("SwitchStatement", AST_Switch, [["discriminant", ">", "expression"], ["cases", "@", "body"]])),
 }, {
     documentation: "A `switch` statement",
     propdoc: {
@@ -1363,6 +1382,7 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
             body: to_moz_block(M)
         };
     }),
+    // to_mozilla_ast: get_to_moz(getMetoMozFunc("CatchClause", AST_Catch, [["param", ">", "argname"], ["body", "%"]])),
 }, {
     documentation: "A `catch` node; only makes sense as part of a `try` statement",
     propdoc: {
@@ -1460,7 +1480,8 @@ var AST_VarDef: any = DEFNODE("VarDef", "name value", {
     transform: get_transformer(function(self, tw: any) {
         self.name = self.name.transform(tw) as any;
         if (self.value) self.value = self.value.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("VariableDeclarator", AST_VarDef, [["id", ">", "name"], ["init", ">", "value"]])),
 }, {
     documentation: "A variable declaration; only appears in a AST_Definitions node",
     propdoc: {
@@ -1903,7 +1924,8 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
     transform: get_transformer(function(self, tw: any) {
         self.left = self.left.transform(tw);
         self.right = self.right.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]])),
 }, {
     documentation: "Binary expression, i.e. `a + b`",
     propdoc: {
@@ -1943,7 +1965,9 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
     },
 }, AST_Node);
 
-var AST_Assign: any = DEFNODE("Assign", null, {}, {
+var AST_Assign: any = DEFNODE("Assign", null, {
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("AssignmentExpression", AST_Assign, [["operator", "="], ["left", ">"], ["right", ">"]])),
+}, {
     documentation: "An assignment expression — `a = b + 5`",
 }, AST_Binary);
 
@@ -2465,14 +2489,16 @@ var AST_LabelRef: any = DEFNODE("LabelRef", null, {}, {
 
 var AST_This: any = DEFNODE("This", null, {
     _size: () => 4,
-    shallow_cmp: pass_through
+    shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ThisExpression", AST_This)),
 }, {
     documentation: "The `this` symbol",
 }, AST_Symbol);
 
 var AST_Super: any = DEFNODE("Super", null, {
     _size: () => 5,
-    shallow_cmp: pass_through
+    shallow_cmp: pass_through,
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("Super", AST_Super)),
 }, {
     documentation: "The `super` symbol",
 }, AST_This);
@@ -3590,31 +3616,7 @@ function From_Moz_Class(M) {
     });
 }
 
-def_to_moz(AST_EmptyStatement, getMetoMozFunc("EmptyStatement", AST_EmptyStatement));
-def_to_moz(AST_BlockStatement, getMetoMozFunc("BlockStatement", AST_BlockStatement, [["body", "@"]]));
-def_to_moz(AST_If, getMetoMozFunc("IfStatement", AST_If, [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]]));
-def_to_moz(AST_LabeledStatement, getMetoMozFunc("LabeledStatement", AST_LabeledStatement, [["label", ">"], ["body", ">"]]));
-def_to_moz(AST_Break, getMetoMozFunc("BreakStatement", AST_Break, [["label", ">"]]));
-def_to_moz(AST_Continue, getMetoMozFunc("ContinueStatement", AST_Continue, [["label", ">"]]));
-def_to_moz(AST_With, getMetoMozFunc("WithStatement", AST_With, [["object", ">", "expression"], ["body", ">"]]));
-def_to_moz(AST_Switch, getMetoMozFunc("SwitchStatement", AST_Switch, [["discriminant", ">", "expression"], ["cases", "@", "body"]]));
-def_to_moz(AST_Return, getMetoMozFunc("ReturnStatement", AST_Return, [["argument", ">", "value"]]));
-def_to_moz(AST_Throw, getMetoMozFunc("ThrowStatement", AST_Throw, [["argument", ">", "value"]]));
-def_to_moz(AST_While, getMetoMozFunc("WhileStatement", AST_While, [["test", ">", "condition"], ["body", ">"]]));
-def_to_moz(AST_Do, getMetoMozFunc("DoWhileStatement", AST_Do, [["test", ">", "condition"], ["body", ">"]]));
-def_to_moz(AST_For, getMetoMozFunc("ForStatement", AST_For, [["init", ">"], ["test", ">", "condition"], ["update", ">", "step"], ["body", ">"]]));
-def_to_moz(AST_ForIn, getMetoMozFunc("ForInStatement", AST_ForIn, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"]]));
-def_to_moz(AST_ForOf, getMetoMozFunc("ForOfStatement", AST_ForOf, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"], ["await", "="]]));
-def_to_moz(AST_Await, getMetoMozFunc("AwaitExpression", AST_Await, [["argument", ">", "expression"]]));
-def_to_moz(AST_Yield, getMetoMozFunc("YieldExpression", AST_Yield, [["argument", ">", "expression"], ["delegate", "=", "is_star"]]));
-def_to_moz(AST_Debugger, getMetoMozFunc("DebuggerStatement", AST_Debugger));
-def_to_moz(AST_VarDef, getMetoMozFunc("VariableDeclarator", AST_VarDef, [["id", ">", "name"], ["init", ">", "value"]]));
-def_to_moz(AST_Catch, getMetoMozFunc("CatchClause", AST_Catch, [["param", ">", "argname"], ["body", "%"]]));
-
-def_to_moz(AST_This, getMetoMozFunc("ThisExpression", AST_This));
-def_to_moz(AST_Super, getMetoMozFunc("Super", AST_Super));
-def_to_moz(AST_Binary, getMetoMozFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]));
-def_to_moz(AST_Binary, getMetoMozFunc("LogicalExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]));
+// def_to_moz(AST_Binary, getMetoMozFunc("LogicalExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]));
 def_to_moz(AST_Assign, getMetoMozFunc("AssignmentExpression", AST_Assign, [["operator", "="], ["left", ">"], ["right", ">"]]));
 def_to_moz(AST_Conditional, getMetoMozFunc("ConditionalExpression", AST_Conditional, [["test", ">", "condition"], ["consequent", ">"], ["alternate", ">", "alternative"]]));
 def_to_moz(AST_New, getMetoMozFunc("NewExpression", AST_New, [["callee", ">", "expression"], ["arguments", "@", "args"]]));
@@ -3640,7 +3642,6 @@ def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
         right: to_moz(M.right)
     };
 });
-
 
 AST_Boolean.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
 AST_Null.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
