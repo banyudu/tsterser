@@ -1927,7 +1927,27 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
         self.left = self.left.transform(tw);
         self.right = self.right.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]])),
+    // to_mozilla_ast: get_to_moz(getMetoMozFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]])),
+    to_mozilla_ast: get_to_moz(function To_Moz_BinaryExpression(M: any) {
+        if (M.operator == "=" && to_moz_in_destructuring()) {
+            return {
+                type: "AssignmentPattern",
+                left: to_moz(M.left),
+                right: to_moz(M.right)
+            };
+        }
+    
+        const type = M.operator == "&&" || M.operator == "||" || M.operator === "??"
+            ? "LogicalExpression"
+            : "BinaryExpression";
+    
+        return {
+            type,
+            left: to_moz(M.left),
+            operator: M.operator,
+            right: to_moz(M.right)
+        };
+    }),
 }, {
     documentation: "Binary expression, i.e. `a + b`",
     propdoc: {
@@ -3619,27 +3639,6 @@ function From_Moz_Class(M) {
     });
 }
 
-def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
-    if (M.operator == "=" && to_moz_in_destructuring()) {
-        return {
-            type: "AssignmentPattern",
-            left: to_moz(M.left),
-            right: to_moz(M.right)
-        };
-    }
-
-    const type = M.operator == "&&" || M.operator == "||" || M.operator === "??"
-        ? "LogicalExpression"
-        : "BinaryExpression";
-
-    return {
-        type,
-        left: to_moz(M.left),
-        operator: M.operator,
-        right: to_moz(M.right)
-    };
-});
-
 AST_Boolean.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
 AST_Null.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
 
@@ -3790,8 +3789,4 @@ function set_moz_loc(mynode: any, moznode) {
         }
     }
     return moznode;
-}
-
-function def_to_moz(mytype: any, handler: (M: any, parent: any) => any) {
-    mytype.DEFMETHOD("to_mozilla_ast", get_to_moz(handler));
 }
