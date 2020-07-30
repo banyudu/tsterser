@@ -63,7 +63,7 @@
     "build": "rimraf dist/* && rollup --config --silent",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build",
-    "postversion": "echo 'Remember to update the changelog!'"
+    "postversion": "git push --follow-tags"
   },
   "keywords": [
     "uglify",
