@@ -3533,11 +3533,43 @@ var MOZ_TO_ME: any = {
             end   : my_end_token(M),
             value : M.value
         });
-    }
+    },
+    UpdateExpression: To_Moz_Unary,
+    UnaryExpression: To_Moz_Unary,
+    ClassDeclaration: From_Moz_Class,
+    ClassExpression: From_Moz_Class,
+
+    EmptyStatement: getMozToMeFunc("EmptyStatement", AST_EmptyStatement),
+    BlockStatement: getMozToMeFunc("BlockStatement", AST_BlockStatement, [["body", "@"]]),
+    IfStatement: getMozToMeFunc("IfStatement", AST_If, [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]]),
+    LabeledStatement: getMozToMeFunc("LabeledStatement", AST_LabeledStatement, [["label", ">"], ["body", ">"]]),
+    BreakStatement: getMozToMeFunc("BreakStatement", AST_Break, [["label", ">"]]),
+    ContinueStatement: getMozToMeFunc("ContinueStatement", AST_Continue, [["label", ">"]]),
+    WithStatement: getMozToMeFunc("WithStatement", AST_With, [["object", ">", "expression"], ["body", ">"]]),
+    SwitchStatement: getMozToMeFunc("SwitchStatement", AST_Switch, [["discriminant", ">", "expression"], ["cases", "@", "body"]]),
+    ReturnStatement: getMozToMeFunc("ReturnStatement", AST_Return, [["argument", ">", "value"]]),
+    ThrowStatement: getMozToMeFunc("ThrowStatement", AST_Throw, [["argument", ">", "value"]]),
+    WhileStatement: getMozToMeFunc("WhileStatement", AST_While, [["test", ">", "condition"], ["body", ">"]]),
+    DoWhileStatement: getMozToMeFunc("DoWhileStatement", AST_Do, [["test", ">", "condition"], ["body", ">"]]),
+    ForStatement: getMozToMeFunc("ForStatement", AST_For, [["init", ">"], ["test", ">", "condition"], ["update", ">", "step"], ["body", ">"]]),
+    ForInStatement: getMozToMeFunc("ForInStatement", AST_ForIn, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"]]),
+    ForOfStatement: getMozToMeFunc("ForOfStatement", AST_ForOf, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"], ["await", "="]]),
+    AwaitExpression: getMozToMeFunc("AwaitExpression", AST_Await, [["argument", ">", "expression"]]),
+    YieldExpression: getMozToMeFunc("YieldExpression", AST_Yield, [["argument", ">", "expression"], ["delegate", "=", "is_star"]]),
+    DebuggerStatement: getMozToMeFunc("DebuggerStatement", AST_Debugger),
+    VariableDeclarator: getMozToMeFunc("VariableDeclarator", AST_VarDef, [["id", ">", "name"], ["init", ">", "value"]]),
+    CatchClause: getMozToMeFunc("CatchClause", AST_Catch, [["param", ">", "argname"], ["body", "%"]]),
+    ThisExpression: getMozToMeFunc("ThisExpression", AST_This),
+    Super: getMozToMeFunc("Super", AST_Super),
+    BinaryExpression: getMozToMeFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]),
+    LogicalExpression: getMozToMeFunc("LogicalExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]),
+    AssignmentExpression: getMozToMeFunc("AssignmentExpression", AST_Assign, [["operator", "="], ["left", ">"], ["right", ">"]]),
+    ConditionalExpression: getMozToMeFunc("ConditionalExpression", AST_Conditional, [["test", ">", "condition"], ["consequent", ">"], ["alternate", ">", "alternative"]]),
+    NewExpression: getMozToMeFunc("NewExpression", AST_New, [["callee", ">", "expression"], ["arguments", "@", "args"]]),
+    CallExpression: getMozToMeFunc("CallExpression", AST_Call, [["callee", ">", "expression"], ["arguments", "@", "args"]]),
 };
 
-MOZ_TO_ME.UpdateExpression =
-MOZ_TO_ME.UnaryExpression = function To_Moz_Unary(M) {
+function To_Moz_Unary(M) {
     var prefix = "prefix" in M ? M.prefix
         : M.type == "UnaryExpression" ? true : false;
     return new (prefix ? AST_UnaryPrefix : AST_UnaryPostfix)({
@@ -3546,10 +3578,9 @@ MOZ_TO_ME.UnaryExpression = function To_Moz_Unary(M) {
         operator   : M.operator,
         expression : from_moz(M.argument)
     });
-};
+}
 
-MOZ_TO_ME.ClassDeclaration =
-MOZ_TO_ME.ClassExpression = function From_Moz_Class(M) {
+function From_Moz_Class(M) {
     return new (M.type === "ClassDeclaration" ? AST_DefClass : AST_ClassExpression)({
         start    : my_start_token(M),
         end      : my_end_token(M),
@@ -3557,42 +3588,8 @@ MOZ_TO_ME.ClassExpression = function From_Moz_Class(M) {
         extends  : from_moz(M.superClass),
         properties: M.body.body.map(from_moz)
     });
-};
+}
 
-// MOZ_TO_ME[moztype] = mozToMeFunc;
-// def_to_moz(mytype, meToMozFunc);
-
-MOZ_TO_ME.EmptyStatement = getMozToMeFunc("EmptyStatement", AST_EmptyStatement);
-MOZ_TO_ME.BlockStatement = getMozToMeFunc("BlockStatement", AST_BlockStatement, [["body", "@"]]);
-MOZ_TO_ME.IfStatement = getMozToMeFunc("IfStatement", AST_If, [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]]);
-MOZ_TO_ME.LabeledStatement = getMozToMeFunc("LabeledStatement", AST_LabeledStatement, [["label", ">"], ["body", ">"]]);
-MOZ_TO_ME.BreakStatement = getMozToMeFunc("BreakStatement", AST_Break, [["label", ">"]]);
-MOZ_TO_ME.ContinueStatement = getMozToMeFunc("ContinueStatement", AST_Continue, [["label", ">"]]);
-MOZ_TO_ME.WithStatement = getMozToMeFunc("WithStatement", AST_With, [["object", ">", "expression"], ["body", ">"]]);
-MOZ_TO_ME.SwitchStatement = getMozToMeFunc("SwitchStatement", AST_Switch, [["discriminant", ">", "expression"], ["cases", "@", "body"]]);
-MOZ_TO_ME.ReturnStatement = getMozToMeFunc("ReturnStatement", AST_Return, [["argument", ">", "value"]]);
-MOZ_TO_ME.ThrowStatement = getMozToMeFunc("ThrowStatement", AST_Throw, [["argument", ">", "value"]]);
-MOZ_TO_ME.WhileStatement = getMozToMeFunc("WhileStatement", AST_While, [["test", ">", "condition"], ["body", ">"]]);
-MOZ_TO_ME.DoWhileStatement = getMozToMeFunc("DoWhileStatement", AST_Do, [["test", ">", "condition"], ["body", ">"]]);
-MOZ_TO_ME.ForStatement = getMozToMeFunc("ForStatement", AST_For, [["init", ">"], ["test", ">", "condition"], ["update", ">", "step"], ["body", ">"]]);
-MOZ_TO_ME.ForInStatement = getMozToMeFunc("ForInStatement", AST_ForIn, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"]]);
-MOZ_TO_ME.ForOfStatement = getMozToMeFunc("ForOfStatement", AST_ForOf, [["left", ">", "init"], ["right", ">", "object"], ["body", ">"], ["await", "="]]);
-MOZ_TO_ME.AwaitExpression = getMozToMeFunc("AwaitExpression", AST_Await, [["argument", ">", "expression"]]);
-MOZ_TO_ME.YieldExpression = getMozToMeFunc("YieldExpression", AST_Yield, [["argument", ">", "expression"], ["delegate", "=", "is_star"]]);
-MOZ_TO_ME.DebuggerStatement = getMozToMeFunc("DebuggerStatement", AST_Debugger);
-MOZ_TO_ME.VariableDeclarator = getMozToMeFunc("VariableDeclarator", AST_VarDef, [["id", ">", "name"], ["init", ">", "value"]]);
-MOZ_TO_ME.CatchClause = getMozToMeFunc("CatchClause", AST_Catch, [["param", ">", "argname"], ["body", "%"]]);
-
-MOZ_TO_ME.ThisExpression = getMozToMeFunc("ThisExpression", AST_This);
-MOZ_TO_ME.Super = getMozToMeFunc("Super", AST_Super);
-MOZ_TO_ME.BinaryExpression = getMozToMeFunc("BinaryExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]);
-MOZ_TO_ME.LogicalExpression = getMozToMeFunc("LogicalExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]);
-MOZ_TO_ME.AssignmentExpression = getMozToMeFunc("AssignmentExpression", AST_Assign, [["operator", "="], ["left", ">"], ["right", ">"]]);
-MOZ_TO_ME.ConditionalExpression = getMozToMeFunc("ConditionalExpression", AST_Conditional, [["test", ">", "condition"], ["consequent", ">"], ["alternate", ">", "alternative"]]);
-MOZ_TO_ME.NewExpression = getMozToMeFunc("NewExpression", AST_New, [["callee", ">", "expression"], ["arguments", "@", "args"]]);
-MOZ_TO_ME.CallExpression = getMozToMeFunc("CallExpression", AST_Call, [["callee", ">", "expression"], ["arguments", "@", "args"]]);
-
-// 
 def_to_moz(AST_EmptyStatement, getMetoMozFunc("EmptyStatement", AST_EmptyStatement));
 def_to_moz(AST_BlockStatement, getMetoMozFunc("BlockStatement", AST_BlockStatement, [["body", "@"]]));
 def_to_moz(AST_If, getMetoMozFunc("IfStatement", AST_If, [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]]));
