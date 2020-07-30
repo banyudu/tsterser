@@ -3756,7 +3756,7 @@ function getMetoMozFunc (moztype: string, mytype: any, propmap: string[][] = [])
     return meToMozFunc;
 }
 
-var FROM_MOZ_STACK: any[] | null = null;
+var FROM_MOZ_STACK = [];
 
 function from_moz(node) {
     FROM_MOZ_STACK?.push(node);
@@ -3795,7 +3795,5 @@ function set_moz_loc(mynode: any, moznode) {
 }
 
 function def_to_moz(mytype: any, handler: (M: any, parent: any) => any) {
-    mytype.DEFMETHOD("to_mozilla_ast", function(parent: any) {
-        return set_moz_loc(this, handler(this, parent));
-    });
+    mytype.DEFMETHOD("to_mozilla_ast", get_to_moz(handler));
 }
