@@ -1730,7 +1730,8 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.args = do_list(self.args, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("CallExpression", AST_Call, [["callee", ">", "expression"], ["arguments", "@", "args"]])),
 }, {
     documentation: "A function call expression",
     propdoc: {
@@ -1744,7 +1745,8 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
 var AST_New: any = DEFNODE("New", null, {
     _size: function (): number {
         return 6 + list_overhead(this.args);
-    }
+    },
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("NewExpression", AST_New, [["callee", ">", "expression"], ["arguments", "@", "args"]])),
 }, {
     documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
 }, AST_Call);
@@ -1955,7 +1957,8 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         self.condition = self.condition.transform(tw);
         self.consequent = self.consequent.transform(tw);
         self.alternative = self.alternative.transform(tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(getMetoMozFunc("ConditionalExpression", AST_Conditional, [["test", ">", "condition"], ["consequent", ">"], ["alternate", ">", "alternative"]])),
 }, {
     documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
     propdoc: {
@@ -3615,12 +3618,6 @@ function From_Moz_Class(M) {
         properties: M.body.body.map(from_moz)
     });
 }
-
-// def_to_moz(AST_Binary, getMetoMozFunc("LogicalExpression", AST_Binary, [["operator", "="], ["left", ">"], ["right", ">"]]));
-def_to_moz(AST_Assign, getMetoMozFunc("AssignmentExpression", AST_Assign, [["operator", "="], ["left", ">"], ["right", ">"]]));
-def_to_moz(AST_Conditional, getMetoMozFunc("ConditionalExpression", AST_Conditional, [["test", ">", "condition"], ["consequent", ">"], ["alternate", ">", "alternative"]]));
-def_to_moz(AST_New, getMetoMozFunc("NewExpression", AST_New, [["callee", ">", "expression"], ["arguments", "@", "args"]]));
-def_to_moz(AST_Call, getMetoMozFunc("CallExpression", AST_Call, [["callee", ">", "expression"], ["arguments", "@", "args"]]));
 
 def_to_moz(AST_Binary, function To_Moz_BinaryExpression(M: any) {
     if (M.operator == "=" && to_moz_in_destructuring()) {
