@@ -3682,73 +3682,65 @@ function my_end_token(moznode) {
 }
 
 function getMozToMeFunc (moztype: string, mytype: any, propmap: string[][] = []) {
-    const fromFuncName = `From_Moz_${moztype}`;
-    const mozToMeFunc = ((U2, my_start_token, my_end_token, from_moz) => ({
-        [fromFuncName]: function (M) {
-            const data = {
-                start: my_start_token(M),
-                end: my_end_token(M)
-            };
-            propmap.forEach(function(prop) {
-                const moz = prop[0];
-                const how = prop[1];
-                const my = prop[2] || prop[0];
-                data[my] = undefined;
-                switch (how) {
-                    case "@":
-                        data[my] = M[moz].map(from_moz);
-                        break;
-                    case ">":
-                        data[my] = from_moz(M[moz]);
-                        break;
-                    case "=":
-                        data[my] = M[moz];
-                        break;
-                    case "%":
-                        data[my] = from_moz(M[moz]).body;
-                        break;
-                    default:
-                        throw new Error("Can't understand operator in propmap: " + prop);
-                }
-            });
-            return new U2[mytype.name](data);
-        }
-    }[fromFuncName]))(ast, my_start_token, my_end_token, from_moz);
-    return mozToMeFunc;
+    return function (M) {
+        const data = {
+            start: my_start_token(M),
+            end: my_end_token(M)
+        };
+        propmap.forEach(function(prop) {
+            const moz = prop[0];
+            const how = prop[1];
+            const my = prop[2] || prop[0];
+            data[my] = undefined;
+            switch (how) {
+                case "@":
+                    data[my] = M[moz].map(from_moz);
+                    break;
+                case ">":
+                    data[my] = from_moz(M[moz]);
+                    break;
+                case "=":
+                    data[my] = M[moz];
+                    break;
+                case "%":
+                    data[my] = from_moz(M[moz]).body;
+                    break;
+                default:
+                    throw new Error("Can't understand operator in propmap: " + prop);
+            }
+        });
+        return new ast[mytype.name](data);
+    };
 }
 
 function getMetoMozFunc (moztype: string, propmap: string[][] = []) {
-    const toFuncName = `To_Moz_${moztype}`;
-    const meToMozFunc = ((to_moz, to_moz_block) => ({
-        [toFuncName]: function (M) {
-            const data = {
-                type: moztype,
-            };
-            propmap.forEach(function(prop) {
-                const moz = prop[0];
-                const how = prop[1];
-                const my = prop[2] || prop[0];
-                switch (how) {
-                    case "@":
-                        data[moz] = M[my].map(to_moz);
-                        break;
-                    case ">":
-                        data[moz] = to_moz(M[my]);
-                        break;
-                    case "=":
-                        data[moz] = M[my];
-                        break;
-                    case "%":
-                        data[moz] = to_moz_block(M);
-                        break;
-                    default:
-                        throw new Error("Can't understand operator in propmap: " + prop);
-                }
-            });
-            return data;
-        }
-    }[toFuncName]))(to_moz, to_moz_block);
-    return meToMozFunc;
+    return function (M) {
+        const data = {
+            type: moztype,
+        };
+        propmap.forEach(function(prop) {
+            const moz = prop[0];
+            const how = prop[1];
+            const my = prop[2] || prop[0];
+            switch (how) {
+                case "@":
+                    data[moz] = M[my].map(to_moz);
+                    break;
+                case ">":
+                    data[moz] = to_moz(M[my]);
+                    break;
+                case "=":
+                    data[moz] = M[my];
+                    break;
+                case "%":
+                    data[moz] = to_moz_block(M);
+                    break;
+                default:
+                    throw new Error("Can't understand operator in propmap: " + prop);
+            }
+        });
+        return data;
+    };
 }
 
 var FROM_MOZ_STACK = [];
