@@ -341,6 +341,13 @@ var AST_Node: any = DEFNODE("Node", "start end", {
     warn: function(txt, props) {
         if (AST_Node.warn_function)
             AST_Node.warn_function(string_template(txt, props));
+    },
+    from_mozilla_ast: function(node: any) {
+        var save_stack = FROM_MOZ_STACK;
+        FROM_MOZ_STACK = [];
+        var ast = from_moz(node);
+        FROM_MOZ_STACK = save_stack;
+        return ast;
     }
 }, null);
 
@@ -443,7 +450,11 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
     shallow_cmp: pass_through,
     transform: get_transformer(function(self, tw: any) {
         self.body = do_list(self.body, tw);
-    })
+    }),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "BlockStatement",
+        body: M.body.map(to_moz)
+    }))
 }, {
     documentation: "A body of statements (usually braced)",
     propdoc: {
@@ -856,7 +867,8 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
         } else {
             self.body = do_list(self.body, tw);
         }
-    })
+    }),
+    to_mozilla_ast: get_to_moz(To_Moz_FunctionExpression),
 }, {
     documentation: "Base class for functions",
     propdoc: {
@@ -876,23 +888,25 @@ var AST_Accessor: any = DEFNODE("Accessor", null, {
     documentation: "A setter/getter function.  The `name` property is always null."
 }, AST_Lambda);
 
+function To_Moz_FunctionExpression(M, parent) {
+    var is_generator = parent.is_generator !== undefined ?
+        parent.is_generator : M.is_generator;
+    return {
+        type: "FunctionExpression",
+        id: to_moz(M.name),
+        params: M.argnames.map(to_moz),
+        generator: is_generator,
+        async: M.async,
+        body: to_moz_scope("BlockStatement", M)
+    };
+}
+
 var AST_Function: any = DEFNODE("Function", null, {
     _size: function (info) {
         const first: any = !!first_in_statement(info);
         return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_FunctionExpression(M, parent) {
-        var is_generator = parent.is_generator !== undefined ?
-            parent.is_generator : M.is_generator;
-        return {
-            type: "FunctionExpression",
-            id: to_moz(M.name),
-            params: M.argnames.map(to_moz),
-            generator: is_generator,
-            async: M.async,
-            body: to_moz_scope("BlockStatement", M)
-        };
-    }),
+    to_mozilla_ast: get_to_moz(To_Moz_FunctionExpression),
 }, {
     documentation: "A function expression"
 }, AST_Lambda);
@@ -2610,30 +2624,32 @@ var AST_Super: any = DEFNODE("Super", null, {
     documentation: "The `super` symbol",
 }, AST_This);
 
+function To_Moz_Literal(M) {
+    var value = M.value;
+    if (typeof value === "number" && (value < 0 || (value === 0 && 1 / value < 0))) {
+        return {
+            type: "UnaryExpression",
+            operator: "-",
+            prefix: true,
+            argument: {
+                type: "Literal",
+                value: -value,
+                raw: M.start.raw
+            }
+        };
+    }
+    return {
+        type: "Literal",
+        value: value,
+        raw: M.start.raw
+    };
+}
+
 var AST_Constant: any = DEFNODE("Constant", null, {
     getValue: function() {
         return this.value;
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_Literal(M) {
-        var value = M.value;
-        if (typeof value === "number" && (value < 0 || (value === 0 && 1 / value < 0))) {
-            return {
-                type: "UnaryExpression",
-                operator: "-",
-                prefix: true,
-                argument: {
-                    type: "Literal",
-                    value: -value,
-                    raw: M.start.raw
-                }
-            };
-        }
-        return {
-            type: "Literal",
-            value: value,
-            raw: M.start.raw
-        };
-    }),
+    to_mozilla_ast: get_to_moz(To_Moz_Literal),
 }, {
     documentation: "Base class for all constants",
 }, AST_Node);
@@ -2732,7 +2748,8 @@ var AST_Atom: any = DEFNODE("Atom", null, {
 
 var AST_Null: any = DEFNODE("Null", null, {
     value: null,
-    _size: () => 4
+    _size: () => 4,
+    to_mozilla_ast: get_to_moz(To_Moz_Literal)
 }, {
     documentation: "The `null` atom",
 }, AST_Atom);
@@ -2766,7 +2783,9 @@ var AST_Infinity: any = DEFNODE("Infinity", null, {
     documentation: "The `Infinity` value",
 }, AST_Atom);
 
-var AST_Boolean: any = DEFNODE("Boolean", null, {}, {
+var AST_Boolean: any = DEFNODE("Boolean", null, {
+    to_mozilla_ast: get_to_moz(To_Moz_Literal),
+}, {
     documentation: "Base class for booleans",
 }, AST_Atom);
 
@@ -3593,12 +3612,6 @@ function From_Moz_Class(M) {
     });
 }
 
-AST_Boolean.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
-AST_Null.DEFMETHOD("to_mozilla_ast", AST_Constant.prototype.to_mozilla_ast);
-
-AST_Block.DEFMETHOD("to_mozilla_ast", AST_BlockStatement.prototype.to_mozilla_ast);
-AST_Lambda.DEFMETHOD("to_mozilla_ast", AST_Function.prototype.to_mozilla_ast);
-
 /* -----[ tools ]----- */
 
 function raw_token(moznode) {
@@ -3645,14 +3658,6 @@ function from_moz(node) {
     FROM_MOZ_STACK?.pop();
     return ret;
 }
-
-AST_Node.from_mozilla_ast = function(node: any) {
-    var save_stack = FROM_MOZ_STACK;
-    FROM_MOZ_STACK = [];
-    var ast = from_moz(node);
-    FROM_MOZ_STACK = save_stack;
-    return ast;
-};
 
 function set_moz_loc(mynode: any, moznode) {
     var start = mynode.start;
