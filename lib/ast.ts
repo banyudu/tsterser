@@ -579,7 +579,11 @@ var AST_While: any = DEFNODE("While", null, {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("WhileStatement", [["test", ">", "condition"], ["body", ">"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "WhileStatement",
+        test: to_moz(M.condition),
+        body: to_moz(M.body)
+    })),
 }, {
     documentation: "A `while` statement",
 }, AST_DWLoop);
@@ -663,7 +667,13 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
 
 var AST_ForOf: any = DEFNODE("ForOf", "await", {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("ForOfStatement", [["left", ">", "init"], ["right", ">", "object"], ["body", ">"], ["await", "="]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "ForOfStatement",
+        left: to_moz(M.init),
+        right: to_moz(M.object),
+        body: to_moz(M.body),
+        await: M.await
+    })),
 }, {
     documentation: "A `for ... of` statement",
 }, AST_ForIn);
@@ -685,7 +695,11 @@ var AST_With: any = DEFNODE("With", "expression", {
         self.expression = self.expression.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("WithStatement", [["object", ">", "expression"], ["body", ">"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "WithStatement",
+        object: to_moz(M.expression),
+        body: to_moz(M.body)
+    })),
 }, {
     documentation: "A `with` statement",
     propdoc: {
@@ -1109,14 +1123,20 @@ var AST_Return: any = DEFNODE("Return", null, {
     _size: function () {
         return this.value ? 7 : 6;
     },
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("ReturnStatement", [["argument", ">", "value"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "ReturnStatement",
+        argument: to_moz(M.value)
+    })),
 }, {
     documentation: "A `return` statement"
 }, AST_Exit);
 
 var AST_Throw: any = DEFNODE("Throw", null, {
     _size: () => 6,
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("ThrowStatement", [["argument", ">", "value"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "ThrowStatement",
+        argument: to_moz(M.value)
+    })),
 }, {
     documentation: "A `throw` statement"
 }, AST_Exit);
@@ -1146,7 +1166,10 @@ var AST_Break: any = DEFNODE("Break", null, {
     _size: function () {
         return this.label ? 6 : 5;
     },
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("BreakStatement", [["label", ">"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "BreakStatement",
+        label: to_moz(M.label)
+    })),
 }, {
     documentation: "A `break` statement"
 }, AST_LoopControl);
@@ -1155,7 +1178,10 @@ var AST_Continue: any = DEFNODE("Continue", null, {
     _size: function () {
         return this.label ? 9 : 8;
     },
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("ContinueStatement", [["label", ">"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "ContinueStatement",
+        label: to_moz(M.label)
+    })),
 }, {
     documentation: "A `continue` statement"
 }, AST_LoopControl);
@@ -1174,7 +1200,10 @@ var AST_Await: any = DEFNODE("Await", "expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("AwaitExpression", [["argument", ">", "expression"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "AwaitExpression",
+        argument: to_moz(M.expression)
+    })),
 }, {
     documentation: "An `await` statement",
     propdoc: {
@@ -1199,7 +1228,11 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
     transform: get_transformer(function(self, tw: any) {
         if (self.expression) self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("YieldExpression", [["argument", ">", "expression"], ["delegate", "=", "is_star"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "YieldExpression",
+        argument: to_moz(M.expression),
+        delegate: M.is_star
+    })),
 }, {
     documentation: "A `yield` statement",
     propdoc: {
@@ -1235,7 +1268,12 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         self.body = (self.body as any).transform(tw);
         if (self.alternative) self.alternative = self.alternative.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("IfStatement", [["test", ">", "condition"], ["consequent", ">", "body"], ["alternate", ">", "alternative"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "IfStatement",
+        test: to_moz(M.condition),
+        consequent: to_moz(M.body),
+        alternate: to_moz(M.alternative)
+    })),
 }, {
     documentation: "A `if` statement",
     propdoc: {
@@ -1267,7 +1305,11 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
         self.expression = self.expression.transform(tw);
         self.body = do_list(self.body, tw);
     }),
-    to_mozilla_ast: get_to_moz(getMetoMozFunc("SwitchStatement", [["discriminant", ">", "expression"], ["cases", "@", "body"]])),
+    to_mozilla_ast: get_to_moz(M => ({
+        type: "SwitchStatement",
+        discriminant: to_moz(M.expression),
+        cases: M.body.map(to_moz)
+    })),
 }, {
     documentation: "A `switch` statement",
     propdoc: {
@@ -3754,36 +3796,6 @@ function getMozToMeFunc (moztype: string, mytype: any, propmap: string[][] = [])
             }
         });
         return new ast[mytype.name](data);
-    };
-}
-
-function getMetoMozFunc (moztype: string, propmap: string[][] = []) {
-    return function (M) {
-        const data = {
-            type: moztype,
-        };
-        propmap.forEach(function(prop) {
-            const moz = prop[0];
-            const how = prop[1];
-            const my = prop[2] || prop[0];
-            switch (how) {
-                case "@":
-                    data[moz] = M[my].map(to_moz);
-                    break;
-                case ">":
-                    data[moz] = to_moz(M[my]);
-                    break;
-                case "=":
-                    data[moz] = M[my];
-                    break;
-                case "%":
-                    data[moz] = to_moz_block(M);
-                    break;
-                default:
-                    throw new Error("Can't understand operator in propmap: " + prop);
-            }
-        });
-        return data;
     };
 }
 
