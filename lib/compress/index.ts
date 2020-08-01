@@ -3181,9 +3181,7 @@ def_negate(AST_Binary, function(compressor: Compressor, first_in_statement) {
 });
 
 function def_negate(node, func) {
-    node.DEFMETHOD("negate", function(compressor: Compressor, first_in_statement) {
-        return func.call(this, compressor, first_in_statement);
-    });
+    node.DEFMETHOD("negate", func);
 }
 
 var global_pure_fns = makePredicate("Boolean decodeURI decodeURIComponent Date encodeURI encodeURIComponent Error escape EvalError isFinite isNaN Number Object parseFloat parseInt RangeError ReferenceError String SyntaxError TypeError unescape URIError");
