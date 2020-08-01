@@ -2608,69 +2608,69 @@ function is_lhs(node, parent) {
     if (parent instanceof AST_Assign && parent.left === node) return node;
 }
 
-(function(def_find_defs) {
-    function to_node(value, orig) {
-        if (value instanceof AST_Node) return make_node(value.CTOR, orig, value);
-        if (Array.isArray(value)) return make_node(AST_Array, orig, {
-            elements: value.map(function(value) {
-                return to_node(value, orig);
-            })
-        });
-        if (value && typeof value == "object") {
-            var props: any[] = [];
-            for (var key in value) if (HOP(value, key)) {
-                props.push(make_node(AST_ObjectKeyVal, orig, {
-                    key: key,
-                    value: to_node(value[key], orig)
-                }));
-            }
-            return make_node(AST_Object, orig, {
-                properties: props
-            });
+function to_node(value, orig) {
+    if (value instanceof AST_Node) return make_node(value.CTOR, orig, value);
+    if (Array.isArray(value)) return make_node(AST_Array, orig, {
+        elements: value.map(function(value) {
+            return to_node(value, orig);
+        })
+    });
+    if (value && typeof value == "object") {
+        var props: any[] = [];
+        for (var key in value) if (HOP(value, key)) {
+            props.push(make_node(AST_ObjectKeyVal, orig, {
+                key: key,
+                value: to_node(value[key], orig)
+            }));
         }
-        return make_node_from_constant(value, orig);
+        return make_node(AST_Object, orig, {
+            properties: props
+        });
     }
+    return make_node_from_constant(value, orig);
+}
 
-    function warn(compressor, node) {
-        compressor.warn("global_defs " + node.print_to_string() + " redefined [{file}:{line},{col}]", node.start);
-    }
+function warn(compressor, node) {
+    compressor.warn("global_defs " + node.print_to_string() + " redefined [{file}:{line},{col}]", node.start);
+}
 
-    AST_Toplevel.DEFMETHOD("resolve_defines", function(compressor: Compressor) {
-        if (!compressor.option("global_defs")) return this;
-        this.figure_out_scope({ ie8: compressor.option("ie8") });
-        return this.transform(new TreeTransformer(function(node: any) {
-            var def = node._find_defs(compressor, "");
-            if (!def) return;
-            var level = 0, child = node, parent;
-            while (parent = this.parent(level++)) {
-                if (!(parent instanceof AST_PropAccess)) break;
-                if (parent.expression !== child) break;
-                child = parent;
-            }
-            if (is_lhs(child, parent)) {
-                warn(compressor, node);
-                return;
-            }
-            return def;
-        }));
-    });
-    def_find_defs(AST_Node, noop);
-    def_find_defs(AST_Dot, function(compressor: Compressor, suffix) {
-        return this.expression._find_defs(compressor, "." + this.property + suffix);
-    });
-    def_find_defs(AST_SymbolDeclaration, function(compressor: Compressor) {
-        if (!this.global()) return;
-        if (HOP(compressor.option("global_defs") as object, this.name)) warn(compressor, this);
-    });
-    def_find_defs(AST_SymbolRef, function(compressor: Compressor, suffix) {
-        if (!this.global()) return;
-        var defines = compressor.option("global_defs") as AnyObject;
-        var name = this.name + suffix;
-        if (HOP(defines, name)) return to_node(defines[name], this);
-    });
-})(function(node, func) {
-    node.DEFMETHOD("_find_defs", func);
+AST_Toplevel.DEFMETHOD("resolve_defines", function(compressor: Compressor) {
+    if (!compressor.option("global_defs")) return this;
+    this.figure_out_scope({ ie8: compressor.option("ie8") });
+    return this.transform(new TreeTransformer(function(node: any) {
+        var def = node._find_defs(compressor, "");
+        if (!def) return;
+        var level = 0, child = node, parent;
+        while (parent = this.parent(level++)) {
+            if (!(parent instanceof AST_PropAccess)) break;
+            if (parent.expression !== child) break;
+            child = parent;
+        }
+        if (is_lhs(child, parent)) {
+            warn(compressor, node);
+            return;
+        }
+        return def;
+    }));
 });
+def_find_defs(AST_Node, noop);
+def_find_defs(AST_Dot, function(compressor: Compressor, suffix) {
+    return this.expression._find_defs(compressor, "." + this.property + suffix);
+});
+def_find_defs(AST_SymbolDeclaration, function(compressor: Compressor) {
+    if (!this.global()) return;
+    if (HOP(compressor.option("global_defs") as object, this.name)) warn(compressor, this);
+});
+def_find_defs(AST_SymbolRef, function(compressor: Compressor, suffix) {
+    if (!this.global()) return;
+    var defines = compressor.option("global_defs") as AnyObject;
+    var name = this.name + suffix;
+    if (HOP(defines, name)) return to_node(defines[name], this);
+});
+
+function def_find_defs (node, func) {
+    node.DEFMETHOD("_find_defs", func);
+}
 
 function best_of_expression(ast1, ast2) {
     return ast1.size() > ast2.size() ? ast2 : ast1;
