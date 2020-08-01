@@ -336,7 +336,15 @@ var AST_Node: any = DEFNODE("Node", "start end", {
     transform: get_transformer(noop),
     shallow_cmp: function () {
         throw new Error("did not find a shallow_cmp function for " + this.constructor.name);
-    }
+    },
+    print: print,
+    _print: print,
+    print_to_string: function(options: any) {
+        var output = OutputStream(options);
+        this.print(output);
+        return output.get();
+    },
+    needs_parens: return_false,
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
@@ -639,6 +647,35 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         update: to_moz(M.step),
         body: to_moz(M.body)
     })),
+    _codegen: function(self, output) {
+        output.print("for");
+        output.space();
+        output.with_parens(function() {
+            if (self.init) {
+                if (self.init instanceof AST_Definitions) {
+                    self.init.print(output);
+                } else {
+                    parenthesize_for_noin(self.init, output, true);
+                }
+                output.print(";");
+                output.space();
+            } else {
+                output.print(";");
+            }
+            if (self.condition) {
+                self.condition.print(output);
+                output.print(";");
+                output.space();
+            } else {
+                output.print(";");
+            }
+            if (self.step) {
+                self.step.print(output);
+            }
+        });
+        output.space();
+        self._do_print_body(output);
+    },
 }, {
     documentation: "A `for` statement",
     propdoc: {
@@ -744,7 +781,276 @@ var AST_Scope: any = DEFNODE("Scope", "variables functions uses_with uses_eval p
     },
     pinned: function() {
         return this.uses_eval || this.uses_with;
-    }
+    },
+    figure_out_scope: function(options: any, { parent_scope = null, toplevel = this } = {}) {
+        options = defaults(options, {
+            cache: null,
+            ie8: false,
+            safari10: false,
+        });
+
+        if (!(toplevel instanceof AST_Toplevel)) {
+            throw new Error("Invalid toplevel scope");
+        }
+
+        // pass 1: setup scope chaining and handle definitions
+        var scope: any = this.parent_scope = parent_scope as any;
+        var labels = new Map();
+        var defun: any = null;
+        var in_destructuring: any = null;
+        var for_scopes: any[] = [];
+        var tw = new TreeWalker((node, descend) => {
+            if (node.is_block_scope()) {
+                const save_scope = scope;
+                node.block_scope = scope = new AST_Scope(node);
+                scope._block_scope = true;
+                // AST_Try in the AST sadly *is* (not has) a body itself,
+                // and its catch and finally branches are children of the AST_Try itself
+                const parent_scope = node instanceof AST_Catch
+                    ? save_scope.parent_scope
+                    : save_scope;
+                scope.init_scope_vars(parent_scope);
+                scope.uses_with = save_scope.uses_with;
+                scope.uses_eval = save_scope.uses_eval;
+                if (options.safari10) {
+                    if (node instanceof AST_For || node instanceof AST_ForIn) {
+                        for_scopes.push(scope);
+                    }
+                }
+
+                if (node instanceof AST_Switch) {
+                    // XXX: HACK! Ensure the switch expression gets the correct scope (the parent scope) and the body gets the contained scope
+                    // AST_Switch has a scope within the body, but it itself "is a block scope"
+                    // This means the switched expression has to belong to the outer scope
+                    // while the body inside belongs to the switch itself.
+                    // This is pretty nasty and warrants an AST change similar to AST_Try (read above)
+                    const the_block_scope = scope;
+                    scope = save_scope;
+                    node.expression.walk(tw);
+                    scope = the_block_scope;
+                    for (let i = 0; i < node.body.length; i++) {
+                        node.body[i].walk(tw);
+                    }
+                } else {
+                    descend();
+                }
+                scope = save_scope;
+                return true;
+            }
+            if (node instanceof AST_Destructuring) {
+                const save_destructuring = in_destructuring;
+                in_destructuring = node;
+                descend();
+                in_destructuring = save_destructuring;
+                return true;
+            }
+            if (node instanceof AST_Scope) {
+                node.init_scope_vars?.(scope);
+                var save_scope = scope;
+                var save_defun = defun;
+                var save_labels = labels;
+                defun = scope = node;
+                labels = new Map();
+                descend();
+                scope = save_scope;
+                defun = save_defun;
+                labels = save_labels;
+                return true;        // don't descend again in TreeWalker
+            }
+            if (node instanceof AST_LabeledStatement) {
+                var l = node.label;
+                if (labels.has(l.name)) {
+                    throw new Error(string_template("Label {name} defined twice", l));
+                }
+                labels.set(l.name, l);
+                descend();
+                labels.delete(l.name);
+                return true;        // no descend again
+            }
+            if (node instanceof AST_With) {
+                for (var s: any | null = scope; s; s = s.parent_scope)
+                    s.uses_with = true;
+                return;
+            }
+            if (node instanceof AST_Symbol) {
+                node.scope = scope;
+            }
+            if (node instanceof AST_Label) {
+                // TODO: check type
+                node.thedef = node as any;
+                node.references = [] as any;
+            }
+            if (node instanceof AST_SymbolLambda) {
+                defun.def_function(node, node.name == "arguments" ? undefined : defun);
+            } else if (node instanceof AST_SymbolDefun) {
+                // Careful here, the scope where this should be defined is
+                // the parent scope.  The reason is that we enter a new
+                // scope when we encounter the AST_Defun node (which is
+                // instanceof AST_Scope) but we get to the symbol a bit
+                // later.
+                mark_export((node.scope = defun.parent_scope.get_defun_scope()).def_function(node, defun), 1);
+            } else if (node instanceof AST_SymbolClass) {
+                mark_export(defun.def_variable(node, defun), 1);
+            } else if (node instanceof AST_SymbolImport) {
+                scope.def_variable(node);
+            } else if (node instanceof AST_SymbolDefClass) {
+                // This deals with the name of the class being available
+                // inside the class.
+                mark_export((node.scope = defun.parent_scope).def_function(node, defun), 1);
+            } else if (
+                node instanceof AST_SymbolVar
+                || node instanceof AST_SymbolLet
+                || node instanceof AST_SymbolConst
+                || node instanceof AST_SymbolCatch
+            ) {
+                var def: any;
+                if (node instanceof AST_SymbolBlockDeclaration) {
+                    def = scope.def_variable(node, null);
+                } else {
+                    def = defun.def_variable(node, node.TYPE == "SymbolVar" ? null : undefined);
+                }
+                if (!def.orig.every((sym) => {
+                    if (sym === node as any) return true;
+                    if (node instanceof AST_SymbolBlockDeclaration) {
+                        return sym instanceof AST_SymbolLambda;
+                    }
+                    return !(sym instanceof AST_SymbolLet || sym instanceof AST_SymbolConst);
+                })) {
+                    js_error(
+                        `"${node.name}" is redeclared`,
+                        node.start.file,
+                        node.start.line,
+                        node.start.col,
+                        node.start.pos
+                    );
+                }
+                if (!(node instanceof AST_SymbolFunarg)) mark_export(def, 2);
+                if (defun !== scope) {
+                    node.mark_enclosed();
+                    const def = scope.find_variable(node);
+                    if (node.thedef !== def) {
+                        node.thedef = def;
+                        node.reference();
+                    }
+                }
+            } else if (node instanceof AST_LabelRef) {
+                var sym = labels.get(node.name);
+                if (!sym) throw new Error(string_template("Undefined label {name} [{line},{col}]", {
+                    name: node.name,
+                    line: node.start.line,
+                    col: node.start.col
+                }));
+                node.thedef = sym;
+            }
+            if (!(scope instanceof AST_Toplevel) && (node instanceof AST_Export || node instanceof AST_Import)) {
+                js_error(
+                    `"${node.TYPE}" statement may only appear at the top level`,
+                    node.start.file,
+                    node.start.line,
+                    node.start.col,
+                    node.start.pos
+                );
+            }
+        });
+        this.walk(tw);
+
+        function mark_export(def: any, level: number) {
+            if (in_destructuring) {
+                var i = 0;
+                do {
+                    level++;
+                } while (tw.parent(i++) !== in_destructuring);
+            }
+            var node = tw.parent(level);
+            if (def.export = node instanceof AST_Export ? MASK_EXPORT_DONT_MANGLE : 0) {
+                var exported = node.exported_definition;
+                if ((exported instanceof AST_Defun || exported instanceof AST_DefClass) && node.is_default) {
+                    def.export = MASK_EXPORT_WANT_MANGLE;
+                }
+            }
+        }
+
+        // pass 2: find back references and eval
+        const is_toplevel = this instanceof AST_Toplevel;
+        if (is_toplevel) {
+            this.globals = new Map();
+        }
+
+        var tw = new TreeWalker((node: any) => {
+            if (node instanceof AST_LoopControl && node.label) {
+                node.label.thedef.references.push(node as any); // TODO: check type
+                return true;
+            }
+            if (node instanceof AST_SymbolRef) {
+                var name = node.name;
+                if (name == "eval" && tw.parent() instanceof AST_Call) {
+                    for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
+                        s.uses_eval = true;
+                    }
+                }
+                var sym;
+                if (tw.parent() instanceof AST_NameMapping && tw.parent(1).module_name
+                    || !(sym = node.scope.find_variable(name))) {
+
+                    sym = toplevel.def_global?.(node);
+                    if (node instanceof AST_SymbolExport) sym.export = MASK_EXPORT_DONT_MANGLE;
+                } else if (sym.scope instanceof AST_Lambda && name == "arguments") {
+                    sym.scope.uses_arguments = true;
+                }
+                node.thedef = sym;
+                node.reference();
+                if (node.scope.is_block_scope()
+                    && !(sym.orig[0] instanceof AST_SymbolBlockDeclaration)) {
+                    node.scope = node.scope.get_defun_scope();
+                }
+                return true;
+            }
+            // ensure mangling works if catch reuses a scope variable
+            var def;
+            if (node instanceof AST_SymbolCatch && (def = redefined_catch_def(node.definition()))) {
+                let s: any = node.scope;
+                while (s) {
+                    push_uniq(s.enclosed, def);
+                    if (s === def.scope) break;
+                    s = s.parent_scope;
+                }
+            }
+        });
+        this.walk(tw);
+
+        // pass 3: work around IE8 and Safari catch scope bugs
+        if (options.ie8 || options.safari10) {
+            walk(this, (node: any) => {
+                if (node instanceof AST_SymbolCatch) {
+                    var name = node.name;
+                    var refs = node.thedef.references;
+                    var scope = node.scope.get_defun_scope();
+                    var def = scope.find_variable(name)
+                        || toplevel.globals.get(name)
+                        || scope.def_variable(node);
+                    refs.forEach(function(ref) {
+                        ref.thedef = def;
+                        ref.reference();
+                    });
+                    node.thedef = def;
+                    node.reference();
+                    return true;
+                }
+            });
+        }
+
+        // pass 4: add symbol definitions to loop scopes
+        // Safari/Webkit bug workaround - loop init let variable shadowing argument.
+        // https://github.com/mishoo/UglifyJS2/issues/1753
+        // https://bugs.webkit.org/show_bug.cgi?id=171041
+        if (options.safari10) {
+            for (const scope of for_scopes) {
+                scope.parent_scope?.variables.forEach(function(def) {
+                    push_uniq(scope.enclosed, def);
+                });
+            }
+        }
+    },
 }, {
     documentation: "Base class for all statements introducing a lexical scope",
     propdoc: {
@@ -913,6 +1219,36 @@ var AST_Function: any = DEFNODE("Function", null, {
         return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
     },
     to_mozilla_ast: get_to_moz(To_Moz_FunctionExpression),
+    // a function expression needs parens around it when it's provably
+    // the first token to appear in a statement.
+    needs_parens: function(output: any) {
+        if (!output.has_parens() && first_in_statement(output)) {
+            return true;
+        }
+
+        if (output.option("webkit")) {
+            var p = output.parent();
+            if (p instanceof AST_PropAccess && p.expression === this) {
+                return true;
+            }
+        }
+
+        if (output.option("wrap_iife")) {
+            var p = output.parent();
+            if (p instanceof AST_Call && p.expression === this) {
+                return true;
+            }
+        }
+
+        if (output.option("wrap_func_args")) {
+            var p = output.parent();
+            if (p instanceof AST_Call && p.args.includes(this)) {
+                return true;
+            }
+        }
+
+        return false;
+    },
 }, {
     documentation: "A function expression"
 }, AST_Lambda);
@@ -944,6 +1280,10 @@ var AST_Arrow: any = DEFNODE("Arrow", null, {
             body: body
         };
     }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        return p instanceof AST_PropAccess && p.expression === this;
+    },
 }, {
     documentation: "An ES6 Arrow function ((a) => b)"
 }, AST_Lambda);
@@ -1224,6 +1564,12 @@ var AST_Await: any = DEFNODE("Await", "expression", {
         type: "AwaitExpression",
         argument: to_moz(M.expression)
     })),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        return p instanceof AST_PropAccess && p.expression === this
+            || p instanceof AST_Call && p.expression === this
+            || output.option("safari10") && p instanceof AST_UnaryPrefix;
+    },
 }, {
     documentation: "An `await` statement",
     propdoc: {
@@ -1874,6 +2220,25 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
             expressions: M.expressions.map(to_moz)
         };
     }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
+            || p instanceof AST_Unary                         // !(foo, bar, baz)
+            || p instanceof AST_Binary                        // 1 + (2, 3) + 4 ==> 8
+            || p instanceof AST_VarDef                        // var a = (1, 2), b = a + a; ==> b == 4
+            || p instanceof AST_PropAccess                    // (1, {foo:2}).foo or (1, {foo:2})["foo"] ==> 2
+            || p instanceof AST_Array                         // [ 1, (2, 3), 4 ] ==> [ 1, 3, 4 ]
+            || p instanceof AST_ObjectProperty                // { foo: (1, 2) }.foo ==> 2
+            || p instanceof AST_Conditional                   /* (false, true) ? (a = 10, b = 20) : (c = 30)
+                                                                * ==> 20 (side effect, set a := 10 and b := 20) */
+            || p instanceof AST_Arrow                         // x => (x, x)
+            || p instanceof AST_DefaultAssign                 // x => (x = (0, function(){}))
+            || p instanceof AST_Expansion                     // [...(a, b)]
+            || p instanceof AST_ForOf && this === p.object    // for (e of (foo, bar)) {}
+            || p instanceof AST_Yield                         // yield (foo, bar)
+            || p instanceof AST_Export                        // export default (foo, bar)
+        ;
+    },
 }, {
     documentation: "A sequence expression (comma-separated expressions)",
     propdoc: {
@@ -1971,6 +2336,17 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
             argument: to_moz(M.expression)
         };
     }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        return p instanceof AST_PropAccess && p.expression === this
+            || p instanceof AST_Call && p.expression === this
+            || p instanceof AST_Binary
+                && p.operator === "**"
+                && this instanceof AST_UnaryPrefix
+                && p.left === this
+                && this.operator !== "++"
+                && this.operator !== "--";
+    },
 }, {
     documentation: "Base class for unary expressions",
     propdoc: {
@@ -2167,7 +2543,12 @@ var AST_Object: any = DEFNODE("Object", "properties", {
             type: "ObjectExpression",
             properties: M.properties.map(to_moz)
         };
-    })
+    }),
+    // same goes for an object literal, because otherwise it would be
+    // interpreted as a block of code.
+    needs_parens: function(output: any) {
+        return !output.has_parens() && first_in_statement(output);
+    },
 }, {
     documentation: "An object literal",
     propdoc: {
@@ -2446,7 +2827,9 @@ var AST_DefClass: any = DEFNODE("DefClass", null, {}, {
     documentation: "A class definition",
 }, AST_Class);
 
-var AST_ClassExpression: any = DEFNODE("ClassExpression", null, {}, {
+var AST_ClassExpression: any = DEFNODE("ClassExpression", null, {
+    needs_parens: first_in_statement,
+}, {
     documentation: "A class expression."
 }, AST_Class);
 
@@ -2706,6 +3089,9 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
         type: "BigIntLiteral",
         value: M.value
     })),
+    _codegen: function(self, output) {
+        output.print(self.getValue() + "n");
+    },
 }, {
     documentation: "A big int literal",
     propdoc: {
@@ -3686,276 +4072,6 @@ function set_moz_loc(mynode: any, moznode) {
     return moznode;
 }
 
-AST_Scope.DEFMETHOD("figure_out_scope", function(options: any, { parent_scope = null, toplevel = this } = {}) {
-    options = defaults(options, {
-        cache: null,
-        ie8: false,
-        safari10: false,
-    });
-
-    if (!(toplevel instanceof AST_Toplevel)) {
-        throw new Error("Invalid toplevel scope");
-    }
-
-    // pass 1: setup scope chaining and handle definitions
-    var scope: any = this.parent_scope = parent_scope as any;
-    var labels = new Map();
-    var defun: any = null;
-    var in_destructuring: any = null;
-    var for_scopes: any[] = [];
-    var tw = new TreeWalker((node, descend) => {
-        if (node.is_block_scope()) {
-            const save_scope = scope;
-            node.block_scope = scope = new AST_Scope(node);
-            scope._block_scope = true;
-            // AST_Try in the AST sadly *is* (not has) a body itself,
-            // and its catch and finally branches are children of the AST_Try itself
-            const parent_scope = node instanceof AST_Catch
-                ? save_scope.parent_scope
-                : save_scope;
-            scope.init_scope_vars(parent_scope);
-            scope.uses_with = save_scope.uses_with;
-            scope.uses_eval = save_scope.uses_eval;
-            if (options.safari10) {
-                if (node instanceof AST_For || node instanceof AST_ForIn) {
-                    for_scopes.push(scope);
-                }
-            }
-
-            if (node instanceof AST_Switch) {
-                // XXX: HACK! Ensure the switch expression gets the correct scope (the parent scope) and the body gets the contained scope
-                // AST_Switch has a scope within the body, but it itself "is a block scope"
-                // This means the switched expression has to belong to the outer scope
-                // while the body inside belongs to the switch itself.
-                // This is pretty nasty and warrants an AST change similar to AST_Try (read above)
-                const the_block_scope = scope;
-                scope = save_scope;
-                node.expression.walk(tw);
-                scope = the_block_scope;
-                for (let i = 0; i < node.body.length; i++) {
-                    node.body[i].walk(tw);
-                }
-            } else {
-                descend();
-            }
-            scope = save_scope;
-            return true;
-        }
-        if (node instanceof AST_Destructuring) {
-            const save_destructuring = in_destructuring;
-            in_destructuring = node;
-            descend();
-            in_destructuring = save_destructuring;
-            return true;
-        }
-        if (node instanceof AST_Scope) {
-            node.init_scope_vars?.(scope);
-            var save_scope = scope;
-            var save_defun = defun;
-            var save_labels = labels;
-            defun = scope = node;
-            labels = new Map();
-            descend();
-            scope = save_scope;
-            defun = save_defun;
-            labels = save_labels;
-            return true;        // don't descend again in TreeWalker
-        }
-        if (node instanceof AST_LabeledStatement) {
-            var l = node.label;
-            if (labels.has(l.name)) {
-                throw new Error(string_template("Label {name} defined twice", l));
-            }
-            labels.set(l.name, l);
-            descend();
-            labels.delete(l.name);
-            return true;        // no descend again
-        }
-        if (node instanceof AST_With) {
-            for (var s: any | null = scope; s; s = s.parent_scope)
-                s.uses_with = true;
-            return;
-        }
-        if (node instanceof AST_Symbol) {
-            node.scope = scope;
-        }
-        if (node instanceof AST_Label) {
-            // TODO: check type
-            node.thedef = node as any;
-            node.references = [] as any;
-        }
-        if (node instanceof AST_SymbolLambda) {
-            defun.def_function(node, node.name == "arguments" ? undefined : defun);
-        } else if (node instanceof AST_SymbolDefun) {
-            // Careful here, the scope where this should be defined is
-            // the parent scope.  The reason is that we enter a new
-            // scope when we encounter the AST_Defun node (which is
-            // instanceof AST_Scope) but we get to the symbol a bit
-            // later.
-            mark_export((node.scope = defun.parent_scope.get_defun_scope()).def_function(node, defun), 1);
-        } else if (node instanceof AST_SymbolClass) {
-            mark_export(defun.def_variable(node, defun), 1);
-        } else if (node instanceof AST_SymbolImport) {
-            scope.def_variable(node);
-        } else if (node instanceof AST_SymbolDefClass) {
-            // This deals with the name of the class being available
-            // inside the class.
-            mark_export((node.scope = defun.parent_scope).def_function(node, defun), 1);
-        } else if (
-            node instanceof AST_SymbolVar
-            || node instanceof AST_SymbolLet
-            || node instanceof AST_SymbolConst
-            || node instanceof AST_SymbolCatch
-        ) {
-            var def: any;
-            if (node instanceof AST_SymbolBlockDeclaration) {
-                def = scope.def_variable(node, null);
-            } else {
-                def = defun.def_variable(node, node.TYPE == "SymbolVar" ? null : undefined);
-            }
-            if (!def.orig.every((sym) => {
-                if (sym === node as any) return true;
-                if (node instanceof AST_SymbolBlockDeclaration) {
-                    return sym instanceof AST_SymbolLambda;
-                }
-                return !(sym instanceof AST_SymbolLet || sym instanceof AST_SymbolConst);
-            })) {
-                js_error(
-                    `"${node.name}" is redeclared`,
-                    node.start.file,
-                    node.start.line,
-                    node.start.col,
-                    node.start.pos
-                );
-            }
-            if (!(node instanceof AST_SymbolFunarg)) mark_export(def, 2);
-            if (defun !== scope) {
-                node.mark_enclosed();
-                const def = scope.find_variable(node);
-                if (node.thedef !== def) {
-                    node.thedef = def;
-                    node.reference();
-                }
-            }
-        } else if (node instanceof AST_LabelRef) {
-            var sym = labels.get(node.name);
-            if (!sym) throw new Error(string_template("Undefined label {name} [{line},{col}]", {
-                name: node.name,
-                line: node.start.line,
-                col: node.start.col
-            }));
-            node.thedef = sym;
-        }
-        if (!(scope instanceof AST_Toplevel) && (node instanceof AST_Export || node instanceof AST_Import)) {
-            js_error(
-                `"${node.TYPE}" statement may only appear at the top level`,
-                node.start.file,
-                node.start.line,
-                node.start.col,
-                node.start.pos
-            );
-        }
-    });
-    this.walk(tw);
-
-    function mark_export(def: any, level: number) {
-        if (in_destructuring) {
-            var i = 0;
-            do {
-                level++;
-            } while (tw.parent(i++) !== in_destructuring);
-        }
-        var node = tw.parent(level);
-        if (def.export = node instanceof AST_Export ? MASK_EXPORT_DONT_MANGLE : 0) {
-            var exported = node.exported_definition;
-            if ((exported instanceof AST_Defun || exported instanceof AST_DefClass) && node.is_default) {
-                def.export = MASK_EXPORT_WANT_MANGLE;
-            }
-        }
-    }
-
-    // pass 2: find back references and eval
-    const is_toplevel = this instanceof AST_Toplevel;
-    if (is_toplevel) {
-        this.globals = new Map();
-    }
-
-    var tw = new TreeWalker((node: any) => {
-        if (node instanceof AST_LoopControl && node.label) {
-            node.label.thedef.references.push(node as any); // TODO: check type
-            return true;
-        }
-        if (node instanceof AST_SymbolRef) {
-            var name = node.name;
-            if (name == "eval" && tw.parent() instanceof AST_Call) {
-                for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
-                    s.uses_eval = true;
-                }
-            }
-            var sym;
-            if (tw.parent() instanceof AST_NameMapping && tw.parent(1).module_name
-                || !(sym = node.scope.find_variable(name))) {
-
-                sym = toplevel.def_global?.(node);
-                if (node instanceof AST_SymbolExport) sym.export = MASK_EXPORT_DONT_MANGLE;
-            } else if (sym.scope instanceof AST_Lambda && name == "arguments") {
-                sym.scope.uses_arguments = true;
-            }
-            node.thedef = sym;
-            node.reference();
-            if (node.scope.is_block_scope()
-                && !(sym.orig[0] instanceof AST_SymbolBlockDeclaration)) {
-                node.scope = node.scope.get_defun_scope();
-            }
-            return true;
-        }
-        // ensure mangling works if catch reuses a scope variable
-        var def;
-        if (node instanceof AST_SymbolCatch && (def = redefined_catch_def(node.definition()))) {
-            let s: any = node.scope;
-            while (s) {
-                push_uniq(s.enclosed, def);
-                if (s === def.scope) break;
-                s = s.parent_scope;
-            }
-        }
-    });
-    this.walk(tw);
-
-    // pass 3: work around IE8 and Safari catch scope bugs
-    if (options.ie8 || options.safari10) {
-        walk(this, (node: any) => {
-            if (node instanceof AST_SymbolCatch) {
-                var name = node.name;
-                var refs = node.thedef.references;
-                var scope = node.scope.get_defun_scope();
-                var def = scope.find_variable(name)
-                    || toplevel.globals.get(name)
-                    || scope.def_variable(node);
-                refs.forEach(function(ref) {
-                    ref.thedef = def;
-                    ref.reference();
-                });
-                node.thedef = def;
-                node.reference();
-                return true;
-            }
-        });
-    }
-
-    // pass 4: add symbol definitions to loop scopes
-    // Safari/Webkit bug workaround - loop init let variable shadowing argument.
-    // https://github.com/mishoo/UglifyJS2/issues/1753
-    // https://bugs.webkit.org/show_bug.cgi?id=171041
-    if (options.safari10) {
-        for (const scope of for_scopes) {
-            scope.parent_scope?.variables.forEach(function(def) {
-                push_uniq(scope.enclosed, def);
-            });
-        }
-    }
-});
-
 function redefined_catch_def(def: any) {
     if (def.orig[0] instanceof AST_SymbolCatch
         && def.scope.is_block_scope()
@@ -3971,7 +4087,7 @@ const MASK_EXPORT_WANT_MANGLE = 1 << 1;
 
 /* -----[ utils ]----- */
 
-AST_Node.DEFMETHOD("print", function(this: any, output: any, force_parens: boolean) {
+function print (this: any, output: any, force_parens: boolean) {
     var self = this, generator = self._codegen;
     if (self instanceof AST_Scope) {
         output.active_scope = self;
@@ -3994,99 +4110,7 @@ AST_Node.DEFMETHOD("print", function(this: any, output: any, force_parens: boole
     if (self === output.use_asm) {
         output.use_asm = null;
     }
-});
-AST_Node.DEFMETHOD("_print", AST_Node.prototype.print);
-
-AST_Node.DEFMETHOD("print_to_string", function(options: any) {
-    var output = OutputStream(options);
-    this.print(output);
-    return output.get();
-});
-
-AST_Node.DEFMETHOD("needs_parens", return_false);
-
-// a function expression needs parens around it when it's provably
-// the first token to appear in a statement.
-AST_Function.DEFMETHOD("needs_parens", function(output: any) {
-    if (!output.has_parens() && first_in_statement(output)) {
-        return true;
-    }
-
-    if (output.option("webkit")) {
-        var p = output.parent();
-        if (p instanceof AST_PropAccess && p.expression === this) {
-            return true;
-        }
-    }
-
-    if (output.option("wrap_iife")) {
-        var p = output.parent();
-        if (p instanceof AST_Call && p.expression === this) {
-            return true;
-        }
-    }
-
-    if (output.option("wrap_func_args")) {
-        var p = output.parent();
-        if (p instanceof AST_Call && p.args.includes(this)) {
-            return true;
-        }
-    }
-
-    return false;
-});
-
-AST_Arrow.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    return p instanceof AST_PropAccess && p.expression === this;
-});
-
-// same goes for an object literal, because otherwise it would be
-// interpreted as a block of code.
-AST_Object.DEFMETHOD("needs_parens", function(output: any) {
-    return !output.has_parens() && first_in_statement(output);
-});
-
-AST_ClassExpression.DEFMETHOD("needs_parens", first_in_statement);
-
-AST_Unary.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    return p instanceof AST_PropAccess && p.expression === this
-        || p instanceof AST_Call && p.expression === this
-        || p instanceof AST_Binary
-            && p.operator === "**"
-            && this instanceof AST_UnaryPrefix
-            && p.left === this
-            && this.operator !== "++"
-            && this.operator !== "--";
-});
-
-AST_Await.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    return p instanceof AST_PropAccess && p.expression === this
-        || p instanceof AST_Call && p.expression === this
-        || output.option("safari10") && p instanceof AST_UnaryPrefix;
-});
-
-AST_Sequence.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
-        || p instanceof AST_Unary                         // !(foo, bar, baz)
-        || p instanceof AST_Binary                        // 1 + (2, 3) + 4 ==> 8
-        || p instanceof AST_VarDef                        // var a = (1, 2), b = a + a; ==> b == 4
-        || p instanceof AST_PropAccess                    // (1, {foo:2}).foo or (1, {foo:2})["foo"] ==> 2
-        || p instanceof AST_Array                         // [ 1, (2, 3), 4 ] ==> [ 1, 3, 4 ]
-        || p instanceof AST_ObjectProperty                // { foo: (1, 2) }.foo ==> 2
-        || p instanceof AST_Conditional                   /* (false, true) ? (a = 10, b = 20) : (c = 30)
-                                                            * ==> 20 (side effect, set a := 10 and b := 20) */
-        || p instanceof AST_Arrow                         // x => (x, x)
-        || p instanceof AST_DefaultAssign                 // x => (x = (0, function(){}))
-        || p instanceof AST_Expansion                     // [...(a, b)]
-        || p instanceof AST_ForOf && this === p.object    // for (e of (foo, bar)) {}
-        || p instanceof AST_Yield                         // yield (foo, bar)
-        || p instanceof AST_Export                        // export default (foo, bar)
-    ;
-});
+}
 
 AST_Binary.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
@@ -4357,35 +4381,7 @@ AST_While.DEFMETHOD("_codegen", function(self, output) {
     output.space();
     self._do_print_body(output);
 });
-AST_For.DEFMETHOD("_codegen", function(self, output) {
-    output.print("for");
-    output.space();
-    output.with_parens(function() {
-        if (self.init) {
-            if (self.init instanceof AST_Definitions) {
-                self.init.print(output);
-            } else {
-                parenthesize_for_noin(self.init, output, true);
-            }
-            output.print(";");
-            output.space();
-        } else {
-            output.print(";");
-        }
-        if (self.condition) {
-            self.condition.print(output);
-            output.print(";");
-            output.space();
-        } else {
-            output.print(";");
-        }
-        if (self.step) {
-            self.step.print(output);
-        }
-    });
-    output.space();
-    self._do_print_body(output);
-});
+
 AST_ForIn.DEFMETHOD("_codegen", function(self, output) {
     output.print("for");
     if (self.await) {
@@ -5209,9 +5205,6 @@ AST_Number.DEFMETHOD("_codegen", function(self, output) {
     } else {
         output.print(make_num(self.getValue()));
     }
-});
-AST_BigInt.DEFMETHOD("_codegen", function(self, output) {
-    output.print(self.getValue() + "n");
 });
 
 const r_slash_script = /(<\s*\/\s*script)/i;
