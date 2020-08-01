@@ -4006,13 +4006,7 @@ AST_Node.DEFMETHOD("print_to_string", function(options: any) {
 /* -----[ PARENTHESES ]----- */
 
 function PARENS(nodetype: any, func: ((node: any, output: any) => any) | ((outout: any) => any)) {
-    if (Array.isArray(nodetype)) {
-        nodetype.forEach(function(nodetype) {
-            PARENS(nodetype, func);
-        });
-    } else {
-        nodetype.DEFMETHOD("needs_parens", func);
-    }
+    nodetype.DEFMETHOD("needs_parens", func);
 }
 
 PARENS(AST_Node, return_false);
@@ -4220,7 +4214,7 @@ PARENS(AST_BigInt, function(output: any) {
     return undefined;
 });
 
-PARENS([ AST_Assign, AST_Conditional ], function(output: any) {
+function needsParens (output: any) {
     var p = output.parent();
     // !(a = false) → true
     if (p instanceof AST_Unary)
@@ -4241,7 +4235,10 @@ PARENS([ AST_Assign, AST_Conditional ], function(output: any) {
     if (this instanceof AST_Assign && this.left instanceof AST_Destructuring && this.left.is_array === false)
         return true;
     return undefined;
-});
+}
+
+PARENS(AST_Assign, needsParens);
+PARENS(AST_Conditional, needsParens);
 
 /* -----[ PRINTERS ]----- */
 
