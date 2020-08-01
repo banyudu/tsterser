@@ -4003,17 +4003,11 @@ AST_Node.DEFMETHOD("print_to_string", function(options: any) {
     return output.get();
 });
 
-/* -----[ PARENTHESES ]----- */
-
-function PARENS(nodetype: any, func: ((node: any, output: any) => any) | ((outout: any) => any)) {
-    nodetype.DEFMETHOD("needs_parens", func);
-}
-
-PARENS(AST_Node, return_false);
+AST_Node.DEFMETHOD("needs_parens", return_false);
 
 // a function expression needs parens around it when it's provably
 // the first token to appear in a statement.
-PARENS(AST_Function, function(output: any) {
+AST_Function.DEFMETHOD("needs_parens", function(output: any) {
     if (!output.has_parens() && first_in_statement(output)) {
         return true;
     }
@@ -4042,20 +4036,20 @@ PARENS(AST_Function, function(output: any) {
     return false;
 });
 
-PARENS(AST_Arrow, function(output: any) {
+AST_Arrow.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     return p instanceof AST_PropAccess && p.expression === this;
 });
 
 // same goes for an object literal, because otherwise it would be
 // interpreted as a block of code.
-PARENS(AST_Object, function(output: any) {
+AST_Object.DEFMETHOD("needs_parens", function(output: any) {
     return !output.has_parens() && first_in_statement(output);
 });
 
-PARENS(AST_ClassExpression, first_in_statement);
+AST_ClassExpression.DEFMETHOD("needs_parens", first_in_statement);
 
-PARENS(AST_Unary, function(output: any) {
+AST_Unary.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     return p instanceof AST_PropAccess && p.expression === this
         || p instanceof AST_Call && p.expression === this
@@ -4067,14 +4061,14 @@ PARENS(AST_Unary, function(output: any) {
             && this.operator !== "--";
 });
 
-PARENS(AST_Await, function(output: any) {
+AST_Await.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     return p instanceof AST_PropAccess && p.expression === this
         || p instanceof AST_Call && p.expression === this
         || output.option("safari10") && p instanceof AST_UnaryPrefix;
 });
 
-PARENS(AST_Sequence, function(output: any) {
+AST_Sequence.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
         || p instanceof AST_Unary                         // !(foo, bar, baz)
@@ -4094,7 +4088,7 @@ PARENS(AST_Sequence, function(output: any) {
     ;
 });
 
-PARENS(AST_Binary, function(output: any) {
+AST_Binary.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     // (foo && bar)()
     if (p instanceof AST_Call && p.expression === this)
@@ -4125,7 +4119,7 @@ PARENS(AST_Binary, function(output: any) {
     return undefined;
 });
 
-PARENS(AST_Yield, function(output: any) {
+AST_Yield.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     // (yield 1) + (yield 2)
     // a = yield 3
@@ -4148,7 +4142,7 @@ PARENS(AST_Yield, function(output: any) {
     return undefined;
 });
 
-PARENS(AST_PropAccess, function(output: any) {
+AST_PropAccess.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     if (p instanceof AST_New && p.expression === this) {
         // i.e. new (foo.bar().baz)
@@ -4168,7 +4162,7 @@ PARENS(AST_PropAccess, function(output: any) {
     return undefined;
 });
 
-PARENS(AST_Call, function(output: any) {
+AST_Call.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent(), p1;
     if (p instanceof AST_New && p.expression === this
         || p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function)
@@ -4183,7 +4177,7 @@ PARENS(AST_Call, function(output: any) {
         && p1.left === p;
 });
 
-PARENS(AST_New, function(output: any) {
+AST_New.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     if (this.args.length === 0
         && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
@@ -4192,7 +4186,7 @@ PARENS(AST_New, function(output: any) {
     return undefined;
 });
 
-PARENS(AST_Number, function(output: any) {
+AST_Number.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     if (p instanceof AST_PropAccess && p.expression === this) {
         var value = this.getValue();
@@ -4203,7 +4197,7 @@ PARENS(AST_Number, function(output: any) {
     return undefined;
 });
 
-PARENS(AST_BigInt, function(output: any) {
+AST_BigInt.DEFMETHOD("needs_parens", function(output: any) {
     var p = output.parent();
     if (p instanceof AST_PropAccess && p.expression === this) {
         var value = this.getValue();
@@ -4237,8 +4231,8 @@ function needsParens (output: any) {
     return undefined;
 }
 
-PARENS(AST_Assign, needsParens);
-PARENS(AST_Conditional, needsParens);
+AST_Assign.DEFMETHOD("needs_parens", needsParens);
+AST_Conditional.DEFMETHOD("needs_parens", needsParens);
 
 /* -----[ PRINTERS ]----- */
 
