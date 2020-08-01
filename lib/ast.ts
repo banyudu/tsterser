@@ -51,9 +51,13 @@ import {
     make_node,
     defaults,
     push_uniq,
+    regexp_source_fix,
+    return_false,
+    sort_regexp_flags,
 } from "./utils/index";
 
-import { parse, js_error } from "./parse";
+import { parse, js_error, is_basic_identifier_string, is_identifier_string, PRECEDENCE, RESERVED_WORDS } from "./parse";
+import { OutputStream } from "./output";
 
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
@@ -3962,3 +3966,1398 @@ function redefined_catch_def(def: any) {
 
 const MASK_EXPORT_DONT_MANGLE = 1 << 0;
 const MASK_EXPORT_WANT_MANGLE = 1 << 1;
+
+/* -----[ code generators ]----- */
+
+/* -----[ utils ]----- */
+
+function DEFPRINT(nodetype: any, generator: (node: any, output: any) => any) {
+    nodetype.DEFMETHOD("_codegen", generator);
+}
+
+AST_Node.DEFMETHOD("print", function(this: any, output: any, force_parens: boolean) {
+    var self = this, generator = self._codegen;
+    if (self instanceof AST_Scope) {
+        output.active_scope = self;
+    } else if (!output.use_asm && self instanceof AST_Directive && self.value == "use asm") {
+        output.use_asm = output.active_scope;
+    }
+    function doit() {
+        output.prepend_comments(self);
+        self.add_source_map(output);
+        generator(self, output);
+        output.append_comments(self);
+    }
+    output.push_node(self);
+    if (force_parens || self.needs_parens(output)) {
+        output.with_parens(doit);
+    } else {
+        doit();
+    }
+    output.pop_node();
+    if (self === output.use_asm) {
+        output.use_asm = null;
+    }
+});
+AST_Node.DEFMETHOD("_print", AST_Node.prototype.print);
+
+AST_Node.DEFMETHOD("print_to_string", function(options: any) {
+    var output = OutputStream(options);
+    this.print(output);
+    return output.get();
+});
+
+/* -----[ PARENTHESES ]----- */
+
+function PARENS(nodetype: any, func: ((node: any, output: any) => any) | ((outout: any) => any)) {
+    if (Array.isArray(nodetype)) {
+        nodetype.forEach(function(nodetype) {
+            PARENS(nodetype, func);
+        });
+    } else {
+        nodetype.DEFMETHOD("needs_parens", func);
+    }
+}
+
+PARENS(AST_Node, return_false);
+
+// a function expression needs parens around it when it's provably
+// the first token to appear in a statement.
+PARENS(AST_Function, function(output: any) {
+    if (!output.has_parens() && first_in_statement(output)) {
+        return true;
+    }
+
+    if (output.option("webkit")) {
+        var p = output.parent();
+        if (p instanceof AST_PropAccess && p.expression === this) {
+            return true;
+        }
+    }
+
+    if (output.option("wrap_iife")) {
+        var p = output.parent();
+        if (p instanceof AST_Call && p.expression === this) {
+            return true;
+        }
+    }
+
+    if (output.option("wrap_func_args")) {
+        var p = output.parent();
+        if (p instanceof AST_Call && p.args.includes(this)) {
+            return true;
+        }
+    }
+
+    return false;
+});
+
+PARENS(AST_Arrow, function(output: any) {
+    var p = output.parent();
+    return p instanceof AST_PropAccess && p.expression === this;
+});
+
+// same goes for an object literal, because otherwise it would be
+// interpreted as a block of code.
+PARENS(AST_Object, function(output: any) {
+    return !output.has_parens() && first_in_statement(output);
+});
+
+PARENS(AST_ClassExpression, first_in_statement);
+
+PARENS(AST_Unary, function(output: any) {
+    var p = output.parent();
+    return p instanceof AST_PropAccess && p.expression === this
+        || p instanceof AST_Call && p.expression === this
+        || p instanceof AST_Binary
+            && p.operator === "**"
+            && this instanceof AST_UnaryPrefix
+            && p.left === this
+            && this.operator !== "++"
+            && this.operator !== "--";
+});
+
+PARENS(AST_Await, function(output: any) {
+    var p = output.parent();
+    return p instanceof AST_PropAccess && p.expression === this
+        || p instanceof AST_Call && p.expression === this
+        || output.option("safari10") && p instanceof AST_UnaryPrefix;
+});
+
+PARENS(AST_Sequence, function(output: any) {
+    var p = output.parent();
+    return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
+        || p instanceof AST_Unary                         // !(foo, bar, baz)
+        || p instanceof AST_Binary                        // 1 + (2, 3) + 4 ==> 8
+        || p instanceof AST_VarDef                        // var a = (1, 2), b = a + a; ==> b == 4
+        || p instanceof AST_PropAccess                    // (1, {foo:2}).foo or (1, {foo:2})["foo"] ==> 2
+        || p instanceof AST_Array                         // [ 1, (2, 3), 4 ] ==> [ 1, 3, 4 ]
+        || p instanceof AST_ObjectProperty                // { foo: (1, 2) }.foo ==> 2
+        || p instanceof AST_Conditional                   /* (false, true) ? (a = 10, b = 20) : (c = 30)
+                                                            * ==> 20 (side effect, set a := 10 and b := 20) */
+        || p instanceof AST_Arrow                         // x => (x, x)
+        || p instanceof AST_DefaultAssign                 // x => (x = (0, function(){}))
+        || p instanceof AST_Expansion                     // [...(a, b)]
+        || p instanceof AST_ForOf && this === p.object    // for (e of (foo, bar)) {}
+        || p instanceof AST_Yield                         // yield (foo, bar)
+        || p instanceof AST_Export                        // export default (foo, bar)
+    ;
+});
+
+PARENS(AST_Binary, function(output: any) {
+    var p = output.parent();
+    // (foo && bar)()
+    if (p instanceof AST_Call && p.expression === this)
+        return true;
+    // typeof (foo && bar)
+    if (p instanceof AST_Unary)
+        return true;
+    // (foo && bar)["prop"], (foo && bar).prop
+    if (p instanceof AST_PropAccess && p.expression === this)
+        return true;
+    // this deals with precedence: 3 * (2 + 1)
+    if (p instanceof AST_Binary) {
+        const po = p.operator;
+        const so = this.operator;
+
+        if (so === "??" && (po === "||" || po === "&&")) {
+            return true;
+        }
+
+        const pp = PRECEDENCE[po];
+        const sp = PRECEDENCE[so];
+        if (pp > sp
+            || (pp == sp
+                && (this === p.right || po == "**"))) {
+            return true;
+        }
+    }
+    return undefined;
+});
+
+PARENS(AST_Yield, function(output: any) {
+    var p = output.parent();
+    // (yield 1) + (yield 2)
+    // a = yield 3
+    if (p instanceof AST_Binary && p.operator !== "=")
+        return true;
+    // (yield 1)()
+    // new (yield 1)()
+    if (p instanceof AST_Call && p.expression === this)
+        return true;
+    // (yield 1) ? yield 2 : yield 3
+    if (p instanceof AST_Conditional && p.condition === this)
+        return true;
+    // -(yield 4)
+    if (p instanceof AST_Unary)
+        return true;
+    // (yield x).foo
+    // (yield x)['foo']
+    if (p instanceof AST_PropAccess && p.expression === this)
+        return true;
+    return undefined;
+});
+
+PARENS(AST_PropAccess, function(output: any) {
+    var p = output.parent();
+    if (p instanceof AST_New && p.expression === this) {
+        // i.e. new (foo.bar().baz)
+        //
+        // if there's one call into this subtree, then we need
+        // parens around it too, otherwise the call will be
+        // interpreted as passing the arguments to the upper New
+        // expression.
+        return walk(this, (node: any) => {
+            if (node instanceof AST_Scope) return true;
+            if (node instanceof AST_Call) {
+                return walk_abort;  // makes walk() return true.
+            }
+            return undefined;
+        });
+    }
+    return undefined;
+});
+
+PARENS(AST_Call, function(output: any) {
+    var p = output.parent(), p1;
+    if (p instanceof AST_New && p.expression === this
+        || p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function)
+        return true;
+
+    // workaround for Safari bug.
+    // https://bugs.webkit.org/show_bug.cgi?id=123506
+    return this.expression instanceof AST_Function
+        && p instanceof AST_PropAccess
+        && p.expression === this
+        && (p1 = output.parent(1)) instanceof AST_Assign
+        && p1.left === p;
+});
+
+PARENS(AST_New, function(output: any) {
+    var p = output.parent();
+    if (this.args.length === 0
+        && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
+            || p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
+        return true;
+    return undefined;
+});
+
+PARENS(AST_Number, function(output: any) {
+    var p = output.parent();
+    if (p instanceof AST_PropAccess && p.expression === this) {
+        var value = this.getValue();
+        if (value < 0 || /^0/.test(make_num(value))) {
+            return true;
+        }
+    }
+    return undefined;
+});
+
+PARENS(AST_BigInt, function(output: any) {
+    var p = output.parent();
+    if (p instanceof AST_PropAccess && p.expression === this) {
+        var value = this.getValue();
+        if (value.startsWith("-")) {
+            return true;
+        }
+    }
+    return undefined;
+});
+
+PARENS([ AST_Assign, AST_Conditional ], function(output: any) {
+    var p = output.parent();
+    // !(a = false) → true
+    if (p instanceof AST_Unary)
+        return true;
+    // 1 + (a = 2) + 3 → 6, side effect setting a = 2
+    if (p instanceof AST_Binary && !(p instanceof AST_Assign))
+        return true;
+    // (a = func)() —or— new (a = Object)()
+    if (p instanceof AST_Call && p.expression === this)
+        return true;
+    // (a = foo) ? bar : baz
+    if (p instanceof AST_Conditional && p.condition === this)
+        return true;
+    // (a = foo)["prop"] —or— (a = foo).prop
+    if (p instanceof AST_PropAccess && p.expression === this)
+        return true;
+    // ({a, b} = {a: 1, b: 2}), a destructuring assignment
+    if (this instanceof AST_Assign && this.left instanceof AST_Destructuring && this.left.is_array === false)
+        return true;
+    return undefined;
+});
+
+/* -----[ PRINTERS ]----- */
+
+DEFPRINT(AST_Directive, function(self, output) {
+    output.print_string(self.value, self.quote);
+    output.semicolon();
+});
+
+DEFPRINT(AST_Expansion, function (self, output) {
+    output.print("...");
+    self.expression.print(output);
+});
+
+DEFPRINT(AST_Destructuring, function (self, output) {
+    output.print(self.is_array ? "[" : "{");
+    var len = self.names.length;
+    self.names.forEach(function (name, i) {
+        if (i > 0) output.comma();
+        name.print(output);
+        // If the final element is a hole, we need to make sure it
+        // doesn't look like a trailing comma, by inserting an actual
+        // trailing comma.
+        if (i == len - 1 && name instanceof AST_Hole) output.comma();
+    });
+    output.print(self.is_array ? "]" : "}");
+});
+
+DEFPRINT(AST_Debugger, function(_self, output) {
+    output.print("debugger");
+    output.semicolon();
+});
+
+/* -----[ statements ]----- */
+
+function display_body(body: any[], is_toplevel: boolean, output: any, allow_directives: boolean) {
+    var last = body.length - 1;
+    output.in_directive = allow_directives;
+    body.forEach(function(stmt, i) {
+        if (output.in_directive === true && !(stmt instanceof AST_Directive ||
+            stmt instanceof AST_EmptyStatement ||
+            (stmt instanceof AST_SimpleStatement && stmt.body instanceof AST_String)
+        )) {
+            output.in_directive = false;
+        }
+        if (!(stmt instanceof AST_EmptyStatement)) {
+            output.indent();
+            stmt.print(output);
+            if (!(i == last && is_toplevel)) {
+                output.newline();
+                if (is_toplevel) output.newline();
+            }
+        }
+        if (output.in_directive === true &&
+            stmt instanceof AST_SimpleStatement &&
+            stmt.body instanceof AST_String
+        ) {
+            output.in_directive = false;
+        }
+    });
+    output.in_directive = false;
+}
+
+AST_StatementWithBody.DEFMETHOD("_do_print_body", function(output: any) {
+    force_statement(this.body, output);
+});
+
+DEFPRINT(AST_Statement, function(self, output) {
+    (self.body as any).print(output);
+    output.semicolon();
+});
+DEFPRINT(AST_Toplevel, function(self, output) {
+    display_body(self.body as any[], true, output, true);
+    output.print("");
+});
+DEFPRINT(AST_LabeledStatement, function(self, output) {
+    self.label.print(output);
+    output.colon();
+    (self.body as any).print(output);
+});
+DEFPRINT(AST_SimpleStatement, function(self, output) {
+    (self.body as any).print(output);
+    output.semicolon();
+});
+function print_braced_empty(self: any, output: any) {
+    output.print("{");
+    output.with_indent(output.next_indent(), function() {
+        output.append_comments(self, true);
+    });
+    output.print("}");
+}
+function print_braced(self: any, output: any, allow_directives?: boolean) {
+    if ((self.body as any[]).length > 0) {
+        output.with_block(function() {
+            display_body((self.body as any[]), false, output, !!allow_directives);
+        });
+    } else print_braced_empty(self, output);
+}
+DEFPRINT(AST_BlockStatement, function(self, output) {
+    print_braced(self, output);
+});
+DEFPRINT(AST_EmptyStatement, function(_self, output) {
+    output.semicolon();
+});
+DEFPRINT(AST_Do, function(self, output) {
+    output.print("do");
+    output.space();
+    make_block(self.body as any, output);
+    output.space();
+    output.print("while");
+    output.space();
+    output.with_parens(function() {
+        self.condition.print(output);
+    });
+    output.semicolon();
+});
+DEFPRINT(AST_While, function(self, output) {
+    output.print("while");
+    output.space();
+    output.with_parens(function() {
+        self.condition.print(output);
+    });
+    output.space();
+    self._do_print_body(output);
+});
+DEFPRINT(AST_For, function(self, output) {
+    output.print("for");
+    output.space();
+    output.with_parens(function() {
+        if (self.init) {
+            if (self.init instanceof AST_Definitions) {
+                self.init.print(output);
+            } else {
+                parenthesize_for_noin(self.init, output, true);
+            }
+            output.print(";");
+            output.space();
+        } else {
+            output.print(";");
+        }
+        if (self.condition) {
+            self.condition.print(output);
+            output.print(";");
+            output.space();
+        } else {
+            output.print(";");
+        }
+        if (self.step) {
+            self.step.print(output);
+        }
+    });
+    output.space();
+    self._do_print_body(output);
+});
+DEFPRINT(AST_ForIn, function(self, output) {
+    output.print("for");
+    if (self.await) {
+        output.space();
+        output.print("await");
+    }
+    output.space();
+    output.with_parens(function() {
+        self.init?.print(output);
+        output.space();
+        output.print(self instanceof AST_ForOf ? "of" : "in");
+        output.space();
+        self.object.print(output);
+    });
+    output.space();
+    self._do_print_body(output);
+});
+DEFPRINT(AST_With, function(self, output) {
+    output.print("with");
+    output.space();
+    output.with_parens(function() {
+        self.expression.print(output);
+    });
+    output.space();
+    self._do_print_body(output);
+});
+
+/* -----[ functions ]----- */
+AST_Lambda.DEFMETHOD("_do_print", function(this: any, output: any, nokeyword: boolean) {
+    var self = this;
+    if (!nokeyword) {
+        if (self.async) {
+            output.print("async");
+            output.space();
+        }
+        output.print("function");
+        if (self.is_generator) {
+            output.star();
+        }
+        if (self.name) {
+            output.space();
+        }
+    }
+    if (self.name instanceof AST_Symbol) {
+        self.name.print(output);
+    } else if (nokeyword && self.name instanceof AST_Node) {
+        output.with_square(function() {
+            self.name?.print(output); // Computed method name
+        });
+    }
+    output.with_parens(function() {
+        self.argnames.forEach(function(arg, i) {
+            if (i) output.comma();
+            arg.print(output);
+        });
+    });
+    output.space();
+    print_braced(self, output, true);
+});
+DEFPRINT(AST_Lambda, function(self, output) {
+    self._do_print(output);
+});
+
+DEFPRINT(AST_PrefixedTemplateString, function(self, output) {
+    var tag = self.prefix;
+    var parenthesize_tag = tag instanceof AST_Lambda
+        || tag instanceof AST_Binary
+        || tag instanceof AST_Conditional
+        || tag instanceof AST_Sequence
+        || tag instanceof AST_Unary
+        || tag instanceof AST_Dot && tag.expression instanceof AST_Object;
+    if (parenthesize_tag) output.print("(");
+    self.prefix.print(output);
+    if (parenthesize_tag) output.print(")");
+    self.template_string.print(output);
+});
+DEFPRINT(AST_TemplateString, function(self, output) {
+    var is_tagged = output.parent() instanceof AST_PrefixedTemplateString;
+
+    output.print("`");
+    for (var i = 0; i < self.segments.length; i++) {
+        if (!(self.segments[i] instanceof AST_TemplateSegment)) {
+            output.print("${");
+            self.segments[i].print(output);
+            output.print("}");
+        } else if (is_tagged) {
+            output.print(self.segments[i].raw);
+        } else {
+            output.print_template_string_chars(self.segments[i].value);
+        }
+    }
+    output.print("`");
+});
+
+AST_Arrow.DEFMETHOD("_do_print", function(this: any, output: any) {
+    var self = this;
+    var parent = output.parent();
+    var needs_parens = (parent instanceof AST_Binary && !(parent instanceof AST_Assign)) ||
+        parent instanceof AST_Unary ||
+        (parent instanceof AST_Call && self === parent.expression);
+    if (needs_parens) { output.print("("); }
+    if (self.async) {
+        output.print("async");
+        output.space();
+    }
+    if (self.argnames.length === 1 && self.argnames[0] instanceof AST_Symbol) {
+        self.argnames[0].print(output);
+    } else {
+        output.with_parens(function() {
+            self.argnames.forEach(function(arg, i) {
+                if (i) output.comma();
+                arg.print(output);
+            });
+        });
+    }
+    output.space();
+    output.print("=>");
+    output.space();
+    const first_statement = self.body[0];
+    if (
+        self.body.length === 1
+        && first_statement instanceof AST_Return
+    ) {
+        const returned = first_statement.value;
+        if (!returned) {
+            output.print("{}");
+        } else if (left_is_object(returned)) {
+            output.print("(");
+            returned.print?.(output);
+            output.print(")");
+        } else {
+            returned.print?.(output);
+        }
+    } else {
+        print_braced(self, output);
+    }
+    if (needs_parens) { output.print(")"); }
+});
+
+/* -----[ exits ]----- */
+AST_Exit.DEFMETHOD("_do_print", function(output: any, kind: string) {
+    output.print(kind);
+    if (this.value) {
+        output.space();
+        const comments = this.value.start.comments_before;
+        if (comments && comments.length && !output.printed_comments.has(comments)) {
+            output.print("(");
+            this.value.print(output);
+            output.print(")");
+        } else {
+            this.value.print(output);
+        }
+    }
+    output.semicolon();
+});
+DEFPRINT(AST_Return, function(self, output) {
+    self._do_print(output, "return");
+});
+DEFPRINT(AST_Throw, function(self, output) {
+    self._do_print(output, "throw");
+});
+
+/* -----[ yield ]----- */
+
+DEFPRINT(AST_Yield, function(self, output) {
+    var star = self.is_star ? "*" : "";
+    output.print("yield" + star);
+    if (self.expression) {
+        output.space();
+        self.expression.print(output);
+    }
+});
+
+DEFPRINT(AST_Await, function(self, output) {
+    output.print("await");
+    output.space();
+    var e = self.expression;
+    var parens = !(
+            e instanceof AST_Call
+        || e instanceof AST_SymbolRef
+        || e instanceof AST_PropAccess
+        || e instanceof AST_Unary
+        || e instanceof AST_Constant
+    );
+    if (parens) output.print("(");
+    self.expression.print(output);
+    if (parens) output.print(")");
+});
+
+/* -----[ loop control ]----- */
+AST_LoopControl.DEFMETHOD("_do_print", function(output: any, kind: string) {
+    output.print(kind);
+    if (this.label) {
+        output.space();
+        this.label.print(output);
+    }
+    output.semicolon();
+});
+DEFPRINT(AST_Break, function(self, output) {
+    self._do_print(output, "break");
+});
+DEFPRINT(AST_Continue, function(self, output) {
+    self._do_print(output, "continue");
+});
+
+/* -----[ if ]----- */
+function make_then(self: any, output: any) {
+    var b: any = self.body;
+    if (output.option("braces")
+        || output.option("ie8") && b instanceof AST_Do)
+        return make_block(b as any, output);
+    // The squeezer replaces "block"-s that contain only a single
+    // statement with the statement itself; technically, the AST
+    // is correct, but this can create problems when we output an
+    // IF having an ELSE clause where the THEN clause ends in an
+    // IF *without* an ELSE block (then the outer ELSE would refer
+    // to the inner IF).  This function checks for this case and
+    // adds the block braces if needed.
+    if (!b) return output.force_semicolon();
+    while (true) {
+        if (b instanceof AST_If) {
+            if (!b.alternative) {
+                make_block(self.body as any, output);
+                return;
+            }
+            b = b.alternative;
+        } else if (b instanceof AST_StatementWithBody) {
+            b = b.body;
+        } else break;
+    }
+    force_statement(self.body as any, output);
+}
+DEFPRINT(AST_If, function(self, output) {
+    output.print("if");
+    output.space();
+    output.with_parens(function() {
+        self.condition.print(output);
+    });
+    output.space();
+    if (self.alternative) {
+        make_then(self, output);
+        output.space();
+        output.print("else");
+        output.space();
+        if (self.alternative instanceof AST_If)
+            self.alternative.print(output);
+        else
+            force_statement(self.alternative as any, output);
+    } else {
+        self._do_print_body(output);
+    }
+});
+
+/* -----[ switch ]----- */
+DEFPRINT(AST_Switch, function(self, output) {
+    output.print("switch");
+    output.space();
+    output.with_parens(function() {
+        self.expression.print(output);
+    });
+    output.space();
+    var last = self.body.length - 1;
+    if (last < 0) print_braced_empty(self, output);
+    else output.with_block(function() {
+        (self.body as any[]).forEach(function(branch, i) {
+            output.indent(true);
+            branch.print(output);
+            if (i < last && branch.body.length > 0)
+                output.newline();
+        });
+    });
+});
+AST_SwitchBranch.DEFMETHOD("_do_print_body", function(this: any, output: any) {
+    output.newline();
+    this.body.forEach(function(stmt) {
+        output.indent();
+        stmt.print(output);
+        output.newline();
+    });
+});
+DEFPRINT(AST_Default, function(self, output) {
+    output.print("default:");
+    self._do_print_body(output);
+});
+DEFPRINT(AST_Case, function(self, output) {
+    output.print("case");
+    output.space();
+    self.expression.print(output);
+    output.print(":");
+    self._do_print_body(output);
+});
+
+/* -----[ exceptions ]----- */
+DEFPRINT(AST_Try, function(self, output) {
+    output.print("try");
+    output.space();
+    print_braced(self, output);
+    if (self.bcatch) {
+        output.space();
+        self.bcatch.print(output);
+    }
+    if (self.bfinally) {
+        output.space();
+        self.bfinally.print(output);
+    }
+});
+DEFPRINT(AST_Catch, function(self, output) {
+    output.print("catch");
+    if (self.argname) {
+        output.space();
+        output.with_parens(function() {
+            self.argname.print(output);
+        });
+    }
+    output.space();
+    print_braced(self, output);
+});
+DEFPRINT(AST_Finally, function(self, output) {
+    output.print("finally");
+    output.space();
+    print_braced(self, output);
+});
+
+/* -----[ var/const ]----- */
+AST_Definitions.DEFMETHOD("_do_print", function(this: any, output: any, kind: string) {
+    output.print(kind);
+    output.space();
+    this.definitions.forEach(function(def, i) {
+        if (i) output.comma();
+        def.print(output);
+    });
+    var p = output.parent();
+    var in_for = p instanceof AST_For || p instanceof AST_ForIn;
+    var output_semicolon = !in_for || p && p.init !== this;
+    if (output_semicolon)
+        output.semicolon();
+});
+DEFPRINT(AST_Let, function(self, output) {
+    self._do_print(output, "let");
+});
+DEFPRINT(AST_Var, function(self, output) {
+    self._do_print(output, "var");
+});
+DEFPRINT(AST_Const, function(self, output) {
+    self._do_print(output, "const");
+});
+DEFPRINT(AST_Import, function(self, output) {
+    output.print("import");
+    output.space();
+    if (self.imported_name) {
+        self.imported_name.print(output);
+    }
+    if (self.imported_name && self.imported_names) {
+        output.print(",");
+        output.space();
+    }
+    if (self.imported_names) {
+        if (self.imported_names.length === 1 && self.imported_names[0].foreign_name.name === "*") {
+            self.imported_names[0].print(output);
+        } else {
+            output.print("{");
+            self.imported_names.forEach(function (name_import, i) {
+                output.space();
+                name_import.print(output);
+                if (i < self.imported_names.length - 1) {
+                    output.print(",");
+                }
+            });
+            output.space();
+            output.print("}");
+        }
+    }
+    if (self.imported_name || self.imported_names) {
+        output.space();
+        output.print("from");
+        output.space();
+    }
+    self.module_name.print(output);
+    output.semicolon();
+});
+
+DEFPRINT(AST_NameMapping, function(self, output) {
+    var is_import = output.parent() instanceof AST_Import;
+    var definition = self.name.definition();
+    var names_are_different =
+        (definition && definition.mangled_name || self.name.name) !==
+        self.foreign_name.name;
+    if (names_are_different) {
+        if (is_import) {
+            output.print(self.foreign_name.name);
+        } else {
+            self.name.print(output);
+        }
+        output.space();
+        output.print("as");
+        output.space();
+        if (is_import) {
+            self.name.print(output);
+        } else {
+            output.print(self.foreign_name.name);
+        }
+    } else {
+        self.name.print(output);
+    }
+});
+
+DEFPRINT(AST_Export, function(self, output) {
+    output.print("export");
+    output.space();
+    if (self.is_default) {
+        output.print("default");
+        output.space();
+    }
+    if (self.exported_names) {
+        if (self.exported_names.length === 1 && self.exported_names[0].name.name === "*") {
+            self.exported_names[0].print(output);
+        } else {
+            output.print("{");
+            self.exported_names.forEach(function(name_export, i) {
+                output.space();
+                name_export.print(output);
+                if (i < self.exported_names.length - 1) {
+                    output.print(",");
+                }
+            });
+            output.space();
+            output.print("}");
+        }
+    } else if (self.exported_value) {
+        self.exported_value.print(output);
+    } else if (self.exported_definition) {
+        self.exported_definition.print(output);
+        if (self.exported_definition instanceof AST_Definitions) return;
+    }
+    if (self.module_name) {
+        output.space();
+        output.print("from");
+        output.space();
+        self.module_name.print(output);
+    }
+    if (self.exported_value
+            && !(self.exported_value instanceof AST_Defun ||
+                self.exported_value instanceof AST_Function ||
+                self.exported_value instanceof AST_Class)
+        || self.module_name
+        || self.exported_names
+    ) {
+        output.semicolon();
+    }
+});
+
+function parenthesize_for_noin(node: any, output: any, noin: boolean) {
+    var parens = false;
+    // need to take some precautions here:
+    //    https://github.com/mishoo/UglifyJS2/issues/60
+    if (noin) {
+        parens = walk(node, (node: any) => {
+            if (node instanceof AST_Scope) return true;
+            if (node instanceof AST_Binary && node.operator == "in") {
+                return walk_abort;  // makes walk() return true
+            }
+            return undefined;
+        });
+    }
+    node.print(output, parens);
+}
+
+DEFPRINT(AST_VarDef, function(self, output) {
+    self.name.print(output);
+    if (self.value) {
+        output.space();
+        output.print("=");
+        output.space();
+        var p = output.parent(1);
+        var noin = p instanceof AST_For || p instanceof AST_ForIn;
+        parenthesize_for_noin(self.value, output, noin);
+    }
+});
+
+/* -----[ other expressions ]----- */
+DEFPRINT(AST_Call, function(self, output) {
+    self.expression.print(output);
+    if (self instanceof AST_New && self.args.length === 0)
+        return;
+    if (self.expression instanceof AST_Call || self.expression instanceof AST_Lambda) {
+        output.add_mapping(self.start);
+    }
+    output.with_parens(function() {
+        self.args.forEach(function(expr, i) {
+            if (i) output.comma();
+            expr.print(output);
+        });
+    });
+});
+DEFPRINT(AST_New, function(self, output) {
+    output.print("new");
+    output.space();
+    AST_Call.prototype._codegen?.(self, output);
+});
+
+AST_Sequence.DEFMETHOD("_do_print", function(this: any, output: any) {
+    this.expressions.forEach(function(node, index) {
+        if (index > 0) {
+            output.comma();
+            if (output.should_break()) {
+                output.newline();
+                output.indent();
+            }
+        }
+        node.print(output);
+    });
+});
+DEFPRINT(AST_Sequence, function(self, output) {
+    self._do_print(output);
+    // var p = output.parent();
+    // if (p instanceof AST_Statement) {
+    //     output.with_indent(output.next_indent(), function(){
+    //         self._do_print(output);
+    //     });
+    // } else {
+    //     self._do_print(output);
+    // }
+});
+DEFPRINT(AST_Dot, function(self, output) {
+    var expr = self.expression;
+    expr.print(output);
+    var prop: string = self.property as string;
+    var print_computed = RESERVED_WORDS.has(prop)
+        ? output.option("ie8")
+        : !is_identifier_string(prop, (output.option("ecma") as unknown as number) >= 2015);
+    if (print_computed) {
+        output.print("[");
+        output.add_mapping(self.end);
+        output.print_string(prop);
+        output.print("]");
+    } else {
+        if (expr instanceof AST_Number && expr.getValue() >= 0) {
+            if (!/[xa-f.)]/i.test(output.last())) {
+                output.print(".");
+            }
+        }
+        output.print(".");
+        // the name after dot would be mapped about here.
+        output.add_mapping(self.end);
+        output.print_name(prop);
+    }
+});
+DEFPRINT(AST_Sub, function(self, output) {
+    self.expression.print(output);
+    output.print("[");
+    (self.property as any).print(output);
+    output.print("]");
+});
+DEFPRINT(AST_UnaryPrefix, function(self, output) {
+    var op = self.operator;
+    output.print(op);
+    if (/^[a-z]/i.test(op)
+        || (/[+-]$/.test(op)
+            && self.expression instanceof AST_UnaryPrefix
+            && /^[+-]/.test(self.expression.operator))) {
+        output.space();
+    }
+    self.expression.print(output);
+});
+DEFPRINT(AST_UnaryPostfix, function(self, output) {
+    self.expression.print(output);
+    output.print(self.operator);
+});
+DEFPRINT(AST_Binary, function(self, output) {
+    var op = self.operator;
+    self.left.print(output);
+    if (op[0] == ">" /* ">>" ">>>" ">" ">=" */
+        && self.left instanceof AST_UnaryPostfix
+        && self.left.operator == "--") {
+        // space is mandatory to avoid outputting -->
+        output.print(" ");
+    } else {
+        // the space is optional depending on "beautify"
+        output.space();
+    }
+    output.print(op);
+    if ((op == "<" || op == "<<")
+        && self.right instanceof AST_UnaryPrefix
+        && self.right.operator == "!"
+        && self.right.expression instanceof AST_UnaryPrefix
+        && self.right.expression.operator == "--") {
+        // space is mandatory to avoid outputting <!--
+        output.print(" ");
+    } else {
+        // the space is optional depending on "beautify"
+        output.space();
+    }
+    self.right.print(output);
+});
+DEFPRINT(AST_Conditional, function(self, output) {
+    self.condition.print(output);
+    output.space();
+    output.print("?");
+    output.space();
+    self.consequent.print(output);
+    output.space();
+    output.colon();
+    self.alternative.print(output);
+});
+
+/* -----[ literals ]----- */
+DEFPRINT(AST_Array, function(self, output) {
+    output.with_square(function() {
+        var a = self.elements, len = a.length;
+        if (len > 0) output.space();
+        a.forEach(function(exp, i) {
+            if (i) output.comma();
+            exp.print(output);
+            // If the final element is a hole, we need to make sure it
+            // doesn't look like a trailing comma, by inserting an actual
+            // trailing comma.
+            if (i === len - 1 && exp instanceof AST_Hole)
+                output.comma();
+        });
+        if (len > 0) output.space();
+    });
+});
+DEFPRINT(AST_Object, function(self, output) {
+    if (self.properties.length > 0) output.with_block(function() {
+        self.properties.forEach(function(prop, i) {
+            if (i) {
+                output.print(",");
+                output.newline();
+            }
+            output.indent();
+            prop.print(output);
+        });
+        output.newline();
+    });
+    else print_braced_empty(self, output);
+});
+DEFPRINT(AST_Class, function(self, output) {
+    output.print("class");
+    output.space();
+    if (self.name) {
+        self.name.print(output);
+        output.space();
+    }
+    if (self.extends) {
+        var parens = (
+                !(self.extends instanceof AST_SymbolRef)
+            && !(self.extends instanceof AST_PropAccess)
+            && !(self.extends instanceof AST_ClassExpression)
+            && !(self.extends instanceof AST_Function)
+        );
+        output.print("extends");
+        if (parens) {
+            output.print("(");
+        } else {
+            output.space();
+        }
+        self.extends.print(output);
+        if (parens) {
+            output.print(")");
+        } else {
+            output.space();
+        }
+    }
+    if (self.properties.length > 0) output.with_block(function() {
+        self.properties.forEach(function(prop, i) {
+            if (i) {
+                output.newline();
+            }
+            output.indent();
+            prop.print(output);
+        });
+        output.newline();
+    });
+    else output.print("{}");
+});
+DEFPRINT(AST_NewTarget, function(_self, output) {
+    output.print("new.target");
+});
+
+function print_property_name(key: string, quote: string, output: any) {
+    if (output.option("quote_keys")) {
+        return output.print_string(key);
+    }
+    if ("" + +key == key && Number(key) >= 0) {
+        if (output.option("keep_numbers")) {
+            return output.print(key);
+        }
+        return output.print(make_num(Number(key)));
+    }
+    var print_string = RESERVED_WORDS.has(key)
+        ? output.option("ie8")
+        : (
+            output.option("ecma") < 2015
+                ? !is_basic_identifier_string(key)
+                : !is_identifier_string(key, true)
+        );
+    if (print_string || (quote && output.option("keep_quoted_props"))) {
+        return output.print_string(key, quote);
+    }
+    return output.print_name(key);
+}
+
+DEFPRINT(AST_ObjectKeyVal, function(self, output) {
+    function get_name(self: any) {
+        var def = self.definition();
+        return def ? def.mangled_name || def.name : self.name;
+    }
+
+    var allowShortHand = output.option("shorthand");
+    if (allowShortHand &&
+        self.value instanceof AST_Symbol &&
+        is_identifier_string(self.key, (output.option("ecma") as unknown as number) >= 2015) &&
+        get_name(self.value) === self.key &&
+        !RESERVED_WORDS.has(self.key)
+    ) {
+        print_property_name(self.key, self.quote, output);
+
+    } else if (allowShortHand &&
+        self.value instanceof AST_DefaultAssign &&
+        self.value.left instanceof AST_Symbol &&
+        is_identifier_string(self.key, (output.option("ecma") as unknown as number) >= 2015) &&
+        get_name(self.value.left) === self.key
+    ) {
+        print_property_name(self.key, self.quote, output);
+        output.space();
+        output.print("=");
+        output.space();
+        self.value.right.print(output);
+    } else {
+        if (!(self.key instanceof AST_Node)) {
+            print_property_name(self.key, self.quote, output);
+        } else {
+            output.with_square(function() {
+                self.key.print(output);
+            });
+        }
+        output.colon();
+        self.value.print(output);
+    }
+});
+DEFPRINT(AST_ClassProperty, (self, output) => {
+    if (self.static) {
+        output.print("static");
+        output.space();
+    }
+
+    if (self.key instanceof AST_SymbolClassProperty) {
+        print_property_name(self.key.name, self.quote, output);
+    } else {
+        output.print("[");
+        self.key.print(output);
+        output.print("]");
+    }
+
+    if (self.value) {
+        output.print("=");
+        self.value.print(output);
+    }
+
+    output.semicolon();
+});
+AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(this: any, type: string, output: any) {
+    var self = this;
+    if (self.static) {
+        output.print("static");
+        output.space();
+    }
+    if (type) {
+        output.print(type);
+        output.space();
+    }
+    if (self.key instanceof AST_SymbolMethod) {
+        print_property_name(self.key.name, self.quote, output);
+    } else {
+        output.with_square(function() {
+            self.key.print(output);
+        });
+    }
+    self.value._do_print(output, true);
+});
+DEFPRINT(AST_ObjectSetter, function(self, output) {
+    self._print_getter_setter("set", output);
+});
+DEFPRINT(AST_ObjectGetter, function(self, output) {
+    self._print_getter_setter("get", output);
+});
+DEFPRINT(AST_ConciseMethod, function(self, output) {
+    var type;
+    if (self.is_generator && self.async) {
+        type = "async*";
+    } else if (self.is_generator) {
+        type = "*";
+    } else if (self.async) {
+        type = "async";
+    }
+    self._print_getter_setter(type, output);
+});
+AST_Symbol.DEFMETHOD("_do_print", function(output: any) {
+    var def = this.definition();
+    output.print_name(def ? def.mangled_name || def.name : this.name);
+});
+DEFPRINT(AST_Symbol, function (self, output) {
+    self._do_print(output);
+});
+DEFPRINT(AST_Hole, noop);
+DEFPRINT(AST_This, function(_self, output) {
+    output.print("this");
+});
+DEFPRINT(AST_Super, function(_self, output) {
+    output.print("super");
+});
+DEFPRINT(AST_Constant, function(self, output) {
+    output.print(self.getValue());
+});
+DEFPRINT(AST_String, function(self, output) {
+    output.print_string(self.getValue(), self.quote, output.in_directive);
+});
+DEFPRINT(AST_Number, function(self, output) {
+    if ((output.option("keep_numbers") || output.use_asm) && self.start && self.start.raw != null) {
+        output.print(self.start.raw);
+    } else {
+        output.print(make_num(self.getValue()));
+    }
+});
+DEFPRINT(AST_BigInt, function(self, output) {
+    output.print(self.getValue() + "n");
+});
+
+const r_slash_script = /(<\s*\/\s*script)/i;
+const slash_script_replace = (_: any, $1: string) => $1.replace("/", "\\/");
+DEFPRINT(AST_RegExp, function(self, output) {
+    let { source, flags } = self.getValue();
+    source = regexp_source_fix(source);
+    flags = flags ? sort_regexp_flags(flags) : "";
+    source = source.replace(r_slash_script, slash_script_replace);
+    output.print?.(output.to_utf8(`/${source}/${flags}`));
+    const parent = output.parent();
+    if (
+        parent instanceof AST_Binary
+        && /^\w/.test(parent.operator)
+        && parent.left === self
+    ) {
+        output.print(" ");
+    }
+});
+
+function force_statement(stat: any, output: any) {
+    if (output.option("braces")) {
+        make_block(stat, output);
+    } else {
+        if (!stat || stat instanceof AST_EmptyStatement)
+            output.force_semicolon();
+        else
+            stat.print(output);
+    }
+}
+
+function best_of(a: string[]) {
+    var best = a[0], len = best.length;
+    for (var i = 1; i < a.length; ++i) {
+        if (a[i].length < len) {
+            best = a[i];
+            len = best.length;
+        }
+    }
+    return best;
+}
+
+function make_num(num: number) {
+    var str = num.toString(10).replace(/^0\./, ".").replace("e+", "e");
+    var candidates = [ str ];
+    if (Math.floor(num) === num) {
+        if (num < 0) {
+            candidates.push("-0x" + (-num).toString(16).toLowerCase());
+        } else {
+            candidates.push("0x" + num.toString(16).toLowerCase());
+        }
+    }
+    var match: RegExpExecArray | null, len, digits;
+    if (match = /^\.0+/.exec(str)) {
+        len = match[0].length;
+        digits = str.slice(len);
+        candidates.push(digits + "e-" + (digits.length + len - 1));
+    } else if (match = /0+$/.exec(str)) {
+        len = match[0].length;
+        candidates.push(str.slice(0, -len) + "e" + len);
+    } else if (match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str)) {
+        candidates.push(match[1] + match[2] + "e" + (Number(match[3]) - match[2].length));
+    }
+    return best_of(candidates);
+}
+
+function make_block(stmt: any, output: any) {
+    if (!stmt || stmt instanceof AST_EmptyStatement)
+        output.print("{}");
+    else if (stmt instanceof AST_BlockStatement)
+        stmt.print?.(output);
+    else output.with_block(function() {
+        output.indent();
+        stmt.print(output);
+        output.newline();
+    });
+}
+
+/* -----[ source map generators ]----- */
+
+function DEFMAP(nodetype: any, generator: (output: any) => any) {
+    nodetype.forEach(function(nodetype) {
+        nodetype.DEFMETHOD("add_source_map", generator);
+    });
+}
+
+DEFMAP([
+    // We could easily add info for ALL nodes, but it seems to me that
+    // would be quite wasteful, hence this noop in the base class.
+    AST_Node,
+    // since the label symbol will mark it
+    AST_LabeledStatement,
+    AST_Toplevel,
+], noop);
+
+// XXX: I'm not exactly sure if we need it for all of these nodes,
+// or if we should add even more.
+DEFMAP([
+    AST_Array,
+    AST_BlockStatement,
+    AST_Catch,
+    AST_Class,
+    AST_Constant,
+    AST_Debugger,
+    AST_Definitions,
+    AST_Directive,
+    AST_Finally,
+    AST_Jump,
+    AST_Lambda,
+    AST_New,
+    AST_Object,
+    AST_StatementWithBody,
+    AST_Symbol,
+    AST_Switch,
+    AST_SwitchBranch,
+    AST_TemplateString,
+    AST_TemplateSegment,
+    AST_Try,
+], function(output: any) {
+    output.add_mapping(this.start);
+});
+
+DEFMAP([
+    AST_ObjectGetter,
+    AST_ObjectSetter,
+], function(output: any) {
+    output.add_mapping(this.start, this.key.name);
+});
+
+DEFMAP([ AST_ObjectProperty ], function(output: any) {
+    output.add_mapping(this.start, this.key);
+});
+
+export {
+    OutputStream,
+};
