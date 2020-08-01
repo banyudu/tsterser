@@ -375,6 +375,10 @@ var AST_Debugger: any = DEFNODE("Debugger", null, {
     shallow_cmp: pass_through,
     _size: () => 8,
     to_mozilla_ast: get_to_moz(() => ({ type: "DebuggerStatement" })),
+    _codegen: function(_self, output) {
+        output.print("debugger");
+        output.semicolon();
+    },
 }, {
     documentation: "Represents a debugger statement",
 }, AST_Statement);
@@ -396,6 +400,10 @@ var AST_Directive: any = DEFNODE("Directive", "value quote", {
             directive: M.value
         };
     }),
+    _codegen: function(self, output) {
+        output.print_string(self.value, self.quote);
+        output.semicolon();
+    },
 }, {
     documentation: "Represents a directive, like \"use strict\";",
     propdoc: {
@@ -494,7 +502,11 @@ var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
     documentation: "The empty statement (empty block or simply a semicolon)"
 }, AST_Statement);
 
-var AST_StatementWithBody: any = DEFNODE("StatementWithBody", "body", {}, {
+var AST_StatementWithBody: any = DEFNODE("StatementWithBody", "body", {
+    _do_print_body: function(output: any) {
+        force_statement(this.body, output);
+    },
+}, {
     documentation: "Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`",
     propdoc: {
         body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
@@ -1129,6 +1141,10 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
             argument: to_moz(M.expression)
         };
     }),
+    _codegen: function (self, output) {
+        output.print("...");
+        self.expression.print(output);
+    },
 }, {
     documentation: "An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list",
     propdoc: {
@@ -1347,6 +1363,19 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
             properties: M.names.map(to_moz)
         };
     }),
+    _codegen: function (self, output) {
+        output.print(self.is_array ? "[" : "{");
+        var len = self.names.length;
+        self.names.forEach(function (name, i) {
+            if (i > 0) output.comma();
+            name.print(output);
+            // If the final element is a hole, we need to make sure it
+            // doesn't look like a trailing comma, by inserting an actual
+            // trailing comma.
+            if (i == len - 1 && name instanceof AST_Hole) output.comma();
+        });
+        output.print(self.is_array ? "]" : "}");
+    },
 }, {
     documentation: "A destructuring of several names. Used in destructuring assignment and with destructuring function argument names",
     propdoc: {
@@ -1599,6 +1628,28 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
         argument: to_moz(M.expression),
         delegate: M.is_star
     })),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        // (yield 1) + (yield 2)
+        // a = yield 3
+        if (p instanceof AST_Binary && p.operator !== "=")
+            return true;
+        // (yield 1)()
+        // new (yield 1)()
+        if (p instanceof AST_Call && p.expression === this)
+            return true;
+        // (yield 1) ? yield 2 : yield 3
+        if (p instanceof AST_Conditional && p.condition === this)
+            return true;
+        // -(yield 4)
+        if (p instanceof AST_Unary)
+            return true;
+        // (yield x).foo
+        // (yield x)['foo']
+        if (p instanceof AST_PropAccess && p.expression === this)
+            return true;
+        return undefined;
+    },
 }, {
     documentation: "A `yield` statement",
     propdoc: {
@@ -2169,6 +2220,20 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
         callee: to_moz(M.expression),
         arguments: M.args.map(to_moz)
     })),
+    needs_parens: function(output: any) {
+        var p = output.parent(), p1;
+        if (p instanceof AST_New && p.expression === this
+            || p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function)
+            return true;
+
+        // workaround for Safari bug.
+        // https://bugs.webkit.org/show_bug.cgi?id=123506
+        return this.expression instanceof AST_Function
+            && p instanceof AST_PropAccess
+            && p.expression === this
+            && (p1 = output.parent(1)) instanceof AST_Assign
+            && p1.left === p;
+    },
 }, {
     documentation: "A function call expression",
     propdoc: {
@@ -2188,6 +2253,14 @@ var AST_New: any = DEFNODE("New", null, {
         callee: to_moz(M.expression),
         arguments: M.args.map(to_moz)
     })),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        if (this.args.length === 0
+            && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
+                || p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
+            return true;
+        return undefined;
+    },
 }, {
     documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
 }, AST_Call);
@@ -2258,6 +2331,25 @@ var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {
             property: isComputed ? to_moz(M.property as any) : {type: "Identifier", name: M.property}
         };
     }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        if (p instanceof AST_New && p.expression === this) {
+            // i.e. new (foo.bar().baz)
+            //
+            // if there's one call into this subtree, then we need
+            // parens around it too, otherwise the call will be
+            // interpreted as passing the arguments to the upper New
+            // expression.
+            return walk(this, (node: any) => {
+                if (node instanceof AST_Scope) return true;
+                if (node instanceof AST_Call) {
+                    return walk_abort;  // makes walk() return true.
+                }
+                return undefined;
+            });
+        }
+        return undefined;
+    },
 }, {
     documentation: "Base class for property access expressions, i.e. `a.foo` or `a[\"foo\"]`",
     propdoc: {
@@ -2418,6 +2510,36 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
             right: to_moz(M.right)
         };
     }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        // (foo && bar)()
+        if (p instanceof AST_Call && p.expression === this)
+            return true;
+        // typeof (foo && bar)
+        if (p instanceof AST_Unary)
+            return true;
+        // (foo && bar)["prop"], (foo && bar).prop
+        if (p instanceof AST_PropAccess && p.expression === this)
+            return true;
+        // this deals with precedence: 3 * (2 + 1)
+        if (p instanceof AST_Binary) {
+            const po = p.operator;
+            const so = this.operator;
+
+            if (so === "??" && (po === "||" || po === "&&")) {
+                return true;
+            }
+
+            const pp = PRECEDENCE[po];
+            const sp = PRECEDENCE[so];
+            if (pp > sp
+                || (pp == sp
+                    && (this === p.right || po == "**"))) {
+                return true;
+            }
+        }
+        return undefined;
+    },
 }, {
     documentation: "Binary expression, i.e. `a + b`",
     propdoc: {
@@ -2454,6 +2576,7 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         consequent: to_moz(M.consequent),
         alternate: to_moz(M.alternative)
     })),
+    needs_parens: needsParens,
 }, {
     documentation: "Conditional expression using the ternary operator, i.e. `a ? b : c`",
     propdoc: {
@@ -2470,6 +2593,7 @@ var AST_Assign: any = DEFNODE("Assign", null, {
         left: to_moz(M.left),
         right: to_moz(M.right)
     })),
+    needs_parens: needsParens,
 }, {
     documentation: "An assignment expression — `a = b + 5`",
 }, AST_Binary);
@@ -3069,7 +3193,17 @@ var AST_Number: any = DEFNODE("Number", "value literal", {
     },
     shallow_cmp: mkshallow({
         value: "eq"
-    })
+    }),
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        if (p instanceof AST_PropAccess && p.expression === this) {
+            var value = this.getValue();
+            if (value < 0 || /^0/.test(make_num(value))) {
+                return true;
+            }
+        }
+        return undefined;
+    },
 }, {
     documentation: "A number literal",
     propdoc: {
@@ -3091,6 +3225,16 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
     })),
     _codegen: function(self, output) {
         output.print(self.getValue() + "n");
+    },
+    needs_parens: function(output: any) {
+        var p = output.parent();
+        if (p instanceof AST_PropAccess && p.expression === this) {
+            var value = this.getValue();
+            if (value.startsWith("-")) {
+                return true;
+            }
+        }
+        return undefined;
     },
 }, {
     documentation: "A big int literal",
@@ -4112,125 +4256,6 @@ function print (this: any, output: any, force_parens: boolean) {
     }
 }
 
-AST_Binary.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    // (foo && bar)()
-    if (p instanceof AST_Call && p.expression === this)
-        return true;
-    // typeof (foo && bar)
-    if (p instanceof AST_Unary)
-        return true;
-    // (foo && bar)["prop"], (foo && bar).prop
-    if (p instanceof AST_PropAccess && p.expression === this)
-        return true;
-    // this deals with precedence: 3 * (2 + 1)
-    if (p instanceof AST_Binary) {
-        const po = p.operator;
-        const so = this.operator;
-
-        if (so === "??" && (po === "||" || po === "&&")) {
-            return true;
-        }
-
-        const pp = PRECEDENCE[po];
-        const sp = PRECEDENCE[so];
-        if (pp > sp
-            || (pp == sp
-                && (this === p.right || po == "**"))) {
-            return true;
-        }
-    }
-    return undefined;
-});
-
-AST_Yield.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    // (yield 1) + (yield 2)
-    // a = yield 3
-    if (p instanceof AST_Binary && p.operator !== "=")
-        return true;
-    // (yield 1)()
-    // new (yield 1)()
-    if (p instanceof AST_Call && p.expression === this)
-        return true;
-    // (yield 1) ? yield 2 : yield 3
-    if (p instanceof AST_Conditional && p.condition === this)
-        return true;
-    // -(yield 4)
-    if (p instanceof AST_Unary)
-        return true;
-    // (yield x).foo
-    // (yield x)['foo']
-    if (p instanceof AST_PropAccess && p.expression === this)
-        return true;
-    return undefined;
-});
-
-AST_PropAccess.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    if (p instanceof AST_New && p.expression === this) {
-        // i.e. new (foo.bar().baz)
-        //
-        // if there's one call into this subtree, then we need
-        // parens around it too, otherwise the call will be
-        // interpreted as passing the arguments to the upper New
-        // expression.
-        return walk(this, (node: any) => {
-            if (node instanceof AST_Scope) return true;
-            if (node instanceof AST_Call) {
-                return walk_abort;  // makes walk() return true.
-            }
-            return undefined;
-        });
-    }
-    return undefined;
-});
-
-AST_Call.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent(), p1;
-    if (p instanceof AST_New && p.expression === this
-        || p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function)
-        return true;
-
-    // workaround for Safari bug.
-    // https://bugs.webkit.org/show_bug.cgi?id=123506
-    return this.expression instanceof AST_Function
-        && p instanceof AST_PropAccess
-        && p.expression === this
-        && (p1 = output.parent(1)) instanceof AST_Assign
-        && p1.left === p;
-});
-
-AST_New.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    if (this.args.length === 0
-        && (p instanceof AST_PropAccess // (new Date).getTime(), (new Date)["getTime"]()
-            || p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
-        return true;
-    return undefined;
-});
-
-AST_Number.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    if (p instanceof AST_PropAccess && p.expression === this) {
-        var value = this.getValue();
-        if (value < 0 || /^0/.test(make_num(value))) {
-            return true;
-        }
-    }
-    return undefined;
-});
-
-AST_BigInt.DEFMETHOD("needs_parens", function(output: any) {
-    var p = output.parent();
-    if (p instanceof AST_PropAccess && p.expression === this) {
-        var value = this.getValue();
-        if (value.startsWith("-")) {
-            return true;
-        }
-    }
-    return undefined;
-});
 
 function needsParens (output: any) {
     var p = output.parent();
@@ -4255,39 +4280,8 @@ function needsParens (output: any) {
     return undefined;
 }
 
-AST_Assign.DEFMETHOD("needs_parens", needsParens);
-AST_Conditional.DEFMETHOD("needs_parens", needsParens);
-
 /* -----[ PRINTERS ]----- */
 
-AST_Directive.DEFMETHOD("_codegen", function(self, output) {
-    output.print_string(self.value, self.quote);
-    output.semicolon();
-});
-
-AST_Expansion.DEFMETHOD("_codegen", function (self, output) {
-    output.print("...");
-    self.expression.print(output);
-});
-
-AST_Destructuring.DEFMETHOD("_codegen", function (self, output) {
-    output.print(self.is_array ? "[" : "{");
-    var len = self.names.length;
-    self.names.forEach(function (name, i) {
-        if (i > 0) output.comma();
-        name.print(output);
-        // If the final element is a hole, we need to make sure it
-        // doesn't look like a trailing comma, by inserting an actual
-        // trailing comma.
-        if (i == len - 1 && name instanceof AST_Hole) output.comma();
-    });
-    output.print(self.is_array ? "]" : "}");
-});
-
-AST_Debugger.DEFMETHOD("_codegen", function(_self, output) {
-    output.print("debugger");
-    output.semicolon();
-});
 
 /* -----[ statements ]----- */
 
@@ -4319,9 +4313,6 @@ function display_body(body: any[], is_toplevel: boolean, output: any, allow_dire
     output.in_directive = false;
 }
 
-AST_StatementWithBody.DEFMETHOD("_do_print_body", function(output: any) {
-    force_statement(this.body, output);
-});
 
 AST_Statement.DEFMETHOD("_codegen", function(self, output) {
     (self.body as any).print(output);
