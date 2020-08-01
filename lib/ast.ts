@@ -49,9 +49,11 @@ import {
     noop,
     string_template,
     make_node,
+    defaults,
+    push_uniq,
 } from "./utils/index";
 
-import { parse } from "./parse";
+import { parse, js_error } from "./parse";
 
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
@@ -3679,3 +3681,284 @@ function set_moz_loc(mynode: any, moznode) {
     }
     return moznode;
 }
+
+AST_Scope.DEFMETHOD("figure_out_scope", function(options: any, { parent_scope = null, toplevel = this } = {}) {
+    options = defaults(options, {
+        cache: null,
+        ie8: false,
+        safari10: false,
+    });
+
+    if (!(toplevel instanceof AST_Toplevel)) {
+        throw new Error("Invalid toplevel scope");
+    }
+
+    // pass 1: setup scope chaining and handle definitions
+    var scope: any = this.parent_scope = parent_scope as any;
+    var labels = new Map();
+    var defun: any = null;
+    var in_destructuring: any = null;
+    var for_scopes: any[] = [];
+    var tw = new TreeWalker((node, descend) => {
+        if (node.is_block_scope()) {
+            const save_scope = scope;
+            node.block_scope = scope = new AST_Scope(node);
+            scope._block_scope = true;
+            // AST_Try in the AST sadly *is* (not has) a body itself,
+            // and its catch and finally branches are children of the AST_Try itself
+            const parent_scope = node instanceof AST_Catch
+                ? save_scope.parent_scope
+                : save_scope;
+            scope.init_scope_vars(parent_scope);
+            scope.uses_with = save_scope.uses_with;
+            scope.uses_eval = save_scope.uses_eval;
+            if (options.safari10) {
+                if (node instanceof AST_For || node instanceof AST_ForIn) {
+                    for_scopes.push(scope);
+                }
+            }
+
+            if (node instanceof AST_Switch) {
+                // XXX: HACK! Ensure the switch expression gets the correct scope (the parent scope) and the body gets the contained scope
+                // AST_Switch has a scope within the body, but it itself "is a block scope"
+                // This means the switched expression has to belong to the outer scope
+                // while the body inside belongs to the switch itself.
+                // This is pretty nasty and warrants an AST change similar to AST_Try (read above)
+                const the_block_scope = scope;
+                scope = save_scope;
+                node.expression.walk(tw);
+                scope = the_block_scope;
+                for (let i = 0; i < node.body.length; i++) {
+                    node.body[i].walk(tw);
+                }
+            } else {
+                descend();
+            }
+            scope = save_scope;
+            return true;
+        }
+        if (node instanceof AST_Destructuring) {
+            const save_destructuring = in_destructuring;
+            in_destructuring = node;
+            descend();
+            in_destructuring = save_destructuring;
+            return true;
+        }
+        if (node instanceof AST_Scope) {
+            node.init_scope_vars?.(scope);
+            var save_scope = scope;
+            var save_defun = defun;
+            var save_labels = labels;
+            defun = scope = node;
+            labels = new Map();
+            descend();
+            scope = save_scope;
+            defun = save_defun;
+            labels = save_labels;
+            return true;        // don't descend again in TreeWalker
+        }
+        if (node instanceof AST_LabeledStatement) {
+            var l = node.label;
+            if (labels.has(l.name)) {
+                throw new Error(string_template("Label {name} defined twice", l));
+            }
+            labels.set(l.name, l);
+            descend();
+            labels.delete(l.name);
+            return true;        // no descend again
+        }
+        if (node instanceof AST_With) {
+            for (var s: any | null = scope; s; s = s.parent_scope)
+                s.uses_with = true;
+            return;
+        }
+        if (node instanceof AST_Symbol) {
+            node.scope = scope;
+        }
+        if (node instanceof AST_Label) {
+            // TODO: check type
+            node.thedef = node as any;
+            node.references = [] as any;
+        }
+        if (node instanceof AST_SymbolLambda) {
+            defun.def_function(node, node.name == "arguments" ? undefined : defun);
+        } else if (node instanceof AST_SymbolDefun) {
+            // Careful here, the scope where this should be defined is
+            // the parent scope.  The reason is that we enter a new
+            // scope when we encounter the AST_Defun node (which is
+            // instanceof AST_Scope) but we get to the symbol a bit
+            // later.
+            mark_export((node.scope = defun.parent_scope.get_defun_scope()).def_function(node, defun), 1);
+        } else if (node instanceof AST_SymbolClass) {
+            mark_export(defun.def_variable(node, defun), 1);
+        } else if (node instanceof AST_SymbolImport) {
+            scope.def_variable(node);
+        } else if (node instanceof AST_SymbolDefClass) {
+            // This deals with the name of the class being available
+            // inside the class.
+            mark_export((node.scope = defun.parent_scope).def_function(node, defun), 1);
+        } else if (
+            node instanceof AST_SymbolVar
+            || node instanceof AST_SymbolLet
+            || node instanceof AST_SymbolConst
+            || node instanceof AST_SymbolCatch
+        ) {
+            var def: any;
+            if (node instanceof AST_SymbolBlockDeclaration) {
+                def = scope.def_variable(node, null);
+            } else {
+                def = defun.def_variable(node, node.TYPE == "SymbolVar" ? null : undefined);
+            }
+            if (!def.orig.every((sym) => {
+                if (sym === node as any) return true;
+                if (node instanceof AST_SymbolBlockDeclaration) {
+                    return sym instanceof AST_SymbolLambda;
+                }
+                return !(sym instanceof AST_SymbolLet || sym instanceof AST_SymbolConst);
+            })) {
+                js_error(
+                    `"${node.name}" is redeclared`,
+                    node.start.file,
+                    node.start.line,
+                    node.start.col,
+                    node.start.pos
+                );
+            }
+            if (!(node instanceof AST_SymbolFunarg)) mark_export(def, 2);
+            if (defun !== scope) {
+                node.mark_enclosed();
+                const def = scope.find_variable(node);
+                if (node.thedef !== def) {
+                    node.thedef = def;
+                    node.reference();
+                }
+            }
+        } else if (node instanceof AST_LabelRef) {
+            var sym = labels.get(node.name);
+            if (!sym) throw new Error(string_template("Undefined label {name} [{line},{col}]", {
+                name: node.name,
+                line: node.start.line,
+                col: node.start.col
+            }));
+            node.thedef = sym;
+        }
+        if (!(scope instanceof AST_Toplevel) && (node instanceof AST_Export || node instanceof AST_Import)) {
+            js_error(
+                `"${node.TYPE}" statement may only appear at the top level`,
+                node.start.file,
+                node.start.line,
+                node.start.col,
+                node.start.pos
+            );
+        }
+    });
+    this.walk(tw);
+
+    function mark_export(def: any, level: number) {
+        if (in_destructuring) {
+            var i = 0;
+            do {
+                level++;
+            } while (tw.parent(i++) !== in_destructuring);
+        }
+        var node = tw.parent(level);
+        if (def.export = node instanceof AST_Export ? MASK_EXPORT_DONT_MANGLE : 0) {
+            var exported = node.exported_definition;
+            if ((exported instanceof AST_Defun || exported instanceof AST_DefClass) && node.is_default) {
+                def.export = MASK_EXPORT_WANT_MANGLE;
+            }
+        }
+    }
+
+    // pass 2: find back references and eval
+    const is_toplevel = this instanceof AST_Toplevel;
+    if (is_toplevel) {
+        this.globals = new Map();
+    }
+
+    var tw = new TreeWalker((node: any) => {
+        if (node instanceof AST_LoopControl && node.label) {
+            node.label.thedef.references.push(node as any); // TODO: check type
+            return true;
+        }
+        if (node instanceof AST_SymbolRef) {
+            var name = node.name;
+            if (name == "eval" && tw.parent() instanceof AST_Call) {
+                for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
+                    s.uses_eval = true;
+                }
+            }
+            var sym;
+            if (tw.parent() instanceof AST_NameMapping && tw.parent(1).module_name
+                || !(sym = node.scope.find_variable(name))) {
+
+                sym = toplevel.def_global?.(node);
+                if (node instanceof AST_SymbolExport) sym.export = MASK_EXPORT_DONT_MANGLE;
+            } else if (sym.scope instanceof AST_Lambda && name == "arguments") {
+                sym.scope.uses_arguments = true;
+            }
+            node.thedef = sym;
+            node.reference();
+            if (node.scope.is_block_scope()
+                && !(sym.orig[0] instanceof AST_SymbolBlockDeclaration)) {
+                node.scope = node.scope.get_defun_scope();
+            }
+            return true;
+        }
+        // ensure mangling works if catch reuses a scope variable
+        var def;
+        if (node instanceof AST_SymbolCatch && (def = redefined_catch_def(node.definition()))) {
+            let s: any = node.scope;
+            while (s) {
+                push_uniq(s.enclosed, def);
+                if (s === def.scope) break;
+                s = s.parent_scope;
+            }
+        }
+    });
+    this.walk(tw);
+
+    // pass 3: work around IE8 and Safari catch scope bugs
+    if (options.ie8 || options.safari10) {
+        walk(this, (node: any) => {
+            if (node instanceof AST_SymbolCatch) {
+                var name = node.name;
+                var refs = node.thedef.references;
+                var scope = node.scope.get_defun_scope();
+                var def = scope.find_variable(name)
+                    || toplevel.globals.get(name)
+                    || scope.def_variable(node);
+                refs.forEach(function(ref) {
+                    ref.thedef = def;
+                    ref.reference();
+                });
+                node.thedef = def;
+                node.reference();
+                return true;
+            }
+        });
+    }
+
+    // pass 4: add symbol definitions to loop scopes
+    // Safari/Webkit bug workaround - loop init let variable shadowing argument.
+    // https://github.com/mishoo/UglifyJS2/issues/1753
+    // https://bugs.webkit.org/show_bug.cgi?id=171041
+    if (options.safari10) {
+        for (const scope of for_scopes) {
+            scope.parent_scope?.variables.forEach(function(def) {
+                push_uniq(scope.enclosed, def);
+            });
+        }
+    }
+});
+
+function redefined_catch_def(def: any) {
+    if (def.orig[0] instanceof AST_SymbolCatch
+        && def.scope.is_block_scope()
+    ) {
+        return def.scope.get_defun_scope().variables.get(def.name);
+    }
+}
+
+const MASK_EXPORT_DONT_MANGLE = 1 << 0;
+const MASK_EXPORT_WANT_MANGLE = 1 << 1;
