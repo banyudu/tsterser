@@ -367,7 +367,12 @@ var AST_Node: any = DEFNODE("Node", "start end", {
 
 /* -----[ statements ]----- */
 
-var AST_Statement: any = DEFNODE("Statement", null, {}, {
+var AST_Statement: any = DEFNODE("Statement", null, {
+    _codegen: function(self, output) {
+        (self.body as any).print(output);
+        output.semicolon();
+    },
+}, {
     documentation: "Base class of all statements",
 }, AST_Node);
 
@@ -560,6 +565,11 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
         label: to_moz(M.label),
         body: to_moz(M.body)
     })),
+    _codegen: function(self, output) {
+        self.label.print(output);
+        output.colon();
+        (self.body as any).print(output);
+    },
 }, {
     documentation: "Statement with a label",
     propdoc: {
@@ -3352,6 +3362,25 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
             value: to_moz(M.value)
         };
     }),
+    _print_getter_setter:  function(this: any, type: string, output: any) {
+        var self = this;
+        if (self.static) {
+            output.print("static");
+            output.space();
+        }
+        if (type) {
+            output.print(type);
+            output.space();
+        }
+        if (self.key instanceof AST_SymbolMethod) {
+            print_property_name(self.key.name, self.quote, output);
+        } else {
+            output.with_square(function() {
+                self.key.print(output);
+            });
+        }
+        self.value._do_print(output, true);
+    },
 }, {
     documentation: "Base class for literal object properties",
     propdoc: {
@@ -4003,6 +4032,21 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
             regex: { pattern, flags }
         };
     }),
+    _codegen: function(self, output) {
+        let { source, flags } = self.getValue();
+        source = regexp_source_fix(source);
+        flags = flags ? sort_regexp_flags(flags) : "";
+        source = source.replace(r_slash_script, slash_script_replace);
+        output.print?.(output.to_utf8(`/${source}/${flags}`));
+        const parent = output.parent();
+        if (
+            parent instanceof AST_Binary
+            && /^\w/.test(parent.operator)
+            && parent.left === self
+        ) {
+            output.print(" ");
+        }
+    },
 }, {
     documentation: "A regexp literal",
     propdoc: {
@@ -5054,15 +5098,6 @@ function display_body(body: any[], is_toplevel: boolean, output: any, allow_dire
     output.in_directive = false;
 }
 
-AST_Statement.DEFMETHOD("_codegen", function(self, output) {
-    (self.body as any).print(output);
-    output.semicolon();
-});
-AST_LabeledStatement.DEFMETHOD("_codegen", function(self, output) {
-    self.label.print(output);
-    output.colon();
-    (self.body as any).print(output);
-});
 function print_braced_empty(self: any, output: any) {
     output.print("{");
     output.with_indent(output.next_indent(), function() {
@@ -5157,43 +5192,9 @@ function print_property_name(key: string, quote: string, output: any) {
     return output.print_name(key);
 }
 
-AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(this: any, type: string, output: any) {
-    var self = this;
-    if (self.static) {
-        output.print("static");
-        output.space();
-    }
-    if (type) {
-        output.print(type);
-        output.space();
-    }
-    if (self.key instanceof AST_SymbolMethod) {
-        print_property_name(self.key.name, self.quote, output);
-    } else {
-        output.with_square(function() {
-            self.key.print(output);
-        });
-    }
-    self.value._do_print(output, true);
-});
 
 const r_slash_script = /(<\s*\/\s*script)/i;
 const slash_script_replace = (_: any, $1: string) => $1.replace("/", "\\/");
-AST_RegExp.DEFMETHOD("_codegen", function(self, output) {
-    let { source, flags } = self.getValue();
-    source = regexp_source_fix(source);
-    flags = flags ? sort_regexp_flags(flags) : "";
-    source = source.replace(r_slash_script, slash_script_replace);
-    output.print?.(output.to_utf8(`/${source}/${flags}`));
-    const parent = output.parent();
-    if (
-        parent instanceof AST_Binary
-        && /^\w/.test(parent.operator)
-        && parent.left === self
-    ) {
-        output.print(" ");
-    }
-});
 
 function force_statement(stat: any, output: any) {
     if (output.option("braces")) {
