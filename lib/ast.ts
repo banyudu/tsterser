@@ -504,7 +504,10 @@ var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {
 var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
     shallow_cmp: pass_through,
     to_mozilla_ast: get_to_moz(() => ({ type: "EmptyStatement" })),
-    _size: () => 1
+    _size: () => 1,
+    _codegen: function(_self, output) {
+        output.semicolon();
+    },
 }, {
     documentation: "The empty statement (empty block or simply a semicolon)"
 }, AST_Statement);
@@ -1711,6 +1714,9 @@ var AST_Throw: any = DEFNODE("Throw", null, {
         type: "ThrowStatement",
         argument: to_moz(M.value)
     })),
+    _codegen: function(self, output) {
+        self._do_print(output, "throw");
+    },
 }, {
     documentation: "A `throw` statement"
 }, AST_Exit);
@@ -2786,6 +2792,9 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
             node.print(output);
         });
     },
+    _codegen: function(self, output) {
+        self._do_print(output);
+    },
 }, {
     documentation: "A sequence expression (comma-separated expressions)",
     propdoc: {
@@ -2894,7 +2903,13 @@ var AST_Sub: any = DEFNODE("Sub", null, {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
         self.property = (self.property as any).transform(tw);
-    })
+    }),
+    _codegen: function(self, output) {
+        self.expression.print(output);
+        output.print("[");
+        (self.property as any).print(output);
+        output.print("]");
+    },
 }, {
     documentation: "Index-style property access, i.e. `a[\"foo\"]`",
 
@@ -3407,7 +3422,10 @@ var AST_ObjectSetter: any = DEFNODE("ObjectSetter", "quote static", {
     },
     shallow_cmp: mkshallow({
         static: "eq"
-    })
+    }),
+    _codegen: function(self, output) {
+        self._print_getter_setter("set", output);
+    },
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -3425,7 +3443,10 @@ var AST_ObjectGetter: any = DEFNODE("ObjectGetter", "quote static", {
     },
     shallow_cmp: mkshallow({
         static: "eq"
-    })
+    }),
+    _codegen: function(self, output) {
+        self._print_getter_setter("get", output);
+    },
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -3467,6 +3488,17 @@ var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator
             value: to_moz(M.value)
         };
     }),
+    _codegen: function(self, output) {
+        var type;
+        if (self.is_generator && self.async) {
+            type = "async*";
+        } else if (self.is_generator) {
+            type = "*";
+        } else if (self.async) {
+            type = "async";
+        }
+        self._print_getter_setter(type, output);
+    },
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -3596,7 +3628,28 @@ var AST_ClassProperty = DEFNODE("ClassProperty", "static quote", {
     },
     shallow_cmp: mkshallow({
         static: "eq"
-    })
+    }),
+    _codegen: (self, output) => {
+        if (self.static) {
+            output.print("static");
+            output.space();
+        }
+
+        if (self.key instanceof AST_SymbolClassProperty) {
+            print_property_name(self.key.name, self.quote, output);
+        } else {
+            output.print("[");
+            self.key.print(output);
+            output.print("]");
+        }
+
+        if (self.value) {
+            output.print("=");
+            self.value.print(output);
+        }
+
+        output.semicolon();
+    },
 }, {
     documentation: "A class property",
     propdoc: {
@@ -3642,6 +3695,9 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
     _do_print: function(output: any) {
         var def = this.definition();
         output.print_name(def ? def.mangled_name || def.name : this.name);
+    },
+    _codegen: function (self, output) {
+        self._do_print(output);
     },
 }, {
     propdoc: {
@@ -3790,6 +3846,9 @@ var AST_This: any = DEFNODE("This", null, {
     _size: () => 4,
     shallow_cmp: pass_through,
     to_mozilla_ast: get_to_moz(() => ({ type: "ThisExpression" })),
+    _codegen: function(_self, output) {
+        output.print("this");
+    },
 }, {
     documentation: "The `this` symbol",
 }, AST_Symbol);
@@ -3798,6 +3857,9 @@ var AST_Super: any = DEFNODE("Super", null, {
     _size: () => 5,
     shallow_cmp: pass_through,
     to_mozilla_ast: get_to_moz(() => ({ type: "Super" })),
+    _codegen: function(_self, output) {
+        output.print("super");
+    },
 }, {
     documentation: "The `super` symbol",
 }, AST_This);
@@ -3828,6 +3890,9 @@ var AST_Constant: any = DEFNODE("Constant", null, {
         return this.value;
     },
     to_mozilla_ast: get_to_moz(To_Moz_Literal),
+    _codegen: function(self, output) {
+        output.print(self.getValue());
+    },
 }, {
     documentation: "Base class for all constants",
 }, AST_Node);
@@ -3838,7 +3903,10 @@ var AST_String: any = DEFNODE("String", "value quote", {
     },
     shallow_cmp: mkshallow({
         value: "eq"
-    })
+    }),
+    _codegen: function(self, output) {
+        output.print_string(self.getValue(), self.quote, output.in_directive);
+    },
 }, {
     documentation: "A string literal",
     propdoc: {
@@ -3868,6 +3936,13 @@ var AST_Number: any = DEFNODE("Number", "value literal", {
             }
         }
         return undefined;
+    },
+    _codegen: function(self, output) {
+        if ((output.option("keep_numbers") || output.use_asm) && self.start && self.start.raw != null) {
+            output.print(self.start.raw);
+        } else {
+            output.print(make_num(self.getValue()));
+        }
     },
 }, {
     documentation: "A number literal",
@@ -4979,7 +5054,6 @@ function display_body(body: any[], is_toplevel: boolean, output: any, allow_dire
     output.in_directive = false;
 }
 
-
 AST_Statement.DEFMETHOD("_codegen", function(self, output) {
     (self.body as any).print(output);
     output.semicolon();
@@ -5003,21 +5077,9 @@ function print_braced(self: any, output: any, allow_directives?: boolean) {
         });
     } else print_braced_empty(self, output);
 }
-AST_EmptyStatement.DEFMETHOD("_codegen", function(_self, output) {
-    output.semicolon();
-});
 
 /* -----[ exits ]----- */
 
-AST_Throw.DEFMETHOD("_codegen", function(self, output) {
-    self._do_print(output, "throw");
-});
-
-/* -----[ yield ]----- */
-
-
-
-/* -----[ loop control ]----- */
 
 /* -----[ if ]----- */
 function make_then(self: any, output: any) {
@@ -5069,16 +5131,6 @@ function parenthesize_for_noin(node: any, output: any, noin: boolean) {
 
 /* -----[ other expressions ]----- */
 
-AST_Sequence.DEFMETHOD("_codegen", function(self, output) {
-    self._do_print(output);
-});
-
-AST_Sub.DEFMETHOD("_codegen", function(self, output) {
-    self.expression.print(output);
-    output.print("[");
-    (self.property as any).print(output);
-    output.print("]");
-});
 
 /* -----[ literals ]----- */
 
@@ -5105,28 +5157,6 @@ function print_property_name(key: string, quote: string, output: any) {
     return output.print_name(key);
 }
 
-
-AST_ClassProperty.DEFMETHOD("_codegen", (self, output) => {
-    if (self.static) {
-        output.print("static");
-        output.space();
-    }
-
-    if (self.key instanceof AST_SymbolClassProperty) {
-        print_property_name(self.key.name, self.quote, output);
-    } else {
-        output.print("[");
-        self.key.print(output);
-        output.print("]");
-    }
-
-    if (self.value) {
-        output.print("=");
-        self.value.print(output);
-    }
-
-    output.semicolon();
-});
 AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(this: any, type: string, output: any) {
     var self = this;
     if (self.static) {
@@ -5145,45 +5175,6 @@ AST_ObjectProperty.DEFMETHOD("_print_getter_setter", function(this: any, type: s
         });
     }
     self.value._do_print(output, true);
-});
-AST_ObjectSetter.DEFMETHOD("_codegen", function(self, output) {
-    self._print_getter_setter("set", output);
-});
-AST_ObjectGetter.DEFMETHOD("_codegen", function(self, output) {
-    self._print_getter_setter("get", output);
-});
-AST_ConciseMethod.DEFMETHOD("_codegen", function(self, output) {
-    var type;
-    if (self.is_generator && self.async) {
-        type = "async*";
-    } else if (self.is_generator) {
-        type = "*";
-    } else if (self.async) {
-        type = "async";
-    }
-    self._print_getter_setter(type, output);
-});
-AST_Symbol.DEFMETHOD("_codegen", function (self, output) {
-    self._do_print(output);
-});
-AST_This.DEFMETHOD("_codegen", function(_self, output) {
-    output.print("this");
-});
-AST_Super.DEFMETHOD("_codegen", function(_self, output) {
-    output.print("super");
-});
-AST_Constant.DEFMETHOD("_codegen", function(self, output) {
-    output.print(self.getValue());
-});
-AST_String.DEFMETHOD("_codegen", function(self, output) {
-    output.print_string(self.getValue(), self.quote, output.in_directive);
-});
-AST_Number.DEFMETHOD("_codegen", function(self, output) {
-    if ((output.option("keep_numbers") || output.use_asm) && self.start && self.start.raw != null) {
-        output.print(self.start.raw);
-    } else {
-        output.print(make_num(self.getValue()));
-    }
 });
 
 const r_slash_script = /(<\s*\/\s*script)/i;
