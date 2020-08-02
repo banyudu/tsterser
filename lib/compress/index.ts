@@ -46,10 +46,7 @@
 import {
   defaults,
   HOP,
-  keep_name,
   make_node,
-  makePredicate,
-  map_add,
   MAP,
   member,
   noop,
@@ -57,10 +54,11 @@ import {
   return_false,
   return_null,
   return_this,
+  warn,
   return_true,
   string_template,
-  regexp_source_fix,
-  has_annotation
+  has_annotation,
+  regexp_source_fix
 } from '../utils/index'
 import { first_in_statement } from '../utils/first_in_statement'
 import {
@@ -175,9 +173,18 @@ import {
   walk_parent,
   _INLINE,
   _NOINLINE,
+  safe_to_flatten,
+  make_sequence,
+  merge_sequence,
+  maintain_this_binding,
+  can_be_evicted_from_block,
+  is_empty,
+  get_value,
+  is_ref_of,
+  is_lhs,
+  is_undeclared_ref,
   _PURE
 } from '../ast'
-import { equivalent_to } from '../equivalent-to'
 import {
   is_basic_identifier_string,
   JS_Parse_Error,
@@ -186,31 +193,38 @@ import {
 } from '../parse'
 import { OutputStream } from '../output'
 import {
-  base54,
-  SymbolDef
+  base54
 } from '../scope'
 
-const UNUSED = 0b00000001
-const TRUTHY = 0b00000010
-const FALSY = 0b00000100
-const UNDEFINED = 0b00001000
-const INLINED = 0b00010000
-// Nodes to which values are ever written. Used when keep_assign is part of the unused option string.
-const WRITE_ONLY = 0b00100000
-
-// information specific to a single compression pass
-const SQUEEZED = 0b0000000100000000
-const OPTIMIZED = 0b0000001000000000
-const TOP = 0b0000010000000000
-
-const CLEAR_BETWEEN_PASSES = SQUEEZED | OPTIMIZED | TOP
-
-/* @__INLINE__ */
-const has_flag = (node: any, flag: number) => node.flags & flag
-/* @__INLINE__ */
-const set_flag = (node: any, flag: number) => { node.flags |= flag }
-/* @__INLINE__ */
-const clear_flag = (node: any, flag: number) => { node.flags &= ~flag }
+import {
+  UNUSED,
+  TRUTHY,
+  FALSY,
+  UNDEFINED,
+  INLINED,
+  WRITE_ONLY,
+  SQUEEZED,
+  TOP,
+  has_flag,
+  set_flag,
+  static_values,
+  static_fns,
+  native_fns,
+  lazy_op,
+  unary_side_effects,
+  unary_bool,
+  binary_bool,
+  unary,
+  binary,
+  non_converting_binary,
+  non_converting_unary,
+  ASSIGN_OPS,
+  ASSIGN_OPS_COMMUTATIVE,
+  identifier_atom,
+  commutativeOperators,
+  pure_prop_access_globals,
+  clear_flag
+} from '../constants'
 
 class Compressor extends TreeWalker {
   options: any
@@ -471,72 +485,6 @@ function def_optimize (node: any, optimizer: Function) {
 
 def_optimize(AST_Node, function (self) {
   return self
-})
-
-AST_Toplevel.DEFMETHOD('drop_console', function () {
-  return this.transform(new TreeTransformer(function (self) {
-    if (self.TYPE == 'Call') {
-      var exp = self.expression
-      if (exp instanceof AST_PropAccess) {
-        var name = exp.expression
-        while (name.expression) {
-          name = name.expression
-        }
-        if (is_undeclared_ref(name) && name.name == 'console') {
-          return make_node(AST_Undefined, self)
-        }
-      }
-    }
-  }))
-})
-
-AST_Node.DEFMETHOD('equivalent_to', function (node: any) {
-  return equivalent_to(this, node)
-})
-
-AST_Scope.DEFMETHOD('process_expression', function (insert, compressor) {
-  var self = this
-  var tt = new TreeTransformer(function (node: any) {
-    if (insert && node instanceof AST_SimpleStatement) {
-      return make_node(AST_Return, node, {
-        value: node.body
-      })
-    }
-    if (!insert && node instanceof AST_Return) {
-      if (compressor) {
-        var value = node.value && node.value.drop_side_effect_free?.(compressor, true)
-        return value ? make_node(AST_SimpleStatement, node, {
-          body: value
-        }) : make_node(AST_EmptyStatement, node)
-      }
-      return make_node(AST_SimpleStatement, node, {
-        body: node.value || make_node(AST_UnaryPrefix, node, {
-          operator: 'void',
-          expression: make_node(AST_Number, node, {
-            value: 0
-          })
-        })
-      })
-    }
-    if (node instanceof AST_Class || node instanceof AST_Lambda && node !== self) {
-      return node
-    }
-    if (node instanceof AST_Block) {
-      var index = node.body.length - 1
-      if (index >= 0) {
-        node.body[index] = node.body[index].transform(tt)
-      }
-    } else if (node instanceof AST_If) {
-      node.body = (node.body).transform(tt)
-      if (node.alternative) {
-        node.alternative = node.alternative.transform(tt)
-      }
-    } else if (node instanceof AST_With) {
-      node.body = (node.body).transform(tt)
-    }
-    return node
-  })
-  self.transform(tt)
 })
 
 function read_property (obj, key) {
@@ -1051,43 +999,6 @@ function def_reduce_vars (node, func) {
   node.DEFMETHOD('reduce_vars', func)
 }
 
-AST_Toplevel.DEFMETHOD('reset_opt_flags', function (compressor: Compressor) {
-  const self = this
-  const reduce_vars = compressor.option('reduce_vars')
-
-  const preparation = new TreeWalker(function (node: any, descend) {
-    clear_flag(node, CLEAR_BETWEEN_PASSES)
-    if (reduce_vars) {
-      if (compressor.top_retain &&
-                node instanceof AST_Defun && // Only functions are retained
-                preparation.parent() === self
-      ) {
-        set_flag(node, TOP)
-      }
-      return node.reduce_vars(preparation, descend, compressor)
-    }
-  })
-  // Stack of look-up tables to keep track of whether a `SymbolDef` has been
-  // properly assigned before use:
-  // - `push()` & `pop()` when visiting conditional branches
-  preparation.safe_ids = Object.create(null)
-  preparation.in_loop = null
-  preparation.loop_ids = new Map()
-  preparation.defs_to_safe_ids = new Map()
-  self.walk(preparation)
-})
-
-AST_Symbol.DEFMETHOD('fixed_value', function () {
-  var fixed = this.thedef.fixed
-  if (!fixed || fixed instanceof AST_Node) return fixed
-  return fixed()
-})
-
-AST_SymbolRef.DEFMETHOD('is_immutable', function () {
-  var orig = this.definition?.().orig
-  return orig.length == 1 && orig[0] instanceof AST_SymbolLambda
-})
-
 function is_func_expr (node: any) {
   return node instanceof AST_Arrow || node instanceof AST_Function
 }
@@ -1109,14 +1020,6 @@ function is_lhs_read_only (lhs) {
   return false
 }
 
-function is_ref_of (ref, type) {
-  if (!(ref instanceof AST_SymbolRef)) return false
-  var orig = ref.definition?.().orig
-  for (var i = orig.length; --i >= 0;) {
-    if (orig[i] instanceof type) return true
-  }
-}
-
 function find_scope (tw) {
   for (let i = 0; ;i++) {
     const p = tw.parent(i)
@@ -1136,14 +1039,6 @@ function find_variable (compressor, name) {
     }
   }
   return scope.find_variable(name)
-}
-
-function make_sequence (orig, expressions) {
-  if (expressions.length == 1) return expressions[0]
-  if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
-  return make_node(AST_Sequence, orig, {
-    expressions: expressions.reduce(merge_sequence, [])
-  })
 }
 
 function make_node_from_constant (val, orig) {
@@ -1186,51 +1081,12 @@ function make_node_from_constant (val, orig) {
   }
 }
 
-// we shouldn't compress (1,func)(something) to
-// func(something) because that changes the meaning of
-// the func (becomes lexical instead of global).
-function maintain_this_binding (parent, orig, val) {
-  if (parent instanceof AST_UnaryPrefix && parent.operator == 'delete' ||
-        parent instanceof AST_Call && parent.expression === orig &&
-            (val instanceof AST_PropAccess || val instanceof AST_SymbolRef && val.name == 'eval')) {
-    return make_sequence(orig, [make_node(AST_Number, orig, { value: 0 }), val])
-  }
-  return val
-}
-
-function merge_sequence (array, node) {
-  if (node instanceof AST_Sequence) {
-    array.push(...node.expressions)
-  } else {
-    array.push(node)
-  }
-  return array
-}
-
 function as_statement_array (thing) {
   if (thing === null) return []
   if (thing instanceof AST_BlockStatement) return thing.body
   if (thing instanceof AST_EmptyStatement) return []
   if (thing instanceof AST_Statement) return [thing]
   throw new Error("Can't convert thing to statement array")
-}
-
-function is_empty (thing) {
-  if (thing === null) return true
-  if (thing instanceof AST_EmptyStatement) return true
-  if (thing instanceof AST_BlockStatement) return thing.body.length == 0
-  return false
-}
-
-function can_be_evicted_from_block (node: any) {
-  return !(
-    node instanceof AST_DefClass ||
-        node instanceof AST_Defun ||
-        node instanceof AST_Let ||
-        node instanceof AST_Const ||
-        node instanceof AST_Export ||
-        node instanceof AST_Import
-  )
 }
 
 function loop_body (x) {
@@ -1247,17 +1103,6 @@ function is_iife_call (node: any) {
   return node.expression instanceof AST_Function || is_iife_call(node.expression)
 }
 
-function is_undeclared_ref (node: any) {
-  return node instanceof AST_SymbolRef && node.definition?.().undeclared
-}
-
-var global_names = makePredicate('Array Boolean clearInterval clearTimeout console Date decodeURI decodeURIComponent encodeURI encodeURIComponent Error escape eval EvalError Function isFinite isNaN JSON Math Number parseFloat parseInt RangeError ReferenceError RegExp Object setInterval setTimeout String SyntaxError TypeError unescape URIError')
-AST_SymbolRef.DEFMETHOD('is_declared', function (compressor: Compressor) {
-  return !this.definition?.().undeclared ||
-        compressor.option('unsafe') && global_names.has(this.name)
-})
-
-var identifier_atom = makePredicate('Infinity NaN undefined')
 function is_identifier_atom (node: any | null) {
   return node instanceof AST_Infinity ||
         node instanceof AST_NaN ||
@@ -2438,18 +2283,6 @@ function extract_declarations_from_unreachable_code (compressor, stat, target) {
   })
 }
 
-function get_value (key) {
-  if (key instanceof AST_Constant) {
-    return key.getValue()
-  }
-  if (key instanceof AST_UnaryPrefix &&
-        key.operator == 'void' &&
-        key.expression instanceof AST_Constant) {
-    return
-  }
-  return key
-}
-
 function is_undefined (node, compressor?) {
   return has_flag(node, UNDEFINED) ||
         node instanceof AST_Undefined ||
@@ -2457,13 +2290,6 @@ function is_undefined (node, compressor?) {
             node.operator == 'void' &&
             !node.expression.has_side_effects(compressor)
 }
-
-// may_throw_on_access()
-// returns true if this node may be null, undefined or contain `AST_Accessor`
-AST_Node.DEFMETHOD('may_throw_on_access', function (compressor: Compressor) {
-  return !compressor.option('pure_getters') ||
-        this._dot_throw(compressor)
-})
 
 function is_strict (compressor) {
   const optPureGettters = compressor.option('pure_getters')
@@ -2527,8 +2353,6 @@ function def_may_throw_on_access (node, func) {
 /* -----[ boolean/negation helpers ]----- */
 
 // methods to determine whether an expression has a boolean result type
-const unary_bool = makePredicate('! delete')
-const binary_bool = makePredicate('in instanceof == != === !== < <= >= >')
 def_is_boolean(AST_Node, return_false)
 def_is_boolean(AST_UnaryPrefix, function () {
   return unary_bool.has(this.operator)
@@ -2558,11 +2382,9 @@ function def_is_boolean (node, func) {
 // methods to determine if an expression has a numeric result type
 def_is_number(AST_Node, return_false)
 def_is_number(AST_Number, return_true)
-var unary = makePredicate('+ - ~ ++ --')
 def_is_number(AST_Unary, function () {
   return unary.has(this.operator)
 })
-var binary = makePredicate('- * / % & | ^ << >> >>>')
 def_is_number(AST_Binary, function (compressor: Compressor) {
   return binary.has(this.operator) || this.operator == '+' &&
         this.left.is_number(compressor) &&
@@ -2608,14 +2430,6 @@ function def_is_string (node, func) {
   node.DEFMETHOD('is_string', func)
 }
 
-var lazy_op = makePredicate('&& || ??')
-var unary_side_effects = makePredicate('delete ++ --')
-
-function is_lhs (node, parent) {
-  if (parent instanceof AST_Unary && unary_side_effects.has(parent.operator)) return parent.expression
-  if (parent instanceof AST_Assign && parent.left === node) return node
-}
-
 function to_node (value, orig) {
   if (value instanceof AST_Node) return make_node(value.CTOR, orig, value)
   if (Array.isArray(value)) {
@@ -2642,29 +2456,6 @@ function to_node (value, orig) {
   return make_node_from_constant(value, orig)
 }
 
-function warn (compressor, node) {
-  compressor.warn('global_defs ' + node.print_to_string() + ' redefined [{file}:{line},{col}]', node.start)
-}
-
-AST_Toplevel.DEFMETHOD('resolve_defines', function (compressor: Compressor) {
-  if (!compressor.option('global_defs')) return this
-  this.figure_out_scope({ ie8: compressor.option('ie8') })
-  return this.transform(new TreeTransformer(function (node: any) {
-    var def = node._find_defs(compressor, '')
-    if (!def) return
-    var level = 0; var child = node; var parent
-    while (parent = this.parent(level++)) {
-      if (!(parent instanceof AST_PropAccess)) break
-      if (parent.expression !== child) break
-      child = parent
-    }
-    if (is_lhs(child, parent)) {
-      warn(compressor, node)
-      return
-    }
-    return def
-  }))
-})
 def_find_defs(AST_Node, noop)
 def_find_defs(AST_Dot, function (compressor: Compressor, suffix) {
   return this.expression._find_defs(compressor, '.' + this.property + suffix)
@@ -2703,123 +2494,6 @@ function best_of (compressor, ast1, ast2) {
   return (first_in_statement(compressor) ? best_of_statement : best_of_expression)(ast1, ast2)
 }
 
-function convert_to_predicate (obj) {
-  const out = new Map()
-  for (var key of Object.keys(obj)) {
-    out.set(key, makePredicate(obj[key]))
-  }
-  return out
-}
-
-var object_fns = [
-  'constructor',
-  'toString',
-  'valueOf'
-]
-var native_fns = convert_to_predicate({
-  Array: [
-    'indexOf',
-    'join',
-    'lastIndexOf',
-    'slice'
-  ].concat(object_fns),
-  Boolean: object_fns,
-  Function: object_fns,
-  Number: [
-    'toExponential',
-    'toFixed',
-    'toPrecision'
-  ].concat(object_fns),
-  Object: object_fns,
-  RegExp: [
-    'test'
-  ].concat(object_fns),
-  String: [
-    'charAt',
-    'charCodeAt',
-    'concat',
-    'indexOf',
-    'italics',
-    'lastIndexOf',
-    'match',
-    'replace',
-    'search',
-    'slice',
-    'split',
-    'substr',
-    'substring',
-    'toLowerCase',
-    'toUpperCase',
-    'trim'
-  ].concat(object_fns)
-})
-var static_fns = convert_to_predicate({
-  Array: [
-    'isArray'
-  ],
-  Math: [
-    'abs',
-    'acos',
-    'asin',
-    'atan',
-    'ceil',
-    'cos',
-    'exp',
-    'floor',
-    'log',
-    'round',
-    'sin',
-    'sqrt',
-    'tan',
-    'atan2',
-    'pow',
-    'max',
-    'min'
-  ],
-  Number: [
-    'isFinite',
-    'isNaN'
-  ],
-  Object: [
-    'create',
-    'getOwnPropertyDescriptor',
-    'getOwnPropertyNames',
-    'getPrototypeOf',
-    'isExtensible',
-    'isFrozen',
-    'isSealed',
-    'keys'
-  ],
-  String: [
-    'fromCharCode'
-  ]
-})
-
-// methods to evaluate a constant expression
-// If the node has been successfully reduced to a constant,
-// then its value is returned; otherwise the element itself
-// is returned.
-// They can be distinguished as constant value is never a
-// descendant of AST_Node.
-AST_Node.DEFMETHOD('evaluate', function (compressor: Compressor) {
-  if (!compressor.option('evaluate')) return this
-  var val = this._eval(compressor, 1)
-  if (!val || val instanceof RegExp) return val
-  if (typeof val === 'function' || typeof val === 'object') return this
-  return val
-})
-var unaryPrefix = makePredicate('! ~ - + void')
-AST_Node.DEFMETHOD('is_constant', function () {
-  // Accomodate when compress option evaluate=false
-  // as well as the common constant expressions !0 and -1
-  if (this instanceof AST_Constant) {
-    return !(this instanceof AST_RegExp)
-  } else {
-    return this instanceof AST_UnaryPrefix &&
-            this.expression instanceof AST_Constant &&
-            unaryPrefix.has(this.operator)
-  }
-})
 def_eval(AST_Statement, function () {
   throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
 })
@@ -2894,7 +2568,6 @@ def_eval(AST_Object, function (compressor: Compressor, depth) {
   }
   return this
 })
-var non_converting_unary = makePredicate('! typeof void')
 def_eval(AST_UnaryPrefix, function (compressor: Compressor, depth) {
   var e = this.expression
   // Function would be evaluated to an array and so typeof would
@@ -2923,7 +2596,6 @@ def_eval(AST_UnaryPrefix, function (compressor: Compressor, depth) {
   }
   return this
 })
-var non_converting_binary = makePredicate('&& || ?? === !==')
 def_eval(AST_Binary, function (compressor: Compressor, depth) {
   if (!non_converting_binary.has(this.operator)) depth++
   var left = this.left._eval(compressor, depth)
@@ -2999,25 +2671,7 @@ var global_objs = {
   Object: Object,
   String: String
 }
-var static_values = convert_to_predicate({
-  Math: [
-    'E',
-    'LN10',
-    'LN2',
-    'LOG2E',
-    'LOG10E',
-    'PI',
-    'SQRT1_2',
-    'SQRT2'
-  ],
-  Number: [
-    'MAX_VALUE',
-    'MIN_VALUE',
-    'NaN',
-    'NEGATIVE_INFINITY',
-    'POSITIVE_INFINITY'
-  ]
-})
+
 def_eval(AST_PropAccess, function (compressor: Compressor, depth) {
   if (compressor.option('unsafe')) {
     var key = this.property
@@ -3197,57 +2851,6 @@ function def_negate (node, func) {
   node.DEFMETHOD('negate', func)
 }
 
-var global_pure_fns = makePredicate('Boolean decodeURI decodeURIComponent Date encodeURI encodeURIComponent Error escape EvalError isFinite isNaN Number Object parseFloat parseInt RangeError ReferenceError String SyntaxError TypeError unescape URIError')
-AST_Call.DEFMETHOD('is_expr_pure', function (compressor: Compressor) {
-  if (compressor.option('unsafe')) {
-    var expr = this.expression
-    var first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
-    if (
-      expr.expression && expr.expression.name === 'hasOwnProperty' &&
-            (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)
-    ) {
-      return false
-    }
-    if (is_undeclared_ref(expr) && global_pure_fns.has(expr.name)) return true
-    let static_fn
-    if (expr instanceof AST_Dot &&
-            is_undeclared_ref(expr.expression) &&
-            (static_fn = static_fns.get(expr.expression.name)) &&
-            static_fn.has(expr.property)) {
-      return true
-    }
-  }
-  return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
-})
-AST_Node.DEFMETHOD('is_call_pure', return_false)
-AST_Dot.DEFMETHOD('is_call_pure', function (compressor: Compressor) {
-  if (!compressor.option('unsafe')) return
-  const expr = this.expression
-  let map
-  if (expr instanceof AST_Array) {
-    map = native_fns.get('Array')
-  } else if (expr.is_boolean()) {
-    map = native_fns.get('Boolean')
-  } else if (expr.is_number(compressor)) {
-    map = native_fns.get('Number')
-  } else if (expr instanceof AST_RegExp) {
-    map = native_fns.get('RegExp')
-  } else if (expr.is_string(compressor)) {
-    map = native_fns.get('String')
-  } else if (!this.may_throw_on_access(compressor)) {
-    map = native_fns.get('Object')
-  }
-  return map && map.has(this.property)
-})
-
-const pure_prop_access_globals = new Set([
-  'Number',
-  'String',
-  'Array',
-  'Object',
-  'Function',
-  'Promise'
-])
 // determine if expression has side effects
 def_has_side_effects(AST_Node, return_true)
 
@@ -3673,612 +3276,6 @@ function opt_AST_Lambda (self, compressor) {
 def_optimize(AST_Lambda, opt_AST_Lambda)
 
 const r_keep_assign = /keep_assign/
-AST_Scope.DEFMETHOD('drop_unused', function (compressor: Compressor) {
-  const optUnused = compressor.option('unused')
-  if (!optUnused) return
-  if (compressor.has_directive('use asm')) return
-  var self = this
-  if (self.pinned()) return
-  var drop_funcs = !(self instanceof AST_Toplevel) || compressor.toplevel.funcs
-  var drop_vars = !(self instanceof AST_Toplevel) || compressor.toplevel.vars
-  const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: any) {
-    if (node instanceof AST_Assign &&
-            (has_flag(node, WRITE_ONLY) || node.operator == '=')
-    ) {
-      return node.left
-    }
-    if (node instanceof AST_Unary && has_flag(node, WRITE_ONLY)) {
-      return node.expression
-    }
-  }
-  var in_use_ids = new Map()
-  var fixed_ids = new Map()
-  if (self instanceof AST_Toplevel && compressor.top_retain) {
-    self.variables.forEach(function (def) {
-      if (compressor.top_retain?.(def) && !in_use_ids.has(def.id)) {
-        in_use_ids.set(def.id, def)
-      }
-    })
-  }
-  var var_defs_by_id = new Map()
-  var initializations = new Map()
-  // pass 1: find out which symbols are directly used in
-  // this scope (not in nested scopes).
-  var scope = this
-  var tw = new TreeWalker(function (node: any, descend) {
-    if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive('use strict')) {
-      node.argnames.forEach(function (argname) {
-        if (!(argname instanceof AST_SymbolDeclaration)) return
-        var def = argname.definition?.()
-        if (!in_use_ids.has(def.id)) {
-          in_use_ids.set(def.id, def)
-        }
-      })
-    }
-    if (node === self) return
-    if (node instanceof AST_Defun || node instanceof AST_DefClass) {
-      var node_def = node.name?.definition?.()
-      const in_export = tw.parent() instanceof AST_Export
-      if (in_export || !drop_funcs && scope === self) {
-        if (node_def.global && !in_use_ids.has(node_def.id)) {
-          in_use_ids.set(node_def.id, node_def)
-        }
-      }
-      if (node instanceof AST_DefClass) {
-        if (
-          node.extends &&
-                    (node.extends.has_side_effects(compressor) ||
-                    node.extends.may_throw(compressor))
-        ) {
-          node.extends.walk(tw)
-        }
-        for (const prop of node.properties) {
-          if (
-            prop.has_side_effects(compressor) ||
-                        prop.may_throw(compressor)
-          ) {
-            prop.walk(tw)
-          }
-        }
-      }
-      map_add(initializations, node_def.id, node)
-      return true // don't go in nested scopes
-    }
-    if (node instanceof AST_SymbolFunarg && scope === self) {
-      map_add(var_defs_by_id, node.definition?.().id, node)
-    }
-    if (node instanceof AST_Definitions && scope === self) {
-      const in_export = tw.parent() instanceof AST_Export
-      node.definitions.forEach(function (def) {
-        if (def.name instanceof AST_SymbolVar) {
-          map_add(var_defs_by_id, def.name.definition?.().id, def)
-        }
-        if (in_export || !drop_vars) {
-          walk(def.name, (node: any) => {
-            if (node instanceof AST_SymbolDeclaration) {
-              const def = node.definition?.()
-              if (
-                (in_export || def.global) &&
-                                !in_use_ids.has(def.id)
-              ) {
-                in_use_ids.set(def.id, def)
-              }
-            }
-          })
-        }
-        if (def.value) {
-          if (def.name instanceof AST_Destructuring) {
-            def.walk(tw)
-          } else {
-            var node_def = def.name.definition?.()
-            map_add(initializations, node_def.id, def.value)
-            if (!node_def.chained && def.name.fixed_value() === def.value) {
-              fixed_ids.set(node_def.id, def)
-            }
-          }
-          if (def.value.has_side_effects(compressor)) {
-            def.value.walk(tw)
-          }
-        }
-      })
-      return true
-    }
-    return scan_ref_scoped(node, descend)
-  })
-  self.walk(tw)
-  // pass 2: for every used symbol we need to walk its
-  // initialization code to figure out if it uses other
-  // symbols (that may not be in_use).
-  tw = new TreeWalker(scan_ref_scoped)
-  in_use_ids.forEach(function (def) {
-    var init = initializations.get(def.id)
-    if (init) {
-      init.forEach(function (init) {
-        init.walk(tw)
-      })
-    }
-  })
-  // pass 3: we should drop declarations not in_use
-  var tt = new TreeTransformer(
-    function before (node, descend, in_list) {
-      var parent = tt.parent()
-      if (drop_vars) {
-        const sym = assign_as_unused(node)
-        if (sym instanceof AST_SymbolRef) {
-          var def = sym.definition?.()
-          var in_use = in_use_ids.has(def.id)
-          if (node instanceof AST_Assign) {
-            if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
-              return maintain_this_binding(parent, node, node.right.transform(tt))
-            }
-          } else if (!in_use) {
-            return in_list ? MAP.skip : make_node(AST_Number, node, {
-              value: 0
-            })
-          }
-        }
-      }
-      if (scope !== self) return
-      var def
-      if (node.name &&
-                (node instanceof AST_ClassExpression &&
-                    !keep_name(compressor.option('keep_classnames'), (def = node.name?.definition?.()).name) ||
-                node instanceof AST_Function &&
-                    !keep_name(compressor.option('keep_fnames'), (def = node.name?.definition?.()).name))) {
-        // any declarations with same name will overshadow
-        // name of this anonymous function and can therefore
-        // never be used anywhere
-        if (!in_use_ids.has(def.id) || def.orig.length > 1) node.name = null
-      }
-      if (node instanceof AST_Lambda && !(node instanceof AST_Accessor)) {
-        var trim = !compressor.option('keep_fargs')
-        for (var a = node.argnames, i = a.length; --i >= 0;) {
-          var sym = a[i]
-          if (sym instanceof AST_Expansion) {
-            sym = sym.expression
-          }
-          if (sym instanceof AST_DefaultAssign) {
-            sym = sym.left
-          }
-          // Do not drop destructuring arguments.
-          // They constitute a type assertion, so dropping
-          // them would stop that TypeError which would happen
-          // if someone called it with an incorrectly formatted
-          // parameter.
-          if (!(sym instanceof AST_Destructuring) && !in_use_ids.has(sym.definition?.().id)) {
-            set_flag(sym, UNUSED)
-            if (trim) {
-              a.pop()
-              compressor[sym.unreferenced() ? 'warn' : 'info']('Dropping unused function argument {name} [{file}:{line},{col}]', template(sym))
-            }
-          } else {
-            trim = false
-          }
-        }
-      }
-      if ((node instanceof AST_Defun || node instanceof AST_DefClass) && node !== self) {
-        const def = node.name?.definition?.()
-        const keep = def.global && !drop_funcs || in_use_ids.has(def.id)
-        if (!keep) {
-          compressor[node.name?.unreferenced() ? 'warn' : 'info']('Dropping unused function {name} [{file}:{line},{col}]', template(node.name))
-          def.eliminated++
-          if (node instanceof AST_DefClass) {
-            // Classes might have extends with side effects
-            const side_effects = node.drop_side_effect_free(compressor)
-            if (side_effects) {
-              return make_node(AST_SimpleStatement, node, {
-                body: side_effects
-              })
-            }
-          }
-          return in_list ? MAP.skip : make_node(AST_EmptyStatement, node)
-        }
-      }
-      if (node instanceof AST_Definitions && !(parent instanceof AST_ForIn && parent.init === node)) {
-        var drop_block = !(parent instanceof AST_Toplevel) && !(node instanceof AST_Var)
-        // place uninitialized names at the start
-        var body: any[] = []; var head: any[] = []; var tail: any[] = []
-        // for unused names whose initialization has
-        // side effects, we can cascade the init. code
-        // into the next one, or next statement.
-        var side_effects: any[] = []
-        node.definitions.forEach(function (def) {
-          if (def.value) def.value = def.value.transform(tt)
-          var is_destructure = def.name instanceof AST_Destructuring
-          var sym = is_destructure
-            ? new SymbolDef(null, { name: '<destructure>' }) /* fake SymbolDef */
-            : def.name.definition?.()
-          if (drop_block && sym.global) return tail.push(def)
-          if (!(drop_vars || drop_block) ||
-                        is_destructure &&
-                            (def.name.names.length ||
-                                def.name.is_array ||
-                                compressor.option('pure_getters') != true) ||
-                        in_use_ids.has(sym.id)
-          ) {
-            if (def.value && fixed_ids.has(sym.id) && fixed_ids.get(sym.id) !== def) {
-              def.value = def.value.drop_side_effect_free(compressor)
-            }
-            if (def.name instanceof AST_SymbolVar) {
-              var var_defs = var_defs_by_id.get(sym.id)
-              if (var_defs.length > 1 && (!def.value || sym.orig.indexOf(def.name) > sym.eliminated)) {
-                compressor.warn('Dropping duplicated definition of variable {name} [{file}:{line},{col}]', template(def.name))
-                if (def.value) {
-                  var ref = make_node(AST_SymbolRef, def.name, def.name)
-                  sym.references.push(ref)
-                  var assign = make_node(AST_Assign, def, {
-                    operator: '=',
-                    left: ref,
-                    right: def.value
-                  })
-                  if (fixed_ids.get(sym.id) === def) {
-                    fixed_ids.set(sym.id, assign)
-                  }
-                  side_effects.push(assign.transform(tt))
-                }
-                remove(var_defs, def)
-                sym.eliminated++
-                return
-              }
-            }
-            if (def.value) {
-              if (side_effects.length > 0) {
-                if (tail.length > 0) {
-                  side_effects.push(def.value)
-                  def.value = make_sequence(def.value, side_effects)
-                } else {
-                  body.push(make_node(AST_SimpleStatement, node, {
-                    body: make_sequence(node, side_effects)
-                  }))
-                }
-                side_effects = []
-              }
-              tail.push(def)
-            } else {
-              head.push(def)
-            }
-          } else if (sym.orig[0] instanceof AST_SymbolCatch) {
-            var value = def.value && def.value.drop_side_effect_free(compressor)
-            if (value) side_effects.push(value)
-            def.value = null
-            head.push(def)
-          } else {
-            var value = def.value && def.value.drop_side_effect_free(compressor)
-            if (value) {
-              if (!is_destructure) compressor.warn('Side effects in initialization of unused variable {name} [{file}:{line},{col}]', template(def.name))
-              side_effects.push(value)
-            } else {
-              if (!is_destructure) compressor[def.name.unreferenced() ? 'warn' : 'info']('Dropping unused variable {name} [{file}:{line},{col}]', template(def.name))
-            }
-            sym.eliminated++
-          }
-        })
-        if (head.length > 0 || tail.length > 0) {
-          node.definitions = head.concat(tail)
-          body.push(node)
-        }
-        if (side_effects.length > 0) {
-          body.push(make_node(AST_SimpleStatement, node, {
-            body: make_sequence(node, side_effects)
-          }))
-        }
-        switch (body.length) {
-          case 0:
-            return in_list ? MAP.skip : make_node(AST_EmptyStatement, node)
-          case 1:
-            return body[0]
-          default:
-            return in_list ? MAP.splice(body) : make_node(AST_BlockStatement, node, {
-              body: body
-            })
-        }
-      }
-      // certain combination of unused name + side effect leads to:
-      //    https://github.com/mishoo/UglifyJS2/issues/44
-      //    https://github.com/mishoo/UglifyJS2/issues/1830
-      //    https://github.com/mishoo/UglifyJS2/issues/1838
-      // that's an invalid AST.
-      // We fix it at this stage by moving the `var` outside the `for`.
-      if (node instanceof AST_For) {
-        descend(node, this)
-        var block
-        if (node.init instanceof AST_BlockStatement) {
-          block = node.init
-          node.init = block.body.pop()
-          block.body.push(node)
-        }
-        if (node.init instanceof AST_SimpleStatement) {
-          // TODO: check type
-          node.init = node.init.body
-        } else if (is_empty(node.init)) {
-          node.init = null
-        }
-        return !block ? node : in_list ? MAP.splice(block.body) : block
-      }
-      if (node instanceof AST_LabeledStatement &&
-                node.body instanceof AST_For
-      ) {
-        descend(node, this)
-        if (node.body instanceof AST_BlockStatement) {
-          const block = node.body
-          node.body = block.body.pop() // TODO: check type
-          block.body.push(node)
-          return in_list ? MAP.splice(block.body) : block
-        }
-        return node
-      }
-      if (node instanceof AST_BlockStatement) {
-        descend(node, this)
-        if (in_list && node.body.every(can_be_evicted_from_block)) {
-          return MAP.splice(node.body)
-        }
-        return node
-      }
-      if (node instanceof AST_Scope) {
-        const save_scope = scope
-        scope = node
-        descend(node, this)
-        scope = save_scope
-        return node
-      }
-
-      function template (sym) {
-        return {
-          name: sym.name,
-          file: sym.start.file,
-          line: sym.start.line,
-          col: sym.start.col
-        }
-      }
-    }
-  )
-
-  self.transform(tt)
-
-  function scan_ref_scoped (node, descend) {
-    var node_def
-    const sym = assign_as_unused(node)
-    if (sym instanceof AST_SymbolRef &&
-            !is_ref_of(node.left, AST_SymbolBlockDeclaration) &&
-            self.variables.get(sym.name) === (node_def = sym.definition?.())
-    ) {
-      if (node instanceof AST_Assign) {
-        node.right.walk(tw)
-        if (!node_def.chained && node.left.fixed_value() === node.right) {
-          fixed_ids.set(node_def.id, node)
-        }
-      }
-      return true
-    }
-    if (node instanceof AST_SymbolRef) {
-      node_def = node.definition?.()
-      if (!in_use_ids.has(node_def.id)) {
-        in_use_ids.set(node_def.id, node_def)
-        if (node_def.orig[0] instanceof AST_SymbolCatch) {
-          const redef = node_def.scope.is_block_scope() &&
-                        node_def.scope.get_defun_scope().variables.get(node_def.name)
-          if (redef) in_use_ids.set(redef.id, redef)
-        }
-      }
-      return true
-    }
-    if (node instanceof AST_Scope) {
-      var save_scope = scope
-      scope = node
-      descend()
-      scope = save_scope
-      return true
-    }
-  }
-})
-
-AST_Scope.DEFMETHOD('hoist_declarations', function (compressor: Compressor) {
-  var self = this
-  if (compressor.has_directive('use asm')) return self
-  // Hoisting makes no sense in an arrow func
-  if (!Array.isArray(self.body)) return self
-
-  var hoist_funs = compressor.option('hoist_funs')
-  var hoist_vars = compressor.option('hoist_vars')
-
-  if (hoist_funs || hoist_vars) {
-    var dirs: any[] = []
-    var hoisted: any[] = []
-    var vars = new Map(); var vars_found = 0; var var_decl = 0
-    // let's count var_decl first, we seem to waste a lot of
-    // space if we hoist `var` when there's only one.
-    walk(self, (node: any) => {
-      if (node instanceof AST_Scope && node !== self) { return true }
-      if (node instanceof AST_Var) {
-        ++var_decl
-        return true
-      }
-    })
-    hoist_vars = hoist_vars && var_decl > 1
-    var tt = new TreeTransformer(
-      function before (node: any) {
-        if (node !== self) {
-          if (node instanceof AST_Directive) {
-            dirs.push(node)
-            return make_node(AST_EmptyStatement, node)
-          }
-          if (hoist_funs && node instanceof AST_Defun &&
-                        !(tt.parent() instanceof AST_Export) &&
-                        tt.parent() === self) {
-            hoisted.push(node)
-            return make_node(AST_EmptyStatement, node)
-          }
-          if (hoist_vars && node instanceof AST_Var) {
-            node.definitions.forEach(function (def) {
-              if (def.name instanceof AST_Destructuring) return
-              vars.set(def.name.name, def)
-              ++vars_found
-            })
-            var seq = node.to_assignments(compressor)
-            var p = tt.parent()
-            if (p instanceof AST_ForIn && p.init === node) {
-              if (seq == null) {
-                var def = node.definitions[0].name
-                return make_node(AST_SymbolRef, def, def)
-              }
-              return seq
-            }
-            if (p instanceof AST_For && p.init === node) {
-              return seq
-            }
-            if (!seq) return make_node(AST_EmptyStatement, node)
-            return make_node(AST_SimpleStatement, node, {
-              body: seq
-            })
-          }
-          if (node instanceof AST_Scope) { return node } // to avoid descending in nested scopes
-        }
-      }
-    )
-    self = self.transform(tt)
-    if (vars_found > 0) {
-      // collect only vars which don't show up in self's arguments list
-      var defs: any[] = []
-      const is_lambda = self instanceof AST_Lambda
-      const args_as_names = is_lambda ? self.args_as_names() : null
-      vars.forEach((def, name) => {
-        if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
-          vars.delete(name)
-        } else {
-          def = def.clone()
-          def.value = null
-          defs.push(def)
-          vars.set(name, def)
-        }
-      })
-      if (defs.length > 0) {
-        // try to merge in assignments
-        for (var i = 0; i < self.body.length;) {
-          if (self.body[i] instanceof AST_SimpleStatement) {
-            var expr = self.body[i].body; var sym; var assign
-            if (expr instanceof AST_Assign &&
-                            expr.operator == '=' &&
-                            (sym = expr.left) instanceof AST_Symbol &&
-                            vars.has(sym.name)
-            ) {
-              var def = vars.get(sym.name)
-              if (def.value) break
-              def.value = expr.right
-              remove(defs, def)
-              defs.push(def)
-              self.body.splice(i, 1)
-              continue
-            }
-            if (expr instanceof AST_Sequence &&
-                            (assign = expr.expressions[0]) instanceof AST_Assign &&
-                            assign.operator == '=' &&
-                            (sym = assign.left) instanceof AST_Symbol &&
-                            vars.has(sym.name)
-            ) {
-              var def = vars.get(sym.name)
-              if (def.value) break
-              def.value = assign.right
-              remove(defs, def)
-              defs.push(def)
-              self.body[i].body = make_sequence(expr, expr.expressions.slice(1))
-              continue
-            }
-          }
-          if (self.body[i] instanceof AST_EmptyStatement) {
-            self.body.splice(i, 1)
-            continue
-          }
-          if (self.body[i] instanceof AST_BlockStatement) {
-            var tmp = [i, 1].concat(self.body[i].body)
-            self.body.splice.apply(self.body, tmp)
-            continue
-          }
-          break
-        }
-        defs = make_node(AST_Var, self, {
-          definitions: defs
-        })
-        hoisted.push(defs)
-      }
-    }
-    self.body = dirs.concat(hoisted, self.body)
-  }
-  return self
-})
-
-AST_Scope.DEFMETHOD('make_var_name', function (prefix) {
-  var var_names = this.var_names()
-  prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
-  var name = prefix
-  for (var i = 0; var_names.has(name); i++) name = prefix + '$' + i
-  this.add_var_name(name)
-  return name
-})
-
-AST_Scope.DEFMETHOD('hoist_properties', function (compressor: Compressor) {
-  var self = this
-  if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
-  var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false
-  var defs_by_id = new Map()
-  var hoister = new TreeTransformer(function (node: any, descend) {
-    if (node instanceof AST_Definitions &&
-            hoister.parent() instanceof AST_Export) return node
-    if (node instanceof AST_VarDef) {
-      const sym = node.name
-      let def
-      let value
-      if (sym.scope === self &&
-                (def = sym.definition?.()).escaped != 1 &&
-                !def.assignments &&
-                !def.direct_access &&
-                !def.single_use &&
-                !compressor.exposed(def) &&
-                !top_retain(def) &&
-                (value = sym.fixed_value()) === node.value &&
-                value instanceof AST_Object &&
-                value.properties.every(prop => typeof prop.key === 'string')
-      ) {
-        descend(node, this)
-        const defs = new Map()
-        const assignments: any[] = []
-        value.properties.forEach(function (prop) {
-          assignments.push(make_node(AST_VarDef, node, {
-            name: make_sym(sym, prop.key, defs),
-            value: prop.value
-          }))
-        })
-        defs_by_id.set(def.id, defs)
-        return MAP.splice(assignments)
-      }
-    } else if (node instanceof AST_PropAccess &&
-            node.expression instanceof AST_SymbolRef
-    ) {
-      const defs = defs_by_id.get(node.expression.definition?.().id)
-      if (defs) {
-        const def = defs.get(String(get_value(node.property)))
-        const sym = make_node(AST_SymbolRef, node, {
-          name: def.name,
-          scope: node.expression.scope,
-          thedef: def
-        })
-        sym.reference({})
-        return sym
-      }
-    }
-
-    function make_sym (sym: any | any, key: string, defs: Map<string, any>) {
-      const new_var = make_node(sym.CTOR, sym, {
-        name: self.make_var_name(sym.name + '_' + key),
-        scope: self
-      })
-      const def = self.def_variable(new_var)
-      defs.set(String(key), def)
-      self.enclosed.push(def)
-      return new_var
-    }
-  })
-  return self.transform(hoister)
-})
 
 // drop_side_effect_free()
 // remove side-effect-free parts which only affects return value
@@ -4922,57 +3919,6 @@ def_optimize(AST_Try, function (self, compressor) {
     }).optimize(compressor)
   }
   return self
-})
-
-AST_Definitions.DEFMETHOD('remove_initializers', function () {
-  var decls: any[] = []
-  this.definitions.forEach(function (def) {
-    if (def.name instanceof AST_SymbolDeclaration) {
-      def.value = null
-      decls.push(def)
-    } else {
-      walk(def.name, (node: any) => {
-        if (node instanceof AST_SymbolDeclaration) {
-          decls.push(make_node(AST_VarDef, def, {
-            name: node,
-            value: null
-          }))
-        }
-      })
-    }
-  })
-  this.definitions = decls
-})
-
-AST_Definitions.DEFMETHOD('to_assignments', function (compressor: Compressor) {
-  var reduce_vars = compressor.option('reduce_vars')
-  var assignments = this.definitions.reduce(function (a, def) {
-    if (def.value && !(def.name instanceof AST_Destructuring)) {
-      var name = make_node(AST_SymbolRef, def.name, def.name)
-      a.push(make_node(AST_Assign, def, {
-        operator: '=',
-        left: name,
-        right: def.value
-      }))
-      if (reduce_vars) name.definition().fixed = false
-    } else if (def.value) {
-      // Because it's a destructuring, do not turn into an assignment.
-      var varDef = make_node(AST_VarDef, def, {
-        name: def.name,
-        value: def.value
-      })
-      var var_ = make_node(AST_Var, def, {
-        definitions: [varDef]
-      })
-      a.push(var_)
-    }
-    def = def.name.definition?.()
-    def.eliminated++
-    def.replaced--
-    return a
-  }, [])
-  if (assignments.length == 0) return null
-  return make_sequence(this, assignments)
 })
 
 def_optimize(AST_Definitions, function (self) {
@@ -5713,19 +4659,6 @@ def_optimize(AST_Sequence, function (self, compressor) {
   }
 })
 
-AST_Unary.DEFMETHOD('lift_sequences', function (compressor: Compressor) {
-  if (compressor.option('sequences')) {
-    if (this.expression instanceof AST_Sequence) {
-      var x = this.expression.expressions.slice()
-      var e = this.clone()
-      e.expression = x.pop()
-      x.push(e)
-      return make_sequence(this, x).optimize(compressor)
-    }
-  }
-  return this
-})
-
 def_optimize(AST_UnaryPostfix, function (self, compressor) {
   return self.lift_sequences(compressor)
 })
@@ -5804,41 +4737,6 @@ def_optimize(AST_UnaryPrefix, function (self, compressor) {
   return self
 })
 
-AST_Binary.DEFMETHOD('lift_sequences', function (compressor: Compressor) {
-  if (compressor.option('sequences')) {
-    if (this.left instanceof AST_Sequence) {
-      var x = this.left.expressions.slice()
-      var e = this.clone()
-      e.left = x.pop()
-      x.push(e)
-      return make_sequence(this, x).optimize(compressor)
-    }
-    if (this.right instanceof AST_Sequence && !this.left.has_side_effects(compressor)) {
-      var assign = this.operator == '=' && this.left instanceof AST_SymbolRef
-      var x = this.right.expressions
-      var last = x.length - 1
-      for (var i = 0; i < last; i++) {
-        if (!assign && x[i].has_side_effects(compressor)) break
-      }
-      if (i == last) {
-        x = x.slice()
-        var e = this.clone()
-        e.right = x.pop()
-        x.push(e)
-        return make_sequence(this, x).optimize(compressor)
-      } else if (i > 0) {
-        var e = this.clone()
-        e.right = make_sequence(this.right, x.slice(i))
-        x = x.slice(0, i)
-        x.push(e)
-        return make_sequence(this, x).optimize(compressor)
-      }
-    }
-  }
-  return this
-})
-
-var commutativeOperators = makePredicate('== === != !== * & | ^')
 function is_object (node: any) {
   return node instanceof AST_Array ||
         node instanceof AST_Lambda ||
@@ -6629,8 +5527,6 @@ function is_reachable (self, defs) {
   })
 }
 
-const ASSIGN_OPS = makePredicate('+ - / * % >> << >>> | ^ &')
-const ASSIGN_OPS_COMMUTATIVE = makePredicate('* | ^ &')
 def_optimize(AST_Assign, function (self, compressor) {
   var def
   if (compressor.option('dead_code') &&
@@ -7100,16 +5996,6 @@ def_optimize(AST_Boolean, function (self, compressor) {
   return self
 })
 
-function safe_to_flatten (value, compressor) {
-  if (value instanceof AST_SymbolRef) {
-    value = value.fixed_value()
-  }
-  if (!value) return false
-  if (!(value instanceof AST_Lambda || value instanceof AST_Class)) return true
-  if (!(value instanceof AST_Lambda && value.contains_this())) return true
-  return compressor.parent() instanceof AST_New
-}
-
 def_optimize(AST_Sub, function (self, compressor) {
   var expr = self.expression
   var prop = self.property
@@ -7238,54 +6124,6 @@ def_optimize(AST_Sub, function (self, compressor) {
     return best_of(compressor, ev, self)
   }
   return self
-})
-
-AST_Lambda.DEFMETHOD('contains_this', function () {
-  return walk(this, (node: any) => {
-    if (node instanceof AST_This) return walk_abort
-    if (
-      node !== this &&
-            node instanceof AST_Scope &&
-            !(node instanceof AST_Arrow)
-    ) {
-      return true
-    }
-  })
-})
-
-AST_PropAccess.DEFMETHOD('flatten_object', function (key, compressor) {
-  if (!compressor.option('properties')) return
-  var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
-  var expr = this.expression
-  if (expr instanceof AST_Object) {
-    var props = expr.properties
-    for (var i = props.length; --i >= 0;) {
-      var prop = props[i]
-      if ('' + (prop instanceof AST_ConciseMethod ? prop.key.name : prop.key) == key) {
-        if (!props.every((prop) => {
-          return prop instanceof AST_ObjectKeyVal ||
-                        arrows && prop instanceof AST_ConciseMethod && !prop.is_generator
-        })) break
-        if (!safe_to_flatten(prop.value, compressor)) break
-        return make_node(AST_Sub, this, {
-          expression: make_node(AST_Array, expr, {
-            elements: props.map(function (prop) {
-              var v = prop.value
-              if (v instanceof AST_Accessor) v = make_node(AST_Function, v, v)
-              var k = prop.key
-              if (k instanceof AST_Node && !(k instanceof AST_SymbolMethod)) {
-                return make_sequence(prop, [k, v])
-              }
-              return v
-            })
-          }),
-          property: make_node(AST_Number, this, {
-            value: i
-          })
-        })
-      }
-    }
-  }
 })
 
 def_optimize(AST_Dot, function (self, compressor) {

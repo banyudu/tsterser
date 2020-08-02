@@ -277,10 +277,6 @@ function sort_regexp_flags (flags: string) {
   return out
 }
 
-function has_annotation (node: any, annotation: number) {
-  return node._annotations & annotation
-}
-
 function set_annotation (node: any, annotation: number) {
   node._annotations |= annotation
 }
@@ -308,6 +304,21 @@ export {
   return_true,
   sort_regexp_flags,
   string_template,
-  has_annotation,
   set_annotation
+}
+
+export function convert_to_predicate (obj) {
+  const out = new Map()
+  for (var key of Object.keys(obj)) {
+    out.set(key, makePredicate(obj[key]))
+  }
+  return out
+}
+
+export function has_annotation (node: any, annotation: number) {
+  return node._annotations & annotation
+}
+
+export function warn (compressor, node) {
+  compressor.warn('global_defs ' + node.print_to_string() + ' redefined [{file}:{line},{col}]', node.start)
 }
