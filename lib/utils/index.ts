@@ -322,3 +322,20 @@ export function has_annotation (node: any, annotation: number) {
 export function warn (compressor, node) {
   compressor.warn('global_defs ' + node.print_to_string() + ' redefined [{file}:{line},{col}]', node.start)
 }
+
+export function is_strict (compressor) {
+  const optPureGettters = compressor.option('pure_getters')
+  return typeof optPureGettters === 'string' && optPureGettters.includes('strict')
+}
+
+export function push (tw) {
+  tw.safe_ids = Object.create(tw.safe_ids)
+}
+
+export function pop (tw) {
+  tw.safe_ids = Object.getPrototypeOf(tw.safe_ids)
+}
+
+export function mark (tw, def, safe) {
+  tw.safe_ids[def.id] = safe
+}
