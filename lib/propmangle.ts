@@ -41,277 +41,276 @@
 
  ***********************************************************************/
 
-"use strict";
+'use strict'
 /* global global, self */
 
 import {
-    defaults,
-    push_uniq,
-} from "./utils/index";
-import { base54 } from "./scope";
+  defaults,
+  push_uniq
+} from './utils/index'
+import { base54 } from './scope'
 import {
-    AST_Call,
-    AST_Conditional,
-    AST_Dot,
-    AST_ObjectKeyVal,
-    AST_ObjectProperty,
-    AST_Sequence,
-    AST_String,
-    AST_Sub,
-    TreeTransformer,
-    TreeWalker,
-} from "./ast";
-import { domprops } from "../tools/domprops";
+  AST_Call,
+  AST_Conditional,
+  AST_Dot,
+  AST_ObjectKeyVal,
+  AST_ObjectProperty,
+  AST_Sequence,
+  AST_String,
+  AST_Sub,
+  TreeTransformer,
+  TreeWalker
+} from './ast'
+import { domprops } from '../tools/domprops'
 
-function find_builtins(reserved: Set<string | undefined>) {
-    domprops.forEach(add);
+function find_builtins (reserved: Set<string | undefined>) {
+  domprops.forEach(add)
 
-    // Compatibility fix for some standard defined globals not defined on every js environment
-    var new_globals = ["Symbol", "Map", "Promise", "Proxy", "Reflect", "Set", "WeakMap", "WeakSet"];
-    var objects: any = {};
-    var global_ref: AnyObject = typeof global === "object" ? global : self;
+  // Compatibility fix for some standard defined globals not defined on every js environment
+  var new_globals = ['Symbol', 'Map', 'Promise', 'Proxy', 'Reflect', 'Set', 'WeakMap', 'WeakSet']
+  var objects: any = {}
+  var global_ref: AnyObject = typeof global === 'object' ? global : self
 
-    new_globals.forEach(function (new_global) {
-        objects[new_global] = global_ref[new_global] || new Function();
-    });
+  new_globals.forEach(function (new_global) {
+    objects[new_global] = global_ref[new_global] || new Function()
+  });
 
-    [
-        "null",
-        "true",
-        "false",
-        "NaN",
-        "Infinity",
-        "-Infinity",
-        "undefined",
-    ].forEach(add);
-    [ Object, Array, Function, Number,
-      String, Boolean, Error, Math,
-      Date, RegExp, objects.Symbol, ArrayBuffer,
-      DataView, decodeURI, decodeURIComponent,
-      encodeURI, encodeURIComponent, eval, EvalError,
-      Float32Array, Float64Array, Int8Array, Int16Array,
-      Int32Array, isFinite, isNaN, JSON, objects.Map, parseFloat,
-      parseInt, objects.Promise, objects.Proxy, RangeError, ReferenceError,
-      objects.Reflect, objects.Set, SyntaxError, TypeError, Uint8Array,
-      Uint8ClampedArray, Uint16Array, Uint32Array, URIError,
-      objects.WeakMap, objects.WeakSet
-    ].forEach(function(ctor) {
-        Object.getOwnPropertyNames(ctor).map(add);
-        if (ctor.prototype) {
-            Object.getOwnPropertyNames(ctor.prototype).map(add);
-        }
-    });
-    function add(name: string) {
-        reserved.add(name);
+  [
+    'null',
+    'true',
+    'false',
+    'NaN',
+    'Infinity',
+    '-Infinity',
+    'undefined'
+  ].forEach(add);
+  [Object, Array, Function, Number,
+    String, Boolean, Error, Math,
+    Date, RegExp, objects.Symbol, ArrayBuffer,
+    DataView, decodeURI, decodeURIComponent,
+    encodeURI, encodeURIComponent, eval, EvalError,
+    Float32Array, Float64Array, Int8Array, Int16Array,
+    Int32Array, isFinite, isNaN, JSON, objects.Map, parseFloat,
+    parseInt, objects.Promise, objects.Proxy, RangeError, ReferenceError,
+    objects.Reflect, objects.Set, SyntaxError, TypeError, Uint8Array,
+    Uint8ClampedArray, Uint16Array, Uint32Array, URIError,
+    objects.WeakMap, objects.WeakSet
+  ].forEach(function (ctor) {
+    Object.getOwnPropertyNames(ctor).map(add)
+    if (ctor.prototype) {
+      Object.getOwnPropertyNames(ctor.prototype).map(add)
     }
+  })
+  function add (name: string) {
+    reserved.add(name)
+  }
 }
 
-function reserve_quoted_keys(ast: any, reserved: string[]) {
-    function add(name: string) {
-        push_uniq(reserved, name);
-    }
+function reserve_quoted_keys (ast: any, reserved: string[]) {
+  function add (name: string) {
+    push_uniq(reserved, name)
+  }
 
-    ast.walk(new TreeWalker(function(node: any) {
-        if (node instanceof AST_ObjectKeyVal && node.quote) {
-            add(node.key);
-        } else if (node instanceof AST_ObjectProperty && node.quote) {
-            add(node.key.name);
-        } else if (node instanceof AST_Sub) {
-            addStrings(node.property as any, add);
-        }
-    }));
+  ast.walk(new TreeWalker(function (node: any) {
+    if (node instanceof AST_ObjectKeyVal && node.quote) {
+      add(node.key)
+    } else if (node instanceof AST_ObjectProperty && node.quote) {
+      add(node.key.name)
+    } else if (node instanceof AST_Sub) {
+      addStrings(node.property, add)
+    }
+  }))
 }
 
-function addStrings(node: any, add: Function) {
-    node.walk(new TreeWalker(function(node: any) {
-        if (node instanceof AST_Sequence) {
-            addStrings(node.tail_node?.(), add);
-        } else if (node instanceof AST_String) {
-            add(node.value);
-        } else if (node instanceof AST_Conditional) {
-            addStrings(node.consequent, add);
-            addStrings(node.alternative, add);
-        }
-        return true;
-    }));
+function addStrings (node: any, add: Function) {
+  node.walk(new TreeWalker(function (node: any) {
+    if (node instanceof AST_Sequence) {
+      addStrings(node.tail_node?.(), add)
+    } else if (node instanceof AST_String) {
+      add(node.value)
+    } else if (node instanceof AST_Conditional) {
+      addStrings(node.consequent, add)
+      addStrings(node.alternative, add)
+    }
+    return true
+  }))
 }
 
-function mangle_properties(ast: any, options: any) {
-    options = defaults(options, {
-        builtins: false,
-        cache: null,
-        debug: false,
-        keep_quoted: false,
-        only_cache: false,
-        regex: null,
-        reserved: null,
-        undeclared: false,
-    }, true);
+function mangle_properties (ast: any, options: any) {
+  options = defaults(options, {
+    builtins: false,
+    cache: null,
+    debug: false,
+    keep_quoted: false,
+    only_cache: false,
+    regex: null,
+    reserved: null,
+    undeclared: false
+  }, true)
 
-    var reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved];
-    var reserved = new Set(reserved_option as string);
-    if (!options.builtins) find_builtins(reserved);
+  var reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved]
+  var reserved = new Set(reserved_option as string)
+  if (!options.builtins) find_builtins(reserved)
 
-    var cname = -1;
-    var cache: Map<string, any>;
-    if (options.cache) {
-        cache = options.cache.props;
-        cache.forEach(function(mangled_name) {
-            reserved.add(mangled_name);
-        });
-    } else {
-        cache = new Map();
-    }
+  var cname = -1
+  var cache: Map<string, any>
+  if (options.cache) {
+    cache = options.cache.props
+    cache.forEach(function (mangled_name) {
+      reserved.add(mangled_name)
+    })
+  } else {
+    cache = new Map()
+  }
 
-    var regex = options.regex && new RegExp(options.regex);
+  var regex = options.regex && new RegExp(options.regex)
 
-    // note debug is either false (disabled), or a string of the debug suffix to use (enabled).
-    // note debug may be enabled as an empty string, which is falsey. Also treat passing 'true'
-    // the same as passing an empty string.
-    var debug = options.debug !== false;
-    var debug_name_suffix: string;
-    if (debug) {
-        debug_name_suffix = (options.debug === true ? "" : options.debug as string);
-    }
+  // note debug is either false (disabled), or a string of the debug suffix to use (enabled).
+  // note debug may be enabled as an empty string, which is falsey. Also treat passing 'true'
+  // the same as passing an empty string.
+  var debug = options.debug !== false
+  var debug_name_suffix: string
+  if (debug) {
+    debug_name_suffix = (options.debug === true ? '' : options.debug as string)
+  }
 
-    var names_to_mangle = new Set();
-    var unmangleable = new Set<string>();
+  var names_to_mangle = new Set()
+  var unmangleable = new Set<string>()
 
-    var keep_quoted_strict = options.keep_quoted === "strict";
+  var keep_quoted_strict = options.keep_quoted === 'strict'
 
-    // step 1: find candidates to mangle
-    ast.walk(new TreeWalker(function(node: any) {
-        if (node instanceof AST_ObjectKeyVal) {
-            if (typeof node.key == "string" &&
+  // step 1: find candidates to mangle
+  ast.walk(new TreeWalker(function (node: any) {
+    if (node instanceof AST_ObjectKeyVal) {
+      if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
-                add(node.key);
-            }
-        } else if (node instanceof AST_ObjectProperty) {
-            // setter or getter, since KeyVal is handled above
-            if (!keep_quoted_strict || !node.key.end.quote) {
-                add(node.key.name);
-            }
-        } else if (node instanceof AST_Dot) {
-            var declared = !!options.undeclared;
-            if (!declared) {
-                // TODO: check type
-                var root: any = node;
-                while (root.expression) {
-                    root = root.expression;
-                }
-                declared = !(root.thedef && root.thedef.undeclared);
-            }
-            if (declared &&
+        add(node.key)
+      }
+    } else if (node instanceof AST_ObjectProperty) {
+      // setter or getter, since KeyVal is handled above
+      if (!keep_quoted_strict || !node.key.end.quote) {
+        add(node.key.name)
+      }
+    } else if (node instanceof AST_Dot) {
+      var declared = !!options.undeclared
+      if (!declared) {
+        // TODO: check type
+        var root: any = node
+        while (root.expression) {
+          root = root.expression
+        }
+        declared = !(root.thedef && root.thedef.undeclared)
+      }
+      if (declared &&
                 (!keep_quoted_strict || !node.quote)) {
-                add(node.property as string); // TODO: check type
-            }
-        } else if (node instanceof AST_Sub) {
-            if (!keep_quoted_strict) {
-                addStrings(node.property as any, add);
-            }
-        } else if (node instanceof AST_Call
-            && node.expression.print_to_string() == "Object.defineProperty") {
-            addStrings(node.args[1], add);
-        }
-    }));
+        add(node.property as string) // TODO: check type
+      }
+    } else if (node instanceof AST_Sub) {
+      if (!keep_quoted_strict) {
+        addStrings(node.property, add)
+      }
+    } else if (node instanceof AST_Call &&
+            node.expression.print_to_string() == 'Object.defineProperty') {
+      addStrings(node.args[1], add)
+    }
+  }))
 
-    // step 2: transform the tree, renaming properties
-    return ast.transform(new TreeTransformer(function(node: any) {
-        if (node instanceof AST_ObjectKeyVal) {
-            if (typeof node.key == "string" &&
+  // step 2: transform the tree, renaming properties
+  return ast.transform(new TreeTransformer(function (node: any) {
+    if (node instanceof AST_ObjectKeyVal) {
+      if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
-                node.key = mangle(node.key);
-            }
-        } else if (node instanceof AST_ObjectProperty) {
-            // setter, getter, method or class field
-            if (!keep_quoted_strict || !node.key.end.quote) {
-                node.key.name = mangle(node.key.name);
-            }
-        } else if (node instanceof AST_Dot) {
-            if (!keep_quoted_strict || !node.quote) {
-                node.property = mangle(node.property as string); // TODO: check type
-            }
-        } else if (!options.keep_quoted && node instanceof AST_Sub) {
-            node.property = mangleStrings(node.property as any); // TODO: check type
-        } else if (node instanceof AST_Call
-            && node.expression.print_to_string() == "Object.defineProperty") {
-            node.args[1] = mangleStrings(node.args[1]);
-        }
-    }));
+        node.key = mangle(node.key)
+      }
+    } else if (node instanceof AST_ObjectProperty) {
+      // setter, getter, method or class field
+      if (!keep_quoted_strict || !node.key.end.quote) {
+        node.key.name = mangle(node.key.name)
+      }
+    } else if (node instanceof AST_Dot) {
+      if (!keep_quoted_strict || !node.quote) {
+        node.property = mangle(node.property as string) // TODO: check type
+      }
+    } else if (!options.keep_quoted && node instanceof AST_Sub) {
+      node.property = mangleStrings(node.property) // TODO: check type
+    } else if (node instanceof AST_Call &&
+            node.expression.print_to_string() == 'Object.defineProperty') {
+      node.args[1] = mangleStrings(node.args[1])
+    }
+  }))
 
-    // only function declarations after this line
+  // only function declarations after this line
 
-    function can_mangle(name: string) {
-        if (unmangleable.has(name)) return false;
-        if (reserved.has(name)) return false;
-        if (options.only_cache) {
-            return cache.has(name);
-        }
-        if (/^-?[0-9]+(\.[0-9]+)?(e[+-][0-9]+)?$/.test(name)) return false;
-        return true;
+  function can_mangle (name: string) {
+    if (unmangleable.has(name)) return false
+    if (reserved.has(name)) return false
+    if (options.only_cache) {
+      return cache.has(name)
+    }
+    if (/^-?[0-9]+(\.[0-9]+)?(e[+-][0-9]+)?$/.test(name)) return false
+    return true
+  }
+
+  function should_mangle (name: string) {
+    if (regex && !regex.test(name)) return false
+    if (reserved.has(name)) return false
+    return cache.has(name) ||
+            names_to_mangle.has(name)
+  }
+
+  function add (name: string) {
+    if (can_mangle(name)) { names_to_mangle.add(name) }
+
+    if (!should_mangle(name)) {
+      unmangleable.add(name)
+    }
+  }
+
+  function mangle (name: string) {
+    if (!should_mangle(name)) {
+      return name
     }
 
-    function should_mangle(name: string) {
-        if (regex && !regex.test(name)) return false;
-        if (reserved.has(name)) return false;
-        return cache.has(name)
-            || names_to_mangle.has(name);
-    }
+    var mangled = cache.get(name)
+    if (!mangled) {
+      if (debug) {
+        // debug mode: use a prefix and suffix to preserve readability, e.g. o.foo -> o._$foo$NNN_.
+        var debug_mangled = '_$' + name + '$' + debug_name_suffix + '_'
 
-    function add(name: string) {
-        if (can_mangle(name))
-            names_to_mangle.add(name);
-
-        if (!should_mangle(name)) {
-            unmangleable.add(name);
+        if (can_mangle(debug_mangled)) {
+          mangled = debug_mangled
         }
+      }
+
+      // either debug mode is off, or it is on and we could not use the mangled name
+      if (!mangled) {
+        do {
+          mangled = base54(++cname)
+        } while (!can_mangle(mangled))
+      }
+
+      cache.set(name, mangled)
     }
+    return mangled
+  }
 
-    function mangle(name: string) {
-        if (!should_mangle(name)) {
-            return name;
-        }
-
-        var mangled = cache.get(name);
-        if (!mangled) {
-            if (debug) {
-                // debug mode: use a prefix and suffix to preserve readability, e.g. o.foo -> o._$foo$NNN_.
-                var debug_mangled = "_$" + name + "$" + debug_name_suffix + "_";
-
-                if (can_mangle(debug_mangled)) {
-                    mangled = debug_mangled;
-                }
-            }
-
-            // either debug mode is off, or it is on and we could not use the mangled name
-            if (!mangled) {
-                do {
-                    mangled = base54(++cname);
-                } while (!can_mangle(mangled));
-            }
-
-            cache.set(name, mangled);
-        }
-        return mangled;
-    }
-
-    function mangleStrings(node: any) {
-        return node.transform(new TreeTransformer(function(node: any) {
-            if (node instanceof AST_Sequence) {
-                var last = node.expressions.length - 1;
-                node.expressions[last] = mangleStrings(node.expressions[last]);
-            } else if (node instanceof AST_String) {
-                node.value = mangle(node.value);
-            } else if (node instanceof AST_Conditional) {
-                node.consequent = mangleStrings(node.consequent);
-                node.alternative = mangleStrings(node.alternative);
-            }
-            return node;
-        }));
-    }
+  function mangleStrings (node: any) {
+    return node.transform(new TreeTransformer(function (node: any) {
+      if (node instanceof AST_Sequence) {
+        var last = node.expressions.length - 1
+        node.expressions[last] = mangleStrings(node.expressions[last])
+      } else if (node instanceof AST_String) {
+        node.value = mangle(node.value)
+      } else if (node instanceof AST_Conditional) {
+        node.consequent = mangleStrings(node.consequent)
+        node.alternative = mangleStrings(node.alternative)
+      }
+      return node
+    }))
+  }
 }
 
 export {
-    reserve_quoted_keys,
-    mangle_properties,
-};
+  reserve_quoted_keys,
+  mangle_properties
+}

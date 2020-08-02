@@ -41,66 +41,66 @@
 
  ***********************************************************************/
 
-"use strict";
+'use strict'
 
-import MOZ_SourceMap from "source-map";
+import MOZ_SourceMap from 'source-map'
 import {
-    defaults,
-} from "./utils/index";
+  defaults
+} from './utils/index'
 
 // a small wrapper around fitzgen's source-map library
-function SourceMap(options) {
-    options = defaults(options, {
-        file : null,
-        root : null,
-        orig : null,
+function SourceMap (options) {
+  options = defaults(options, {
+    file: null,
+    root: null,
+    orig: null,
 
-        orig_line_diff : 0,
-        dest_line_diff : 0,
-    });
-    var generator: any = new MOZ_SourceMap.SourceMapGenerator({
-        file       : options.file,
-        sourceRoot : options.root
-    });
-    var orig_map: any = options.orig && new MOZ_SourceMap.SourceMapConsumer(options.orig);
+    orig_line_diff: 0,
+    dest_line_diff: 0
+  })
+  var generator: any = new MOZ_SourceMap.SourceMapGenerator({
+    file: options.file,
+    sourceRoot: options.root
+  })
+  var orig_map: any = options.orig && new MOZ_SourceMap.SourceMapConsumer(options.orig)
 
+  if (orig_map) {
+    orig_map.sources.forEach(function (source) {
+      var sourceContent = orig_map.sourceContentFor(source, true)
+      if (sourceContent) {
+        generator.setSourceContent(source, sourceContent)
+      }
+    })
+  }
+
+  function add (source, gen_line, gen_col, orig_line, orig_col, name) {
     if (orig_map) {
-        orig_map.sources.forEach(function(source) {
-            var sourceContent = orig_map.sourceContentFor(source, true);
-            if (sourceContent) {
-                generator.setSourceContent(source, sourceContent);
-            }
-        });
+      var info = orig_map.originalPositionFor({
+        line: orig_line,
+        column: orig_col
+      })
+      if (info.source === null) {
+        return
+      }
+      source = info.source
+      orig_line = info.line
+      orig_col = info.column
+      name = info.name || name
     }
-
-    function add(source, gen_line, gen_col, orig_line, orig_col, name) {
-        if (orig_map) {
-            var info = orig_map.originalPositionFor({
-                line: orig_line,
-                column: orig_col
-            });
-            if (info.source === null) {
-                return;
-            }
-            source = info.source;
-            orig_line = info.line;
-            orig_col = info.column;
-            name = info.name || name;
-        }
-        generator.addMapping({
-            generated : { line: gen_line + options.dest_line_diff, column: gen_col },
-            original  : { line: orig_line + options.orig_line_diff, column: orig_col },
-            source    : source,
-            name      : name
-        });
-    }
-    return {
-        add        : add,
-        get        : function() { return generator; },
-        toString   : function() { return JSON.stringify(generator.toJSON()); }
-    };
+    generator.addMapping({
+      generated: { line: gen_line + options.dest_line_diff, column: gen_col },
+      original: { line: orig_line + options.orig_line_diff, column: orig_col },
+      source: source,
+      name: name
+    })
+  }
+  return {
+    add: add,
+    get: function () { return generator },
+    toString: function () { return JSON.stringify(generator.toJSON()) }
+  }
 }
 
 export {
-    SourceMap,
-};
+  SourceMap
+}

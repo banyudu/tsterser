@@ -1,3 +1,3 @@
 interface AnyObject<T = any> {
-    [x: string]: T
+  [x: string]: T
 }

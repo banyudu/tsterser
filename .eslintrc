@@ -2,5 +2,37 @@
     "extends": ["standard-with-typescript"],
     "parserOptions": {
         "project": "./tsconfig.json"
+    },
+    "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/naming-convention": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/prefer-optional-chain": "warn",
+        "no-eval": "warn",
+        "eqeqeq": "warn",
+        "no-mixed-operators": "warn",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "@typescript-eslint/no-implied-eval": "off",
+        "new-cap": "warn",
+        "no-case-declarations": "warn",
+        "no-labels": "warn",
+        "no-cond-assign": "warn",
+        "no-redeclare": "warn",
+        "no-fallthrough": "warn",
+        "@typescript-eslint/brace-style": "warn",
+        "no-return-assign": "warn",
+        "no-misleading-character-class": "warn",
+        "no-control-regex": "warn",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "no-unmodified-loop-condition": "warn",
+        "@typescript-eslint/no-this-alias": "warn",
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/consistent-type-assertions": "warn",
+        "no-useless-escape": "warn",
+        "no-new-func": "warn",
+        "@typescript-eslint/no-extraneous-class": "warn",
+        "@typescript-eslint/no-throw-literal": "off",
+        "@typescript-eslint/no-base-to-string": "off",
+        "no-void": "warn"
     }
 }
