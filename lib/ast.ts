@@ -123,10 +123,6 @@ const def_size = (size, def) => size + list_overhead(def.definitions);
 
 const pass_through = () => true;
 
-const get_to_moz = (handler) => function(parent: any) {
-    return set_moz_loc(this, handler(this, parent));
-};
-
 var TO_MOZ_STACK: Array<any | null> | null = null;
 
 function to_moz(node: any | null) {
@@ -364,6 +360,12 @@ var AST_Node: any = DEFNODE("Node", "start end", {
         set_flag(opt, OPTIMIZED);
         return opt;
     },
+    to_mozilla_ast: function (parent) {
+        if (!this._to_mozilla_ast) {
+            throw new Error("to_mozilla_ast not defined");
+        }
+        return set_moz_loc(this, this._to_mozilla_ast(this, parent));
+    },
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
@@ -398,7 +400,7 @@ var AST_Statement: any = DEFNODE("Statement", null, {
 var AST_Debugger: any = DEFNODE("Debugger", null, {
     shallow_cmp: pass_through,
     _size: () => 8,
-    to_mozilla_ast: get_to_moz(() => ({ type: "DebuggerStatement" })),
+    _to_mozilla_ast: () => ({ type: "DebuggerStatement" }),
     _codegen: function(_self, output) {
         output.print("debugger");
         output.semicolon();
@@ -413,7 +415,7 @@ var AST_Directive: any = DEFNODE("Directive", "value quote", {
         // TODO string encoding stuff
         return 2 + this.value.length;
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_Directive(M) {
+    _to_mozilla_ast: function To_Moz_Directive(M) {
         return {
             type: "ExpressionStatement",
             expression: {
@@ -423,7 +425,7 @@ var AST_Directive: any = DEFNODE("Directive", "value quote", {
             },
             directive: M.value
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print_string(self.value, self.quote);
         output.semicolon();
@@ -449,12 +451,12 @@ var AST_SimpleStatement: any = DEFNODE("SimpleStatement", "body", {
     transform: get_transformer(function(self, tw: any) {
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ExpressionStatement(M) {
+    _to_mozilla_ast: function To_Moz_ExpressionStatement(M) {
         return {
             type: "ExpressionStatement",
             expression: to_moz(M.body as any) // TODO: check type
         };
-    }),
+    },
     _codegen: function(self, output) {
         (self.body as any).print(output);
         output.semicolon();
@@ -501,10 +503,10 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
     transform: get_transformer(function(self, tw: any) {
         self.body = do_list(self.body, tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "BlockStatement",
         body: M.body.map(to_moz)
-    }))
+    })
 }, {
     documentation: "A body of statements (usually braced)",
     propdoc: {
@@ -514,10 +516,10 @@ var AST_Block: any = DEFNODE("Block", "body block_scope", {
 }, AST_Statement);
 
 var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "BlockStatement",
         body: M.body.map(to_moz)
-    })),
+    }),
     _codegen: function(self, output) {
         print_braced(self, output);
     },
@@ -527,7 +529,7 @@ var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {
 
 var AST_EmptyStatement: any = DEFNODE("EmptyStatement", null, {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(() => ({ type: "EmptyStatement" })),
+    _to_mozilla_ast: () => ({ type: "EmptyStatement" }),
     _size: () => 1,
     _codegen: function(_self, output) {
         output.semicolon();
@@ -579,11 +581,11 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
         self.label = self.label.transform(tw) as any;
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "LabeledStatement",
         label: to_moz(M.label),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         self.label.print(output);
         output.colon();
@@ -629,11 +631,11 @@ var AST_Do: any = DEFNODE("Do", null, {
         self.body = (self.body as any).transform(tw);
         self.condition = self.condition.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "DoWhileStatement",
         test: to_moz(M.condition),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("do");
         output.space();
@@ -667,11 +669,11 @@ var AST_While: any = DEFNODE("While", null, {
         self.condition = self.condition.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "WhileStatement",
         test: to_moz(M.condition),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("while");
         output.space();
@@ -712,13 +714,13 @@ var AST_For: any = DEFNODE("For", "init condition step", {
         if (self.step) self.step = self.step.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ForStatement",
         init: to_moz(M.init),
         test: to_moz(M.condition),
         update: to_moz(M.step),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("for");
         output.space();
@@ -777,12 +779,12 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
         self.object = self.object.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ForInStatement",
         left: to_moz(M.init),
         right: to_moz(M.object),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("for");
         if (self.await) {
@@ -810,13 +812,13 @@ var AST_ForIn: any = DEFNODE("ForIn", "init object", {
 
 var AST_ForOf: any = DEFNODE("ForOf", "await", {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ForOfStatement",
         left: to_moz(M.init),
         right: to_moz(M.object),
         body: to_moz(M.body),
         await: M.await
-    })),
+    }),
 }, {
     documentation: "A `for ... of` statement",
 }, AST_ForIn);
@@ -838,11 +840,11 @@ var AST_With: any = DEFNODE("With", "expression", {
         self.expression = self.expression.transform(tw);
         self.body = (self.body as any).transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "WithStatement",
         object: to_moz(M.expression),
         body: to_moz(M.body)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("with");
         output.space();
@@ -1198,9 +1200,9 @@ var AST_Toplevel: any = DEFNODE("Toplevel", "globals", {
     _size: function() {
         return list_overhead(this.body);
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_Program(M) {
+    _to_mozilla_ast: function To_Moz_Program(M) {
         return to_moz_scope("Program", M);
-    }),
+    },
     _codegen: function(self, output) {
         display_body(self.body as any[], true, output, true);
         output.print("");
@@ -1226,12 +1228,12 @@ var AST_Expansion: any = DEFNODE("Expansion", "expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_Spread(M) {
+    _to_mozilla_ast: function To_Moz_Spread(M) {
         return {
             type: to_moz_in_destructuring() ? "RestElement" : "SpreadElement",
             argument: to_moz(M.expression)
         };
-    }),
+    },
     _codegen: function (self, output) {
         output.print("...");
         self.expression.print(output);
@@ -1287,7 +1289,7 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
             self.body = do_list(self.body, tw);
         }
     }),
-    to_mozilla_ast: get_to_moz(To_Moz_FunctionExpression),
+    _to_mozilla_ast: To_Moz_FunctionExpression,
     _do_print: function(this: any, output: any, nokeyword: boolean) {
         var self = this;
         if (!nokeyword) {
@@ -1359,7 +1361,7 @@ var AST_Function: any = DEFNODE("Function", null, {
         const first: any = !!first_in_statement(info);
         return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body);
     },
-    to_mozilla_ast: get_to_moz(To_Moz_FunctionExpression),
+    _to_mozilla_ast: To_Moz_FunctionExpression,
     // a function expression needs parens around it when it's provably
     // the first token to appear in a statement.
     needs_parens: function(output: any) {
@@ -1409,7 +1411,7 @@ var AST_Arrow: any = DEFNODE("Arrow", null, {
 
         return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size());
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_ArrowFunctionExpression(M) {
+    _to_mozilla_ast: function To_Moz_ArrowFunctionExpression(M) {
         var body = {
             type: "BlockStatement",
             body: M.body.map(to_moz)
@@ -1420,7 +1422,7 @@ var AST_Arrow: any = DEFNODE("Arrow", null, {
             async: M.async,
             body: body
         };
-    }),
+    },
     needs_parens: function(output: any) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this;
@@ -1477,7 +1479,7 @@ var AST_Defun: any = DEFNODE("Defun", null, {
     _size: function () {
         return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body);
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_FunctionDeclaration(M) {
+    _to_mozilla_ast: function To_Moz_FunctionDeclaration(M) {
         return {
             type: "FunctionDeclaration",
             id: to_moz(M.name),
@@ -1486,7 +1488,7 @@ var AST_Defun: any = DEFNODE("Defun", null, {
             async: M.async,
             body: to_moz_scope("BlockStatement", M)
         };
-    }),
+    },
 }, {
     documentation: "A function definition"
 }, AST_Lambda);
@@ -1520,7 +1522,7 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
     transform: get_transformer(function(self, tw: any) {
         self.names = do_list(self.names, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ObjectPattern(M) {
+    _to_mozilla_ast: function To_Moz_ObjectPattern(M) {
         if (M.is_array) {
             return {
                 type: "ArrayPattern",
@@ -1531,7 +1533,7 @@ var AST_Destructuring: any = DEFNODE("Destructuring", "names is_array", {
             type: "ObjectPattern",
             properties: M.names.map(to_moz)
         };
-    }),
+    },
     _codegen: function (self, output) {
         output.print(self.is_array ? "[" : "{");
         var len = self.names.length;
@@ -1569,13 +1571,13 @@ var AST_PrefixedTemplateString: any = DEFNODE("PrefixedTemplateString", "templat
         self.prefix = self.prefix.transform(tw);
         self.template_string = self.template_string.transform(tw) as any;
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_TaggedTemplateExpression(M) {
+    _to_mozilla_ast: function To_Moz_TaggedTemplateExpression(M) {
         return {
             type: "TaggedTemplateExpression",
             tag: to_moz(M.prefix),
             quasi: to_moz(M.template_string)
         };
-    }),
+    },
     _codegen: function(self, output) {
         var tag = self.prefix;
         var parenthesize_tag = tag instanceof AST_Lambda
@@ -1616,7 +1618,7 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
     transform: get_transformer(function(self, tw: any) {
         self.segments = do_list(self.segments, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_TemplateLiteral(M) {
+    _to_mozilla_ast: function To_Moz_TemplateLiteral(M) {
         var quasis: any[] = [];
         var expressions: any[] = [];
         for (var i = 0; i < M.segments.length; i++) {
@@ -1638,7 +1640,7 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
             quasis: quasis,
             expressions: expressions
         };
-    }),
+    },
     _codegen: function(self, output) {
         var is_tagged = output.parent() instanceof AST_PrefixedTemplateString;
 
@@ -1726,10 +1728,10 @@ var AST_Return: any = DEFNODE("Return", null, {
     _size: function () {
         return this.value ? 7 : 6;
     },
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ReturnStatement",
         argument: to_moz(M.value)
-    })),
+    }),
     _codegen:  function(self, output) {
         self._do_print(output, "return");
     },
@@ -1739,10 +1741,10 @@ var AST_Return: any = DEFNODE("Return", null, {
 
 var AST_Throw: any = DEFNODE("Throw", null, {
     _size: () => 6,
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ThrowStatement",
         argument: to_moz(M.value)
-    })),
+    }),
     _codegen: function(self, output) {
         self._do_print(output, "throw");
     },
@@ -1783,10 +1785,10 @@ var AST_Break: any = DEFNODE("Break", null, {
     _size: function () {
         return this.label ? 6 : 5;
     },
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "BreakStatement",
         label: to_moz(M.label)
-    })),
+    }),
     _codegen: function(self, output) {
         self._do_print(output, "break");
     },
@@ -1798,10 +1800,10 @@ var AST_Continue: any = DEFNODE("Continue", null, {
     _size: function () {
         return this.label ? 9 : 8;
     },
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ContinueStatement",
         label: to_moz(M.label)
-    })),
+    }),
     _codegen: function(self, output) {
         self._do_print(output, "continue");
     },
@@ -1823,10 +1825,10 @@ var AST_Await: any = DEFNODE("Await", "expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "AwaitExpression",
         argument: to_moz(M.expression)
-    })),
+    }),
     needs_parens: function(output: any) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this
@@ -1872,11 +1874,11 @@ var AST_Yield: any = DEFNODE("Yield", "expression is_star", {
     transform: get_transformer(function(self, tw: any) {
         if (self.expression) self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "YieldExpression",
         argument: to_moz(M.expression),
         delegate: M.is_star
-    })),
+    }),
     needs_parens: function(output: any) {
         var p = output.parent();
         // (yield 1) + (yield 2)
@@ -1942,12 +1944,12 @@ var AST_If: any = DEFNODE("If", "condition alternative", {
         self.body = (self.body as any).transform(tw);
         if (self.alternative) self.alternative = self.alternative.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "IfStatement",
         test: to_moz(M.condition),
         consequent: to_moz(M.body),
         alternate: to_moz(M.alternative)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("if");
         output.space();
@@ -1999,11 +2001,11 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
         self.expression = self.expression.transform(tw);
         self.body = do_list(self.body, tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "SwitchStatement",
         discriminant: to_moz(M.expression),
         cases: M.body.map(to_moz)
-    })),
+    }),
     _codegen: function(self, output) {
         output.print("switch");
         output.space();
@@ -2032,13 +2034,13 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
 
 var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(function To_Moz_SwitchCase(M) {
+    _to_mozilla_ast: function To_Moz_SwitchCase(M) {
         return {
             type: "SwitchCase",
             test: to_moz(M.expression),
             consequent: M.body.map(to_moz)
         };
-    }),
+    },
     _do_print_body: function(this: any, output: any) {
         output.newline();
         this.body.forEach(function(stmt) {
@@ -2125,7 +2127,7 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
         if (self.bcatch) self.bcatch = self.bcatch.transform(tw) as any;
         if (self.bfinally) self.bfinally = self.bfinally.transform(tw) as any;
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_TryStatement(M) {
+    _to_mozilla_ast: function To_Moz_TryStatement(M) {
         return {
             type: "TryStatement",
             block: to_moz_block(M),
@@ -2133,7 +2135,7 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
             guardedHandlers: [],
             finalizer: to_moz(M.bfinally)
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print("try");
         output.space();
@@ -2182,14 +2184,14 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
         if (self.argname) self.argname = self.argname.transform(tw);
         self.body = do_list(self.body, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_CatchClause(M) {
+    _to_mozilla_ast: function To_Moz_CatchClause(M) {
         return {
             type: "CatchClause",
             param: to_moz(M.argname),
             guard: null,
             body: to_moz_block(M)
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print("catch");
         if (self.argname) {
@@ -2242,7 +2244,7 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
     transform: get_transformer(function(self, tw: any) {
         self.definitions = do_list(self.definitions, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_VariableDeclaration(M) {
+    _to_mozilla_ast: function To_Moz_VariableDeclaration(M) {
         return {
             type: "VariableDeclaration",
             kind:
@@ -2250,7 +2252,7 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
                 M instanceof AST_Let ? "let" : "var",
             declarations: M.definitions.map(to_moz)
         };
-    }),
+    },
     _do_print: function(this: any, output: any, kind: string) {
         output.print(kind);
         output.space();
@@ -2326,11 +2328,11 @@ var AST_VarDef: any = DEFNODE("VarDef", "name value", {
         self.name = self.name.transform(tw) as any;
         if (self.value) self.value = self.value.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "VariableDeclarator", 
         id: to_moz(M.name),
         init: to_moz(M.value)
-    })),
+    }),
     _codegen: function(self, output) {
         self.name.print(output);
         if (self.value) {
@@ -2451,7 +2453,7 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
         if (self.imported_names) do_list(self.imported_names, tw);
         self.module_name = self.module_name.transform(tw) as any;
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ImportDeclaration(M) {
+    _to_mozilla_ast: function To_Moz_ImportDeclaration(M) {
         var specifiers: any[] = [];
         if (M.imported_name) {
             specifiers.push({
@@ -2478,7 +2480,7 @@ var AST_Import: any = DEFNODE("Import", "imported_name imported_names module_nam
             specifiers: specifiers,
             source: to_moz(M.module_name)
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print("import");
         output.space();
@@ -2583,7 +2585,7 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
         if (self.exported_names) do_list(self.exported_names, tw);
         if (self.module_name) self.module_name = self.module_name.transform(tw) as any;
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ExportDeclaration(M) {
+    _to_mozilla_ast: function To_Moz_ExportDeclaration(M) {
         if (M.exported_names) {
             if (M.exported_names[0].name.name === "*") {
                 return {
@@ -2608,7 +2610,7 @@ var AST_Export: any = DEFNODE("Export", "exported_definition exported_value is_d
             type: M.is_default ? "ExportDefaultDeclaration" : "ExportNamedDeclaration",
             declaration: to_moz(M.exported_value || M.exported_definition)
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print("export");
         output.space();
@@ -2693,11 +2695,11 @@ var AST_Call: any = DEFNODE("Call", "expression args _annotations", {
         self.expression = self.expression.transform(tw);
         self.args = do_list(self.args, tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "CallExpression", 
         callee: to_moz(M.expression),
         arguments: M.args.map(to_moz)
-    })),
+    }),
     needs_parens: function(output: any) {
         var p = output.parent(), p1;
         if (p instanceof AST_New && p.expression === this
@@ -2740,11 +2742,11 @@ var AST_New: any = DEFNODE("New", null, {
     _size: function (): number {
         return 6 + list_overhead(this.args);
     },
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "NewExpression",
         callee: to_moz(M.expression),
         arguments: M.args.map(to_moz)
-    })),
+    }),
     needs_parens: function(output: any) {
         var p = output.parent();
         if (this.args.length === 0
@@ -2784,12 +2786,12 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
             ? result
             : [new AST_Number({ value: 0 })];
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_SequenceExpression(M) {
+    _to_mozilla_ast: function To_Moz_SequenceExpression(M) {
         return {
             type: "SequenceExpression",
             expressions: M.expressions.map(to_moz)
         };
-    }),
+    },
     needs_parens: function(output: any) {
         var p = output.parent();
         return p instanceof AST_Call                          // (foo, bar)() or foo(1, (2, 3), 4)
@@ -2834,7 +2836,7 @@ var AST_Sequence: any = DEFNODE("Sequence", "expressions", {
 
 var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(function To_Moz_MemberExpression(M) {
+    _to_mozilla_ast: function To_Moz_MemberExpression(M) {
         var isComputed = M instanceof AST_Sub;
         return {
             type: "MemberExpression",
@@ -2842,7 +2844,7 @@ var AST_PropAccess: any = DEFNODE("PropAccess", "expression property", {
             computed: isComputed,
             property: isComputed ? to_moz(M.property as any) : {type: "Identifier", name: M.property}
         };
-    }),
+    },
     needs_parens: function(output: any) {
         var p = output.parent();
         if (p instanceof AST_New && p.expression === this) {
@@ -2962,14 +2964,14 @@ var AST_Unary: any = DEFNODE("Unary", "operator expression", {
     transform: get_transformer(function(self, tw: any) {
         self.expression = self.expression.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_Unary(M: any) {
+    _to_mozilla_ast: function To_Moz_Unary(M: any) {
         return {
             type: M.operator == "++" || M.operator == "--" ? "UpdateExpression" : "UnaryExpression",
             operator: M.operator,
             prefix: M instanceof AST_UnaryPrefix,
             argument: to_moz(M.expression)
         };
-    }),
+    },
     needs_parens: function(output: any) {
         var p = output.parent();
         return p instanceof AST_PropAccess && p.expression === this
@@ -3049,7 +3051,7 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
         self.left = self.left.transform(tw);
         self.right = self.right.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_BinaryExpression(M: any) {
+    _to_mozilla_ast: function To_Moz_BinaryExpression(M: any) {
         if (M.operator == "=" && to_moz_in_destructuring()) {
             return {
                 type: "AssignmentPattern",
@@ -3068,7 +3070,7 @@ var AST_Binary: any = DEFNODE("Binary", "operator left right", {
             operator: M.operator,
             right: to_moz(M.right)
         };
-    }),
+    },
     needs_parens: function(output: any) {
         var p = output.parent();
         // (foo && bar)()
@@ -3155,12 +3157,12 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
         self.consequent = self.consequent.transform(tw);
         self.alternative = self.alternative.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "ConditionalExpression",
         test: to_moz(M.condition),
         consequent: to_moz(M.consequent),
         alternate: to_moz(M.alternative)
-    })),
+    }),
     needs_parens: needsParens,
     _codegen: function(self, output) {
         self.condition.print(output);
@@ -3182,12 +3184,12 @@ var AST_Conditional: any = DEFNODE("Conditional", "condition consequent alternat
 }, AST_Node);
 
 var AST_Assign: any = DEFNODE("Assign", null, {
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "AssignmentExpression",
         operator: M.operator,
         left: to_moz(M.left),
         right: to_moz(M.right)
-    })),
+    }),
     needs_parens: needsParens,
 }, {
     documentation: "An assignment expression — `a = b + 5`",
@@ -3219,12 +3221,12 @@ var AST_Array: any = DEFNODE("Array", "elements", {
     transform: get_transformer(function(self, tw: any) {
         self.elements = do_list(self.elements, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ArrayExpression(M: any) {
+    _to_mozilla_ast: function To_Moz_ArrayExpression(M: any) {
         return {
             type: "ArrayExpression",
             elements: M.elements.map(to_moz)
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.with_square(function() {
             var a = self.elements, len = a.length;
@@ -3273,12 +3275,12 @@ var AST_Object: any = DEFNODE("Object", "properties", {
     transform: get_transformer(function(self, tw: any) {
         self.properties = do_list(self.properties, tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_ObjectExpression(M: any) {
+    _to_mozilla_ast: function To_Moz_ObjectExpression(M: any) {
         return {
             type: "ObjectExpression",
             properties: M.properties.map(to_moz)
         };
-    }),
+    },
     // same goes for an object literal, because otherwise it would be
     // interpreted as a block of code.
     needs_parens: function(output: any) {
@@ -3324,7 +3326,7 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
         }
         if (self.value) self.value = self.value.transform(tw);
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_Property(M, parent) {
+    _to_mozilla_ast: function To_Moz_Property(M, parent) {
         var key = M.key instanceof AST_Node ? to_moz(M.key) : {
             type: "Identifier",
             value: M.key
@@ -3380,7 +3382,7 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
             key: key,
             value: to_moz(M.value)
         };
-    }),
+    },
     _print_getter_setter:  function(this: any, type: string, output: any) {
         var self = this;
         if (self.static) {
@@ -3515,7 +3517,7 @@ var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator
         is_generator: "eq",
         async: "eq",
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_MethodDefinition(M, parent) {
+    _to_mozilla_ast: function To_Moz_MethodDefinition(M, parent) {
         if (parent instanceof AST_Object) {
             return {
                 type: "Property",
@@ -3535,7 +3537,7 @@ var AST_ConciseMethod: any = DEFNODE("ConciseMethod", "quote static is_generator
             key: to_moz(M.key),
             value: to_moz(M.value)
         };
-    }),
+    },
     _codegen: function(self, output) {
         var type;
         if (self.is_generator && self.async) {
@@ -3590,7 +3592,7 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
         name: "exist",
         extends: "exist",
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_Class(M) {
+    _to_mozilla_ast: function To_Moz_Class(M) {
         var type = M instanceof AST_ClassExpression ? "ClassExpression" : "ClassDeclaration";
         return {
             type: type,
@@ -3601,7 +3603,7 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
                 body: M.properties.map(to_moz)
             }
         };
-    }),
+    },
     _codegen: function(self, output) {
         output.print("class");
         output.space();
@@ -3727,7 +3729,7 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
     shallow_cmp: mkshallow({
         name: "eq"
     }),
-    to_mozilla_ast: get_to_moz(function To_Moz_Identifier(M, parent) {
+    _to_mozilla_ast: function To_Moz_Identifier(M, parent) {
         if (M instanceof AST_SymbolMethod && parent.quote) {
             return {
                 type: "Literal",
@@ -3739,7 +3741,7 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
             type: "Identifier",
             name: def ? def.mangled_name || def.name : M.name
         };
-    }),
+    },
     _do_print: function(output: any) {
         var def = this.definition();
         output.print_name(def ? def.mangled_name || def.name : this.name);
@@ -3759,7 +3761,7 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
 var AST_NewTarget: any = DEFNODE("NewTarget", null, {
     _size: () => 10,
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(function To_Moz_MetaProperty() {
+    _to_mozilla_ast: function To_Moz_MetaProperty() {
         return {
             type: "MetaProperty",
             meta: {
@@ -3771,7 +3773,7 @@ var AST_NewTarget: any = DEFNODE("NewTarget", null, {
                 name: "target"
             }
         };
-    }),
+    },
     _codegen: function(_self, output) {
         output.print("new.target");
     },
@@ -3893,7 +3895,7 @@ var AST_LabelRef: any = DEFNODE("LabelRef", null, {}, {
 var AST_This: any = DEFNODE("This", null, {
     _size: () => 4,
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(() => ({ type: "ThisExpression" })),
+    _to_mozilla_ast: () => ({ type: "ThisExpression" }),
     _codegen: function(_self, output) {
         output.print("this");
     },
@@ -3904,7 +3906,7 @@ var AST_This: any = DEFNODE("This", null, {
 var AST_Super: any = DEFNODE("Super", null, {
     _size: () => 5,
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(() => ({ type: "Super" })),
+    _to_mozilla_ast: () => ({ type: "Super" }),
     _codegen: function(_self, output) {
         output.print("super");
     },
@@ -3937,7 +3939,7 @@ var AST_Constant: any = DEFNODE("Constant", null, {
     getValue: function() {
         return this.value;
     },
-    to_mozilla_ast: get_to_moz(To_Moz_Literal),
+    _to_mozilla_ast: To_Moz_Literal,
     _codegen: function(self, output) {
         output.print(self.getValue());
     },
@@ -4007,10 +4009,10 @@ var AST_BigInt = DEFNODE("BigInt", "value", {
     shallow_cmp: mkshallow({
         value: "eq"
     }),
-    to_mozilla_ast: get_to_moz(M => ({
+    _to_mozilla_ast: M => ({
         type: "BigIntLiteral",
         value: M.value
-    })),
+    }),
     _codegen: function(self, output) {
         output.print(self.getValue() + "n");
     },
@@ -4041,7 +4043,7 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
             && this.value.source === other.value.source
         );
     },
-    to_mozilla_ast: get_to_moz(function To_Moz_RegExpLiteral(M) {
+    _to_mozilla_ast: function To_Moz_RegExpLiteral(M) {
         const pattern = M.value.source;
         const flags = M.value.flags;
         return {
@@ -4050,7 +4052,7 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
             raw: M.print_to_string(),
             regex: { pattern, flags }
         };
-    }),
+    },
     _codegen: function(self, output) {
         let { source, flags } = self.getValue();
         source = regexp_source_fix(source);
@@ -4075,12 +4077,12 @@ var AST_RegExp: any = DEFNODE("RegExp", "value", {
 
 var AST_Atom: any = DEFNODE("Atom", null, {
     shallow_cmp: pass_through,
-    to_mozilla_ast: get_to_moz(function To_Moz_Atom(M) {
+    _to_mozilla_ast: function To_Moz_Atom(M) {
         return {
             type: "Identifier",
             name: String(M.value)
         };
-    }),
+    },
 }, {
     documentation: "Base class for atoms",
 }, AST_Constant);
@@ -4088,7 +4090,7 @@ var AST_Atom: any = DEFNODE("Atom", null, {
 var AST_Null: any = DEFNODE("Null", null, {
     value: null,
     _size: () => 4,
-    to_mozilla_ast: get_to_moz(To_Moz_Literal)
+    _to_mozilla_ast: To_Moz_Literal
 }, {
     documentation: "The `null` atom",
 }, AST_Atom);
@@ -4124,7 +4126,7 @@ var AST_Infinity: any = DEFNODE("Infinity", null, {
 }, AST_Atom);
 
 var AST_Boolean: any = DEFNODE("Boolean", null, {
-    to_mozilla_ast: get_to_moz(To_Moz_Literal),
+    _to_mozilla_ast: To_Moz_Literal,
 }, {
     documentation: "Base class for booleans",
 }, AST_Atom);
