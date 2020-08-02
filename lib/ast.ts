@@ -373,6 +373,7 @@ var AST_Node: any = DEFNODE("Node", "start end", {
         }
         return set_moz_loc(this, this._to_mozilla_ast(this, parent));
     },
+    add_source_map: noop,
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {
@@ -412,6 +413,7 @@ var AST_Debugger: any = DEFNODE("Debugger", null, {
         output.print("debugger");
         output.semicolon();
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Represents a debugger statement",
 }, AST_Statement);
@@ -437,6 +439,7 @@ var AST_Directive: any = DEFNODE("Directive", "value quote", {
         output.print_string(self.value, self.quote);
         output.semicolon();
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Represents a directive, like \"use strict\";",
     propdoc: {
@@ -530,6 +533,7 @@ var AST_BlockStatement: any = DEFNODE("BlockStatement", null, {
     _codegen: function(self, output) {
         print_braced(self, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A block statement",
 }, AST_Block);
@@ -549,6 +553,7 @@ var AST_StatementWithBody: any = DEFNODE("StatementWithBody", "body", {
     _do_print_body: function(output: any) {
         force_statement(this.body, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`",
     propdoc: {
@@ -598,6 +603,7 @@ var AST_LabeledStatement: any = DEFNODE("LabeledStatement", "label", {
         output.colon();
         (self.body as any).print(output);
     },
+    add_source_map: noop,
 }, {
     documentation: "Statement with a label",
     propdoc: {
@@ -1214,6 +1220,7 @@ var AST_Toplevel: any = DEFNODE("Toplevel", "globals", {
         display_body(self.body as any[], true, output, true);
         output.print("");
     },
+    add_source_map: noop,
 }, {
     documentation: "The toplevel scope",
     propdoc: {
@@ -1331,6 +1338,7 @@ var AST_Lambda: any = DEFNODE("Lambda", "name argnames uses_arguments is_generat
     _codegen: function(self, output) {
         self._do_print(output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for functions",
     propdoc: {
@@ -1665,6 +1673,7 @@ var AST_TemplateString: any = DEFNODE("TemplateString", "segments", {
         }
         output.print("`");
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A template string literal",
     propdoc: {
@@ -1679,7 +1688,8 @@ var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {
     }),
     _size: function (): number {
         return this.value.length;
-    }
+    },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A segment of a template string literal",
     propdoc: {
@@ -1692,6 +1702,7 @@ var AST_TemplateSegment: any = DEFNODE("TemplateSegment", "value raw", {
 
 var AST_Jump: any = DEFNODE("Jump", null, {
     shallow_cmp: pass_through,
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
 }, AST_Statement);
@@ -2031,6 +2042,7 @@ var AST_Switch: any = DEFNODE("Switch", "expression", {
             });
         });
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A `switch` statement",
     propdoc: {
@@ -2056,6 +2068,7 @@ var AST_SwitchBranch: any = DEFNODE("SwitchBranch", null, {
             output.newline();
         });
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for `switch` branches",
 }, AST_Block);
@@ -2156,6 +2169,7 @@ var AST_Try: any = DEFNODE("Try", "bcatch bfinally", {
             self.bfinally.print(output);
         }
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A `try` statement",
     propdoc: {
@@ -2210,6 +2224,7 @@ var AST_Catch: any = DEFNODE("Catch", "argname", {
         output.space();
         print_braced(self, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A `catch` node; only makes sense as part of a `try` statement",
     propdoc: {
@@ -2228,6 +2243,7 @@ var AST_Finally: any = DEFNODE("Finally", null, {
         output.space();
         print_braced(self, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "A `finally` node; only makes sense as part of a `try` statement"
 }, AST_Block);
@@ -2273,6 +2289,7 @@ var AST_Definitions: any = DEFNODE("Definitions", "definitions", {
         if (output_semicolon)
             output.semicolon();
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for `var` or `const` nodes (variable declarations/initializations)",
     propdoc: {
@@ -2767,6 +2784,7 @@ var AST_New: any = DEFNODE("New", null, {
         output.space();
         AST_Call.prototype._codegen?.(self, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "An object instantiation.  Derives from a function call since it has exactly the same properties"
 }, AST_Call);
@@ -3250,6 +3268,7 @@ var AST_Array: any = DEFNODE("Array", "elements", {
             if (len > 0) output.space();
         });
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "An array literal",
     propdoc: {
@@ -3307,6 +3326,7 @@ var AST_Object: any = DEFNODE("Object", "properties", {
         });
         else print_braced_empty(self, output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "An object literal",
     propdoc: {
@@ -3409,6 +3429,7 @@ var AST_ObjectProperty: any = DEFNODE("ObjectProperty", "key value", {
         }
         self.value._do_print(output, true);
     },
+    add_source_map: function (output) { output.add_mapping(this.start, this.key); },
 }, {
     documentation: "Base class for literal object properties",
     propdoc: {
@@ -3483,6 +3504,7 @@ var AST_ObjectSetter: any = DEFNODE("ObjectSetter", "quote static", {
     _codegen: function(self, output) {
         self._print_getter_setter("set", output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start, this.key.name); },
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -3504,6 +3526,7 @@ var AST_ObjectGetter: any = DEFNODE("ObjectGetter", "quote static", {
     _codegen: function(self, output) {
         self._print_getter_setter("get", output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start, this.key.name); },
 }, {
     propdoc: {
         quote: "[string|undefined] the original quote character, if any",
@@ -3650,6 +3673,7 @@ var AST_Class: any = DEFNODE("Class", "name extends properties", {
         });
         else output.print("{}");
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     propdoc: {
         name: "[AST_SymbolClass|AST_SymbolDefClass?] optional class name.",
@@ -3756,6 +3780,7 @@ var AST_Symbol: any = DEFNODE("Symbol", "scope name thedef", {
     _codegen: function (self, output) {
         self._do_print(output);
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     propdoc: {
         name: "[string] name of this symbol",
@@ -3950,6 +3975,7 @@ var AST_Constant: any = DEFNODE("Constant", null, {
     _codegen: function(self, output) {
         output.print(self.getValue());
     },
+    add_source_map: function (output) { output.add_mapping(this.start); },
 }, {
     documentation: "Base class for all constants",
 }, AST_Node);
@@ -5281,61 +5307,6 @@ function make_block(stmt: any, output: any) {
         output.newline();
     });
 }
-
-/* -----[ source map generators ]----- */
-
-function DEFMAP(nodetype: any, generator: (output: any) => any) {
-    nodetype.forEach(function(nodetype) {
-        nodetype.DEFMETHOD("add_source_map", generator);
-    });
-}
-
-DEFMAP([
-    // We could easily add info for ALL nodes, but it seems to me that
-    // would be quite wasteful, hence this noop in the base class.
-    AST_Node,
-    // since the label symbol will mark it
-    AST_LabeledStatement,
-    AST_Toplevel,
-], noop);
-
-// XXX: I'm not exactly sure if we need it for all of these nodes,
-// or if we should add even more.
-DEFMAP([
-    AST_Array,
-    AST_BlockStatement,
-    AST_Catch,
-    AST_Class,
-    AST_Constant,
-    AST_Debugger,
-    AST_Definitions,
-    AST_Directive,
-    AST_Finally,
-    AST_Jump,
-    AST_Lambda,
-    AST_New,
-    AST_Object,
-    AST_StatementWithBody,
-    AST_Symbol,
-    AST_Switch,
-    AST_SwitchBranch,
-    AST_TemplateString,
-    AST_TemplateSegment,
-    AST_Try,
-], function(output: any) {
-    output.add_mapping(this.start);
-});
-
-DEFMAP([
-    AST_ObjectGetter,
-    AST_ObjectSetter,
-], function(output: any) {
-    output.add_mapping(this.start, this.key.name);
-});
-
-DEFMAP([ AST_ObjectProperty ], function(output: any) {
-    output.add_mapping(this.start, this.key);
-});
 
 export {
     OutputStream,
