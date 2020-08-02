@@ -59,6 +59,14 @@ import {
 import { parse, js_error, is_basic_identifier_string, is_identifier_string, PRECEDENCE, RESERVED_WORDS } from "./parse";
 import { OutputStream } from "./output";
 
+// information specific to a single compression pass
+const OPTIMIZED = 0b0000001000000000;
+
+/*@__INLINE__*/
+const has_flag = (node: any, flag: number) => node.flags & flag;
+/*@__INLINE__*/
+const set_flag = (node: any, flag: number) => { node.flags |= flag; };
+
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
 // a statement.
@@ -345,6 +353,17 @@ var AST_Node: any = DEFNODE("Node", "start end", {
         return output.get();
     },
     needs_parens: return_false,
+    optimize: function(compressor: any) {
+        if (!this._optimize) {
+            throw new Error("optimize not defined");
+        }
+        var self = this;
+        if (has_flag(self, OPTIMIZED)) return self;
+        if (compressor.has_directive("use asm")) return self;
+        var opt = this._optimize(self, compressor);
+        set_flag(opt, OPTIMIZED);
+        return opt;
+    },
 }, {
     documentation: "Base class of all AST nodes",
     propdoc: {

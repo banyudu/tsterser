@@ -462,14 +462,7 @@ class Compressor extends TreeWalker {
 }
 
 function def_optimize(node: any, optimizer: Function) {
-    node.DEFMETHOD("optimize", function(compressor: Compressor) {
-        var self = this;
-        if (has_flag(self, OPTIMIZED)) return self;
-        if (compressor.has_directive("use asm")) return self;
-        var opt = optimizer(self, compressor);
-        set_flag(opt, OPTIMIZED);
-        return opt;
-    });
+    node.DEFMETHOD("_optimize", optimizer);
 }
 
 def_optimize(AST_Node, function(self) {
