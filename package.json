@@ -18,7 +18,8 @@
   },
   "types": "tools/terser.d.ts",
   "bin": {
-    "terser": "bin/terser"
+    "terser": "bin/terser",
+    "tsterser": "bin/tsterser"
   },
   "files": [
     "bin",
@@ -36,34 +37,50 @@
     "source-map-support": "~0.5.12"
   },
   "devDependencies": {
+    "@commitlint/cli": "^9.1.1",
+    "@commitlint/config-conventional": "^9.1.1",
     "@types/node": "^14.0.1",
-    "@typescript-eslint/eslint-plugin": "^2.33.0",
-    "@typescript-eslint/parser": "^2.33.0",
+    "@typescript-eslint/eslint-plugin": "^3.7.1",
+    "@typescript-eslint/parser": "^2.34.0",
     "acorn": "^7.1.1",
     "astring": "^1.4.1",
-    "eslint": "^6.8.0",
+    "eslint": "^7.6.0",
+    "eslint-config-standard-with-typescript": "^18.0.2",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "eslump": "^2.0.0",
+    "husky": "^4.2.5",
     "mocha": "^5.2.0",
     "mochallel": "^2.0.0",
-    "pre-commit": "^1.2.2",
     "rimraf": "^3.0.0",
     "rollup": "2.0.6",
     "rollup-plugin-terser": "5.3.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "semver": "^7.1.3",
     "tslib": "^2.0.0",
-    "typescript": "^3.9.2"
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "test": "npm run build -- --configTest && node test/run-tests.js",
     "test:compress": "npm run build -- --configTest && node test/compress.js",
     "test:mocha": "npm run build -- --configTest && node test/mocha.js",
-    "lint": "eslint --ext .js,.ts lib",
-    "lint-fix": "eslint --ext .js,.ts --fix lib",
+    "lint": "eslint .",
+    "lint:quiet": "npm run lint -- --quiet",
+    "lint:fix": "npm run lint -- --quiet --fix",
+    "lint:fixOne": "eslint  --ext .js,.jsx,.ts,.tsx --quiet --fix",
+    "lint:git": "git diff --cached --name-only --diff-filter=ACM | grep '\\.[tj]sx\\?$' |xargs eslint --quiet",
     "build": "rimraf dist/* && rollup --config --silent",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build",
     "postversion": "git push --follow-tags"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint:git",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   },
   "keywords": [
     "uglify",
@@ -73,6 +90,7 @@
     "minify",
     "minifier",
     "javascript",
+    "typescript",
     "ecmascript",
     "es5",
     "es6",
@@ -83,62 +101,5 @@
     "es2017",
     "async",
     "await"
-  ],
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "parserOptions": {
-      "sourceType": "module"
-    },
-    "env": {
-      "es6": true,
-      "browser": true
-    },
-    "globals": {
-      "describe": false,
-      "it": false,
-      "require": false,
-      "global": false,
-      "process": false
-    },
-    "rules": {
-      "brace-style": [
-        "error",
-        "1tbs",
-        {
-          "allowSingleLine": true
-        }
-      ],
-      "quotes": [
-        "error",
-        "double",
-        "avoid-escape"
-      ],
-      "no-debugger": "error",
-      "no-undef": "error",
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "varsIgnorePattern": "^_$"
-        }
-      ],
-      "no-tabs": "error",
-      "semi": [
-        "error",
-        "always"
-      ],
-      "no-extra-semi": "error",
-      "no-irregular-whitespace": "error",
-      "space-before-blocks": [
-        "error",
-        "always"
-      ]
-    }
-  },
-  "pre-commit": [
-    "lint-fix"
   ]
 }
