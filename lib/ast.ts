@@ -4931,34 +4931,170 @@ var MOZ_TO_ME: any = {
   ClassDeclaration: From_Moz_Class,
   ClassExpression: From_Moz_Class,
 
-  EmptyStatement: M => new AST_EmptyStatement({ start: my_start_token(M), end: my_end_token(M) }),
-  BlockStatement: M => new AST_BlockStatement({ start: my_start_token(M), end: my_end_token(M), body: M.body.map(from_moz) }),
-  IfStatement: M => new AST_If({ start: my_start_token(M), end: my_end_token(M), condition: from_moz(M.test), body: from_moz(M.consequent), alternative: from_moz(M.alternate) }),
-  LabeledStatement: M => new AST_LabeledStatement({ start: my_start_token(M), end: my_end_token(M), label: from_moz(M.label), body: from_moz(M.body) }),
-  BreakStatement: M => new AST_Break({ start: my_start_token(M), end: my_end_token(M), label: from_moz(M.label) }),
-  ContinueStatement: M => new AST_Continue({ start: my_start_token(M), end: my_end_token(M), label: from_moz(M.label) }),
-  WithStatement: M => new AST_With({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.object), body: from_moz(M.body) }),
-  SwitchStatement: M => new AST_Switch({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.discriminant), body: M.cases.map(from_moz) }),
-  ReturnStatement: M => new AST_Return({ start: my_start_token(M), end: my_end_token(M), value: from_moz(M.argument) }),
-  ThrowStatement: M => new AST_Throw({ start: my_start_token(M), end: my_end_token(M), value: from_moz(M.argument) }),
-  WhileStatement: M => new AST_While({ start: my_start_token(M), end: my_end_token(M), condition: from_moz(M.test), body: from_moz(M.body) }),
-  DoWhileStatement: M => new AST_Do({ start: my_start_token(M), end: my_end_token(M), condition: from_moz(M.test), body: from_moz(M.body) }),
-  ForStatement: M => new AST_For({ start: my_start_token(M), end: my_end_token(M), init: from_moz(M.init), condition: from_moz(M.test), step: from_moz(M.update), body: from_moz(M.body) }),
-  ForInStatement: M => new AST_ForIn({ start: my_start_token(M), end: my_end_token(M), init: from_moz(M.left), object: from_moz(M.right), body: from_moz(M.body) }),
-  ForOfStatement: M => new AST_ForOf({ start: my_start_token(M), end: my_end_token(M), init: from_moz(M.left), object: from_moz(M.right), body: from_moz(M.body), await: M.await }),
-  AwaitExpression: M => new AST_Await({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.argument) }),
-  YieldExpression: M => new AST_Yield({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.argument), is_star: M.delegate }),
-  DebuggerStatement: M => new AST_Debugger({ start: my_start_token(M), end: my_end_token(M) }),
-  VariableDeclarator: M => new AST_VarDef({ start: my_start_token(M), end: my_end_token(M), name: from_moz(M.id), value: from_moz(M.init) }),
-  CatchClause: M => new AST_Catch({ start: my_start_token(M), end: my_end_token(M), argname: from_moz(M.param), body: from_moz(M.body).body }),
-  ThisExpression: M => new AST_This({ start: my_start_token(M), end: my_end_token(M) }),
-  Super: M => new AST_Super({ start: my_start_token(M), end: my_end_token(M) }),
-  BinaryExpression: M => new AST_Binary({ start: my_start_token(M), end: my_end_token(M), operator: M.operator, left: from_moz(M.left), right: from_moz(M.right) }),
-  LogicalExpression: M => new AST_Binary({ start: my_start_token(M), end: my_end_token(M), operator: M.operator, left: from_moz(M.left), right: from_moz(M.right) }),
-  AssignmentExpression: M => new AST_Assign({ start: my_start_token(M), end: my_end_token(M), operator: M.operator, left: from_moz(M.left), right: from_moz(M.right) }),
-  ConditionalExpression: M => new AST_Conditional({ start: my_start_token(M), end: my_end_token(M), condition: from_moz(M.test), consequent: from_moz(M.consequent), alternative: from_moz(M.alternate) }),
-  NewExpression: M => new AST_New({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.callee), args: M.arguments.map(from_moz) }),
-  CallExpression: M => new AST_Call({ start: my_start_token(M), end: my_end_token(M), expression: from_moz(M.callee), args: M.arguments.map(from_moz) })
+  EmptyStatement: M => new AST_EmptyStatement({
+    start: my_start_token(M),
+    end: my_end_token(M)
+  }),
+  BlockStatement: M => new AST_BlockStatement({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    body: M.body.map(from_moz)
+  }),
+  IfStatement: M => new AST_If({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    condition: from_moz(M.test),
+    body: from_moz(M.consequent),
+    alternative: from_moz(M.alternate)
+  }),
+  LabeledStatement: M => new AST_LabeledStatement({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    label: from_moz(M.label),
+    body: from_moz(M.body)
+  }),
+  BreakStatement: M => new AST_Break({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    label: from_moz(M.label)
+  }),
+  ContinueStatement: M => new AST_Continue({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    label: from_moz(M.label)
+  }),
+  WithStatement: M => new AST_With({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.object),
+    body: from_moz(M.body)
+  }),
+  SwitchStatement: M => new AST_Switch({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.discriminant),
+    body: M.cases.map(from_moz)
+  }),
+  ReturnStatement: M => new AST_Return({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    value: from_moz(M.argument)
+  }),
+  ThrowStatement: M => new AST_Throw({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    value: from_moz(M.argument)
+  }),
+  WhileStatement: M => new AST_While({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    condition: from_moz(M.test),
+    body: from_moz(M.body)
+  }),
+  DoWhileStatement: M => new AST_Do({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    condition: from_moz(M.test),
+    body: from_moz(M.body)
+  }),
+  ForStatement: M => new AST_For({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    init: from_moz(M.init),
+    condition: from_moz(M.test),
+    step: from_moz(M.update),
+    body: from_moz(M.body)
+  }),
+  ForInStatement: M => new AST_ForIn({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    init: from_moz(M.left),
+    object: from_moz(M.right),
+    body: from_moz(M.body)
+  }),
+  ForOfStatement: M => new AST_ForOf({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    init: from_moz(M.left),
+    object: from_moz(M.right),
+    body: from_moz(M.body),
+    await: M.await
+  }),
+  AwaitExpression: M => new AST_Await({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.argument)
+  }),
+  YieldExpression: M => new AST_Yield({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.argument),
+    is_star: M.delegate
+  }),
+  DebuggerStatement: M => new AST_Debugger({
+    start: my_start_token(M),
+    end: my_end_token(M)
+  }),
+  VariableDeclarator: M => new AST_VarDef({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    name: from_moz(M.id),
+    value: from_moz(M.init)
+  }),
+  CatchClause: M => new AST_Catch({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    argname: from_moz(M.param),
+    body: from_moz(M.body).body
+  }),
+  ThisExpression: M => new AST_This({
+    start: my_start_token(M),
+    end: my_end_token(M)
+  }),
+  Super: M => new AST_Super({
+    start: my_start_token(M),
+    end: my_end_token(M)
+  }),
+  BinaryExpression: M => new AST_Binary({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    operator: M.operator,
+    left: from_moz(M.left),
+    right: from_moz(M.right)
+  }),
+  LogicalExpression: M => new AST_Binary({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    operator: M.operator,
+    left: from_moz(M.left),
+    right: from_moz(M.right)
+  }),
+  AssignmentExpression: M => new AST_Assign({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    operator: M.operator,
+    left: from_moz(M.left),
+    right: from_moz(M.right)
+  }),
+  ConditionalExpression: M => new AST_Conditional({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    condition: from_moz(M.test),
+    consequent: from_moz(M.consequent),
+    alternative: from_moz(M.alternate)
+  }),
+  NewExpression: M => new AST_New({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.callee),
+    args: M.arguments.map(from_moz)
+  }),
+  CallExpression: M => new AST_Call({
+    start: my_start_token(M),
+    end: my_end_token(M),
+    expression: from_moz(M.callee),
+    args: M.arguments.map(from_moz)
+  })
 }
 
 function To_Moz_Unary (M) {
