@@ -274,10 +274,6 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
         static get BASE () { return proto ? base : undefined }
         static get TYPE () { return type || undefined }
 
-        static DEFMETHOD (name: string, method: Function) {
-          this.prototype[name] = method
-        }
-
         constructor (args) {
           super(args)
           if (args) {
@@ -348,10 +344,6 @@ class AST_Token {
 
   static get TYPE () {
     return 'Token'
-  }
-
-  static DEFMETHOD (name: string, method: Function) {
-    this.prototype[name] = method
   }
 
   constructor (args: any = {}) {

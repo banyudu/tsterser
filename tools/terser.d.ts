@@ -255,7 +255,6 @@ export class AST_Node {
   static warn?: (text: string, props?: AnyObject) => void
   static warn_function: Function | null
   static from_mozilla_ast?: (node: AST_Node) => any
-  static DEFMETHOD: (name: string, func: Function) => any
   print: Function
   _print: Function
   _eval: Function
