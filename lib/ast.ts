@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  is_string: return_false,
   is_number: return_false,
   is_boolean: return_false,
   reduce_vars: noop,
@@ -2871,6 +2872,7 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'templat
 }, AST_Node)
 
 var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
+  is_string: return_true,
   _walk: function (visitor: any) {
     return visitor._visit(this, function (this: any) {
       this.segments.forEach(function (seg) {
@@ -4169,6 +4171,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  is_string: function (compressor: any) {
+    return this.tail_node().is_string(compressor)
+  },
   is_number: function (compressor: any) {
     return this.tail_node().is_number(compressor)
   },
@@ -4508,6 +4513,9 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
 }, AST_Node)
 
 var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+  is_string: function () {
+    return this.operator == 'typeof'
+  },
   is_boolean: function () {
     return unary_bool.has(this.operator)
   },
@@ -4540,6 +4548,10 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  is_string: function (compressor: any) {
+    return this.operator == '+' &&
+          (this.left.is_string(compressor) || this.right.is_string(compressor))
+  },
   is_number: function (compressor: any) {
     return binary.has(this.operator) || this.operator == '+' &&
           this.left.is_number(compressor) &&
@@ -4714,6 +4726,9 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  is_string: function (compressor: any) {
+    return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
+  },
   is_number: function (compressor: any) {
     return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
   },
@@ -4780,6 +4795,9 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  is_string: function (compressor: any) {
+    return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
+  },
   is_number: function (compressor: any) {
     return binary.has(this.operator.slice(0, -1)) ||
           this.operator == '=' && this.right.is_number(compressor)
@@ -5706,6 +5724,7 @@ var AST_Constant: any = DEFNODE('Constant', null, {
 }, AST_Node)
 
 var AST_String: any = DEFNODE('String', 'value quote', {
+  is_string: return_true,
   _size: function (): number {
     return this.value.length + 2
   },
@@ -7464,31 +7483,6 @@ export function make_node_from_constant (val, orig) {
         type: typeof val
       }))
   }
-}
-
-// methods to determine if an expression has a string result type
-def_is_string(AST_Node, return_false)
-def_is_string(AST_String, return_true)
-def_is_string(AST_TemplateString, return_true)
-def_is_string(AST_UnaryPrefix, function () {
-  return this.operator == 'typeof'
-})
-def_is_string(AST_Binary, function (compressor: any) {
-  return this.operator == '+' &&
-        (this.left.is_string(compressor) || this.right.is_string(compressor))
-})
-def_is_string(AST_Assign, function (compressor: any) {
-  return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
-})
-def_is_string(AST_Sequence, function (compressor: any) {
-  return this.tail_node().is_string(compressor)
-})
-def_is_string(AST_Conditional, function (compressor: any) {
-  return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
-})
-
-function def_is_string (node, func) {
-  node.DEFMETHOD('is_string', func)
 }
 
 def_find_defs(AST_Node, noop)
