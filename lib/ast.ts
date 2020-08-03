@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  _find_defs: noop,
   is_string: return_false,
   is_number: return_false,
   is_boolean: return_false,
@@ -4327,6 +4328,9 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
 }, AST_Node)
 
 var AST_Dot: any = DEFNODE('Dot', 'quote', {
+  _find_defs: function (compressor: any, suffix) {
+    return this.expression._find_defs(compressor, '.' + this.property + suffix)
+  },
   _dot_throw: function (compressor: any) {
     if (!is_strict(compressor)) return false
     if (this.expression instanceof AST_Function && this.property == 'prototype') return false
@@ -5491,7 +5495,12 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
   documentation: 'A reference to new.target'
 }, AST_Node)
 
-var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', 'init', {}, {
+var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', 'init', {
+  _find_defs: function (compressor: any) {
+    if (!this.global()) return
+    if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
+  }
+}, {
   documentation: 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 }, AST_Symbol)
 
@@ -5579,6 +5588,12 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  _find_defs: function (compressor: any, suffix) {
+    if (!this.global()) return
+    var defines = compressor.option('global_defs') as AnyObject
+    var name = this.name + suffix
+    if (HOP(defines, name)) return to_node(defines[name], this)
+  },
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     var d = this.definition?.()
     d.references.push(this)
@@ -7483,25 +7498,6 @@ export function make_node_from_constant (val, orig) {
         type: typeof val
       }))
   }
-}
-
-def_find_defs(AST_Node, noop)
-def_find_defs(AST_Dot, function (compressor: any, suffix) {
-  return this.expression._find_defs(compressor, '.' + this.property + suffix)
-})
-def_find_defs(AST_SymbolDeclaration, function (compressor: any) {
-  if (!this.global()) return
-  if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
-})
-def_find_defs(AST_SymbolRef, function (compressor: any, suffix) {
-  if (!this.global()) return
-  var defines = compressor.option('global_defs') as AnyObject
-  var name = this.name + suffix
-  if (HOP(defines, name)) return to_node(defines[name], this)
-})
-
-function def_find_defs (node, func) {
-  node.DEFMETHOD('_find_defs', func)
 }
 
 def_negate(AST_Node, function () {
