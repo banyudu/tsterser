@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  is_number: return_false,
   is_boolean: return_false,
   reduce_vars: noop,
   _dot_throw: is_strict,
@@ -4168,6 +4169,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  is_number: function (compressor: any) {
+    return this.tail_node().is_number(compressor)
+  },
   is_boolean: function () {
     return this.tail_node().is_boolean()
   },
@@ -4416,6 +4420,9 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  is_number: function () {
+    return unary.has(this.operator)
+  },
   reduce_vars: function (tw) {
     var node = this
     if (node.operator !== '++' && node.operator !== '--') return
@@ -4533,6 +4540,11 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  is_number: function (compressor: any) {
+    return binary.has(this.operator) || this.operator == '+' &&
+          this.left.is_number(compressor) &&
+          this.right.is_number(compressor)
+  },
   is_boolean: function () {
     return binary_bool.has(this.operator) ||
           lazy_op.has(this.operator) &&
@@ -4702,6 +4714,9 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  is_number: function (compressor: any) {
+    return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
+  },
   is_boolean: function () {
     return this.consequent.is_boolean() && this.alternative.is_boolean()
   },
@@ -4765,6 +4780,10 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  is_number: function (compressor: any) {
+    return binary.has(this.operator.slice(0, -1)) ||
+          this.operator == '=' && this.right.is_number(compressor)
+  },
   is_boolean: function () {
     return this.operator == '=' && this.right.is_boolean()
   },
@@ -5705,6 +5724,7 @@ var AST_String: any = DEFNODE('String', 'value quote', {
 }, AST_Constant)
 
 var AST_Number: any = DEFNODE('Number', 'value literal', {
+  is_number: return_true,
   _size: function (): number {
     const { value } = this
     if (value === 0) return 1
@@ -7444,32 +7464,6 @@ export function make_node_from_constant (val, orig) {
         type: typeof val
       }))
   }
-}
-
-// methods to determine if an expression has a numeric result type
-def_is_number(AST_Node, return_false)
-def_is_number(AST_Number, return_true)
-def_is_number(AST_Unary, function () {
-  return unary.has(this.operator)
-})
-def_is_number(AST_Binary, function (compressor: any) {
-  return binary.has(this.operator) || this.operator == '+' &&
-        this.left.is_number(compressor) &&
-        this.right.is_number(compressor)
-})
-def_is_number(AST_Assign, function (compressor: any) {
-  return binary.has(this.operator.slice(0, -1)) ||
-        this.operator == '=' && this.right.is_number(compressor)
-})
-def_is_number(AST_Sequence, function (compressor: any) {
-  return this.tail_node().is_number(compressor)
-})
-def_is_number(AST_Conditional, function (compressor: any) {
-  return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
-})
-
-function def_is_number (node, func) {
-  node.DEFMETHOD('is_number', func)
 }
 
 // methods to determine if an expression has a string result type
