@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  reduce_vars: noop,
   _dot_throw: is_strict,
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
@@ -587,6 +588,9 @@ function clone_block_scope (deep: boolean) {
 }
 
 var AST_Block: any = DEFNODE('Block', 'body block_scope', {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+  },
   is_block_scope: return_true,
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
@@ -654,6 +658,12 @@ var AST_StatementWithBody: any = DEFNODE('StatementWithBody', 'body', {
 }, AST_Statement)
 
 var AST_LabeledStatement: any = DEFNODE('LabeledStatement', 'label', {
+  reduce_vars: function (tw) {
+    push(tw)
+    this.body.walk(tw)
+    pop(tw)
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.label._walk(visitor)
@@ -721,6 +731,21 @@ var AST_DWLoop: any = DEFNODE('DWLoop', 'condition', {}, {
 }, AST_IterationStatement)
 
 var AST_Do: any = DEFNODE('Do', null, {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+    const saved_loop = tw.in_loop
+    tw.in_loop = this
+    push(tw)
+    this.body.walk(tw)
+    if (has_break_or_continue(this)) {
+      pop(tw)
+      push(tw)
+    }
+    this.condition.walk(tw)
+    pop(tw)
+    tw.in_loop = saved_loop
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.body._walk(visitor)
@@ -759,6 +784,16 @@ var AST_Do: any = DEFNODE('Do', null, {
 }, AST_DWLoop)
 
 var AST_While: any = DEFNODE('While', null, {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+    const saved_loop = tw.in_loop
+    tw.in_loop = this
+    push(tw)
+    descend()
+    pop(tw)
+    tw.in_loop = saved_loop
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
@@ -794,6 +829,25 @@ var AST_While: any = DEFNODE('While', null, {
 }, AST_DWLoop)
 
 var AST_For: any = DEFNODE('For', 'init condition step', {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+    if (this.init) this.init.walk(tw)
+    const saved_loop = tw.in_loop
+    tw.in_loop = this
+    push(tw)
+    if (this.condition) this.condition.walk(tw)
+    this.body.walk(tw)
+    if (this.step) {
+      if (has_break_or_continue(this)) {
+        pop(tw)
+        push(tw)
+      }
+      this.step.walk(tw)
+    }
+    pop(tw)
+    tw.in_loop = saved_loop
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.init) this.init._walk(visitor)
@@ -866,6 +920,18 @@ var AST_For: any = DEFNODE('For', 'init condition step', {
 }, AST_IterationStatement)
 
 var AST_ForIn: any = DEFNODE('ForIn', 'init object', {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+    suppress(this.init)
+    this.object.walk(tw)
+    const saved_loop = tw.in_loop
+    tw.in_loop = this
+    push(tw)
+    this.body.walk(tw)
+    pop(tw)
+    tw.in_loop = saved_loop
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.init._walk(visitor)
@@ -2027,6 +2093,12 @@ var AST_Scope: any = DEFNODE('Scope', 'variables functions uses_with uses_eval p
 }, AST_Block)
 
 var AST_Toplevel: any = DEFNODE('Toplevel', 'globals', {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    this.globals.forEach(function (def) {
+      reset_def(compressor, def)
+    })
+    reset_variables(tw, compressor, this)
+  },
   resolve_defines: function (compressor: any) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
@@ -2391,6 +2463,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
 }, AST_Node)
 
 var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+  reduce_vars: mark_lambda,
   contains_this: function () {
     return walk(this, (node: any) => {
       if (node instanceof AST_This) return walk_abort
@@ -2504,6 +2577,13 @@ var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generat
 }, AST_Scope)
 
 var AST_Accessor: any = DEFNODE('Accessor', null, {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    push(tw)
+    reset_variables(tw, compressor, this)
+    descend()
+    pop(tw)
+    return true
+  },
   _size: function () {
     return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body)
   }
@@ -3108,6 +3188,18 @@ var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
 /* -----[ IF ]----- */
 
 var AST_If: any = DEFNODE('If', 'condition alternative', {
+  reduce_vars: function (tw) {
+    this.condition.walk(tw)
+    push(tw)
+    this.body.walk(tw)
+    pop(tw)
+    if (this.alternative) {
+      push(tw)
+      this.alternative.walk(tw)
+      pop(tw)
+    }
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
@@ -3242,6 +3334,12 @@ var AST_SwitchBranch: any = DEFNODE('SwitchBranch', null, {
 }, AST_Block)
 
 var AST_Default: any = DEFNODE('Default', null, {
+  reduce_vars: function (tw, descend) {
+    push(tw)
+    descend()
+    pop(tw)
+    return true
+  },
   _size: function (): number {
     return 8 + list_overhead(this.body)
   },
@@ -3254,6 +3352,15 @@ var AST_Default: any = DEFNODE('Default', null, {
 }, AST_SwitchBranch)
 
 var AST_Case: any = DEFNODE('Case', 'expression', {
+  reduce_vars: function (tw) {
+    push(tw)
+    this.expression.walk(tw)
+    pop(tw)
+    push(tw)
+    walk_body(this, tw)
+    pop(tw)
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -3290,6 +3397,19 @@ var AST_Case: any = DEFNODE('Case', 'expression', {
 /* -----[ EXCEPTIONS ]----- */
 
 var AST_Try: any = DEFNODE('Try', 'bcatch bfinally', {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    reset_block_variables(compressor, this)
+    push(tw)
+    walk_body(this, tw)
+    pop(tw)
+    if (this.bcatch) {
+      push(tw)
+      this.bcatch.walk(tw)
+      pop(tw)
+    }
+    if (this.bfinally) this.bfinally.walk(tw)
+    return true
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       walk_body(this, visitor)
@@ -3548,6 +3668,28 @@ var AST_Const: any = DEFNODE('Const', null, {
 }, AST_Definitions)
 
 var AST_VarDef: any = DEFNODE('VarDef', 'name value', {
+  reduce_vars: function (tw, descend) {
+    var node = this
+    if (node.name instanceof AST_Destructuring) {
+      suppress(node.name)
+      return
+    }
+    var d = node.name.definition?.()
+    if (node.value) {
+      if (safe_to_assign(tw, d, node.name.scope, node.value)) {
+        d.fixed = function () {
+          return node.value
+        }
+        tw.loop_ids.set(d.id, tw.in_loop)
+        mark(tw, d, false)
+        descend()
+        mark(tw, d, true)
+        return true
+      } else {
+        d.fixed = false
+      }
+    }
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.name._walk(visitor)
@@ -4270,6 +4412,34 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  reduce_vars: function (tw) {
+    var node = this
+    if (node.operator !== '++' && node.operator !== '--') return
+    var exp = node.expression
+    if (!(exp instanceof AST_SymbolRef)) return
+    var def = exp.definition?.()
+    var safe = safe_to_assign(tw, def, exp.scope, true)
+    def.assignments++
+    if (!safe) return
+    var fixed = def.fixed
+    if (!fixed) return
+    def.references.push(exp)
+    def.chained = true
+    def.fixed = function () {
+      return make_node(AST_Binary, node, {
+        operator: node.operator.slice(0, -1),
+        left: make_node(AST_UnaryPrefix, node, {
+          operator: '+',
+          expression: fixed instanceof AST_Node ? fixed : fixed()
+        }),
+        right: make_node(AST_Number, node, {
+          value: 1
+        })
+      })
+    }
+    mark(tw, def, true)
+    return true
+  },
   lift_sequences: function (compressor: any) {
     if (compressor.option('sequences')) {
       if (this.expression instanceof AST_Sequence) {
@@ -4356,6 +4526,14 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  reduce_vars: function (tw) {
+    if (!lazy_op.has(this.operator)) return
+    this.left.walk(tw)
+    push(tw)
+    this.right.walk(tw)
+    pop(tw)
+    return true
+  },
   _dot_throw: function (compressor: any) {
     return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
           (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
@@ -4511,6 +4689,16 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  reduce_vars: function (tw) {
+    this.condition.walk(tw)
+    push(tw)
+    this.consequent.walk(tw)
+    pop(tw)
+    push(tw)
+    this.alternative.walk(tw)
+    pop(tw)
+    return true
+  },
   _dot_throw: function (compressor: any) {
     return this.consequent._dot_throw(compressor) ||
           this.alternative._dot_throw(compressor)
@@ -4561,6 +4749,40 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    var node = this
+    if (node.left instanceof AST_Destructuring) {
+      suppress(node.left)
+      return
+    }
+    var sym = node.left
+    if (!(sym instanceof AST_SymbolRef)) return
+    var def = sym.definition?.()
+    var safe = safe_to_assign(tw, def, sym.scope, node.right)
+    def.assignments++
+    if (!safe) return
+    var fixed = def.fixed
+    if (!fixed && node.operator != '=') return
+    var eq = node.operator == '='
+    var value = eq ? node.right : node
+    if (is_modified(compressor, tw, node, value, 0)) return
+    def.references.push(sym)
+    if (!eq) def.chained = true
+    def.fixed = eq ? function () {
+      return node.right
+    } : function () {
+      return make_node(AST_Binary, node, {
+        operator: node.operator.slice(0, -1),
+        left: fixed instanceof AST_Node ? fixed : fixed(),
+        right: node.right
+      })
+    }
+    mark(tw, def, false)
+    node.right.walk(tw)
+    mark(tw, def, true)
+    mark_escaped(tw, def, sym.scope, node, value, 0, 1)
+    return true
+  },
   _dot_throw: function (compressor: any) {
     return this.operator == '=' &&
           this.right._dot_throw(compressor)
@@ -4952,6 +5174,13 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  reduce_vars: function (tw, descend) {
+    clear_flag(this, INLINED)
+    push(tw)
+    descend()
+    pop(tw)
+    return true
+  },
   is_block_scope: return_false,
   _walk: function (visitor: any) {
     return visitor._visit(this, function (this: any) {
@@ -5259,7 +5488,11 @@ var AST_SymbolClass: any = DEFNODE('SymbolClass', null, {}, {
   documentation: "Symbol naming a class's name. Lexically scoped to the class."
 }, AST_SymbolDeclaration)
 
-var AST_SymbolCatch: any = DEFNODE('SymbolCatch', null, {}, {
+var AST_SymbolCatch: any = DEFNODE('SymbolCatch', null, {
+  reduce_vars: function () {
+    this.definition().fixed = false
+  }
+}, {
   documentation: 'Symbol naming the exception in catch'
 }, AST_SymbolBlockDeclaration)
 
@@ -5290,6 +5523,45 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+    var d = this.definition?.()
+    d.references.push(this)
+    if (d.references.length == 1 &&
+          !d.fixed &&
+          d.orig[0] instanceof AST_SymbolDefun) {
+          tw.loop_ids?.set(d.id, tw.in_loop)
+    }
+    var fixed_value
+    if (d.fixed === undefined || !safe_to_read(tw, d)) {
+      d.fixed = false
+    } else if (d.fixed) {
+      fixed_value = this.fixed_value()
+      if (
+        fixed_value instanceof AST_Lambda &&
+              recursive_ref(tw, d)
+      ) {
+        d.recursive_refs++
+      } else if (fixed_value &&
+              !compressor.exposed(d) &&
+              ref_once(tw, compressor, d)
+      ) {
+        d.single_use =
+                  fixed_value instanceof AST_Lambda && !fixed_value.pinned?.() ||
+                  fixed_value instanceof AST_Class ||
+                  d.scope === this.scope && fixed_value.is_constant_expression()
+      } else {
+        d.single_use = false
+      }
+      if (is_modified(compressor, tw, this, fixed_value, 0, is_immutable(fixed_value))) {
+        if (d.single_use) {
+          d.single_use = 'm'
+        } else {
+          d.fixed = false
+        }
+      }
+    }
+    mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1)
+  },
   _dot_throw: function (compressor: any) {
     if (this.name === 'arguments') return false
     if (has_flag(this, UNDEFINED)) return true
@@ -6864,286 +7136,6 @@ export function is_lhs (node, parent) {
   if (parent instanceof AST_Unary && unary_side_effects.has(parent.operator)) return parent.expression
   if (parent instanceof AST_Assign && parent.left === node) return node
 }
-
-function def_reduce_vars (node, func) {
-  node.DEFMETHOD('reduce_vars', func)
-}
-
-def_reduce_vars(AST_Node, noop)
-def_reduce_vars(AST_Accessor, function (tw: TreeWalker, descend, compressor: any) {
-  push(tw)
-  reset_variables(tw, compressor, this)
-  descend()
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_Assign, function (tw: TreeWalker, descend, compressor: any) {
-  var node = this
-  if (node.left instanceof AST_Destructuring) {
-    suppress(node.left)
-    return
-  }
-  var sym = node.left
-  if (!(sym instanceof AST_SymbolRef)) return
-  var def = sym.definition?.()
-  var safe = safe_to_assign(tw, def, sym.scope, node.right)
-  def.assignments++
-  if (!safe) return
-  var fixed = def.fixed
-  if (!fixed && node.operator != '=') return
-  var eq = node.operator == '='
-  var value = eq ? node.right : node
-  if (is_modified(compressor, tw, node, value, 0)) return
-  def.references.push(sym)
-  if (!eq) def.chained = true
-  def.fixed = eq ? function () {
-    return node.right
-  } : function () {
-    return make_node(AST_Binary, node, {
-      operator: node.operator.slice(0, -1),
-      left: fixed instanceof AST_Node ? fixed : fixed(),
-      right: node.right
-    })
-  }
-  mark(tw, def, false)
-  node.right.walk(tw)
-  mark(tw, def, true)
-  mark_escaped(tw, def, sym.scope, node, value, 0, 1)
-  return true
-})
-def_reduce_vars(AST_Binary, function (tw) {
-  if (!lazy_op.has(this.operator)) return
-  this.left.walk(tw)
-  push(tw)
-  this.right.walk(tw)
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_Block, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-})
-def_reduce_vars(AST_Case, function (tw) {
-  push(tw)
-  this.expression.walk(tw)
-  pop(tw)
-  push(tw)
-  walk_body(this, tw)
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_Class, function (tw, descend) {
-  clear_flag(this, INLINED)
-  push(tw)
-  descend()
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_Conditional, function (tw) {
-  this.condition.walk(tw)
-  push(tw)
-  this.consequent.walk(tw)
-  pop(tw)
-  push(tw)
-  this.alternative.walk(tw)
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_Default, function (tw, descend) {
-  push(tw)
-  descend()
-  pop(tw)
-  return true
-})
-
-def_reduce_vars(AST_Lambda, mark_lambda)
-
-def_reduce_vars(AST_Do, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-  const saved_loop = tw.in_loop
-  tw.in_loop = this
-  push(tw)
-  this.body.walk(tw)
-  if (has_break_or_continue(this)) {
-    pop(tw)
-    push(tw)
-  }
-  this.condition.walk(tw)
-  pop(tw)
-  tw.in_loop = saved_loop
-  return true
-})
-def_reduce_vars(AST_For, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-  if (this.init) this.init.walk(tw)
-  const saved_loop = tw.in_loop
-  tw.in_loop = this
-  push(tw)
-  if (this.condition) this.condition.walk(tw)
-  this.body.walk(tw)
-  if (this.step) {
-    if (has_break_or_continue(this)) {
-      pop(tw)
-      push(tw)
-    }
-    this.step.walk(tw)
-  }
-  pop(tw)
-  tw.in_loop = saved_loop
-  return true
-})
-def_reduce_vars(AST_ForIn, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-  suppress(this.init)
-  this.object.walk(tw)
-  const saved_loop = tw.in_loop
-  tw.in_loop = this
-  push(tw)
-  this.body.walk(tw)
-  pop(tw)
-  tw.in_loop = saved_loop
-  return true
-})
-
-def_reduce_vars(AST_If, function (tw) {
-  this.condition.walk(tw)
-  push(tw)
-  this.body.walk(tw)
-  pop(tw)
-  if (this.alternative) {
-    push(tw)
-    this.alternative.walk(tw)
-    pop(tw)
-  }
-  return true
-})
-def_reduce_vars(AST_LabeledStatement, function (tw) {
-  push(tw)
-  this.body.walk(tw)
-  pop(tw)
-  return true
-})
-def_reduce_vars(AST_SymbolCatch, function () {
-  this.definition().fixed = false
-})
-
-def_reduce_vars(AST_SymbolRef, function (tw: TreeWalker, descend, compressor: any) {
-  var d = this.definition?.()
-  d.references.push(this)
-  if (d.references.length == 1 &&
-        !d.fixed &&
-        d.orig[0] instanceof AST_SymbolDefun) {
-        tw.loop_ids?.set(d.id, tw.in_loop)
-  }
-  var fixed_value
-  if (d.fixed === undefined || !safe_to_read(tw, d)) {
-    d.fixed = false
-  } else if (d.fixed) {
-    fixed_value = this.fixed_value()
-    if (
-      fixed_value instanceof AST_Lambda &&
-            recursive_ref(tw, d)
-    ) {
-      d.recursive_refs++
-    } else if (fixed_value &&
-            !compressor.exposed(d) &&
-            ref_once(tw, compressor, d)
-    ) {
-      d.single_use =
-                fixed_value instanceof AST_Lambda && !fixed_value.pinned?.() ||
-                fixed_value instanceof AST_Class ||
-                d.scope === this.scope && fixed_value.is_constant_expression()
-    } else {
-      d.single_use = false
-    }
-    if (is_modified(compressor, tw, this, fixed_value, 0, is_immutable(fixed_value))) {
-      if (d.single_use) {
-        d.single_use = 'm'
-      } else {
-        d.fixed = false
-      }
-    }
-  }
-  mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1)
-})
-def_reduce_vars(AST_Toplevel, function (tw: TreeWalker, descend, compressor: any) {
-  this.globals.forEach(function (def) {
-    reset_def(compressor, def)
-  })
-  reset_variables(tw, compressor, this)
-})
-def_reduce_vars(AST_Try, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-  push(tw)
-  walk_body(this, tw)
-  pop(tw)
-  if (this.bcatch) {
-    push(tw)
-    this.bcatch.walk(tw)
-    pop(tw)
-  }
-  if (this.bfinally) this.bfinally.walk(tw)
-  return true
-})
-def_reduce_vars(AST_Unary, function (tw) {
-  var node = this
-  if (node.operator !== '++' && node.operator !== '--') return
-  var exp = node.expression
-  if (!(exp instanceof AST_SymbolRef)) return
-  var def = exp.definition?.()
-  var safe = safe_to_assign(tw, def, exp.scope, true)
-  def.assignments++
-  if (!safe) return
-  var fixed = def.fixed
-  if (!fixed) return
-  def.references.push(exp)
-  def.chained = true
-  def.fixed = function () {
-    return make_node(AST_Binary, node, {
-      operator: node.operator.slice(0, -1),
-      left: make_node(AST_UnaryPrefix, node, {
-        operator: '+',
-        expression: fixed instanceof AST_Node ? fixed : fixed()
-      }),
-      right: make_node(AST_Number, node, {
-        value: 1
-      })
-    })
-  }
-  mark(tw, def, true)
-  return true
-})
-def_reduce_vars(AST_VarDef, function (tw, descend) {
-  var node = this
-  if (node.name instanceof AST_Destructuring) {
-    suppress(node.name)
-    return
-  }
-  var d = node.name.definition?.()
-  if (node.value) {
-    if (safe_to_assign(tw, d, node.name.scope, node.value)) {
-      d.fixed = function () {
-        return node.value
-      }
-      tw.loop_ids.set(d.id, tw.in_loop)
-      mark(tw, d, false)
-      descend()
-      mark(tw, d, true)
-      return true
-    } else {
-      d.fixed = false
-    }
-  }
-})
-def_reduce_vars(AST_While, function (tw: TreeWalker, descend, compressor: any) {
-  reset_block_variables(compressor, this)
-  const saved_loop = tw.in_loop
-  tw.in_loop = this
-  push(tw)
-  descend()
-  pop(tw)
-  tw.in_loop = saved_loop
-  return true
-})
 
 function reset_block_variables (compressor, node) {
   if (node.block_scope) {
