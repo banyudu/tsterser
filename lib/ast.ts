@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  may_throw: return_true,
   has_side_effects: return_true,
   _eval: return_this,
   is_constant_expression: return_false,
@@ -558,6 +559,9 @@ var AST_Directive: any = DEFNODE('Directive', 'value quote', {
 }, AST_Statement)
 
 var AST_SimpleStatement: any = DEFNODE('SimpleStatement', 'body', {
+  may_throw: function (compressor: any) {
+    return this.body.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.body.has_side_effects(compressor)
   },
@@ -608,6 +612,9 @@ function clone_block_scope (deep: boolean) {
 }
 
 var AST_Block: any = DEFNODE('Block', 'body block_scope', {
+  may_throw: function (compressor: any) {
+    return anyMayThrow(this.body, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.body, compressor)
   },
@@ -659,6 +666,7 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', null, {
 }, AST_Block)
 
 var AST_EmptyStatement: any = DEFNODE('EmptyStatement', null, {
+  may_throw: return_false,
   has_side_effects: return_false,
   shallow_cmp: pass_through,
   _to_mozilla_ast: () => ({ type: 'EmptyStatement' }),
@@ -683,6 +691,9 @@ var AST_StatementWithBody: any = DEFNODE('StatementWithBody', 'body', {
 }, AST_Statement)
 
 var AST_LabeledStatement: any = DEFNODE('LabeledStatement', 'label', {
+  may_throw: function (compressor: any) {
+    return this.body.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.body.has_side_effects(compressor)
   },
@@ -2491,6 +2502,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
 }, AST_Node)
 
 var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+  may_throw: return_false,
   has_side_effects: return_false,
   _eval: return_this,
   is_constant_expression: all_refs_local,
@@ -3055,6 +3067,9 @@ var AST_Exit: any = DEFNODE('Exit', 'value', {
 }, AST_Jump)
 
 var AST_Return: any = DEFNODE('Return', null, {
+  may_throw: function (compressor: any) {
+    return this.value && this.value.may_throw(compressor)
+  },
   _size: function () {
     return this.value ? 7 : 6
   },
@@ -3246,6 +3261,11 @@ var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
 /* -----[ IF ]----- */
 
 var AST_If: any = DEFNODE('If', 'condition alternative', {
+  may_throw: function (compressor: any) {
+    return this.condition.may_throw(compressor) ||
+          this.body && this.body.may_throw(compressor) ||
+          this.alternative && this.alternative.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.condition.has_side_effects(compressor) ||
           this.body && this.body.has_side_effects(compressor) ||
@@ -3324,6 +3344,10 @@ var AST_If: any = DEFNODE('If', 'condition alternative', {
 /* -----[ SWITCH ]----- */
 
 var AST_Switch: any = DEFNODE('Switch', 'expression', {
+  may_throw: function (compressor: any) {
+    return this.expression.may_throw(compressor) ||
+          anyMayThrow(this.body, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
@@ -3423,6 +3447,10 @@ var AST_Default: any = DEFNODE('Default', null, {
 }, AST_SwitchBranch)
 
 var AST_Case: any = DEFNODE('Case', 'expression', {
+  may_throw: function (compressor: any) {
+    return this.expression.may_throw(compressor) ||
+          anyMayThrow(this.body, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
@@ -3472,6 +3500,10 @@ var AST_Case: any = DEFNODE('Case', 'expression', {
 /* -----[ EXCEPTIONS ]----- */
 
 var AST_Try: any = DEFNODE('Try', 'bcatch bfinally', {
+  may_throw: function (compressor: any) {
+    return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
+          this.bfinally && this.bfinally.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.body, compressor) ||
           this.bcatch && this.bcatch.has_side_effects(compressor) ||
@@ -3619,6 +3651,9 @@ var AST_Finally: any = DEFNODE('Finally', null, {
 /* -----[ VAR/CONST ]----- */
 
 var AST_Definitions: any = DEFNODE('Definitions', 'definitions', {
+  may_throw: function (compressor: any) {
+    return anyMayThrow(this.definitions, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.definitions, compressor)
   },
@@ -3751,6 +3786,10 @@ var AST_Const: any = DEFNODE('Const', null, {
 }, AST_Definitions)
 
 var AST_VarDef: any = DEFNODE('VarDef', 'name value', {
+  may_throw: function (compressor: any) {
+    if (!this.value) return false
+    return this.value.may_throw(compressor)
+  },
   has_side_effects: function () {
     return this.value
   },
@@ -4139,6 +4178,13 @@ var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_d
 /* -----[ OTHER ]----- */
 
 var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
+  may_throw: function (compressor: any) {
+    if (anyMayThrow(this.args, compressor)) return true
+    if (this.is_expr_pure(compressor)) return false
+    if (this.expression.may_throw(compressor)) return true
+    return !(this.expression instanceof AST_Lambda) ||
+          anyMayThrow(this.expression.body, compressor)
+  },
   has_side_effects: function (compressor: any) {
     if (!this.is_expr_pure(compressor) &&
           (!this.expression.is_call_pure(compressor) ||
@@ -4313,6 +4359,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  may_throw: function (compressor: any) {
+    return anyMayThrow(this.expressions, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.expressions, compressor)
   },
@@ -4520,6 +4569,10 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
 }, AST_Node)
 
 var AST_Dot: any = DEFNODE('Dot', 'quote', {
+  may_throw: function (compressor: any) {
+    return this.expression.may_throw_on_access(compressor) ||
+          this.expression.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor)
@@ -4598,6 +4651,11 @@ var AST_Dot: any = DEFNODE('Dot', 'quote', {
 }, AST_PropAccess)
 
 var AST_Sub: any = DEFNODE('Sub', null, {
+  may_throw: function (compressor: any) {
+    return this.expression.may_throw_on_access(compressor) ||
+          this.expression.may_throw(compressor) ||
+          this.property.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
@@ -4630,6 +4688,10 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  may_throw: function (compressor: any) {
+    if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) { return false }
+    return this.expression.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return unary_side_effects.has(this.operator) ||
           this.expression.has_side_effects(compressor)
@@ -4792,6 +4854,10 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  may_throw: function (compressor: any) {
+    return this.left.may_throw(compressor) ||
+          this.right.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.left.has_side_effects(compressor) ||
           this.right.has_side_effects(compressor)
@@ -5049,6 +5115,11 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  may_throw: function (compressor: any) {
+    return this.condition.may_throw(compressor) ||
+          this.consequent.may_throw(compressor) ||
+          this.alternative.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.condition.has_side_effects(compressor) ||
           this.consequent.has_side_effects(compressor) ||
@@ -5136,6 +5207,15 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  may_throw: function (compressor: any) {
+    if (this.right.may_throw(compressor)) return true
+    if (!compressor.has_directive('use strict') &&
+          this.operator == '=' &&
+          this.left instanceof AST_SymbolRef) {
+      return false
+    }
+    return this.left.may_throw(compressor)
+  },
   has_side_effects: return_true,
   is_string: function (compressor: any) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
@@ -5203,6 +5283,9 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  may_throw: function (compressor: any) {
+    return anyMayThrow(this.elements, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.elements, compressor)
   },
@@ -5273,6 +5356,9 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  may_throw: function (compressor: any) {
+    return anyMayThrow(this.properties, compressor)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.properties, compressor)
   },
@@ -5366,6 +5452,10 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
 }, AST_Node)
 
 var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+  may_throw: function (compressor: any) {
+    // TODO key may throw too
+    return this.value.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
@@ -5531,6 +5621,9 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', 'quote', {
 }, AST_ObjectProperty)
 
 var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
+  may_throw: function (compressor: any) {
+    return this.computed_key() && this.key.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   },
@@ -5556,6 +5649,9 @@ var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
+  may_throw: function (compressor: any) {
+    return this.computed_key() && this.key.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   },
@@ -5582,6 +5678,9 @@ var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator async', {
+  may_throw: function (compressor: any) {
+    return this.computed_key() && this.key.may_throw(compressor)
+  },
   has_side_effects: function (compressor: any) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   },
@@ -5639,6 +5738,10 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  may_throw: function (compressor: any) {
+    if (this.extends && this.extends.may_throw(compressor)) return true
+    return anyMayThrow(this.properties, compressor)
+  },
   has_side_effects: function (compressor) {
     if (this.extends && this.extends.has_side_effects(compressor)) {
       return true
@@ -5766,6 +5869,12 @@ var AST_Class: any = DEFNODE('Class', 'name extends properties', {
 }, AST_Scope /* TODO a class might have a scope but it's not a scope */)
 
 var AST_ClassProperty = DEFNODE('ClassProperty', 'static quote', {
+  may_throw: function (compressor: any) {
+    return (
+      this.computed_key() && this.key.may_throw(compressor) ||
+          this.static && this.value && this.value.may_throw(compressor)
+    )
+  },
   has_side_effects: function (compressor: any) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
@@ -5930,6 +6039,7 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
 }, AST_Node)
 
 var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', 'init', {
+  may_throw: return_false,
   has_side_effects: return_false,
   _find_defs: function (compressor: any) {
     if (!this.global()) return
@@ -5968,6 +6078,7 @@ var AST_SymbolMethod: any = DEFNODE('SymbolMethod', null, {}, {
 }, AST_Symbol)
 
 var AST_SymbolClassProperty = DEFNODE('SymbolClassProperty', null, {
+  may_throw: return_false,
   has_side_effects: return_false,
   // TODO take propmangle into account
   _size: function (): number {
@@ -6024,6 +6135,9 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  may_throw: function (compressor: any) {
+    return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
+  },
   has_side_effects: function (compressor: any) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   },
@@ -6142,6 +6256,7 @@ var AST_LabelRef: any = DEFNODE('LabelRef', null, {}, {
 }, AST_Symbol)
 
 var AST_This: any = DEFNODE('This', null, {
+  may_throw: return_false,
   has_side_effects: return_false,
   _size: () => 4,
   shallow_cmp: pass_through,
@@ -6186,6 +6301,7 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  may_throw: return_false,
   has_side_effects: return_false,
   _eval: function () {
     return this.getValue()
@@ -8090,136 +8206,11 @@ function anySideEffect (list, compressor) {
   return false
 }
 
-// determine if expression may throw
-def_may_throw(AST_Node, return_true)
-
-def_may_throw(AST_Constant, return_false)
-def_may_throw(AST_EmptyStatement, return_false)
-def_may_throw(AST_Lambda, return_false)
-def_may_throw(AST_SymbolDeclaration, return_false)
-def_may_throw(AST_This, return_false)
-
 function anyMayThrow (list, compressor) {
   for (var i = list.length; --i >= 0;) {
     if (list[i].may_throw(compressor)) { return true }
   }
   return false
-}
-
-def_may_throw(AST_Class, function (compressor: any) {
-  if (this.extends && this.extends.may_throw(compressor)) return true
-  return anyMayThrow(this.properties, compressor)
-})
-
-def_may_throw(AST_Array, function (compressor: any) {
-  return anyMayThrow(this.elements, compressor)
-})
-def_may_throw(AST_Assign, function (compressor: any) {
-  if (this.right.may_throw(compressor)) return true
-  if (!compressor.has_directive('use strict') &&
-        this.operator == '=' &&
-        this.left instanceof AST_SymbolRef) {
-    return false
-  }
-  return this.left.may_throw(compressor)
-})
-def_may_throw(AST_Binary, function (compressor: any) {
-  return this.left.may_throw(compressor) ||
-        this.right.may_throw(compressor)
-})
-def_may_throw(AST_Block, function (compressor: any) {
-  return anyMayThrow(this.body, compressor)
-})
-def_may_throw(AST_Call, function (compressor: any) {
-  if (anyMayThrow(this.args, compressor)) return true
-  if (this.is_expr_pure(compressor)) return false
-  if (this.expression.may_throw(compressor)) return true
-  return !(this.expression instanceof AST_Lambda) ||
-        anyMayThrow(this.expression.body, compressor)
-})
-def_may_throw(AST_Case, function (compressor: any) {
-  return this.expression.may_throw(compressor) ||
-        anyMayThrow(this.body, compressor)
-})
-def_may_throw(AST_Conditional, function (compressor: any) {
-  return this.condition.may_throw(compressor) ||
-        this.consequent.may_throw(compressor) ||
-        this.alternative.may_throw(compressor)
-})
-def_may_throw(AST_Definitions, function (compressor: any) {
-  return anyMayThrow(this.definitions, compressor)
-})
-def_may_throw(AST_Dot, function (compressor: any) {
-  return this.expression.may_throw_on_access(compressor) ||
-        this.expression.may_throw(compressor)
-})
-def_may_throw(AST_If, function (compressor: any) {
-  return this.condition.may_throw(compressor) ||
-        this.body && this.body.may_throw(compressor) ||
-        this.alternative && this.alternative.may_throw(compressor)
-})
-def_may_throw(AST_LabeledStatement, function (compressor: any) {
-  return this.body.may_throw(compressor)
-})
-def_may_throw(AST_Object, function (compressor: any) {
-  return anyMayThrow(this.properties, compressor)
-})
-def_may_throw(AST_ObjectProperty, function (compressor: any) {
-  // TODO key may throw too
-  return this.value.may_throw(compressor)
-})
-def_may_throw(AST_ClassProperty, function (compressor: any) {
-  return (
-    this.computed_key() && this.key.may_throw(compressor) ||
-        this.static && this.value && this.value.may_throw(compressor)
-  )
-})
-def_may_throw(AST_ConciseMethod, function (compressor: any) {
-  return this.computed_key() && this.key.may_throw(compressor)
-})
-def_may_throw(AST_ObjectGetter, function (compressor: any) {
-  return this.computed_key() && this.key.may_throw(compressor)
-})
-def_may_throw(AST_ObjectSetter, function (compressor: any) {
-  return this.computed_key() && this.key.may_throw(compressor)
-})
-def_may_throw(AST_Return, function (compressor: any) {
-  return this.value && this.value.may_throw(compressor)
-})
-def_may_throw(AST_Sequence, function (compressor: any) {
-  return anyMayThrow(this.expressions, compressor)
-})
-def_may_throw(AST_SimpleStatement, function (compressor: any) {
-  return this.body.may_throw(compressor)
-})
-def_may_throw(AST_Sub, function (compressor: any) {
-  return this.expression.may_throw_on_access(compressor) ||
-        this.expression.may_throw(compressor) ||
-        this.property.may_throw(compressor)
-})
-def_may_throw(AST_Switch, function (compressor: any) {
-  return this.expression.may_throw(compressor) ||
-        anyMayThrow(this.body, compressor)
-})
-def_may_throw(AST_SymbolRef, function (compressor: any) {
-  return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
-})
-def_may_throw(AST_SymbolClassProperty, return_false)
-def_may_throw(AST_Try, function (compressor: any) {
-  return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
-        this.bfinally && this.bfinally.may_throw(compressor)
-})
-def_may_throw(AST_Unary, function (compressor: any) {
-  if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) { return false }
-  return this.expression.may_throw(compressor)
-})
-def_may_throw(AST_VarDef, function (compressor: any) {
-  if (!this.value) return false
-  return this.value.may_throw(compressor)
-})
-
-function def_may_throw (node, func) {
-  node.DEFMETHOD('may_throw', func)
 }
 
 def_drop_side_effect_free(AST_Node, return_this)
