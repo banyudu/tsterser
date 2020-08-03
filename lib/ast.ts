@@ -363,6 +363,9 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  negate: function () {
+    return basic_negation(this)
+  },
   _find_defs: noop,
   is_string: return_false,
   is_number: return_false,
@@ -493,6 +496,9 @@ var AST_Node: any = DEFNODE('Node', 'start end', {
 /* -----[ statements ]----- */
 
 var AST_Statement: any = DEFNODE('Statement', null, {
+  negate: function () {
+    throw new Error('Cannot negate a statement')
+  },
   _codegen: function (self, output) {
     (self.body).print(output)
     output.semicolon()
@@ -2609,6 +2615,9 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 var AST_Function: any = DEFNODE('Function', null, {
+  negate: function () {
+    return basic_negation(this)
+  },
   _dot_throw: return_false,
   next_mangled: function (options: any, def: any) {
     // #179, #326
@@ -2665,6 +2674,9 @@ var AST_Function: any = DEFNODE('Function', null, {
 }, AST_Lambda)
 
 var AST_Arrow: any = DEFNODE('Arrow', null, {
+  negate: function () {
+    return basic_negation(this)
+  },
   _dot_throw: return_false,
   init_scope_vars: function () {
       AST_Scope.prototype.init_scope_vars?.apply(this, arguments)
@@ -4172,6 +4184,11 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  negate: function (compressor: any) {
+    var expressions = this.expressions.slice()
+    expressions.push(expressions.pop().negate(compressor))
+    return make_sequence(this, expressions)
+  },
   is_string: function (compressor: any) {
     return this.tail_node().is_string(compressor)
   },
@@ -4517,6 +4534,10 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
 }, AST_Node)
 
 var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+  negate: function () {
+    if (this.operator == '!') { return this.expression }
+    return basic_negation(this)
+  },
   is_string: function () {
     return this.operator == 'typeof'
   },
@@ -4552,6 +4573,37 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  negate: function (compressor: any, first_in_statement) {
+    var self = this.clone(); var op = this.operator
+    if (compressor.option('unsafe_comps')) {
+      switch (op) {
+        case '<=' : self.operator = '>'; return self
+        case '<' : self.operator = '>='; return self
+        case '>=' : self.operator = '<'; return self
+        case '>' : self.operator = '<='; return self
+      }
+    }
+    switch (op) {
+      case '==' : self.operator = '!='; return self
+      case '!=' : self.operator = '=='; return self
+      case '===': self.operator = '!=='; return self
+      case '!==': self.operator = '==='; return self
+      case '&&':
+        self.operator = '||'
+        self.left = self.left.negate(compressor, first_in_statement)
+        self.right = self.right.negate(compressor)
+        return best(this, self, first_in_statement)
+      case '||':
+        self.operator = '&&'
+        self.left = self.left.negate(compressor, first_in_statement)
+        self.right = self.right.negate(compressor)
+        return best(this, self, first_in_statement)
+      case '??':
+        self.right = self.right.negate(compressor)
+        return best(this, self, first_in_statement)
+    }
+    return basic_negation(this)
+  },
   is_string: function (compressor: any) {
     return this.operator == '+' &&
           (this.left.is_string(compressor) || this.right.is_string(compressor))
@@ -4730,6 +4782,12 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  negate: function (compressor: any, first_in_statement) {
+    var self = this.clone()
+    self.consequent = self.consequent.negate(compressor)
+    self.alternative = self.alternative.negate(compressor)
+    return best(this, self, first_in_statement)
+  },
   is_string: function (compressor: any) {
     return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
   },
@@ -7498,69 +7556,6 @@ export function make_node_from_constant (val, orig) {
         type: typeof val
       }))
   }
-}
-
-def_negate(AST_Node, function () {
-  return basic_negation(this)
-})
-def_negate(AST_Statement, function () {
-  throw new Error('Cannot negate a statement')
-})
-def_negate(AST_Function, function () {
-  return basic_negation(this)
-})
-def_negate(AST_Arrow, function () {
-  return basic_negation(this)
-})
-def_negate(AST_UnaryPrefix, function () {
-  if (this.operator == '!') { return this.expression }
-  return basic_negation(this)
-})
-def_negate(AST_Sequence, function (compressor: any) {
-  var expressions = this.expressions.slice()
-  expressions.push(expressions.pop().negate(compressor))
-  return make_sequence(this, expressions)
-})
-def_negate(AST_Conditional, function (compressor: any, first_in_statement) {
-  var self = this.clone()
-  self.consequent = self.consequent.negate(compressor)
-  self.alternative = self.alternative.negate(compressor)
-  return best(this, self, first_in_statement)
-})
-def_negate(AST_Binary, function (compressor: any, first_in_statement) {
-  var self = this.clone(); var op = this.operator
-  if (compressor.option('unsafe_comps')) {
-    switch (op) {
-      case '<=' : self.operator = '>'; return self
-      case '<' : self.operator = '>='; return self
-      case '>=' : self.operator = '<'; return self
-      case '>' : self.operator = '<='; return self
-    }
-  }
-  switch (op) {
-    case '==' : self.operator = '!='; return self
-    case '!=' : self.operator = '=='; return self
-    case '===': self.operator = '!=='; return self
-    case '!==': self.operator = '==='; return self
-    case '&&':
-      self.operator = '||'
-      self.left = self.left.negate(compressor, first_in_statement)
-      self.right = self.right.negate(compressor)
-      return best(this, self, first_in_statement)
-    case '||':
-      self.operator = '&&'
-      self.left = self.left.negate(compressor, first_in_statement)
-      self.right = self.right.negate(compressor)
-      return best(this, self, first_in_statement)
-    case '??':
-      self.right = self.right.negate(compressor)
-      return best(this, self, first_in_statement)
-  }
-  return basic_negation(this)
-})
-
-function def_negate (node, func) {
-  node.DEFMETHOD('negate', func)
 }
 
 function to_node (value, orig) {
