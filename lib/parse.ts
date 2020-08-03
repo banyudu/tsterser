@@ -49,7 +49,7 @@ import {
   defaults,
   makePredicate,
   set_annotation
-} from './utils/index'
+} from './utils'
 import {
   AST_Accessor,
   AST_Array,

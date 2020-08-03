@@ -44,9 +44,7 @@
 'use strict'
 
 import MOZ_SourceMap from 'source-map'
-import {
-  defaults
-} from './utils/index'
+import { defaults } from './utils'
 
 // a small wrapper around fitzgen's source-map library
 function SourceMap (options) {

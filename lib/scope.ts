@@ -46,7 +46,7 @@
 import {
   keep_name,
   mergeSort
-} from './utils/index'
+} from './utils'
 import {
   AST_Node,
   AST_SymbolCatch,

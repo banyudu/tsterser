@@ -49,7 +49,7 @@ import {
   noop,
   return_false,
   return_true
-} from './utils/index'
+} from './utils'
 import {
   AST_Binary,
   AST_Conditional,

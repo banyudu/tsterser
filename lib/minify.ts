@@ -6,14 +6,14 @@ import {
   map_from_object,
   map_to_object,
   HOP
-} from './utils/index'
+} from './utils'
 import {
   AST_Node,
   AST_Toplevel
 } from './ast'
 import { parse } from './parse'
 import { OutputStream } from './output'
-import { Compressor } from './compress/index'
+import Compressor from './compressor'
 import { base54 } from './scope'
 import { SourceMap } from './sourcemap'
 import {

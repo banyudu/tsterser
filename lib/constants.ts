@@ -1,4 +1,4 @@
-import { convert_to_predicate, makePredicate } from './utils/index'
+import { convert_to_predicate, makePredicate } from './utils'
 export const UNUSED = 0b00000001
 export const TRUTHY = 0b00000010
 export const FALSY = 0b00000100
