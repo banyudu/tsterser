@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  _dot_throw: is_strict,
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
   // then its value is returned; otherwise the element itself
@@ -2356,6 +2357,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', 'globals', {
 }, AST_Scope)
 
 var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
+  _dot_throw: function (compressor: any) {
+    return this.expression._dot_throw(compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression.walk(visitor)
@@ -2521,6 +2525,7 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 var AST_Function: any = DEFNODE('Function', null, {
+  _dot_throw: return_false,
   next_mangled: function (options: any, def: any) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
@@ -2576,6 +2581,7 @@ var AST_Function: any = DEFNODE('Function', null, {
 }, AST_Lambda)
 
 var AST_Arrow: any = DEFNODE('Arrow', null, {
+  _dot_throw: return_false,
   init_scope_vars: function () {
       AST_Scope.prototype.init_scope_vars?.apply(this, arguments)
       this.uses_arguments = false
@@ -4019,6 +4025,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  _dot_throw: function (compressor: any) {
+    return this.tail_node()._dot_throw(compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expressions.forEach(function (node: any) {
@@ -4163,6 +4172,11 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
 }, AST_Node)
 
 var AST_Dot: any = DEFNODE('Dot', 'quote', {
+  _dot_throw: function (compressor: any) {
+    if (!is_strict(compressor)) return false
+    if (this.expression instanceof AST_Function && this.property == 'prototype') return false
+    return true
+  },
   is_call_pure: function (compressor: any) {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
@@ -4313,6 +4327,9 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
 }, AST_Node)
 
 var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+  _dot_throw: function () {
+    return this.operator == 'void'
+  },
   _codegen: function (self, output) {
     var op = self.operator
     output.print(op)
@@ -4329,6 +4346,7 @@ var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
 }, AST_Unary)
 
 var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
+  _dot_throw: return_false,
   _codegen: function (self, output) {
     self.expression.print(output)
     output.print(self.operator)
@@ -4338,6 +4356,10 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  _dot_throw: function (compressor: any) {
+    return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
+          (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
+  },
   lift_sequences: function (compressor: any) {
     if (compressor.option('sequences')) {
       if (this.left instanceof AST_Sequence) {
@@ -4489,6 +4511,10 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  _dot_throw: function (compressor: any) {
+    return this.consequent._dot_throw(compressor) ||
+          this.alternative._dot_throw(compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
@@ -4535,6 +4561,10 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  _dot_throw: function (compressor: any) {
+    return this.operator == '=' &&
+          this.right._dot_throw(compressor)
+  },
   _to_mozilla_ast: M => ({
     type: 'AssignmentExpression',
     operator: M.operator,
@@ -4553,6 +4583,7 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  _dot_throw: return_false,
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       var elements = this.elements
@@ -4603,6 +4634,11 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  _dot_throw: function (compressor: any) {
+    if (!is_strict(compressor)) return false
+    for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
+    return false
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       var properties = this.properties
@@ -4661,6 +4697,7 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
 }, AST_Node)
 
 var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+  _dot_throw: return_false,
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.key instanceof AST_Node) { this.key._walk(visitor) }
@@ -4838,6 +4875,7 @@ var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
+  _dot_throw: return_true,
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
   },
@@ -5252,6 +5290,15 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  _dot_throw: function (compressor: any) {
+    if (this.name === 'arguments') return false
+    if (has_flag(this, UNDEFINED)) return true
+    if (!is_strict(compressor)) return false
+    if (is_undeclared_ref(this) && this.is_declared(compressor)) return false
+    if (this.is_immutable()) return false
+    var fixed = this.fixed_value()
+    return !fixed || fixed._dot_throw(compressor)
+  },
   is_declared: function (compressor: any) {
     return !this.definition?.().undeclared ||
           compressor.option('unsafe') && global_names.has(this.name)
@@ -5335,6 +5382,7 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  _dot_throw: return_false,
   getValue: function () {
     return this.value
   },
@@ -5488,6 +5536,7 @@ var AST_Atom: any = DEFNODE('Atom', null, {
 }, AST_Constant)
 
 var AST_Null: any = DEFNODE('Null', null, {
+  _dot_throw: return_true,
   value: null,
   _size: () => 4,
   _to_mozilla_ast: To_Moz_Literal
@@ -5503,6 +5552,7 @@ var AST_NaN: any = DEFNODE('NaN', null, {
 }, AST_Atom)
 
 var AST_Undefined: any = DEFNODE('Undefined', null, {
+  _dot_throw: return_true,
   value: (function () {}()),
   _size: () => 6 // "void 0"
 }, {
@@ -6814,61 +6864,6 @@ export function is_lhs (node, parent) {
   if (parent instanceof AST_Unary && unary_side_effects.has(parent.operator)) return parent.expression
   if (parent instanceof AST_Assign && parent.left === node) return node
 }
-
-function def_may_throw_on_access (node, func) {
-  node.DEFMETHOD('_dot_throw', func)
-}
-
-def_may_throw_on_access(AST_Node, is_strict)
-def_may_throw_on_access(AST_Null, return_true)
-def_may_throw_on_access(AST_Undefined, return_true)
-def_may_throw_on_access(AST_Constant, return_false)
-def_may_throw_on_access(AST_Array, return_false)
-def_may_throw_on_access(AST_Object, function (compressor: any) {
-  if (!is_strict(compressor)) return false
-  for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
-  return false
-})
-def_may_throw_on_access(AST_ObjectProperty, return_false)
-def_may_throw_on_access(AST_ObjectGetter, return_true)
-def_may_throw_on_access(AST_Expansion, function (compressor: any) {
-  return this.expression._dot_throw(compressor)
-})
-def_may_throw_on_access(AST_Function, return_false)
-def_may_throw_on_access(AST_Arrow, return_false)
-def_may_throw_on_access(AST_UnaryPostfix, return_false)
-def_may_throw_on_access(AST_UnaryPrefix, function () {
-  return this.operator == 'void'
-})
-def_may_throw_on_access(AST_Binary, function (compressor: any) {
-  return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
-        (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
-})
-def_may_throw_on_access(AST_Assign, function (compressor: any) {
-  return this.operator == '=' &&
-        this.right._dot_throw(compressor)
-})
-def_may_throw_on_access(AST_Conditional, function (compressor: any) {
-  return this.consequent._dot_throw(compressor) ||
-        this.alternative._dot_throw(compressor)
-})
-def_may_throw_on_access(AST_Dot, function (compressor: any) {
-  if (!is_strict(compressor)) return false
-  if (this.expression instanceof AST_Function && this.property == 'prototype') return false
-  return true
-})
-def_may_throw_on_access(AST_Sequence, function (compressor: any) {
-  return this.tail_node()._dot_throw(compressor)
-})
-def_may_throw_on_access(AST_SymbolRef, function (compressor: any) {
-  if (this.name === 'arguments') return false
-  if (has_flag(this, UNDEFINED)) return true
-  if (!is_strict(compressor)) return false
-  if (is_undeclared_ref(this) && this.is_declared(compressor)) return false
-  if (this.is_immutable()) return false
-  var fixed = this.fixed_value()
-  return !fixed || fixed._dot_throw(compressor)
-})
 
 function def_reduce_vars (node, func) {
   node.DEFMETHOD('reduce_vars', func)
