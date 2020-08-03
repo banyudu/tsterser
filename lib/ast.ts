@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  drop_side_effect_free: return_this,
   may_throw: return_true,
   has_side_effects: return_true,
   _eval: return_this,
@@ -2468,6 +2469,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', 'globals', {
 }, AST_Scope)
 
 var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    return this.expression.drop_side_effect_free(compressor, first_in_statement)
+  },
   _dot_throw: function (compressor: any) {
     return this.expression._dot_throw(compressor)
   },
@@ -2620,6 +2624,7 @@ var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generat
 }, AST_Scope)
 
 var AST_Accessor: any = DEFNODE('Accessor', null, {
+  drop_side_effect_free: return_null,
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     push(tw)
     reset_variables(tw, compressor, this)
@@ -2648,6 +2653,7 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 var AST_Function: any = DEFNODE('Function', null, {
+  drop_side_effect_free: return_null,
   _eval: function (compressor: any) {
     if (compressor.option('unsafe')) {
       var fn: any = function () {}
@@ -2718,6 +2724,7 @@ var AST_Function: any = DEFNODE('Function', null, {
 }, AST_Lambda)
 
 var AST_Arrow: any = DEFNODE('Arrow', null, {
+  drop_side_effect_free: return_null,
   negate: function () {
     return basic_negation(this)
   },
@@ -2929,6 +2936,10 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'templat
 }, AST_Node)
 
 var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
+  drop_side_effect_free: function (compressor: any) {
+    var values = trim(this.segments, compressor, first_in_statement)
+    return values && make_sequence(this, values)
+  },
   has_side_effects: function (compressor: any) {
     return anySideEffect(this.segments, compressor)
   },
@@ -3005,6 +3016,7 @@ var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
 }, AST_Node)
 
 var AST_TemplateSegment: any = DEFNODE('TemplateSegment', 'value raw', {
+  drop_side_effect_free: return_null,
   has_side_effects: return_false,
   shallow_cmp: mkshallow({
     value: 'eq'
@@ -4178,6 +4190,28 @@ var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_d
 /* -----[ OTHER ]----- */
 
 var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    if (!this.is_expr_pure(compressor)) {
+      if (this.expression.is_call_pure(compressor)) {
+        var exprs = this.args.slice()
+        exprs.unshift(this.expression.expression)
+        exprs = trim(exprs, compressor, first_in_statement)
+        return exprs && make_sequence(this, exprs)
+      }
+      if (is_func_expr(this.expression) &&
+              (!this.expression.name || !this.expression.name.definition?.().references.length)) {
+        var node = this.clone()
+        node.expression.process_expression(false, compressor)
+        return node
+      }
+      return this
+    }
+    if (has_annotation(this, _PURE)) {
+      compressor.warn('Dropping __PURE__ call [{file}:{line},{col}]', this.start)
+    }
+    var args = trim(this.args, compressor, first_in_statement)
+    return args && make_sequence(this, args)
+  },
   may_throw: function (compressor: any) {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
@@ -4359,6 +4393,17 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  drop_side_effect_free: function (compressor: any) {
+    var last = this.tail_node()
+    var expr = last.drop_side_effect_free(compressor)
+    if (expr === last) return this
+    var expressions = this.expressions.slice(0, -1)
+    if (expr) expressions.push(expr)
+    if (!expressions.length) {
+      return make_node(AST_Number, this, { value: 0 })
+    }
+    return make_sequence(this, expressions)
+  },
   may_throw: function (compressor: any) {
     return anyMayThrow(this.expressions, compressor)
   },
@@ -4569,6 +4614,10 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
 }, AST_Node)
 
 var AST_Dot: any = DEFNODE('Dot', 'quote', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    if (this.expression.may_throw_on_access(compressor)) return this
+    return this.expression.drop_side_effect_free(compressor, first_in_statement)
+  },
   may_throw: function (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor)
@@ -4651,6 +4700,14 @@ var AST_Dot: any = DEFNODE('Dot', 'quote', {
 }, AST_PropAccess)
 
 var AST_Sub: any = DEFNODE('Sub', null, {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    if (this.expression.may_throw_on_access(compressor)) return this
+    var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
+    if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
+    var property = this.property.drop_side_effect_free(compressor)
+    if (!property) return expression
+    return make_sequence(this, [expression, property])
+  },
   may_throw: function (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
@@ -4688,6 +4745,23 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    if (unary_side_effects.has(this.operator)) {
+      if (!this.expression.has_side_effects(compressor)) {
+        set_flag(this, WRITE_ONLY)
+      } else {
+        clear_flag(this, WRITE_ONLY)
+      }
+      return this
+    }
+    if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) return null
+    var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
+    if (first_in_statement && expression && is_iife_call(expression)) {
+      if (expression === this.expression && this.operator == '!') return this
+      return expression.negate(compressor, first_in_statement)
+    }
+    return expression
+  },
   may_throw: function (compressor: any) {
     if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) { return false }
     return this.expression.may_throw(compressor)
@@ -4854,6 +4928,20 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    var right = this.right.drop_side_effect_free(compressor)
+    if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
+    if (lazy_op.has(this.operator)) {
+      if (right === this.right) return this
+      var node = this.clone()
+      node.right = right
+      return node
+    } else {
+      var left = this.left.drop_side_effect_free(compressor, first_in_statement)
+      if (!left) return this.right.drop_side_effect_free(compressor, first_in_statement)
+      return make_sequence(this, [left, right])
+    }
+  },
   may_throw: function (compressor: any) {
     return this.left.may_throw(compressor) ||
           this.right.may_throw(compressor)
@@ -5115,6 +5203,29 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  drop_side_effect_free: function (compressor: any) {
+    var consequent = this.consequent.drop_side_effect_free(compressor)
+    var alternative = this.alternative.drop_side_effect_free(compressor)
+    if (consequent === this.consequent && alternative === this.alternative) return this
+    if (!consequent) {
+      return alternative ? make_node(AST_Binary, this, {
+        operator: '||',
+        left: this.condition,
+        right: alternative
+      }) : this.condition.drop_side_effect_free(compressor)
+    }
+    if (!alternative) {
+      return make_node(AST_Binary, this, {
+        operator: '&&',
+        left: this.condition,
+        right: consequent
+      })
+    }
+    var node = this.clone()
+    node.consequent = consequent
+    node.alternative = alternative
+    return node
+  },
   may_throw: function (compressor: any) {
     return this.condition.may_throw(compressor) ||
           this.consequent.may_throw(compressor) ||
@@ -5207,6 +5318,23 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  drop_side_effect_free: function (compressor: any) {
+    var left = this.left
+    if (left.has_side_effects(compressor) ||
+          compressor.has_directive('use strict') &&
+              left instanceof AST_PropAccess &&
+              left.expression.is_constant()) {
+      return this
+    }
+    set_flag(this, WRITE_ONLY)
+    while (left instanceof AST_PropAccess) {
+      left = left.expression
+    }
+    if (left.is_constant_expression(compressor.find_parent(AST_Scope))) {
+      return this.right.drop_side_effect_free(compressor)
+    }
+    return this
+  },
   may_throw: function (compressor: any) {
     if (this.right.may_throw(compressor)) return true
     if (!compressor.has_directive('use strict') &&
@@ -5283,6 +5411,10 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    var values = trim(this.elements, compressor, first_in_statement)
+    return values && make_sequence(this, values)
+  },
   may_throw: function (compressor: any) {
     return anyMayThrow(this.elements, compressor)
   },
@@ -5356,6 +5488,10 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    var values = trim(this.properties, compressor, first_in_statement)
+    return values && make_sequence(this, values)
+  },
   may_throw: function (compressor: any) {
     return anyMayThrow(this.properties, compressor)
   },
@@ -5452,6 +5588,15 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
 }, AST_Node)
 
 var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+  drop_side_effect_free: function (compressor: any, first_in_statement) {
+    const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
+    const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
+    const value = this.value.drop_side_effect_free(compressor, first_in_statement)
+    if (key && value) {
+      return make_sequence(this, [key, value])
+    }
+    return key || value
+  },
   may_throw: function (compressor: any) {
     // TODO key may throw too
     return this.value.may_throw(compressor)
@@ -5621,6 +5766,9 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', 'quote', {
 }, AST_ObjectProperty)
 
 var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
+  drop_side_effect_free: function () {
+    return this.computed_key() ? this.key : null
+  },
   may_throw: function (compressor: any) {
     return this.computed_key() && this.key.may_throw(compressor)
   },
@@ -5649,6 +5797,9 @@ var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
+  drop_side_effect_free: function () {
+    return this.computed_key() ? this.key : null
+  },
   may_throw: function (compressor: any) {
     return this.computed_key() && this.key.may_throw(compressor)
   },
@@ -5678,6 +5829,9 @@ var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator async', {
+  drop_side_effect_free: function () {
+    return this.computed_key() ? this.key : null
+  },
   may_throw: function (compressor: any) {
     return this.computed_key() && this.key.may_throw(compressor)
   },
@@ -5738,6 +5892,17 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  drop_side_effect_free: function (compressor: any) {
+    const with_effects: any[] = []
+    const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
+    if (trimmed_extends) with_effects.push(trimmed_extends)
+    for (const prop of this.properties) {
+      const trimmed_prop = prop.drop_side_effect_free(compressor)
+      if (trimmed_prop) with_effects.push(trimmed_prop)
+    }
+    if (!with_effects.length) return null
+    return make_sequence(this, with_effects)
+  },
   may_throw: function (compressor: any) {
     if (this.extends && this.extends.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
@@ -5869,6 +6034,15 @@ var AST_Class: any = DEFNODE('Class', 'name extends properties', {
 }, AST_Scope /* TODO a class might have a scope but it's not a scope */)
 
 var AST_ClassProperty = DEFNODE('ClassProperty', 'static quote', {
+  drop_side_effect_free: function (compressor: any) {
+    const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
+
+    const value = this.static && this.value &&
+          this.value.drop_side_effect_free(compressor)
+
+    if (key && value) return make_sequence(this, [key, value])
+    return key || value || null
+  },
   may_throw: function (compressor: any) {
     return (
       this.computed_key() && this.key.may_throw(compressor) ||
@@ -6135,6 +6309,11 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  drop_side_effect_free: function (compressor: any) {
+    const safe_access = this.is_declared(compressor) ||
+          pure_prop_access_globals.has(this.name)
+    return safe_access ? null : this
+  },
   may_throw: function (compressor: any) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   },
@@ -6256,6 +6435,7 @@ var AST_LabelRef: any = DEFNODE('LabelRef', null, {}, {
 }, AST_Symbol)
 
 var AST_This: any = DEFNODE('This', null, {
+  drop_side_effect_free: return_null,
   may_throw: return_false,
   has_side_effects: return_false,
   _size: () => 4,
@@ -6301,6 +6481,7 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  drop_side_effect_free: return_null,
   may_throw: return_false,
   has_side_effects: return_false,
   _eval: function () {
@@ -8211,192 +8392,6 @@ function anyMayThrow (list, compressor) {
     if (list[i].may_throw(compressor)) { return true }
   }
   return false
-}
-
-def_drop_side_effect_free(AST_Node, return_this)
-def_drop_side_effect_free(AST_Constant, return_null)
-def_drop_side_effect_free(AST_This, return_null)
-def_drop_side_effect_free(AST_Call, function (compressor: any, first_in_statement) {
-  if (!this.is_expr_pure(compressor)) {
-    if (this.expression.is_call_pure(compressor)) {
-      var exprs = this.args.slice()
-      exprs.unshift(this.expression.expression)
-      exprs = trim(exprs, compressor, first_in_statement)
-      return exprs && make_sequence(this, exprs)
-    }
-    if (is_func_expr(this.expression) &&
-            (!this.expression.name || !this.expression.name.definition?.().references.length)) {
-      var node = this.clone()
-      node.expression.process_expression(false, compressor)
-      return node
-    }
-    return this
-  }
-  if (has_annotation(this, _PURE)) {
-    compressor.warn('Dropping __PURE__ call [{file}:{line},{col}]', this.start)
-  }
-  var args = trim(this.args, compressor, first_in_statement)
-  return args && make_sequence(this, args)
-})
-def_drop_side_effect_free(AST_Accessor, return_null)
-def_drop_side_effect_free(AST_Function, return_null)
-def_drop_side_effect_free(AST_Arrow, return_null)
-def_drop_side_effect_free(AST_Class, function (compressor: any) {
-  const with_effects: any[] = []
-  const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
-  if (trimmed_extends) with_effects.push(trimmed_extends)
-  for (const prop of this.properties) {
-    const trimmed_prop = prop.drop_side_effect_free(compressor)
-    if (trimmed_prop) with_effects.push(trimmed_prop)
-  }
-  if (!with_effects.length) return null
-  return make_sequence(this, with_effects)
-})
-def_drop_side_effect_free(AST_Binary, function (compressor: any, first_in_statement) {
-  var right = this.right.drop_side_effect_free(compressor)
-  if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
-  if (lazy_op.has(this.operator)) {
-    if (right === this.right) return this
-    var node = this.clone()
-    node.right = right
-    return node
-  } else {
-    var left = this.left.drop_side_effect_free(compressor, first_in_statement)
-    if (!left) return this.right.drop_side_effect_free(compressor, first_in_statement)
-    return make_sequence(this, [left, right])
-  }
-})
-def_drop_side_effect_free(AST_Assign, function (compressor: any) {
-  var left = this.left
-  if (left.has_side_effects(compressor) ||
-        compressor.has_directive('use strict') &&
-            left instanceof AST_PropAccess &&
-            left.expression.is_constant()) {
-    return this
-  }
-  set_flag(this, WRITE_ONLY)
-  while (left instanceof AST_PropAccess) {
-    left = left.expression
-  }
-  if (left.is_constant_expression(compressor.find_parent(AST_Scope))) {
-    return this.right.drop_side_effect_free(compressor)
-  }
-  return this
-})
-def_drop_side_effect_free(AST_Conditional, function (compressor: any) {
-  var consequent = this.consequent.drop_side_effect_free(compressor)
-  var alternative = this.alternative.drop_side_effect_free(compressor)
-  if (consequent === this.consequent && alternative === this.alternative) return this
-  if (!consequent) {
-    return alternative ? make_node(AST_Binary, this, {
-      operator: '||',
-      left: this.condition,
-      right: alternative
-    }) : this.condition.drop_side_effect_free(compressor)
-  }
-  if (!alternative) {
-    return make_node(AST_Binary, this, {
-      operator: '&&',
-      left: this.condition,
-      right: consequent
-    })
-  }
-  var node = this.clone()
-  node.consequent = consequent
-  node.alternative = alternative
-  return node
-})
-def_drop_side_effect_free(AST_Unary, function (compressor: any, first_in_statement) {
-  if (unary_side_effects.has(this.operator)) {
-    if (!this.expression.has_side_effects(compressor)) {
-      set_flag(this, WRITE_ONLY)
-    } else {
-      clear_flag(this, WRITE_ONLY)
-    }
-    return this
-  }
-  if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) return null
-  var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
-  if (first_in_statement && expression && is_iife_call(expression)) {
-    if (expression === this.expression && this.operator == '!') return this
-    return expression.negate(compressor, first_in_statement)
-  }
-  return expression
-})
-def_drop_side_effect_free(AST_SymbolRef, function (compressor: any) {
-  const safe_access = this.is_declared(compressor) ||
-        pure_prop_access_globals.has(this.name)
-  return safe_access ? null : this
-})
-def_drop_side_effect_free(AST_Object, function (compressor: any, first_in_statement) {
-  var values = trim(this.properties, compressor, first_in_statement)
-  return values && make_sequence(this, values)
-})
-def_drop_side_effect_free(AST_ObjectProperty, function (compressor: any, first_in_statement) {
-  const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
-  const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
-  const value = this.value.drop_side_effect_free(compressor, first_in_statement)
-  if (key && value) {
-    return make_sequence(this, [key, value])
-  }
-  return key || value
-})
-def_drop_side_effect_free(AST_ClassProperty, function (compressor: any) {
-  const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
-
-  const value = this.static && this.value &&
-        this.value.drop_side_effect_free(compressor)
-
-  if (key && value) return make_sequence(this, [key, value])
-  return key || value || null
-})
-def_drop_side_effect_free(AST_ConciseMethod, function () {
-  return this.computed_key() ? this.key : null
-})
-def_drop_side_effect_free(AST_ObjectGetter, function () {
-  return this.computed_key() ? this.key : null
-})
-def_drop_side_effect_free(AST_ObjectSetter, function () {
-  return this.computed_key() ? this.key : null
-})
-def_drop_side_effect_free(AST_Array, function (compressor: any, first_in_statement) {
-  var values = trim(this.elements, compressor, first_in_statement)
-  return values && make_sequence(this, values)
-})
-def_drop_side_effect_free(AST_Dot, function (compressor: any, first_in_statement) {
-  if (this.expression.may_throw_on_access(compressor)) return this
-  return this.expression.drop_side_effect_free(compressor, first_in_statement)
-})
-def_drop_side_effect_free(AST_Sub, function (compressor: any, first_in_statement) {
-  if (this.expression.may_throw_on_access(compressor)) return this
-  var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
-  if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
-  var property = this.property.drop_side_effect_free(compressor)
-  if (!property) return expression
-  return make_sequence(this, [expression, property])
-})
-def_drop_side_effect_free(AST_Sequence, function (compressor: any) {
-  var last = this.tail_node()
-  var expr = last.drop_side_effect_free(compressor)
-  if (expr === last) return this
-  var expressions = this.expressions.slice(0, -1)
-  if (expr) expressions.push(expr)
-  if (!expressions.length) {
-    return make_node(AST_Number, this, { value: 0 })
-  }
-  return make_sequence(this, expressions)
-})
-def_drop_side_effect_free(AST_Expansion, function (compressor: any, first_in_statement) {
-  return this.expression.drop_side_effect_free(compressor, first_in_statement)
-})
-def_drop_side_effect_free(AST_TemplateSegment, return_null)
-def_drop_side_effect_free(AST_TemplateString, function (compressor: any) {
-  var values = trim(this.segments, compressor, first_in_statement)
-  return values && make_sequence(this, values)
-})
-
-function def_drop_side_effect_free (node: any, func: Function) {
-  node.DEFMETHOD('drop_side_effect_free', func)
 }
 
 // Drop side-effect-free elements from an array of expressions.
