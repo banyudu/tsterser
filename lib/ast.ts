@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  has_side_effects: return_true,
   _eval: return_this,
   is_constant_expression: return_false,
   negate: function () {
@@ -557,6 +558,9 @@ var AST_Directive: any = DEFNODE('Directive', 'value quote', {
 }, AST_Statement)
 
 var AST_SimpleStatement: any = DEFNODE('SimpleStatement', 'body', {
+  has_side_effects: function (compressor: any) {
+    return this.body.has_side_effects(compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.body._walk(visitor)
@@ -604,6 +608,9 @@ function clone_block_scope (deep: boolean) {
 }
 
 var AST_Block: any = DEFNODE('Block', 'body block_scope', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.body, compressor)
+  },
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
   },
@@ -652,6 +659,7 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', null, {
 }, AST_Block)
 
 var AST_EmptyStatement: any = DEFNODE('EmptyStatement', null, {
+  has_side_effects: return_false,
   shallow_cmp: pass_through,
   _to_mozilla_ast: () => ({ type: 'EmptyStatement' }),
   _size: () => 1,
@@ -675,6 +683,9 @@ var AST_StatementWithBody: any = DEFNODE('StatementWithBody', 'body', {
 }, AST_Statement)
 
 var AST_LabeledStatement: any = DEFNODE('LabeledStatement', 'label', {
+  has_side_effects: function (compressor: any) {
+    return this.body.has_side_effects(compressor)
+  },
   reduce_vars: function (tw) {
     push(tw)
     this.body.walk(tw)
@@ -2480,6 +2491,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
 }, AST_Node)
 
 var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+  has_side_effects: return_false,
   _eval: return_this,
   is_constant_expression: all_refs_local,
   reduce_vars: mark_lambda,
@@ -2905,6 +2917,9 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'templat
 }, AST_Node)
 
 var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.segments, compressor)
+  },
   _eval: function () {
     if (this.segments.length !== 1) return this
     return this.segments[0].value
@@ -2978,6 +2993,7 @@ var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
 }, AST_Node)
 
 var AST_TemplateSegment: any = DEFNODE('TemplateSegment', 'value raw', {
+  has_side_effects: return_false,
   shallow_cmp: mkshallow({
     value: 'eq'
   }),
@@ -3230,6 +3246,11 @@ var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
 /* -----[ IF ]----- */
 
 var AST_If: any = DEFNODE('If', 'condition alternative', {
+  has_side_effects: function (compressor: any) {
+    return this.condition.has_side_effects(compressor) ||
+          this.body && this.body.has_side_effects(compressor) ||
+          this.alternative && this.alternative.has_side_effects(compressor)
+  },
   aborts: function () {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
   },
@@ -3303,6 +3324,10 @@ var AST_If: any = DEFNODE('If', 'condition alternative', {
 /* -----[ SWITCH ]----- */
 
 var AST_Switch: any = DEFNODE('Switch', 'expression', {
+  has_side_effects: function (compressor: any) {
+    return this.expression.has_side_effects(compressor) ||
+          anySideEffect(this.body, compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -3398,6 +3423,10 @@ var AST_Default: any = DEFNODE('Default', null, {
 }, AST_SwitchBranch)
 
 var AST_Case: any = DEFNODE('Case', 'expression', {
+  has_side_effects: function (compressor: any) {
+    return this.expression.has_side_effects(compressor) ||
+          anySideEffect(this.body, compressor)
+  },
   reduce_vars: function (tw) {
     push(tw)
     this.expression.walk(tw)
@@ -3443,6 +3472,11 @@ var AST_Case: any = DEFNODE('Case', 'expression', {
 /* -----[ EXCEPTIONS ]----- */
 
 var AST_Try: any = DEFNODE('Try', 'bcatch bfinally', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.body, compressor) ||
+          this.bcatch && this.bcatch.has_side_effects(compressor) ||
+          this.bfinally && this.bfinally.has_side_effects(compressor)
+  },
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     push(tw)
@@ -3585,6 +3619,9 @@ var AST_Finally: any = DEFNODE('Finally', null, {
 /* -----[ VAR/CONST ]----- */
 
 var AST_Definitions: any = DEFNODE('Definitions', 'definitions', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.definitions, compressor)
+  },
   to_assignments: function (compressor: any) {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
@@ -3714,6 +3751,9 @@ var AST_Const: any = DEFNODE('Const', null, {
 }, AST_Definitions)
 
 var AST_VarDef: any = DEFNODE('VarDef', 'name value', {
+  has_side_effects: function () {
+    return this.value
+  },
   reduce_vars: function (tw, descend) {
     var node = this
     if (node.name instanceof AST_Destructuring) {
@@ -4099,6 +4139,14 @@ var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_d
 /* -----[ OTHER ]----- */
 
 var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
+  has_side_effects: function (compressor: any) {
+    if (!this.is_expr_pure(compressor) &&
+          (!this.expression.is_call_pure(compressor) ||
+              this.expression.has_side_effects(compressor))) {
+      return true
+    }
+    return anySideEffect(this.args, compressor)
+  },
   _eval: function (compressor: any, depth) {
     var exp = this.expression
     if (compressor.option('unsafe') && exp instanceof AST_PropAccess) {
@@ -4265,6 +4313,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.expressions, compressor)
+  },
   negate: function (compressor: any) {
     var expressions = this.expressions.slice()
     expressions.push(expressions.pop().negate(compressor))
@@ -4469,6 +4520,10 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
 }, AST_Node)
 
 var AST_Dot: any = DEFNODE('Dot', 'quote', {
+  has_side_effects: function (compressor: any) {
+    return this.expression.may_throw_on_access(compressor) ||
+          this.expression.has_side_effects(compressor)
+  },
   _find_defs: function (compressor: any, suffix) {
     return this.expression._find_defs(compressor, '.' + this.property + suffix)
   },
@@ -4543,6 +4598,11 @@ var AST_Dot: any = DEFNODE('Dot', 'quote', {
 }, AST_PropAccess)
 
 var AST_Sub: any = DEFNODE('Sub', null, {
+  has_side_effects: function (compressor: any) {
+    return this.expression.may_throw_on_access(compressor) ||
+          this.expression.has_side_effects(compressor) ||
+          this.property.has_side_effects(compressor)
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -4570,6 +4630,10 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  has_side_effects: function (compressor: any) {
+    return unary_side_effects.has(this.operator) ||
+          this.expression.has_side_effects(compressor)
+  },
   is_constant_expression: function () {
     return this.expression.is_constant_expression()
   },
@@ -4728,6 +4792,10 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  has_side_effects: function (compressor: any) {
+    return this.left.has_side_effects(compressor) ||
+          this.right.has_side_effects(compressor)
+  },
   _eval: function (compressor: any, depth) {
     if (!non_converting_binary.has(this.operator)) depth++
     var left = this.left._eval(compressor, depth)
@@ -4981,6 +5049,11 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  has_side_effects: function (compressor: any) {
+    return this.condition.has_side_effects(compressor) ||
+          this.consequent.has_side_effects(compressor) ||
+          this.alternative.has_side_effects(compressor)
+  },
   _eval: function (compressor: any, depth) {
     var condition = this.condition._eval(compressor, depth)
     if (condition === this.condition) return this
@@ -5063,6 +5136,7 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  has_side_effects: return_true,
   is_string: function (compressor: any) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   },
@@ -5129,6 +5203,9 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.elements, compressor)
+  },
   _eval: function (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var elements: any[] = []
@@ -5196,6 +5273,9 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  has_side_effects: function (compressor: any) {
+    return anySideEffect(this.properties, compressor)
+  },
   _eval: function (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var val = {}
@@ -5286,6 +5366,12 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
 }, AST_Node)
 
 var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+  has_side_effects: function (compressor: any) {
+    return (
+      this.computed_key() && this.key.has_side_effects(compressor) ||
+          this.value.has_side_effects(compressor)
+    )
+  },
   is_constant_expression: function () {
     return !(this.key instanceof AST_Node) && this.value.is_constant_expression()
   },
@@ -5445,6 +5531,9 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', 'quote', {
 }, AST_ObjectProperty)
 
 var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
+  has_side_effects: function (compressor: any) {
+    return this.computed_key() && this.key.has_side_effects(compressor)
+  },
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
   },
@@ -5467,6 +5556,9 @@ var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
+  has_side_effects: function (compressor: any) {
+    return this.computed_key() && this.key.has_side_effects(compressor)
+  },
   _dot_throw: return_true,
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
@@ -5490,6 +5582,9 @@ var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
 }, AST_ObjectProperty)
 
 var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator async', {
+  has_side_effects: function (compressor: any) {
+    return this.computed_key() && this.key.has_side_effects(compressor)
+  },
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
   },
@@ -5544,6 +5639,12 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  has_side_effects: function (compressor) {
+    if (this.extends && this.extends.has_side_effects(compressor)) {
+      return true
+    }
+    return anySideEffect(this.properties, compressor)
+  },
   _eval: return_this,
   is_constant_expression: function (scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
@@ -5665,6 +5766,12 @@ var AST_Class: any = DEFNODE('Class', 'name extends properties', {
 }, AST_Scope /* TODO a class might have a scope but it's not a scope */)
 
 var AST_ClassProperty = DEFNODE('ClassProperty', 'static quote', {
+  has_side_effects: function (compressor: any) {
+    return (
+      this.computed_key() && this.key.has_side_effects(compressor) ||
+          this.static && this.value && this.value.has_side_effects(compressor)
+    )
+  },
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.key instanceof AST_Node) { this.key._walk(visitor) }
@@ -5823,6 +5930,7 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
 }, AST_Node)
 
 var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', 'init', {
+  has_side_effects: return_false,
   _find_defs: function (compressor: any) {
     if (!this.global()) return
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
@@ -5860,6 +5968,7 @@ var AST_SymbolMethod: any = DEFNODE('SymbolMethod', null, {}, {
 }, AST_Symbol)
 
 var AST_SymbolClassProperty = DEFNODE('SymbolClassProperty', null, {
+  has_side_effects: return_false,
   // TODO take propmangle into account
   _size: function (): number {
     return this.name.length
@@ -5915,6 +6024,9 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  has_side_effects: function (compressor: any) {
+    return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
+  },
   _eval: function (compressor: any, depth) {
     var fixed = this.fixed_value()
     if (!fixed) return this
@@ -6030,6 +6142,7 @@ var AST_LabelRef: any = DEFNODE('LabelRef', null, {}, {
 }, AST_Symbol)
 
 var AST_This: any = DEFNODE('This', null, {
+  has_side_effects: return_false,
   _size: () => 4,
   shallow_cmp: pass_through,
   _to_mozilla_ast: () => ({ type: 'ThisExpression' }),
@@ -6073,6 +6186,7 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  has_side_effects: return_false,
   _eval: function () {
     return this.getValue()
   },
@@ -7969,134 +8083,11 @@ var global_objs = {
   String: String
 }
 
-// determine if expression has side effects
-def_has_side_effects(AST_Node, return_true)
-
-def_has_side_effects(AST_EmptyStatement, return_false)
-def_has_side_effects(AST_Constant, return_false)
-def_has_side_effects(AST_This, return_false)
-
 function anySideEffect (list, compressor) {
   for (var i = list.length; --i >= 0;) {
     if (list[i].has_side_effects(compressor)) { return true }
   }
   return false
-}
-
-def_has_side_effects(AST_Block, function (compressor: any) {
-  return anySideEffect(this.body, compressor)
-})
-def_has_side_effects(AST_Call, function (compressor: any) {
-  if (!this.is_expr_pure(compressor) &&
-        (!this.expression.is_call_pure(compressor) ||
-            this.expression.has_side_effects(compressor))) {
-    return true
-  }
-  return anySideEffect(this.args, compressor)
-})
-def_has_side_effects(AST_Switch, function (compressor: any) {
-  return this.expression.has_side_effects(compressor) ||
-        anySideEffect(this.body, compressor)
-})
-def_has_side_effects(AST_Case, function (compressor: any) {
-  return this.expression.has_side_effects(compressor) ||
-        anySideEffect(this.body, compressor)
-})
-def_has_side_effects(AST_Try, function (compressor: any) {
-  return anySideEffect(this.body, compressor) ||
-        this.bcatch && this.bcatch.has_side_effects(compressor) ||
-        this.bfinally && this.bfinally.has_side_effects(compressor)
-})
-def_has_side_effects(AST_If, function (compressor: any) {
-  return this.condition.has_side_effects(compressor) ||
-        this.body && this.body.has_side_effects(compressor) ||
-        this.alternative && this.alternative.has_side_effects(compressor)
-})
-def_has_side_effects(AST_LabeledStatement, function (compressor: any) {
-  return this.body.has_side_effects(compressor)
-})
-def_has_side_effects(AST_SimpleStatement, function (compressor: any) {
-  return this.body.has_side_effects(compressor)
-})
-def_has_side_effects(AST_Lambda, return_false)
-def_has_side_effects(AST_Class, function (compressor) {
-  if (this.extends && this.extends.has_side_effects(compressor)) {
-    return true
-  }
-  return anySideEffect(this.properties, compressor)
-})
-def_has_side_effects(AST_Binary, function (compressor: any) {
-  return this.left.has_side_effects(compressor) ||
-        this.right.has_side_effects(compressor)
-})
-
-def_has_side_effects(AST_Assign, return_true)
-def_has_side_effects(AST_Conditional, function (compressor: any) {
-  return this.condition.has_side_effects(compressor) ||
-        this.consequent.has_side_effects(compressor) ||
-        this.alternative.has_side_effects(compressor)
-})
-def_has_side_effects(AST_Unary, function (compressor: any) {
-  return unary_side_effects.has(this.operator) ||
-        this.expression.has_side_effects(compressor)
-})
-def_has_side_effects(AST_SymbolRef, function (compressor: any) {
-  return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
-})
-def_has_side_effects(AST_SymbolClassProperty, return_false)
-def_has_side_effects(AST_SymbolDeclaration, return_false)
-def_has_side_effects(AST_Object, function (compressor: any) {
-  return anySideEffect(this.properties, compressor)
-})
-def_has_side_effects(AST_ObjectProperty, function (compressor: any) {
-  return (
-    this.computed_key() && this.key.has_side_effects(compressor) ||
-        this.value.has_side_effects(compressor)
-  )
-})
-def_has_side_effects(AST_ClassProperty, function (compressor: any) {
-  return (
-    this.computed_key() && this.key.has_side_effects(compressor) ||
-        this.static && this.value && this.value.has_side_effects(compressor)
-  )
-})
-def_has_side_effects(AST_ConciseMethod, function (compressor: any) {
-  return this.computed_key() && this.key.has_side_effects(compressor)
-})
-def_has_side_effects(AST_ObjectGetter, function (compressor: any) {
-  return this.computed_key() && this.key.has_side_effects(compressor)
-})
-def_has_side_effects(AST_ObjectSetter, function (compressor: any) {
-  return this.computed_key() && this.key.has_side_effects(compressor)
-})
-def_has_side_effects(AST_Array, function (compressor: any) {
-  return anySideEffect(this.elements, compressor)
-})
-def_has_side_effects(AST_Dot, function (compressor: any) {
-  return this.expression.may_throw_on_access(compressor) ||
-        this.expression.has_side_effects(compressor)
-})
-def_has_side_effects(AST_Sub, function (compressor: any) {
-  return this.expression.may_throw_on_access(compressor) ||
-        this.expression.has_side_effects(compressor) ||
-        this.property.has_side_effects(compressor)
-})
-def_has_side_effects(AST_Sequence, function (compressor: any) {
-  return anySideEffect(this.expressions, compressor)
-})
-def_has_side_effects(AST_Definitions, function (compressor: any) {
-  return anySideEffect(this.definitions, compressor)
-})
-def_has_side_effects(AST_VarDef, function () {
-  return this.value
-})
-def_has_side_effects(AST_TemplateSegment, return_false)
-def_has_side_effects(AST_TemplateString, function (compressor: any) {
-  return anySideEffect(this.segments, compressor)
-})
-
-function def_has_side_effects (node, func) {
-  node.DEFMETHOD('has_side_effects', func)
 }
 
 // determine if expression may throw
