@@ -497,6 +497,7 @@ var AST_Node: any = DEFNODE('Node', 'start end', {
 /* -----[ statements ]----- */
 
 var AST_Statement: any = DEFNODE('Statement', null, {
+  aborts: return_null,
   negate: function () {
     throw new Error('Cannot negate a statement')
   },
@@ -633,6 +634,7 @@ var AST_Block: any = DEFNODE('Block', 'body block_scope', {
 }, AST_Statement)
 
 var AST_BlockStatement: any = DEFNODE('BlockStatement', null, {
+  aborts: block_aborts,
   _to_mozilla_ast: M => ({
     type: 'BlockStatement',
     body: M.body.map(to_moz)
@@ -2974,6 +2976,7 @@ var AST_TemplateSegment: any = DEFNODE('TemplateSegment', 'value raw', {
 /* -----[ JUMPS ]----- */
 
 var AST_Jump: any = DEFNODE('Jump', null, {
+  aborts: return_this,
   shallow_cmp: pass_through,
   add_source_map: function (output) { output.add_mapping(this.start) }
 }, {
@@ -3207,6 +3210,9 @@ var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
 /* -----[ IF ]----- */
 
 var AST_If: any = DEFNODE('If', 'condition alternative', {
+  aborts: function () {
+    return this.alternative && aborts(this.body) && aborts(this.alternative) && this
+  },
   reduce_vars: function (tw) {
     this.condition.walk(tw)
     push(tw)
@@ -3330,6 +3336,7 @@ var AST_Switch: any = DEFNODE('Switch', 'expression', {
 }, AST_Block)
 
 var AST_SwitchBranch: any = DEFNODE('SwitchBranch', null, {
+  aborts: block_aborts,
   is_block_scope: return_false,
   shallow_cmp: pass_through,
   _to_mozilla_ast: function To_Moz_SwitchCase (M) {
@@ -3808,6 +3815,7 @@ var AST_NameMapping: any = DEFNODE('NameMapping', 'foreign_name name', {
 }, AST_Node)
 
 var AST_Import: any = DEFNODE('Import', 'imported_name imported_names module_name', {
+  aborts: function () { return null },
   _walk: function (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.imported_name) {
@@ -7680,8 +7688,6 @@ function all_refs_local (scope) {
 export function aborts (thing) {
   return thing && thing.aborts()
 }
-def_aborts(AST_Statement, return_null)
-def_aborts(AST_Jump, return_this)
 function block_aborts () {
   for (var i = 0; i < this.body.length; i++) {
     if (aborts(this.body[i])) {
@@ -7689,16 +7695,6 @@ function block_aborts () {
     }
   }
   return null
-}
-def_aborts(AST_Import, function () { return null })
-def_aborts(AST_BlockStatement, block_aborts)
-def_aborts(AST_SwitchBranch, block_aborts)
-def_aborts(AST_If, function () {
-  return this.alternative && aborts(this.body) && aborts(this.alternative) && this
-})
-
-function def_aborts (node, func) {
-  node.DEFMETHOD('aborts', func)
 }
 
 def_eval(AST_PropAccess, function (compressor: any, depth) {
