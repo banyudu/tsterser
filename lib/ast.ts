@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  is_constant_expression: return_false,
   negate: function () {
     return basic_negation(this)
   },
@@ -2473,6 +2474,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
 }, AST_Node)
 
 var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+  is_constant_expression: all_refs_local,
   reduce_vars: mark_lambda,
   contains_this: function () {
     return walk(this, (node: any) => {
@@ -4446,6 +4448,9 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 }, AST_PropAccess)
 
 var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+  is_constant_expression: function () {
+    return this.expression.is_constant_expression()
+  },
   is_number: function () {
     return unary.has(this.operator)
   },
@@ -4573,6 +4578,10 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  is_constant_expression: function () {
+    return this.left.is_constant_expression() &&
+          this.right.is_constant_expression()
+  },
   negate: function (compressor: any, first_in_statement) {
     var self = this.clone(); var op = this.operator
     if (compressor.option('unsafe_comps')) {
@@ -4923,6 +4932,9 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  is_constant_expression: function () {
+    return this.elements.every((l) => l.is_constant_expression())
+  },
   _dot_throw: return_false,
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
@@ -4974,6 +4986,9 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  is_constant_expression: function () {
+    return this.properties.every((l) => l.is_constant_expression())
+  },
   _dot_throw: function (compressor: any) {
     if (!is_strict(compressor)) return false
     for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
@@ -5037,6 +5052,9 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
 }, AST_Node)
 
 var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+  is_constant_expression: function () {
+    return !(this.key instanceof AST_Node) && this.value.is_constant_expression()
+  },
   _dot_throw: return_false,
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
@@ -5292,6 +5310,22 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  is_constant_expression: function (scope) {
+    if (this.extends && !this.extends.is_constant_expression(scope)) {
+      return false
+    }
+
+    for (const prop of this.properties) {
+      if (prop.computed_key() && !prop.key.is_constant_expression(scope)) {
+        return false
+      }
+      if (prop.static && prop.value && !prop.value.is_constant_expression(scope)) {
+        return false
+      }
+    }
+
+    return all_refs_local.call(this, scope)
+  },
   reduce_vars: function (tw, descend) {
     clear_flag(this, INLINED)
     push(tw)
@@ -5783,6 +5817,7 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  is_constant_expression: return_true,
   _dot_throw: return_false,
   getValue: function () {
     return this.value
@@ -7605,46 +7640,6 @@ function best (orig, alt, first_in_statement) {
 /* -----[ boolean/negation helpers ]----- */
 export function best_of_expression (ast1, ast2) {
   return ast1.size() > ast2.size() ? ast2 : ast1
-}
-
-def_is_constant_expression(AST_Node, return_false)
-def_is_constant_expression(AST_Constant, return_true)
-def_is_constant_expression(AST_Class, function (scope) {
-  if (this.extends && !this.extends.is_constant_expression(scope)) {
-    return false
-  }
-
-  for (const prop of this.properties) {
-    if (prop.computed_key() && !prop.key.is_constant_expression(scope)) {
-      return false
-    }
-    if (prop.static && prop.value && !prop.value.is_constant_expression(scope)) {
-      return false
-    }
-  }
-
-  return all_refs_local.call(this, scope)
-})
-def_is_constant_expression(AST_Lambda, all_refs_local)
-def_is_constant_expression(AST_Unary, function () {
-  return this.expression.is_constant_expression()
-})
-def_is_constant_expression(AST_Binary, function () {
-  return this.left.is_constant_expression() &&
-        this.right.is_constant_expression()
-})
-def_is_constant_expression(AST_Array, function () {
-  return this.elements.every((l) => l.is_constant_expression())
-})
-def_is_constant_expression(AST_Object, function () {
-  return this.properties.every((l) => l.is_constant_expression())
-})
-def_is_constant_expression(AST_ObjectProperty, function () {
-  return !(this.key instanceof AST_Node) && this.value.is_constant_expression()
-})
-
-function def_is_constant_expression (node, func) {
-  node.DEFMETHOD('is_constant_expression', func)
 }
 
 // determine if expression is constant
