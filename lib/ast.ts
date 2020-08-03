@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  is_boolean: return_false,
   reduce_vars: noop,
   _dot_throw: is_strict,
   // methods to evaluate a constant expression
@@ -4167,6 +4168,9 @@ var AST_New: any = DEFNODE('New', null, {
 }, AST_Call)
 
 var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+  is_boolean: function () {
+    return this.tail_node().is_boolean()
+  },
   _dot_throw: function (compressor: any) {
     return this.tail_node()._dot_throw(compressor)
   },
@@ -4497,6 +4501,9 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
 }, AST_Node)
 
 var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+  is_boolean: function () {
+    return unary_bool.has(this.operator)
+  },
   _dot_throw: function () {
     return this.operator == 'void'
   },
@@ -4526,6 +4533,12 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  is_boolean: function () {
+    return binary_bool.has(this.operator) ||
+          lazy_op.has(this.operator) &&
+              this.left.is_boolean() &&
+              this.right.is_boolean()
+  },
   reduce_vars: function (tw) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
@@ -4689,6 +4702,9 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  is_boolean: function () {
+    return this.consequent.is_boolean() && this.alternative.is_boolean()
+  },
   reduce_vars: function (tw) {
     this.condition.walk(tw)
     push(tw)
@@ -4749,6 +4765,9 @@ var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternat
 }, AST_Node)
 
 var AST_Assign: any = DEFNODE('Assign', null, {
+  is_boolean: function () {
+    return this.operator == '=' && this.right.is_boolean()
+  },
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     var node = this
     if (node.left instanceof AST_Destructuring) {
@@ -5854,6 +5873,7 @@ var AST_Boolean: any = DEFNODE('Boolean', null, {
 }, AST_Atom)
 
 var AST_False: any = DEFNODE('False', null, {
+  is_boolean: return_true,
   value: false,
   _size: () => 5
 }, {
@@ -5861,6 +5881,7 @@ var AST_False: any = DEFNODE('False', null, {
 }, AST_Boolean)
 
 var AST_True: any = DEFNODE('True', null, {
+  is_boolean: return_true,
   value: true,
   _size: () => 4
 }, {
@@ -7423,33 +7444,6 @@ export function make_node_from_constant (val, orig) {
         type: typeof val
       }))
   }
-}
-
-// methods to determine whether an expression has a boolean result type
-def_is_boolean(AST_Node, return_false)
-def_is_boolean(AST_UnaryPrefix, function () {
-  return unary_bool.has(this.operator)
-})
-def_is_boolean(AST_Binary, function () {
-  return binary_bool.has(this.operator) ||
-        lazy_op.has(this.operator) &&
-            this.left.is_boolean() &&
-            this.right.is_boolean()
-})
-def_is_boolean(AST_Conditional, function () {
-  return this.consequent.is_boolean() && this.alternative.is_boolean()
-})
-def_is_boolean(AST_Assign, function () {
-  return this.operator == '=' && this.right.is_boolean()
-})
-def_is_boolean(AST_Sequence, function () {
-  return this.tail_node().is_boolean()
-})
-def_is_boolean(AST_True, return_true)
-def_is_boolean(AST_False, return_true)
-
-function def_is_boolean (node, func) {
-  node.DEFMETHOD('is_boolean', func)
 }
 
 // methods to determine if an expression has a numeric result type
