@@ -363,6 +363,7 @@ class AST_Token {
 }
 
 var AST_Node: any = DEFNODE('Node', 'start end', {
+  _eval: return_this,
   is_constant_expression: return_false,
   negate: function () {
     return basic_negation(this)
@@ -497,6 +498,9 @@ var AST_Node: any = DEFNODE('Node', 'start end', {
 /* -----[ statements ]----- */
 
 var AST_Statement: any = DEFNODE('Statement', null, {
+  _eval: function () {
+    throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
+  },
   aborts: return_null,
   negate: function () {
     throw new Error('Cannot negate a statement')
@@ -2476,6 +2480,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
 }, AST_Node)
 
 var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+  _eval: return_this,
   is_constant_expression: all_refs_local,
   reduce_vars: mark_lambda,
   contains_this: function () {
@@ -2619,6 +2624,17 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 var AST_Function: any = DEFNODE('Function', null, {
+  _eval: function (compressor: any) {
+    if (compressor.option('unsafe')) {
+      var fn: any = function () {}
+      fn.node = this
+      fn.toString = function () {
+        return this.node.print_to_string()
+      }
+      return fn
+    }
+    return this
+  },
   negate: function () {
     return basic_negation(this)
   },
@@ -2889,6 +2905,10 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'templat
 }, AST_Node)
 
 var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
+  _eval: function () {
+    if (this.segments.length !== 1) return this
+    return this.segments[0].value
+  },
   is_string: return_true,
   _walk: function (visitor: any) {
     return visitor._visit(this, function (this: any) {
@@ -4079,6 +4099,56 @@ var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_d
 /* -----[ OTHER ]----- */
 
 var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
+  _eval: function (compressor: any, depth) {
+    var exp = this.expression
+    if (compressor.option('unsafe') && exp instanceof AST_PropAccess) {
+      var key = exp.property
+      if (key instanceof AST_Node) {
+        key = key._eval?.(compressor, depth)
+        if (key === exp.property) return this
+      }
+      var val
+      var e = exp.expression
+      if (is_undeclared_ref(e)) {
+        var first_arg =
+                  e.name === 'hasOwnProperty' &&
+                  key === 'call' &&
+                  (this.args[0] && this.args[0].evaluate(compressor))
+
+        first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
+
+        if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
+          return this.clone()
+        }
+        var static_fn = static_fns.get(e.name)
+        if (!static_fn || !static_fn.has(key)) return this
+        val = global_objs[e.name]
+      } else {
+        val = e._eval(compressor, depth + 1)
+        if (val === e || !val) return this
+        var native_fn = native_fns.get(val.constructor.name)
+        if (!native_fn || !native_fn.has(key)) return this
+      }
+      var args: any[] = []
+      for (var i = 0, len = this.args.length; i < len; i++) {
+        var arg = this.args[i]
+        var value = arg._eval(compressor, depth)
+        if (arg === value) return this
+        args.push(value)
+      }
+      try {
+        return val[key as string].apply(val, args)
+      } catch (ex) {
+        compressor.warn('Error evaluating {code} [{file}:{line},{col}]', {
+          code: this.print_to_string(),
+          file: this.start.file,
+          line: this.start.line,
+          col: this.start.col
+        })
+      }
+    }
+    return this
+  },
   is_expr_pure: function (compressor: any) {
     if (compressor.option('unsafe')) {
       var expr = this.expression
@@ -4167,6 +4237,7 @@ var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
 }, AST_Node)
 
 var AST_New: any = DEFNODE('New', null, {
+  _eval: return_this,
   _size: function (): number {
     return 6 + list_overhead(this.args)
   },
@@ -4283,6 +4354,49 @@ var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
 }, AST_Node)
 
 var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
+  _eval: function (compressor: any, depth) {
+    if (compressor.option('unsafe')) {
+      var key = this.property
+      if (key instanceof AST_Node) {
+        key = key._eval?.(compressor, depth)
+        if (key === this.property) return this
+      }
+      var exp = this.expression
+      var val
+      if (is_undeclared_ref(exp)) {
+        var aa
+        var first_arg = exp.name === 'hasOwnProperty' &&
+                  key === 'call' &&
+                  (aa = compressor.parent() && compressor.parent().args) &&
+                  (aa && aa[0] &&
+                  aa[0].evaluate(compressor))
+
+        first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
+
+        if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
+          return this.clone()
+        }
+        var static_value = static_values.get(exp.name)
+        if (!static_value || !static_value.has(key)) return this
+        val = global_objs[exp.name]
+      } else {
+        val = exp._eval(compressor, depth + 1)
+        if (!val || val === exp || !HOP(val, key)) return this
+        if (typeof val === 'function') {
+          switch (key) {
+            case 'name':
+              return val.node.name ? val.node.name.name : ''
+            case 'length':
+              return val.node.argnames.length
+            default:
+              return this
+          }
+        }
+      }
+      return val[key]
+    }
+    return this
+  },
   flatten_object: function (key, compressor) {
     if (!compressor.option('properties')) return
     var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
@@ -4547,6 +4661,34 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
 }, AST_Node)
 
 var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+  _eval: function (compressor: any, depth) {
+    var e = this.expression
+    // Function would be evaluated to an array and so typeof would
+    // incorrectly return 'object'. Hence making is a special case.
+    if (compressor.option('typeofs') &&
+          this.operator == 'typeof' &&
+          (e instanceof AST_Lambda ||
+              e instanceof AST_SymbolRef &&
+                  e.fixed_value() instanceof AST_Lambda)) {
+      return typeof function () {}
+    }
+    if (!non_converting_unary.has(this.operator)) depth++
+    e = e._eval(compressor, depth)
+    if (e === this.expression) return this
+    switch (this.operator) {
+      case '!': return !e
+      case 'typeof':
+        // typeof <RegExp> returns "object" or "function" on different platforms
+        // so cannot evaluate reliably
+        if (e instanceof RegExp) return this
+        return typeof e
+      case 'void': return void e
+      case '~': return ~e
+      case '-': return -e
+      case '+': return +e
+    }
+    return this
+  },
   negate: function () {
     if (this.operator == '!') { return this.expression }
     return basic_negation(this)
@@ -4586,6 +4728,46 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
 }, AST_Unary)
 
 var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+  _eval: function (compressor: any, depth) {
+    if (!non_converting_binary.has(this.operator)) depth++
+    var left = this.left._eval(compressor, depth)
+    if (left === this.left) return this
+    var right = this.right._eval(compressor, depth)
+    if (right === this.right) return this
+    var result
+    switch (this.operator) {
+      case '&&' : result = left && right; break
+      case '||' : result = left || right; break
+      case '??' : result = left != null ? left : right; break
+      case '|' : result = left | right; break
+      case '&' : result = left & right; break
+      case '^' : result = left ^ right; break
+      case '+' : result = left + right; break
+      case '*' : result = left * right; break
+      case '**' : result = Math.pow(left, right); break
+      case '/' : result = left / right; break
+      case '%' : result = left % right; break
+      case '-' : result = left - right; break
+      case '<<' : result = left << right; break
+      case '>>' : result = left >> right; break
+      case '>>>' : result = left >>> right; break
+      case '==' : result = left == right; break
+      case '===' : result = left === right; break
+      case '!=' : result = left != right; break
+      case '!==' : result = left !== right; break
+      case '<' : result = left < right; break
+      case '<=' : result = left <= right; break
+      case '>' : result = left > right; break
+      case '>=' : result = left >= right; break
+      default:
+        return this
+    }
+    if (isNaN(result) && compressor.find_parent(AST_With)) {
+      // leave original expression as is
+      return this
+    }
+    return result
+  },
   is_constant_expression: function () {
     return this.left.is_constant_expression() &&
           this.right.is_constant_expression()
@@ -4799,6 +4981,13 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 }, AST_Node)
 
 var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+  _eval: function (compressor: any, depth) {
+    var condition = this.condition._eval(compressor, depth)
+    if (condition === this.condition) return this
+    var node = condition ? this.consequent : this.alternative
+    var value = node._eval(compressor, depth)
+    return value === node ? this : value
+  },
   negate: function (compressor: any, first_in_statement) {
     var self = this.clone()
     self.consequent = self.consequent.negate(compressor)
@@ -4940,6 +5129,19 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {}, {
 /* -----[ LITERALS ]----- */
 
 var AST_Array: any = DEFNODE('Array', 'elements', {
+  _eval: function (compressor: any, depth) {
+    if (compressor.option('unsafe')) {
+      var elements: any[] = []
+      for (var i = 0, len = this.elements.length; i < len; i++) {
+        var element = this.elements[i]
+        var value = element._eval(compressor, depth)
+        if (element === value) return this
+        elements.push(value)
+      }
+      return elements
+    }
+    return this
+  },
   is_constant_expression: function () {
     return this.elements.every((l) => l.is_constant_expression())
   },
@@ -4994,6 +5196,30 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 }, AST_Node)
 
 var AST_Object: any = DEFNODE('Object', 'properties', {
+  _eval: function (compressor: any, depth) {
+    if (compressor.option('unsafe')) {
+      var val = {}
+      for (var i = 0, len = this.properties.length; i < len; i++) {
+        var prop = this.properties[i]
+        if (prop instanceof AST_Expansion) return this
+        var key = prop.key
+        if (key instanceof AST_Symbol) {
+          key = key.name
+        } else if (key instanceof AST_Node) {
+          key = key._eval?.(compressor, depth)
+          if (key === prop.key) return this
+        }
+        if (typeof Object.prototype[key] === 'function') {
+          return this
+        }
+        if (prop.value instanceof AST_Function) continue
+        val[key] = prop.value._eval(compressor, depth)
+        if (val[key] === prop.value) return this
+      }
+      return val
+    }
+    return this
+  },
   is_constant_expression: function () {
     return this.properties.every((l) => l.is_constant_expression())
   },
@@ -5318,6 +5544,7 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
 }, AST_ObjectProperty)
 
 var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+  _eval: return_this,
   is_constant_expression: function (scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
       return false
@@ -5688,6 +5915,27 @@ var AST_Label: any = DEFNODE('Label', 'references', {
 }, AST_Symbol)
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
+  _eval: function (compressor: any, depth) {
+    var fixed = this.fixed_value()
+    if (!fixed) return this
+    var value
+    if (HOP(fixed, '_eval')) {
+      value = fixed._eval()
+    } else {
+      this._eval = return_this
+      value = fixed._eval(compressor, depth)
+      delete this._eval
+      if (value === fixed) return this
+      fixed._eval = function () {
+        return value
+      }
+    }
+    if (value && typeof value === 'object') {
+      var escaped = this.definition?.().escaped
+      if (escaped && depth > escaped) return this
+    }
+    return value
+  },
   _find_defs: function (compressor: any, suffix) {
     if (!this.global()) return
     var defines = compressor.option('global_defs') as AnyObject
@@ -5825,6 +6073,9 @@ function To_Moz_Literal (M) {
 }
 
 var AST_Constant: any = DEFNODE('Constant', null, {
+  _eval: function () {
+    return this.getValue()
+  },
   is_constant_expression: return_true,
   _dot_throw: return_false,
   getValue: function () {
@@ -5897,6 +6148,7 @@ var AST_Number: any = DEFNODE('Number', 'value literal', {
 }, AST_Constant)
 
 var AST_BigInt = DEFNODE('BigInt', 'value', {
+  _eval: return_this,
   _size: function (): number {
     return this.value.length
   },
@@ -5928,6 +6180,18 @@ var AST_BigInt = DEFNODE('BigInt', 'value', {
 }, AST_Constant)
 
 var AST_RegExp: any = DEFNODE('RegExp', 'value', {
+  _eval: function (compressor: any) {
+    let evaluated = compressor.evaluated_regexps.get(this)
+    if (evaluated === undefined) {
+      try {
+        evaluated = (0, eval)(this.print_to_string())
+      } catch (e) {
+        evaluated = null
+      }
+      compressor.evaluated_regexps.set(this, evaluated)
+    }
+    return evaluated || this
+  },
   _size: function (): number {
     return this.value.toString().length
   },
@@ -7696,276 +7960,6 @@ function block_aborts () {
   }
   return null
 }
-
-def_eval(AST_PropAccess, function (compressor: any, depth) {
-  if (compressor.option('unsafe')) {
-    var key = this.property
-    if (key instanceof AST_Node) {
-      key = key._eval?.(compressor, depth)
-      if (key === this.property) return this
-    }
-    var exp = this.expression
-    var val
-    if (is_undeclared_ref(exp)) {
-      var aa
-      var first_arg = exp.name === 'hasOwnProperty' &&
-                key === 'call' &&
-                (aa = compressor.parent() && compressor.parent().args) &&
-                (aa && aa[0] &&
-                aa[0].evaluate(compressor))
-
-      first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
-
-      if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
-        return this.clone()
-      }
-      var static_value = static_values.get(exp.name)
-      if (!static_value || !static_value.has(key)) return this
-      val = global_objs[exp.name]
-    } else {
-      val = exp._eval(compressor, depth + 1)
-      if (!val || val === exp || !HOP(val, key)) return this
-      if (typeof val === 'function') {
-        switch (key) {
-          case 'name':
-            return val.node.name ? val.node.name.name : ''
-          case 'length':
-            return val.node.argnames.length
-          default:
-            return this
-        }
-      }
-    }
-    return val[key]
-  }
-  return this
-})
-def_eval(AST_Call, function (compressor: any, depth) {
-  var exp = this.expression
-  if (compressor.option('unsafe') && exp instanceof AST_PropAccess) {
-    var key = exp.property
-    if (key instanceof AST_Node) {
-      key = key._eval?.(compressor, depth)
-      if (key === exp.property) return this
-    }
-    var val
-    var e = exp.expression
-    if (is_undeclared_ref(e)) {
-      var first_arg =
-                e.name === 'hasOwnProperty' &&
-                key === 'call' &&
-                (this.args[0] && this.args[0].evaluate(compressor))
-
-      first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
-
-      if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
-        return this.clone()
-      }
-      var static_fn = static_fns.get(e.name)
-      if (!static_fn || !static_fn.has(key)) return this
-      val = global_objs[e.name]
-    } else {
-      val = e._eval(compressor, depth + 1)
-      if (val === e || !val) return this
-      var native_fn = native_fns.get(val.constructor.name)
-      if (!native_fn || !native_fn.has(key)) return this
-    }
-    var args: any[] = []
-    for (var i = 0, len = this.args.length; i < len; i++) {
-      var arg = this.args[i]
-      var value = arg._eval(compressor, depth)
-      if (arg === value) return this
-      args.push(value)
-    }
-    try {
-      return val[key as string].apply(val, args)
-    } catch (ex) {
-      compressor.warn('Error evaluating {code} [{file}:{line},{col}]', {
-        code: this.print_to_string(),
-        file: this.start.file,
-        line: this.start.line,
-        col: this.start.col
-      })
-    }
-  }
-  return this
-})
-def_eval(AST_New, return_this)
-
-function def_eval (node, func) {
-  node.DEFMETHOD('_eval', func)
-}
-
-def_eval(AST_Statement, function () {
-  throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
-})
-def_eval(AST_Lambda, return_this)
-def_eval(AST_Class, return_this)
-def_eval(AST_Node, return_this)
-def_eval(AST_Constant, function () {
-  return this.getValue()
-})
-def_eval(AST_BigInt, return_this)
-def_eval(AST_RegExp, function (compressor: any) {
-  let evaluated = compressor.evaluated_regexps.get(this)
-  if (evaluated === undefined) {
-    try {
-      evaluated = (0, eval)(this.print_to_string())
-    } catch (e) {
-      evaluated = null
-    }
-    compressor.evaluated_regexps.set(this, evaluated)
-  }
-  return evaluated || this
-})
-def_eval(AST_TemplateString, function () {
-  if (this.segments.length !== 1) return this
-  return this.segments[0].value
-})
-def_eval(AST_Function, function (compressor: any) {
-  if (compressor.option('unsafe')) {
-    var fn: any = function () {}
-    fn.node = this
-    fn.toString = function () {
-      return this.node.print_to_string()
-    }
-    return fn
-  }
-  return this
-})
-def_eval(AST_Array, function (compressor: any, depth) {
-  if (compressor.option('unsafe')) {
-    var elements: any[] = []
-    for (var i = 0, len = this.elements.length; i < len; i++) {
-      var element = this.elements[i]
-      var value = element._eval(compressor, depth)
-      if (element === value) return this
-      elements.push(value)
-    }
-    return elements
-  }
-  return this
-})
-def_eval(AST_Object, function (compressor: any, depth) {
-  if (compressor.option('unsafe')) {
-    var val = {}
-    for (var i = 0, len = this.properties.length; i < len; i++) {
-      var prop = this.properties[i]
-      if (prop instanceof AST_Expansion) return this
-      var key = prop.key
-      if (key instanceof AST_Symbol) {
-        key = key.name
-      } else if (key instanceof AST_Node) {
-        key = key._eval?.(compressor, depth)
-        if (key === prop.key) return this
-      }
-      if (typeof Object.prototype[key] === 'function') {
-        return this
-      }
-      if (prop.value instanceof AST_Function) continue
-      val[key] = prop.value._eval(compressor, depth)
-      if (val[key] === prop.value) return this
-    }
-    return val
-  }
-  return this
-})
-def_eval(AST_UnaryPrefix, function (compressor: any, depth) {
-  var e = this.expression
-  // Function would be evaluated to an array and so typeof would
-  // incorrectly return 'object'. Hence making is a special case.
-  if (compressor.option('typeofs') &&
-        this.operator == 'typeof' &&
-        (e instanceof AST_Lambda ||
-            e instanceof AST_SymbolRef &&
-                e.fixed_value() instanceof AST_Lambda)) {
-    return typeof function () {}
-  }
-  if (!non_converting_unary.has(this.operator)) depth++
-  e = e._eval(compressor, depth)
-  if (e === this.expression) return this
-  switch (this.operator) {
-    case '!': return !e
-    case 'typeof':
-      // typeof <RegExp> returns "object" or "function" on different platforms
-      // so cannot evaluate reliably
-      if (e instanceof RegExp) return this
-      return typeof e
-    case 'void': return void e
-    case '~': return ~e
-    case '-': return -e
-    case '+': return +e
-  }
-  return this
-})
-def_eval(AST_Binary, function (compressor: any, depth) {
-  if (!non_converting_binary.has(this.operator)) depth++
-  var left = this.left._eval(compressor, depth)
-  if (left === this.left) return this
-  var right = this.right._eval(compressor, depth)
-  if (right === this.right) return this
-  var result
-  switch (this.operator) {
-    case '&&' : result = left && right; break
-    case '||' : result = left || right; break
-    case '??' : result = left != null ? left : right; break
-    case '|' : result = left | right; break
-    case '&' : result = left & right; break
-    case '^' : result = left ^ right; break
-    case '+' : result = left + right; break
-    case '*' : result = left * right; break
-    case '**' : result = Math.pow(left, right); break
-    case '/' : result = left / right; break
-    case '%' : result = left % right; break
-    case '-' : result = left - right; break
-    case '<<' : result = left << right; break
-    case '>>' : result = left >> right; break
-    case '>>>' : result = left >>> right; break
-    case '==' : result = left == right; break
-    case '===' : result = left === right; break
-    case '!=' : result = left != right; break
-    case '!==' : result = left !== right; break
-    case '<' : result = left < right; break
-    case '<=' : result = left <= right; break
-    case '>' : result = left > right; break
-    case '>=' : result = left >= right; break
-    default:
-      return this
-  }
-  if (isNaN(result) && compressor.find_parent(AST_With)) {
-    // leave original expression as is
-    return this
-  }
-  return result
-})
-def_eval(AST_Conditional, function (compressor: any, depth) {
-  var condition = this.condition._eval(compressor, depth)
-  if (condition === this.condition) return this
-  var node = condition ? this.consequent : this.alternative
-  var value = node._eval(compressor, depth)
-  return value === node ? this : value
-})
-def_eval(AST_SymbolRef, function (compressor: any, depth) {
-  var fixed = this.fixed_value()
-  if (!fixed) return this
-  var value
-  if (HOP(fixed, '_eval')) {
-    value = fixed._eval()
-  } else {
-    this._eval = return_this
-    value = fixed._eval(compressor, depth)
-    delete this._eval
-    if (value === fixed) return this
-    fixed._eval = function () {
-      return value
-    }
-  }
-  if (value && typeof value === 'object') {
-    var escaped = this.definition?.().escaped
-    if (escaped && depth > escaped) return this
-  }
-  return value
-})
 
 var global_objs = {
   Array: Array,
