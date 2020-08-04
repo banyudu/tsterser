@@ -23,7 +23,6 @@
         "no-return-assign": "warn",
         "no-misleading-character-class": "warn",
         "no-control-regex": "warn",
-        "@typescript-eslint/no-unused-vars": "warn",
         "no-unmodified-loop-condition": "warn",
         "@typescript-eslint/no-this-alias": "warn",
         "@typescript-eslint/restrict-template-expressions": "off",

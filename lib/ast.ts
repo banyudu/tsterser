@@ -11132,8 +11132,6 @@ function opt_AST_Lambda (self, compressor) {
   return self
 }
 
-const r_keep_assign = /keep_assign/
-
 function if_break_in_loop (self, compressor) {
   var first = self.body instanceof AST_BlockStatement ? self.body.body[0] : self.body
   if (compressor.option('dead_code') && is_break(first)) {

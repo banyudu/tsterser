@@ -60,10 +60,7 @@ import {
   AST_SimpleStatement,
   AST_SymbolDefun,
   AST_UnaryPrefix,
-  walk,
-  _INLINE,
-  _NOINLINE,
-  _PURE
+  walk
 } from './ast'
 import { parse } from './parse'
 
