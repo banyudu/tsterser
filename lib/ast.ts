@@ -247,9 +247,9 @@ const get_transformer = descend => {
   }
 }
 
-function DEFNODE (type: string, strProps: string | null, methods: AnyObject, staticMethods: AnyObject, base: any | null) {
-  const self_props = strProps ? strProps.split(/\s+/) : []
+function DEFNODE (type: string, props: string[], methods: AnyObject, staticMethods: AnyObject, base: any | null) {
   const name = `AST_${type}`
+  props = props || []
   const factory = () => {
     const BasicClass = base || class {}
     const obj = {
@@ -260,14 +260,12 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
         flags = 0
         TYPE = type || undefined
 
-        static get SELF_PROPS () { return self_props }
-        static get PROPS () { return obj[name].SELF_PROPS.concat((BasicClass).PROPS || []) }
-        static get TYPE () { return type || undefined }
+        static PROPS = props.concat(BasicClass.PROPS || [])
 
         constructor (args) {
           super(args)
           if (args) {
-            obj[name].SELF_PROPS.forEach(item => this[item] = args[item])
+            props.forEach(item => this[item] = args[item])
           }
           this.initialize?.()
         }
@@ -294,42 +292,17 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
 }
 
 class AST_Token {
-  static get SELF_PROPS () {
-    return [
-      'type',
-      'value',
-      'line',
-      'col',
-      'pos',
-      'endline',
-      'endcol',
-      'endpos',
-      'nlb',
-      'comments_before',
-      'comments_after',
-      'file',
-      'raw',
-      'quote',
-      'end'
-    ]
-  }
-
-  static get PROPS () {
-    return AST_Token.SELF_PROPS
-  }
-
-  static get TYPE () {
-    return 'Token'
-  }
+  static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
+  TYPE = 'Token'
 
   constructor (args: any = {}) {
     if (args) {
-      AST_Token.SELF_PROPS.map((item) => (this[item] = args[item]))
+      AST_Token.PROPS.map((item) => (this[item] = args[item]))
     }
   }
 }
 
-var AST_Node: any = DEFNODE('Node', 'start end', {
+var AST_Node: any = DEFNODE('Node', ['start', 'end'], {
   _optimize: function (self) {
     return self
   },
@@ -503,7 +476,7 @@ var AST_Debugger: any = DEFNODE('Debugger', null, {
   documentation: 'Represents a debugger statement'
 }, AST_Statement)
 
-var AST_Directive: any = DEFNODE('Directive', 'value quote', {
+var AST_Directive: any = DEFNODE('Directive', ['value', 'quote'], {
   _optimize: function (self, compressor) {
     if (compressor.option('directives') &&
           (!directives.has(self.value) || compressor.has_directive(self.value) !== self)) {
@@ -540,7 +513,7 @@ var AST_Directive: any = DEFNODE('Directive', 'value quote', {
   }
 }, AST_Statement)
 
-var AST_SimpleStatement: any = DEFNODE('SimpleStatement', 'body', {
+var AST_SimpleStatement: any = DEFNODE('SimpleStatement', ['body'], {
   _optimize: function (self, compressor: any) {
     if (compressor.option('side_effects')) {
       var body = self.body
@@ -607,7 +580,7 @@ function clone_block_scope (deep: boolean) {
   return clone
 }
 
-var AST_Block: any = DEFNODE('Block', 'body block_scope', {
+var AST_Block: any = DEFNODE('Block', ['body', 'block_scope'], {
   _optimize: function (self, compressor) {
     tighten_body(self.body, compressor)
     return self
@@ -651,7 +624,7 @@ var AST_Block: any = DEFNODE('Block', 'body block_scope', {
   }
 }, AST_Statement)
 
-var AST_BlockStatement: any = DEFNODE('BlockStatement', null, {
+var AST_BlockStatement: any = DEFNODE('BlockStatement', [], {
   _optimize: function (self, compressor) {
     tighten_body(self.body, compressor)
     switch (self.body.length) {
@@ -680,7 +653,7 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', null, {
   documentation: 'A block statement'
 }, AST_Block)
 
-var AST_EmptyStatement: any = DEFNODE('EmptyStatement', null, {
+var AST_EmptyStatement: any = DEFNODE('EmptyStatement', [], {
   may_throw: return_false,
   has_side_effects: return_false,
   shallow_cmp: pass_through,
@@ -693,7 +666,7 @@ var AST_EmptyStatement: any = DEFNODE('EmptyStatement', null, {
   documentation: 'The empty statement (empty block or simply a semicolon)'
 }, AST_Statement)
 
-var AST_StatementWithBody: any = DEFNODE('StatementWithBody', 'body', {
+var AST_StatementWithBody: any = DEFNODE('StatementWithBody', ['body'], {
   _do_print_body: function (output: any) {
     force_statement(this.body, output)
   },
@@ -705,7 +678,7 @@ var AST_StatementWithBody: any = DEFNODE('StatementWithBody', 'body', {
   }
 }, AST_Statement)
 
-var AST_LabeledStatement: any = DEFNODE('LabeledStatement', 'label', {
+var AST_LabeledStatement: any = DEFNODE('LabeledStatement', ['label'], {
   _optimize: function (self, compressor) {
     if (self.body instanceof AST_Break &&
           compressor.loopcontrol_target(self.body) === self.body) {
@@ -774,7 +747,7 @@ var AST_LabeledStatement: any = DEFNODE('LabeledStatement', 'label', {
   }
 }, AST_StatementWithBody)
 
-var AST_IterationStatement: any = DEFNODE('IterationStatement', 'block_scope', {
+var AST_IterationStatement: any = DEFNODE('IterationStatement', ['block_scope'], {
   is_block_scope: return_true,
   clone: clone_block_scope
 }, {
@@ -784,14 +757,14 @@ var AST_IterationStatement: any = DEFNODE('IterationStatement', 'block_scope', {
   }
 }, AST_StatementWithBody)
 
-var AST_DWLoop: any = DEFNODE('DWLoop', 'condition', {}, {
+var AST_DWLoop: any = DEFNODE('DWLoop', ['condition'], {}, {
   documentation: 'Base class for do/while statements',
   propdoc: {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
   }
 }, AST_IterationStatement)
 
-var AST_Do: any = DEFNODE('Do', null, {
+var AST_Do: any = DEFNODE('Do', [], {
   _optimize: function (self, compressor) {
     if (!compressor.option('loops')) return self
     var cond = self.condition.tail_node().evaluate(compressor)
@@ -873,7 +846,7 @@ var AST_Do: any = DEFNODE('Do', null, {
   documentation: 'A `do` statement'
 }, AST_DWLoop)
 
-var AST_While: any = DEFNODE('While', null, {
+var AST_While: any = DEFNODE('While', [], {
   _optimize: function (self, compressor: any) {
     return compressor.option('loops') ? make_node(AST_For, self, self).optimize(compressor) : self
   },
@@ -921,7 +894,7 @@ var AST_While: any = DEFNODE('While', null, {
   documentation: 'A `while` statement'
 }, AST_DWLoop)
 
-var AST_For: any = DEFNODE('For', 'init condition step', {
+var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
   _optimize: function (self, compressor) {
     if (!compressor.option('loops')) return self
     if (compressor.option('side_effects') && self.init) {
@@ -1048,7 +1021,7 @@ var AST_For: any = DEFNODE('For', 'init condition step', {
   }
 }, AST_IterationStatement)
 
-var AST_ForIn: any = DEFNODE('ForIn', 'init object', {
+var AST_ForIn: any = DEFNODE('ForIn', ['init', 'object'], {
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     suppress(this.init)
@@ -1111,7 +1084,7 @@ var AST_ForIn: any = DEFNODE('ForIn', 'init object', {
   }
 }, AST_IterationStatement)
 
-var AST_ForOf: any = DEFNODE('ForOf', 'await', {
+var AST_ForOf: any = DEFNODE('ForOf', ['await'], {
   shallow_cmp: pass_through,
   _to_mozilla_ast: M => ({
     type: 'ForOfStatement',
@@ -1124,7 +1097,7 @@ var AST_ForOf: any = DEFNODE('ForOf', 'await', {
   documentation: 'A `for ... of` statement'
 }, AST_ForIn)
 
-var AST_With: any = DEFNODE('With', 'expression', {
+var AST_With: any = DEFNODE('With', ['expression'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -1165,7 +1138,7 @@ var AST_With: any = DEFNODE('With', 'expression', {
 
 /* -----[ scope and functions ]----- */
 
-var AST_Scope: any = DEFNODE('Scope', 'variables functions uses_with uses_eval parent_scope enclosed cname _var_name_cache', {
+var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'], {
   process_expression: function (insert, compressor) {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
@@ -2221,7 +2194,7 @@ var AST_Scope: any = DEFNODE('Scope', 'variables functions uses_with uses_eval p
   }
 }, AST_Block)
 
-var AST_Toplevel: any = DEFNODE('Toplevel', 'globals', {
+var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
   reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
     this.globals.forEach(function (def) {
       reset_def(compressor, def)
@@ -2557,7 +2530,7 @@ var AST_Toplevel: any = DEFNODE('Toplevel', 'globals', {
   }
 }, AST_Scope)
 
-var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
+var AST_Expansion: any = DEFNODE('Expansion', ['expression'], {
   drop_side_effect_free: function (compressor: any, first_in_statement) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   },
@@ -2594,7 +2567,7 @@ var AST_Expansion: any = DEFNODE('Expansion', 'expression', {
   }
 }, AST_Node)
 
-var AST_Lambda: any = DEFNODE('Lambda', 'name argnames uses_arguments is_generator async', {
+var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', 'is_generator', 'async'], {
   _optimize: opt_AST_Lambda,
   may_throw: return_false,
   has_side_effects: return_false,
@@ -2936,7 +2909,7 @@ var AST_Defun: any = DEFNODE('Defun', null, {
 }, AST_Lambda)
 
 /* -----[ DESTRUCTURING ]----- */
-var AST_Destructuring: any = DEFNODE('Destructuring', 'names is_array', {
+var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
   _optimize: function (self, compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
@@ -3045,7 +3018,7 @@ var AST_Destructuring: any = DEFNODE('Destructuring', 'names is_array', {
   }
 }, AST_Node)
 
-var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'template_string prefix', {
+var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['template_string', 'prefix'], {
   _optimize: function (self) {
     return self
   },
@@ -3092,7 +3065,7 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', 'templat
   }
 }, AST_Node)
 
-var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
+var AST_TemplateString: any = DEFNODE('TemplateString', ['segments'], {
   _optimize: function (self, compressor) {
     if (!compressor.option('evaluate') ||
       compressor.parent() instanceof AST_PrefixedTemplateString) { return self }
@@ -3234,7 +3207,7 @@ var AST_TemplateString: any = DEFNODE('TemplateString', 'segments', {
 
 }, AST_Node)
 
-var AST_TemplateSegment: any = DEFNODE('TemplateSegment', 'value raw', {
+var AST_TemplateSegment: any = DEFNODE('TemplateSegment', ['value', 'raw'], {
   drop_side_effect_free: return_null,
   has_side_effects: return_false,
   shallow_cmp: mkshallow({
@@ -3262,7 +3235,7 @@ var AST_Jump: any = DEFNODE('Jump', null, {
   documentation: "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
 }, AST_Statement)
 
-var AST_Exit: any = DEFNODE('Exit', 'value', {
+var AST_Exit: any = DEFNODE('Exit', ['value'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, this.value && function () {
       this.value._walk(visitor)
@@ -3334,7 +3307,7 @@ var AST_Throw: any = DEFNODE('Throw', null, {
   documentation: 'A `throw` statement'
 }, AST_Exit)
 
-var AST_LoopControl: any = DEFNODE('LoopControl', 'label', {
+var AST_LoopControl: any = DEFNODE('LoopControl', ['label'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, this.label && function () {
       this.label._walk(visitor)
@@ -3393,7 +3366,7 @@ var AST_Continue: any = DEFNODE('Continue', null, {
   documentation: 'A `continue` statement'
 }, AST_LoopControl)
 
-var AST_Await: any = DEFNODE('Await', 'expression', {
+var AST_Await: any = DEFNODE('Await', ['expression'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -3440,7 +3413,7 @@ var AST_Await: any = DEFNODE('Await', 'expression', {
 
 }, AST_Node)
 
-var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
+var AST_Yield: any = DEFNODE('Yield', ['expression', 'is_star'], {
   _optimize: function (self, compressor) {
     if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
       self.expression = null
@@ -3503,7 +3476,7 @@ var AST_Yield: any = DEFNODE('Yield', 'expression is_star', {
 
 /* -----[ IF ]----- */
 
-var AST_If: any = DEFNODE('If', 'condition alternative', {
+var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
   _optimize: function (self, compressor) {
     if (is_empty(self.alternative)) self.alternative = null
 
@@ -3731,7 +3704,7 @@ var AST_If: any = DEFNODE('If', 'condition alternative', {
 
 /* -----[ SWITCH ]----- */
 
-var AST_Switch: any = DEFNODE('Switch', 'expression', {
+var AST_Switch: any = DEFNODE('Switch', ['expression'], {
   _optimize: function (self, compressor) {
     if (!compressor.option('switches')) return self
     var branch
@@ -3939,7 +3912,7 @@ var AST_Default: any = DEFNODE('Default', null, {
   documentation: 'A `default` switch branch'
 }, AST_SwitchBranch)
 
-var AST_Case: any = DEFNODE('Case', 'expression', {
+var AST_Case: any = DEFNODE('Case', ['expression'], {
   may_throw: function (compressor: any) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
@@ -3992,7 +3965,7 @@ var AST_Case: any = DEFNODE('Case', 'expression', {
 
 /* -----[ EXCEPTIONS ]----- */
 
-var AST_Try: any = DEFNODE('Try', 'bcatch bfinally', {
+var AST_Try: any = DEFNODE('Try', ['bcatch', 'bfinally'], {
   _optimize: function (self, compressor) {
     tighten_body(self.body, compressor)
     if (self.bcatch && self.bfinally && self.bfinally.body.every(is_empty)) self.bfinally = null
@@ -4087,7 +4060,7 @@ var AST_Try: any = DEFNODE('Try', 'bcatch bfinally', {
 
 }, AST_Block)
 
-var AST_Catch: any = DEFNODE('Catch', 'argname', {
+var AST_Catch: any = DEFNODE('Catch', ['argname'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.argname) this.argname._walk(visitor)
@@ -4158,7 +4131,7 @@ var AST_Finally: any = DEFNODE('Finally', null, {
 
 /* -----[ VAR/CONST ]----- */
 
-var AST_Definitions: any = DEFNODE('Definitions', 'definitions', {
+var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
   _optimize: function (self) {
     if (self.definitions.length == 0) { return make_node(AST_EmptyStatement, self) }
     return self
@@ -4297,7 +4270,7 @@ var AST_Const: any = DEFNODE('Const', null, {
   documentation: 'A `const` statement'
 }, AST_Definitions)
 
-var AST_VarDef: any = DEFNODE('VarDef', 'name value', {
+var AST_VarDef: any = DEFNODE('VarDef', ['name', 'value'], {
   may_throw: function (compressor: any) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
@@ -4372,7 +4345,7 @@ var AST_VarDef: any = DEFNODE('VarDef', 'name value', {
 
 }, AST_Node)
 
-var AST_NameMapping: any = DEFNODE('NameMapping', 'foreign_name name', {
+var AST_NameMapping: any = DEFNODE('NameMapping', ['foreign_name', 'name'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, function () {
       this.foreign_name._walk(visitor)
@@ -4425,7 +4398,7 @@ var AST_NameMapping: any = DEFNODE('NameMapping', 'foreign_name name', {
 
 }, AST_Node)
 
-var AST_Import: any = DEFNODE('Import', 'imported_name imported_names module_name', {
+var AST_Import: any = DEFNODE('Import', ['imported_name', 'imported_names', 'module_name'], {
   _optimize: function (self) {
     return self
   },
@@ -4548,7 +4521,7 @@ var AST_Import: any = DEFNODE('Import', 'imported_name imported_names module_nam
 
 }, AST_Node)
 
-var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_default exported_names module_name', {
+var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'], {
   _walk: function (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.exported_definition) {
@@ -4692,7 +4665,7 @@ var AST_Export: any = DEFNODE('Export', 'exported_definition exported_value is_d
 
 /* -----[ OTHER ]----- */
 
-var AST_Call: any = DEFNODE('Call', 'expression args _annotations', {
+var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
   _optimize: function (self, compressor) {
     var exp = self.expression
     var fn = exp
@@ -5575,7 +5548,7 @@ var AST_New: any = DEFNODE('New', null, {
   documentation: 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 }, AST_Call)
 
-var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
+var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
   _optimize: function (self, compressor) {
     if (!compressor.option('side_effects')) return self
     var expressions: any[] = []
@@ -5718,7 +5691,7 @@ var AST_Sequence: any = DEFNODE('Sequence', 'expressions', {
 
 }, AST_Node)
 
-var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
+var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
   _eval: function (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
@@ -5833,7 +5806,7 @@ var AST_PropAccess: any = DEFNODE('PropAccess', 'expression property', {
   }
 }, AST_Node)
 
-var AST_Dot: any = DEFNODE('Dot', 'quote', {
+var AST_Dot: any = DEFNODE('Dot', ['quote'], {
   _optimize: function (self, compressor) {
     if (self.property == 'arguments' || self.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
@@ -6155,7 +6128,7 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 
 }, AST_PropAccess)
 
-var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
+var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
   drop_side_effect_free: function (compressor: any, first_in_statement) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
@@ -6271,7 +6244,7 @@ var AST_Unary: any = DEFNODE('Unary', 'operator expression', {
   }
 }, AST_Node)
 
-var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', null, {
+var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
   _optimize: function (self, compressor) {
     var e = self.expression
     if (self.operator == 'delete' &&
@@ -6414,7 +6387,7 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
   documentation: 'Unary postfix expression, i.e. `i++`'
 }, AST_Unary)
 
-var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
+var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
   _optimize: function (self, compressor) {
     function reversible () {
       return self.left.is_constant() ||
@@ -7190,7 +7163,7 @@ var AST_Binary: any = DEFNODE('Binary', 'operator left right', {
 
 }, AST_Node)
 
-var AST_Conditional: any = DEFNODE('Conditional', 'condition consequent alternative', {
+var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'alternative'], {
   _optimize: function (self, compressor) {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
@@ -7730,7 +7703,7 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {
 
 /* -----[ LITERALS ]----- */
 
-var AST_Array: any = DEFNODE('Array', 'elements', {
+var AST_Array: any = DEFNODE('Array', ['elements'], {
   _optimize: function (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
@@ -7814,7 +7787,7 @@ var AST_Array: any = DEFNODE('Array', 'elements', {
 
 }, AST_Node)
 
-var AST_Object: any = DEFNODE('Object', 'properties', {
+var AST_Object: any = DEFNODE('Object', ['properties'], {
   _optimize: function (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
@@ -7939,7 +7912,7 @@ var AST_Object: any = DEFNODE('Object', 'properties', {
   }
 }, AST_Node)
 
-var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
+var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
   _optimize: lift_key,
   drop_side_effect_free: function (compressor: any, first_in_statement) {
     const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
@@ -8066,7 +8039,7 @@ var AST_ObjectProperty: any = DEFNODE('ObjectProperty', 'key value', {
   }
 }, AST_Node)
 
-var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', 'quote', {
+var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', ['quote'], {
   _optimize: function (self, compressor) {
     lift_key(self, compressor)
     // p:function(){} ---> p(){}
@@ -8148,7 +8121,7 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', 'quote', {
   }
 }, AST_ObjectProperty)
 
-var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
+var AST_ObjectSetter: any = DEFNODE('ObjectSetter', ['quote', 'static'], {
   drop_side_effect_free: function () {
     return this.computed_key() ? this.key : null
   },
@@ -8179,7 +8152,7 @@ var AST_ObjectSetter: any = DEFNODE('ObjectSetter', 'quote static', {
   documentation: 'An object setter property'
 }, AST_ObjectProperty)
 
-var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
+var AST_ObjectGetter: any = DEFNODE('ObjectGetter', ['quote', 'static'], {
   drop_side_effect_free: function () {
     return this.computed_key() ? this.key : null
   },
@@ -8211,7 +8184,7 @@ var AST_ObjectGetter: any = DEFNODE('ObjectGetter', 'quote static', {
   documentation: 'An object getter property'
 }, AST_ObjectProperty)
 
-var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator async', {
+var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_generator', 'async'], {
   _optimize: function (self, compressor) {
     lift_key(self, compressor)
     // p(){return x;} ---> p:()=>x
@@ -8297,7 +8270,7 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', 'quote static is_generator
   documentation: 'An ES6 concise method inside an object or class'
 }, AST_ObjectProperty)
 
-var AST_Class: any = DEFNODE('Class', 'name extends properties', {
+var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
   _optimize: function (self) {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
@@ -8444,7 +8417,7 @@ var AST_Class: any = DEFNODE('Class', 'name extends properties', {
 
 }, AST_Scope /* TODO a class might have a scope but it's not a scope */)
 
-var AST_ClassProperty = DEFNODE('ClassProperty', 'static quote', {
+var AST_ClassProperty = DEFNODE('ClassProperty', ['static', 'quote'], {
   drop_side_effect_free: function (compressor: any) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
@@ -8530,7 +8503,7 @@ var AST_ClassExpression: any = DEFNODE('ClassExpression', null, {
 
 let mangle_options
 
-var AST_Symbol: any = DEFNODE('Symbol', 'scope name thedef', {
+var AST_Symbol: any = DEFNODE('Symbol', ['scope', 'name', 'thedef'], {
   fixed_value: function () {
     var fixed = this.thedef.fixed
     if (!fixed || fixed instanceof AST_Node) return fixed
@@ -8623,7 +8596,7 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
   documentation: 'A reference to new.target'
 }, AST_Node)
 
-var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', 'init', {
+var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', ['init'], {
   may_throw: return_false,
   has_side_effects: return_false,
   _find_defs: function (compressor: any) {
@@ -8705,7 +8678,7 @@ var AST_SymbolImportForeign: any = DEFNODE('SymbolImportForeign', null, {
   documentation: "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes"
 }, AST_Symbol)
 
-var AST_Label: any = DEFNODE('Label', 'references', {
+var AST_Label: any = DEFNODE('Label', ['references'], {
   // labels are always mangleable
   unmangleable: return_false,
   initialize: function () {
@@ -9067,7 +9040,7 @@ var AST_Constant: any = DEFNODE('Constant', null, {
   documentation: 'Base class for all constants'
 }, AST_Node)
 
-var AST_String: any = DEFNODE('String', 'value quote', {
+var AST_String: any = DEFNODE('String', ['value', 'quote'], {
   is_string: return_true,
   _size: function (): number {
     return this.value.length + 2
@@ -9086,7 +9059,7 @@ var AST_String: any = DEFNODE('String', 'value quote', {
   }
 }, AST_Constant)
 
-var AST_Number: any = DEFNODE('Number', 'value literal', {
+var AST_Number: any = DEFNODE('Number', ['value', 'literal'], {
   is_number: return_true,
   _size: function (): number {
     const { value } = this
@@ -9124,7 +9097,7 @@ var AST_Number: any = DEFNODE('Number', 'value literal', {
   }
 }, AST_Constant)
 
-var AST_BigInt = DEFNODE('BigInt', 'value', {
+var AST_BigInt = DEFNODE('BigInt', ['value'], {
   _eval: return_this,
   _size: function (): number {
     return this.value.length
@@ -9156,7 +9129,7 @@ var AST_BigInt = DEFNODE('BigInt', 'value', {
   }
 }, AST_Constant)
 
-var AST_RegExp: any = DEFNODE('RegExp', 'value', {
+var AST_RegExp: any = DEFNODE('RegExp', ['value'], {
   _optimize: literals_in_boolean_context,
   _eval: function (compressor: any) {
     let evaluated = compressor.evaluated_regexps.get(this)
