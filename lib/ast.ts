@@ -251,11 +251,9 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
   const self_props = strProps ? strProps.split(/\s+/) : []
   const name = `AST_${type}`
   const factory = () => {
-    const proto = base && Object.create(base.prototype)
     const BasicClass = base || class {}
     const obj = {
       [name]: class extends BasicClass {
-        static _SUBCLASSES: any
         initialize: any
 
         CTOR = this.constructor
@@ -263,15 +261,7 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
         TYPE = type || undefined
 
         static get SELF_PROPS () { return self_props }
-        static get SUBCLASSES () {
-          if (!this._SUBCLASSES) {
-            this._SUBCLASSES = []
-          }
-          return this._SUBCLASSES
-        }
-
         static get PROPS () { return obj[name].SELF_PROPS.concat((BasicClass).PROPS || []) }
-        static get BASE () { return proto ? base : undefined }
         static get TYPE () { return type || undefined }
 
         constructor (args) {
@@ -279,14 +269,13 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
           if (args) {
             obj[name].SELF_PROPS.forEach(item => this[item] = args[item])
           }
-                    this.initialize?.()
+          this.initialize?.()
         }
       }
     }
     return obj[name]
   }
   var Node: any = factory()
-  if (base) base.SUBCLASSES.push(Node)
   if (methods) {
     for (const i in methods) {
       if (HOP(methods, i)) {
@@ -305,8 +294,6 @@ function DEFNODE (type: string, strProps: string | null, methods: AnyObject, sta
 }
 
 class AST_Token {
-  static _SUBCLASSES: any
-  initialize: any
   static get SELF_PROPS () {
     return [
       'type',
@@ -327,19 +314,8 @@ class AST_Token {
     ]
   }
 
-  static get SUBCLASSES () {
-    if (!this._SUBCLASSES) {
-      this._SUBCLASSES = []
-    }
-    return this._SUBCLASSES
-  }
-
   static get PROPS () {
     return AST_Token.SELF_PROPS
-  }
-
-  static get BASE () {
-    return undefined
   }
 
   static get TYPE () {
@@ -350,7 +326,6 @@ class AST_Token {
     if (args) {
       AST_Token.SELF_PROPS.map((item) => (this[item] = args[item]))
     }
-      this.initialize?.()
   }
 }
 
