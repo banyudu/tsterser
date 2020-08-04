@@ -19,7 +19,7 @@
   "types": "tools/terser.d.ts",
   "bin": {
     "terser": "bin/terser",
-    "tsterser": "bin/tsterser"
+    "tsterser": "bin/terser"
   },
   "files": [
     "bin",
