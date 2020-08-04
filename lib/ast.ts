@@ -119,6 +119,11 @@ let unmangleable_names: Set<any> | null = null
 
 let printMangleOptions
 
+interface AST {
+  PROPS: string[]
+  new (...args: any[]): any
+}
+
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
 // a statement.
@@ -9171,7 +9176,7 @@ var AST_RegExp: any = DEFNODE('RegExp', ['value'], {
   }
 }, AST_Constant)
 
-var AST_Atom: any = DEFNODE('Atom', null, {
+var AST_Atom: AST = DEFNODE('Atom', null, {
   shallow_cmp: pass_through,
   _to_mozilla_ast: function To_Moz_Atom (M) {
     return {
@@ -9281,8 +9286,8 @@ var AST_Infinity: any = DEFNODE('Infinity', null, {
   documentation: 'The `Infinity` value'
 }, AST_Atom)
 
-var AST_Boolean: any = DEFNODE('Boolean', null, {
-  _optimize: function (self, compressor) {
+class AST_Boolean extends AST_Atom {
+  _optimize = function (self, compressor) {
     if (compressor.in_boolean_context()) {
       return make_node(AST_Number, self, {
         value: +self.value
@@ -9319,27 +9324,41 @@ var AST_Boolean: any = DEFNODE('Boolean', null, {
       })
     }
     return self
-  },
-  _to_mozilla_ast: To_Moz_Literal
-}, {
-  documentation: 'Base class for booleans'
-}, AST_Atom)
+  }
 
-var AST_False: any = DEFNODE('False', null, {
-  is_boolean: return_true,
-  value: false,
-  _size: () => 5
-}, {
-  documentation: 'The `false` atom'
-}, AST_Boolean)
+  _to_mozilla_ast = To_Moz_Literal
+  static documentation = 'Base class for booleans'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Boolean'
 
-var AST_True: any = DEFNODE('True', null, {
-  is_boolean: return_true,
-  value: true,
-  _size: () => 4
-}, {
-  documentation: 'The `true` atom'
-}, AST_Boolean)
+  static PROPS = AST_Atom.PROPS
+}
+
+class AST_False extends AST_Boolean {
+  is_boolean = return_true
+  value = false
+  _size = () => 5
+  static documentation = 'The `false` atom'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'False'
+
+  static PROPS = AST_Boolean.PROPS
+}
+
+class AST_True extends AST_Boolean {
+  is_boolean = return_true
+  value = true
+  _size = () => 4
+  static documentation = 'The `true` atom'
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'True'
+
+  static PROPS = AST_Boolean.PROPS
+}
 
 /* -----[ Walk function ]---- */
 
@@ -9961,7 +9980,7 @@ var MOZ_TO_ME: any = {
         args.value = val
         return new AST_Number(args)
       case 'boolean':
-        return new (val ? AST_True : AST_False)(args)
+        return new (val ? AST_True : AST_False as any)(args)
     }
   },
   MetaProperty: function (M) {
