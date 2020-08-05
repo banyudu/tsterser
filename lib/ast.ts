@@ -9250,14 +9250,21 @@ var AST_Undefined: any = DEFNODE('Undefined', null, {
   documentation: 'The `undefined` value'
 }, AST_Atom)
 
-var AST_Hole: any = DEFNODE('Hole', null, {
-  value: (function () {}()),
-  to_mozilla_ast: function To_Moz_ArrayHole () { return null },
-  _size: () => 0, // comma is taken into account
-  _codegen: noop
-}, {
-  documentation: 'A hole in an array'
-}, AST_Atom)
+class AST_Hole extends AST_Atom {
+  value = (function () {}())
+
+  to_mozilla_ast = function To_Moz_ArrayHole () { return null }
+
+  _size = () => 0 // comma is taken into account
+
+  _codegen = noop
+  static documentation = 'A hole in an array'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Hole'
+
+  static PROPS = AST_Atom.PROPS
+}
 
 class AST_Infinity extends AST_Atom {
   _optimize = function (self, compressor) {
