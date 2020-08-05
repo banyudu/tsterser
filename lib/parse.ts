@@ -359,9 +359,6 @@ class JS_Parse_Error extends Error {
   pos: number
   constructor (message: string, filename: string | undefined, line: number, col: number, pos: number) {
     super()
-
-    // Object.setPrototypeOf(this, JS_Parse_Error.prototype);
-
     this.name = 'SyntaxError'
     this.message = message
     this.filename = filename

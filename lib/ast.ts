@@ -117,6 +117,8 @@ import TreeWalker from './tree-walker'
 
 let unmangleable_names: Set<any> | null = null
 
+let printMangleOptions
+
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
 // a statement.
@@ -395,7 +397,9 @@ var AST_Node: any = DEFNODE('Node', ['start', 'end'], {
   shallow_cmp: function () {
     throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
   },
-  print: print,
+  print (output: any, force_parens: boolean) {
+    return this._print(output, force_parens)
+  },
   _print: print,
   print_to_string: function (options: any) {
     var output = OutputStream(options)
@@ -2347,36 +2351,13 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
   },
   add_source_map: noop,
   compute_char_frequency: function (options: any) {
-    options = this._default_mangler_options(options)
+    printMangleOptions = this._default_mangler_options(options)
     try {
-      AST_Node.prototype.print = function (this: any, stream: any, force_parens: boolean) {
-        this._print(stream, force_parens)
-        if (this instanceof AST_Symbol && !this.unmangleable(options)) {
-          base54.consider(this.name, -1)
-        } else if (options.properties) {
-          if (this instanceof AST_Dot) {
-            base54.consider(this.property as string, -1)
-          } else if (this instanceof AST_Sub) {
-            skip_string(this.property)
-          }
-        }
-      }
       base54.consider(this.print_to_string(), 1)
     } finally {
-      AST_Node.prototype.print = AST_Node.prototype._print
+      printMangleOptions = undefined
     }
     base54.sort()
-
-    function skip_string (node: any) {
-      if (node instanceof AST_String) {
-        base54.consider(node.value, -1)
-      } else if (node instanceof AST_Conditional) {
-        skip_string(node.consequent)
-        skip_string(node.alternative)
-      } else if (node instanceof AST_Sequence) {
-        skip_string(node.tail_node?.())
-      }
-    }
   },
   expand_names: function (options: any) {
     base54.reset()
@@ -10289,6 +10270,17 @@ const MASK_EXPORT_WANT_MANGLE = 1 << 1
 
 /* -----[ utils ]----- */
 
+function skip_string (node: any) {
+  if (node instanceof AST_String) {
+    base54.consider(node.value, -1)
+  } else if (node instanceof AST_Conditional) {
+    skip_string(node.consequent)
+    skip_string(node.alternative)
+  } else if (node instanceof AST_Sequence) {
+    skip_string(node.tail_node?.())
+  }
+}
+
 function print (this: any, output: any, force_parens: boolean) {
   var self = this; var generator = self._codegen
   if (self instanceof AST_Scope) {
@@ -10311,6 +10303,18 @@ function print (this: any, output: any, force_parens: boolean) {
   output.pop_node()
   if (self === output.use_asm) {
     output.use_asm = null
+  }
+
+  if (printMangleOptions) {
+    if (this instanceof AST_Symbol && !this.unmangleable(printMangleOptions)) {
+      base54.consider(this.name, -1)
+    } else if (printMangleOptions.properties) {
+      if (this instanceof AST_Dot) {
+        base54.consider(this.property as string, -1)
+      } else if (this instanceof AST_Sub) {
+        skip_string(this.property)
+      }
+    }
   }
 }
 
