@@ -122,6 +122,7 @@ let printMangleOptions
 interface AST {
   PROPS: string[]
   new (...args: any[]): any
+  _to_mozilla_ast: Function
 }
 
 // return true if the node at the top of the stack (that means the
@@ -9011,7 +9012,7 @@ function To_Moz_Literal (M) {
   }
 }
 
-var AST_Constant: any = DEFNODE('Constant', null, {
+var AST_Constant: AST = DEFNODE('Constant', null, {
   drop_side_effect_free: return_null,
   may_throw: return_false,
   has_side_effects: return_false,
@@ -9176,17 +9177,21 @@ var AST_RegExp: any = DEFNODE('RegExp', ['value'], {
   }
 }, AST_Constant)
 
-var AST_Atom: AST = DEFNODE('Atom', null, {
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: function To_Moz_Atom (M) {
+class AST_Atom extends AST_Constant {
+  shallow_cmp = pass_through
+  _to_mozilla_ast = function To_Moz_Atom (M) {
     return {
       type: 'Identifier',
       name: String(M.value)
     }
-  }
-}, {
-  documentation: 'Base class for atoms'
-}, AST_Constant)
+  } as Function
+
+  static documentation = 'Base class for atoms'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Null'
+  static PROPS = AST_Constant.PROPS
+}
 
 class AST_Null extends AST_Atom {
   _dot_throw = return_true
