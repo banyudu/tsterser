@@ -9188,17 +9188,20 @@ var AST_Atom: AST = DEFNODE('Atom', null, {
   documentation: 'Base class for atoms'
 }, AST_Constant)
 
-var AST_Null: any = DEFNODE('Null', null, {
-  _dot_throw: return_true,
-  value: null,
-  _size: () => 4,
-  _to_mozilla_ast: To_Moz_Literal
-}, {
-  documentation: 'The `null` atom'
-}, AST_Atom)
+class AST_Null extends AST_Atom {
+  _dot_throw = return_true
+  value = null
+  _size = () => 4
+  _to_mozilla_ast = To_Moz_Literal
+  static documentation: 'The `null` atom'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Null'
+  static PROPS = AST_Atom.PROPS
+}
 
-var AST_NaN: any = DEFNODE('NaN', null, {
-  _optimize: function (self, compressor) {
+class AST_NaN extends AST_Atom {
+  _optimize = function (self, compressor) {
     var lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && !is_atomic(lhs, self) ||
           find_variable(compressor, 'NaN')) {
@@ -9213,15 +9216,19 @@ var AST_NaN: any = DEFNODE('NaN', null, {
       })
     }
     return self
-  },
-  value: 0 / 0,
-  _size: () => 3
-}, {
-  documentation: 'The impossible value'
-}, AST_Atom)
+  }
 
-var AST_Undefined: any = DEFNODE('Undefined', null, {
-  _optimize: function (self, compressor) {
+  value = 0 / 0
+  _size = () => 3
+  static documentation: 'The impossible value'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'NaN'
+  static PROPS = AST_Atom.PROPS
+}
+
+class AST_Undefined extends AST_Atom {
+  _optimize = function (self, compressor) {
     if (compressor.option('unsafe_undefined')) {
       var undef = find_variable(compressor, 'undefined')
       if (undef) {
@@ -9242,13 +9249,17 @@ var AST_Undefined: any = DEFNODE('Undefined', null, {
         value: 0
       })
     })
-  },
-  _dot_throw: return_true,
-  value: (function () {}()),
-  _size: () => 6 // "void 0"
-}, {
-  documentation: 'The `undefined` value'
-}, AST_Atom)
+  }
+
+  _dot_throw = return_true
+  value = (function () {}())
+  _size = () => 6 // "void 0"
+  static documentation: 'The `undefined` value'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Undefined'
+  static PROPS = AST_Atom.PROPS
+}
 
 class AST_Hole extends AST_Atom {
   value = (function () {}())
