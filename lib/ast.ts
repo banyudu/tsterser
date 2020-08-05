@@ -9259,8 +9259,8 @@ var AST_Hole: any = DEFNODE('Hole', null, {
   documentation: 'A hole in an array'
 }, AST_Atom)
 
-var AST_Infinity: any = DEFNODE('Infinity', null, {
-  _optimize: function (self, compressor) {
+class AST_Infinity extends AST_Atom {
+  _optimize = function (self, compressor) {
     var lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && is_atomic(lhs, self)) return self
     if (
@@ -9279,12 +9279,17 @@ var AST_Infinity: any = DEFNODE('Infinity', null, {
         value: 0
       })
     })
-  },
-  value: 1 / 0,
-  _size: () => 8
-}, {
-  documentation: 'The `Infinity` value'
-}, AST_Atom)
+  }
+
+  value = 1 / 0
+  _size = () => 8
+  static documentation: 'The `Infinity` value'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Infinity'
+
+  static PROPS = AST_Atom.PROPS
+}
 
 class AST_Boolean extends AST_Atom {
   _optimize = function (self, compressor) {
