@@ -156,6 +156,35 @@ export function left_is_object (node: any): boolean {
   return false
 }
 
+function init_scope_vars (parent_scope: any) {
+  this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
+  this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
+  this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
+  this.uses_eval = false // will be set to true if this or nested scope uses the global `eval`
+  this.parent_scope = parent_scope // the parent scope
+  this.enclosed = [] // a list of variables from this or outer scope(s) that are referenced from this or inner scopes
+  this.cname = -1 // the current index for mangling functions/variables
+  this._var_name_cache = null
+}
+
+function blockStateMentCodeGen (self, output) {
+  print_braced(self, output)
+}
+
+function callCodeGen (self, output) {
+  self.expression.print(output)
+  if (self instanceof AST_New && self.args.length === 0) { return }
+  if (self.expression instanceof AST_Call || self.expression instanceof AST_Lambda) {
+    output.add_mapping(self.start)
+  }
+  output.with_parens(function () {
+    self.args.forEach(function (expr, i) {
+      if (i) output.comma()
+      expr.print(output)
+    })
+  })
+}
+
 /* #__INLINE__ */
 const key_size = key =>
   typeof key === 'string' ? key.length : 0
@@ -649,9 +678,7 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', [], {
     type: 'BlockStatement',
     body: M.body.map(to_moz)
   }),
-  _codegen: function (self, output) {
-    print_braced(self, output)
-  },
+  _codegen: blockStateMentCodeGen,
   add_source_map: function (output) { output.add_mapping(this.start) }
 }, {
   documentation: 'A block statement'
@@ -1790,16 +1817,7 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
     })
     return self.transform(hoister)
   },
-  init_scope_vars: function (parent_scope: any) {
-    this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
-    this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
-    this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
-    this.uses_eval = false // will be set to true if this or nested scope uses the global `eval`
-    this.parent_scope = parent_scope // the parent scope
-    this.enclosed = [] // a list of variables from this or outer scope(s) that are referenced from this or inner scopes
-    this.cname = -1 // the current index for mangling functions/variables
-    this._var_name_cache = null
-  },
+  init_scope_vars,
   var_names: function varNames (this: any): Set<string> | null {
     var var_names = this._var_name_cache
     if (!var_names) {
@@ -2569,13 +2587,13 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
   },
   is_block_scope: return_false,
   init_scope_vars: function () {
-      AST_Scope.prototype.init_scope_vars?.apply(this, arguments)
-      this.uses_arguments = false
-      this.def_variable(new AST_SymbolFunarg({
-        name: 'arguments',
-        start: this.start,
-        end: this.end
-      }))
+    init_scope_vars.apply(this, arguments)
+    this.uses_arguments = false
+    this.def_variable(new AST_SymbolFunarg({
+      name: 'arguments',
+      start: this.start,
+      end: this.end
+    }))
   },
   args_as_names: function () {
     var out: any[] = []
@@ -2790,8 +2808,8 @@ var AST_Arrow: any = DEFNODE('Arrow', null, {
   },
   _dot_throw: return_false,
   init_scope_vars: function () {
-      AST_Scope.prototype.init_scope_vars?.apply(this, arguments)
-      this.uses_arguments = false
+    init_scope_vars.apply(this, arguments)
+    this.uses_arguments = false
   },
   _size: function (): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
@@ -4957,7 +4975,7 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
             }
           })
           const code2 = OutputStream()
-          AST_BlockStatement.prototype._codegen.call(fun, fun, code2)
+          blockStateMentCodeGen.call(fun, fun, code2)
           self.args = [
             make_node(AST_String, self, {
               value: fun.argnames.map(function (arg) {
@@ -5470,19 +5488,7 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
             (p1 = output.parent(1)) instanceof AST_Assign &&
             p1.left === p
   },
-  _codegen: function (self, output) {
-    self.expression.print(output)
-    if (self instanceof AST_New && self.args.length === 0) { return }
-    if (self.expression instanceof AST_Call || self.expression instanceof AST_Lambda) {
-      output.add_mapping(self.start)
-    }
-    output.with_parens(function () {
-      self.args.forEach(function (expr, i) {
-        if (i) output.comma()
-        expr.print(output)
-      })
-    })
-  }
+  _codegen: callCodeGen
 }, {
   documentation: 'A function call expression',
   propdoc: {
@@ -5522,7 +5528,7 @@ var AST_New: any = DEFNODE('New', null, {
   _codegen: function (self, output) {
     output.print('new')
     output.space()
-        AST_Call.prototype._codegen?.(self, output)
+    callCodeGen(self, output)
   },
   add_source_map: function (output) { output.add_mapping(this.start) }
 }, {
