@@ -8670,19 +8670,29 @@ var AST_SymbolImportForeign: any = DEFNODE('SymbolImportForeign', null, {
   documentation: "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes"
 }, AST_Symbol)
 
-var AST_Label: any = DEFNODE('Label', ['references'], {
+class AST_Label extends AST_Symbol {
   // labels are always mangleable
-  unmangleable: return_false,
-  initialize: function () {
+  unmangleable = return_false
+  initialize = function () {
     this.references = []
     this.thedef = this
   }
-}, {
-  documentation: 'Symbol naming a label (declaration)',
-  propdoc: {
+
+  static documentation = 'Symbol naming a label (declaration)'
+  static propdoc = {
     references: '[AST_LoopControl*] a list of nodes referring to this label'
   }
-}, AST_Symbol)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Label'
+  static PROPS = AST_Symbol.PROPS.concat(['references'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.references = args.references
+    this.initialize()
+  }
+}
 
 var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
   _optimize: function (self, compressor) {
@@ -8954,7 +8964,7 @@ class AST_SymbolExport extends AST_SymbolRef {
   CTOR = this.constructor
   flags = 0
   TYPE = 'SymbolExport'
-  static PROPS = AST_SymbolRef.PROP
+  static PROPS = AST_SymbolRef.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
@@ -8969,7 +8979,7 @@ class AST_SymbolExportForeign extends AST_Symbol {
   CTOR = this.constructor
   flags = 0
   TYPE = 'SymbolExportForeign'
-  static PROPS = AST_Symbol.PROP
+  static PROPS = AST_Symbol.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
