@@ -8965,19 +8965,28 @@ var AST_LabelRef: any = DEFNODE('LabelRef', null, {}, {
   documentation: 'Reference to a label symbol'
 }, AST_Symbol)
 
-var AST_This: any = DEFNODE('This', null, {
-  drop_side_effect_free: return_null,
-  may_throw: return_false,
-  has_side_effects: return_false,
-  _size: () => 4,
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: () => ({ type: 'ThisExpression' }),
-  _codegen: function (_self, output) {
+class AST_This extends AST_Symbol {
+  drop_side_effect_free = return_null
+  may_throw = return_false
+  has_side_effects = return_false
+  _size = () => 4
+  shallow_cmp = pass_through
+  _to_mozilla_ast = () => ({ type: 'ThisExpression' })
+  _codegen = function (_self, output) {
     output.print('this')
   }
-}, {
-  documentation: 'The `this` symbol'
-}, AST_Symbol)
+
+  static documentation = 'The `this` symbol'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'This'
+  static PROPS = AST_Symbol.PROPS
+
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    // do nothing
+  }
+}
 
 class AST_Super extends AST_This {
   _size = () => 5
