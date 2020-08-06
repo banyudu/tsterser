@@ -4241,38 +4241,62 @@ var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
 
 }, AST_Statement)
 
-var AST_Var: any = DEFNODE('Var', null, {
-  _size: function (): number {
+class AST_Var extends AST_Definitions {
+  _size = function (): number {
     return def_size(4, this)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     self._do_print(output, 'var')
   }
-}, {
-  documentation: 'A `var` statement'
-}, AST_Definitions)
 
-var AST_Let: any = DEFNODE('Let', null, {
-  _size: function (): number {
+  static documentation = 'A `var` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Var'
+  static PROPS = AST_Definitions.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
+
+class AST_Let extends AST_Definitions {
+  _size = function (): number {
     return def_size(4, this)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     self._do_print(output, 'let')
   }
-}, {
-  documentation: 'A `let` statement'
-}, AST_Definitions)
 
-var AST_Const: any = DEFNODE('Const', null, {
-  _size: function (): number {
+  static documentation = 'A `let` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Let'
+  static PROPS = AST_Definitions.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
+
+class AST_Const extends AST_Definitions {
+  _size = function (): number {
     return def_size(6, this)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     self._do_print(output, 'const')
   }
-}, {
-  documentation: 'A `const` statement'
-}, AST_Definitions)
+
+  static documentation = 'A `const` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Const'
+  static PROPS = AST_Definitions.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 var AST_VarDef: any = DEFNODE('VarDef', ['name', 'value'], {
   may_throw: function (compressor: any) {
@@ -8483,15 +8507,28 @@ var AST_ClassProperty = DEFNODE('ClassProperty', ['static', 'quote'], {
   }
 }, AST_ObjectProperty)
 
-var AST_DefClass: any = DEFNODE('DefClass', null, {}, {
-  documentation: 'A class definition'
-}, AST_Class)
+class AST_DefClass extends AST_Class {
+  static documentation = 'A class definition'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'DefClass'
+  static PROPS = AST_Class.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_ClassExpression: any = DEFNODE('ClassExpression', null, {
-  needs_parens: first_in_statement
-}, {
-  documentation: 'A class expression.'
-}, AST_Class)
+class AST_ClassExpression extends AST_Class {
+  needs_parens = first_in_statement
+  static documentation: 'A class expression.'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ClassExpression'
+  static PROPS = AST_Class.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 let mangle_options
 
