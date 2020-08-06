@@ -8945,13 +8945,20 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
   documentation: 'Reference to some symbol (not definition/declaration)'
 }, AST_Symbol)
 
-var AST_SymbolExport: any = DEFNODE('SymbolExport', null, {
-  _optimize: function (self) {
+class AST_SymbolExport extends AST_SymbolRef {
+  _optimize = function (self) {
     return self
   }
-}, {
-  documentation: 'Symbol referring to a name to export'
-}, AST_SymbolRef)
+
+  static documentation = 'Symbol referring to a name to export'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolExport'
+  static PROPS = AST_SymbolRef.PROP
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_SymbolExportForeign extends AST_Symbol {
   _size = function (): number {
@@ -8961,11 +8968,10 @@ class AST_SymbolExportForeign extends AST_Symbol {
   static documentation = "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
   CTOR = this.constructor
   flags = 0
-  TYPE = 'LabelRef'
+  TYPE = 'SymbolExportForeign'
   static PROPS = AST_Symbol.PROP
   constructor (args?) { // eslint-disable-line
     super(args)
-    // do nothing
   }
 }
 
@@ -8996,7 +9002,6 @@ class AST_This extends AST_Symbol {
 
   constructor (args?) { // eslint-disable-line
     super(args)
-    // do nothing
   }
 }
 
@@ -9016,7 +9021,6 @@ class AST_Super extends AST_This {
 
   constructor (args?) { // eslint-disable-line
     super(args)
-    // do nothing
   }
 }
 
@@ -9070,7 +9074,6 @@ class AST_Constant extends AST_Node {
 
   constructor (args?) { // eslint-disable-line
     super(args)
-    // do nothing
   }
 }
 
