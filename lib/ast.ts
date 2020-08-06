@@ -8961,9 +8961,13 @@ var AST_SymbolExportForeign: any = DEFNODE('SymbolExportForeign', null, {
   documentation: "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
 }, AST_Symbol)
 
-var AST_LabelRef: any = DEFNODE('LabelRef', null, {}, {
-  documentation: 'Reference to a label symbol'
-}, AST_Symbol)
+class AST_LabelRef extends AST_Symbol {
+  static documentation = 'Reference to a label symbol'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'LabelRef'
+  static PROPS = AST_Symbol.PROPS
+}
 
 class AST_This extends AST_Symbol {
   drop_side_effect_free = return_null
