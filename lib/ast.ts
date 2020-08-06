@@ -8979,16 +8979,25 @@ var AST_This: any = DEFNODE('This', null, {
   documentation: 'The `this` symbol'
 }, AST_Symbol)
 
-var AST_Super: any = DEFNODE('Super', null, {
-  _size: () => 5,
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: () => ({ type: 'Super' }),
-  _codegen: function (_self, output) {
+class AST_Super extends AST_This {
+  _size = () => 5
+  shallow_cmp = pass_through
+  _to_mozilla_ast = () => ({ type: 'Super' })
+  _codegen = function (_self, output) {
     output.print('super')
   }
-}, {
-  documentation: 'The `super` symbol'
-}, AST_This)
+
+  static documentation: 'The `super` symbol'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Super'
+  static PROPS = AST_This.PROPS
+
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    // do nothing
+  }
+}
 
 function To_Moz_Literal (M) {
   var value = M.value
