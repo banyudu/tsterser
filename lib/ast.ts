@@ -8565,10 +8565,10 @@ var AST_Symbol: any = DEFNODE('Symbol', ['scope', 'name', 'thedef'], {
   documentation: 'Base class for all symbols'
 }, AST_Node)
 
-var AST_NewTarget: any = DEFNODE('NewTarget', null, {
-  _size: () => 10,
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: function To_Moz_MetaProperty () {
+class AST_NewTarget extends AST_Node {
+  _size = () => 10
+  shallow_cmp = pass_through
+  _to_mozilla_ast = function To_Moz_MetaProperty () {
     return {
       type: 'MetaProperty',
       meta: {
@@ -8580,13 +8580,21 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
         name: 'target'
       }
     }
-  },
-  _codegen: function (_self, output) {
+  }
+
+  _codegen = function (_self, output) {
     output.print('new.target')
   }
-}, {
-  documentation: 'A reference to new.target'
-}, AST_Node)
+
+  static documentation: 'A reference to new.target'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'NewTarget'
+  static PROPS = AST_Node.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_SymbolDeclaration extends AST_Symbol {
   may_throw = return_false
