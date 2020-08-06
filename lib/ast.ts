@@ -8599,33 +8599,82 @@ var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', ['init'], {
   documentation: 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 }, AST_Symbol)
 
-var AST_SymbolVar: any = DEFNODE('SymbolVar', null, {}, {
-  documentation: 'Symbol defining a variable'
-}, AST_SymbolDeclaration)
+class AST_SymbolVar extends AST_SymbolDeclaration {
+  static documentation = 'Symbol defining a variable'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolVar'
+  static PROPS = AST_SymbolDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolBlockDeclaration: any = DEFNODE('SymbolBlockDeclaration', null, {}, {
-  documentation: 'Base class for block-scoped declaration symbols'
-}, AST_SymbolDeclaration)
+class AST_SymbolBlockDeclaration extends AST_SymbolDeclaration {
+  static documentation = 'Base class for block-scoped declaration symbols'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolBlockDeclaration'
+  static PROPS = AST_SymbolDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolConst: any = DEFNODE('SymbolConst', null, {}, {
-  documentation: 'A constant declaration'
-}, AST_SymbolBlockDeclaration)
+class AST_SymbolConst extends AST_SymbolBlockDeclaration {
+  static documentation = 'A constant declaration'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolConst'
+  static PROPS = AST_SymbolBlockDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolLet: any = DEFNODE('SymbolLet', null, {}, {
-  documentation: 'A block-scoped `let` declaration'
-}, AST_SymbolBlockDeclaration)
+class AST_SymbolLet extends AST_SymbolBlockDeclaration {
+  static documentation = 'A block-scoped `let` declaration'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolLet'
+  static PROPS = AST_SymbolBlockDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolFunarg: any = DEFNODE('SymbolFunarg', null, {}, {
-  documentation: 'Symbol naming a function argument'
-}, AST_SymbolVar)
+class AST_SymbolFunarg extends AST_SymbolVar {
+  static documentation = 'Symbol naming a function argument'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolFunarg'
+  static PROPS = AST_SymbolVar.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolDefun: any = DEFNODE('SymbolDefun', null, {}, {
-  documentation: 'Symbol defining a function'
-}, AST_SymbolDeclaration)
+class AST_SymbolDefun extends AST_SymbolDeclaration {
+  static documentation = 'Symbol defining a function'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolDefun'
+  static PROPS = AST_SymbolDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolMethod: any = DEFNODE('SymbolMethod', null, {}, {
-  documentation: 'Symbol in an object defining a method'
-}, AST_Symbol)
+class AST_SymbolMethod extends AST_Symbol {
+  static documentation = 'Symbol in an object defining a method'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolMethod'
+  static PROPS = AST_Symbol.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_SymbolClassProperty extends AST_Symbol {
   may_throw = return_false
