@@ -8627,40 +8627,82 @@ var AST_SymbolMethod: any = DEFNODE('SymbolMethod', null, {}, {
   documentation: 'Symbol in an object defining a method'
 }, AST_Symbol)
 
-var AST_SymbolClassProperty = DEFNODE('SymbolClassProperty', null, {
-  may_throw: return_false,
-  has_side_effects: return_false,
+class AST_SymbolClassProperty extends AST_Symbol {
+  may_throw = return_false
+  has_side_effects = return_false
   // TODO take propmangle into account
-  _size: function (): number {
+  _size = function (): number {
     return this.name.length
   }
-}, {
-  documentation: 'Symbol for a class property'
-}, AST_Symbol)
 
-var AST_SymbolLambda: any = DEFNODE('SymbolLambda', null, {}, {
-  documentation: 'Symbol naming a function expression'
-}, AST_SymbolDeclaration)
+  static documentation = 'Symbol for a class property'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolClassProperty'
+  static PROPS = AST_Symbol.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolDefClass: any = DEFNODE('SymbolDefClass', null, {}, {
-  documentation: "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
-}, AST_SymbolBlockDeclaration)
+class AST_SymbolLambda extends AST_SymbolDeclaration {
+  static documentation = 'Symbol naming a function expression'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolLambda'
+  static PROPS = AST_SymbolDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolClass: any = DEFNODE('SymbolClass', null, {}, {
-  documentation: "Symbol naming a class's name. Lexically scoped to the class."
-}, AST_SymbolDeclaration)
+class AST_SymbolDefClass extends AST_SymbolBlockDeclaration {
+  static documentation = "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolDefClass'
+  static PROPS = AST_SymbolBlockDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_SymbolCatch: any = DEFNODE('SymbolCatch', null, {
-  reduce_vars: function () {
+class AST_SymbolClass extends AST_SymbolDeclaration {
+  static documentation = "Symbol naming a class's name. Lexically scoped to the class."
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolClass'
+  static PROPS = AST_SymbolDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
+
+class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
+  reduce_vars = function () {
     this.definition().fixed = false
   }
-}, {
-  documentation: 'Symbol naming the exception in catch'
-}, AST_SymbolBlockDeclaration)
 
-var AST_SymbolImport: any = DEFNODE('SymbolImport', null, {}, {
-  documentation: 'Symbol referring to an imported name'
-}, AST_SymbolBlockDeclaration)
+  static documentation = 'Symbol naming the exception in catch'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolCatch '
+  static PROPS = AST_SymbolBlockDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
+
+class AST_SymbolImport extends AST_SymbolBlockDeclaration {
+  static documentation = 'Symbol referring to an imported name'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolImport'
+  static PROPS = AST_SymbolBlockDeclaration.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_SymbolImportForeign extends AST_Symbol {
   _size = function (): number {
