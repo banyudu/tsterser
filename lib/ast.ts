@@ -8953,13 +8953,21 @@ var AST_SymbolExport: any = DEFNODE('SymbolExport', null, {
   documentation: 'Symbol referring to a name to export'
 }, AST_SymbolRef)
 
-var AST_SymbolExportForeign: any = DEFNODE('SymbolExportForeign', null, {
-  _size: function (): number {
+class AST_SymbolExportForeign extends AST_Symbol {
+  _size = function (): number {
     return this.name.length
   }
-}, {
-  documentation: "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
-}, AST_Symbol)
+
+  static documentation = "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'LabelRef'
+  static PROPS = AST_Symbol.PROP
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    // do nothing
+  }
+}
 
 class AST_LabelRef extends AST_Symbol {
   static documentation = 'Reference to a label symbol'
