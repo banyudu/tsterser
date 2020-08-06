@@ -8588,16 +8588,24 @@ var AST_NewTarget: any = DEFNODE('NewTarget', null, {
   documentation: 'A reference to new.target'
 }, AST_Node)
 
-var AST_SymbolDeclaration: any = DEFNODE('SymbolDeclaration', ['init'], {
-  may_throw: return_false,
-  has_side_effects: return_false,
-  _find_defs: function (compressor: any) {
+class AST_SymbolDeclaration extends AST_Symbol {
+  may_throw = return_false
+  has_side_effects = return_false
+  _find_defs = function (compressor: any) {
     if (!this.global()) return
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
   }
-}, {
-  documentation: 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
-}, AST_Symbol)
+
+  static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolDeclaration'
+  static PROPS = AST_Symbol.PROPS.concat(['init'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.init = args.init
+  }
+}
 
 class AST_SymbolVar extends AST_SymbolDeclaration {
   static documentation = 'Symbol defining a variable'
