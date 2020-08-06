@@ -120,7 +120,6 @@ let unmangleable_names: Set<any> | null = null
 let printMangleOptions
 
 interface AST {
-  PROPS: string[]
   new (...args: any[]): any
   _to_mozilla_ast: Function
 }
@@ -339,7 +338,7 @@ class AST_Token {
   }
 }
 
-var AST_Node: any = DEFNODE('Node', ['start', 'end'], {
+var AST_Node = DEFNODE('Node', ['start', 'end'], {
   _optimize: function (self) {
     return self
   },
@@ -9012,26 +9011,38 @@ function To_Moz_Literal (M) {
   }
 }
 
-var AST_Constant: AST = DEFNODE('Constant', null, {
-  drop_side_effect_free: return_null,
-  may_throw: return_false,
-  has_side_effects: return_false,
-  _eval: function () {
+class AST_Constant extends AST_Node {
+  drop_side_effect_free = return_null
+  may_throw = return_false
+  has_side_effects = return_false
+  _eval = function (_arg: any) {
     return this.getValue()
-  },
-  is_constant_expression: return_true,
-  _dot_throw: return_false,
-  getValue: function () {
+  }
+
+  is_constant_expression = return_true
+  _dot_throw = return_false
+  getValue = function () {
     return this.value
-  },
-  _to_mozilla_ast: To_Moz_Literal,
-  _codegen: function (self, output) {
+  }
+
+  _to_mozilla_ast = To_Moz_Literal as Function
+  _codegen = function (self, output) {
     output.print(self.getValue())
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'Base class for all constants'
-}, AST_Node)
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static documentation = 'Base class for all constants'
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'String'
+  static PROPS = AST_Node.PROPS
+
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    // do nothing
+  }
+}
 
 class AST_String extends AST_Constant {
   is_string = return_true
