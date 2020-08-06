@@ -9033,39 +9033,54 @@ var AST_Constant: AST = DEFNODE('Constant', null, {
   documentation: 'Base class for all constants'
 }, AST_Node)
 
-var AST_String: any = DEFNODE('String', ['value', 'quote'], {
-  is_string: return_true,
-  _size: function (): number {
+class AST_String extends AST_Constant {
+  is_string = return_true
+  _size = function (): number {
     return this.value.length + 2
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     value: 'eq'
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen = function (self, output) {
     output.print_string(self.getValue(), self.quote, output.in_directive)
   }
-}, {
-  documentation: 'A string literal',
-  propdoc: {
+
+  static documentation = 'A string literal'
+  static propdoc = {
     value: '[string] the contents of this string',
     quote: '[string] the original quote character'
   }
-}, AST_Constant)
 
-var AST_Number: any = DEFNODE('Number', ['value', 'literal'], {
-  is_number: return_true,
-  _size: function (): number {
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'String'
+  static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
+
+  constructor (args) {
+    super(args)
+    this.value = args.value
+    this.quote = args.quote
+  }
+}
+
+class AST_Number extends AST_Constant {
+  is_number = return_true
+  _size = function (): number {
     const { value } = this
     if (value === 0) return 1
     if (value > 0 && Math.floor(value) === value) {
       return Math.floor(Math.log10(value) + 1)
     }
     return value.toString().length
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     value: 'eq'
-  }),
-  needs_parens: function (output: any) {
+  })
+
+  needs_parens = function (output: any) {
     var p = output.parent()
     if (p instanceof AST_PropAccess && p.expression === this) {
       var value = this.getValue()
@@ -9074,38 +9089,52 @@ var AST_Number: any = DEFNODE('Number', ['value', 'literal'], {
       }
     }
     return undefined
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     if ((output.option('keep_numbers') || output.use_asm) && self.start && self.start.raw != null) {
       output.print(self.start.raw)
     } else {
       output.print(make_num(self.getValue()))
     }
   }
-}, {
-  documentation: 'A number literal',
-  propdoc: {
+
+  static documentation = 'A number literal'
+  static propdoc = {
     value: '[number] the numeric value',
     literal: '[string] numeric value as string (optional)'
   }
-}, AST_Constant)
 
-var AST_BigInt = DEFNODE('BigInt', ['value'], {
-  _eval: return_this,
-  _size: function (): number {
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Number'
+  static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
+
+  constructor (args) {
+    super(args)
+    this.value = args.value
+    this.literal = args.literal
+  }
+}
+
+class AST_BigInt extends AST_Constant {
+  _eval = return_this
+  _size = function (): number {
     return this.value.length
-  },
-  shallow_cmp: mkshallow({
-    value: 'eq'
-  }),
-  _to_mozilla_ast: M => ({
+  }
+
+  shallow_cmp = mkshallow({ value: 'eq' })
+
+  _to_mozilla_ast = M => ({
     type: 'BigIntLiteral',
     value: M.value
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen = function (self, output) {
     output.print(self.getValue() + 'n')
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens = function (output: any) {
     var p = output.parent()
     if (p instanceof AST_PropAccess && p.expression === this) {
       var value = this.getValue()
@@ -9115,12 +9144,22 @@ var AST_BigInt = DEFNODE('BigInt', ['value'], {
     }
     return undefined
   }
-}, {
-  documentation: 'A big int literal',
-  propdoc: {
+
+  static documentation = 'A big int literal'
+  static propdoc = {
     value: '[string] big int value'
   }
-}, AST_Constant)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'BigInt'
+  static PROPS = AST_Constant.PROPS.concat(['value'])
+
+  constructor (args) {
+    super(args)
+    this.value = args.value
+  }
+}
 
 class AST_RegExp extends AST_Constant {
   value: any
