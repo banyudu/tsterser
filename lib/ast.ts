@@ -7928,9 +7928,9 @@ var AST_Object: any = DEFNODE('Object', ['properties'], {
   }
 }, AST_Node)
 
-var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
-  _optimize: lift_key,
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+class AST_ObjectProperty extends AST_Node {
+  _optimize = lift_key
+  drop_side_effect_free = function (compressor: any, first_in_statement) {
     const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
@@ -7938,39 +7938,46 @@ var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
       return make_sequence(this, [key, value])
     }
     return key || value
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw = function (compressor: any) {
     // TODO key may throw too
     return this.value.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects = function (compressor: any) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
           this.value.has_side_effects(compressor)
     )
-  },
-  is_constant_expression: function () {
+  }
+
+  is_constant_expression = function () {
     return !(this.key instanceof AST_Node) && this.value.is_constant_expression()
-  },
-  _dot_throw: return_false,
-  _walk: function (visitor: any) {
+  }
+
+  _dot_throw = return_false
+  _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.key instanceof AST_Node) { this.key._walk(visitor) }
       this.value._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.value)
     if (this.key instanceof AST_Node) push(this.key)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through as any
+  transform = get_transformer(function (self, tw: any) {
     if (self.key instanceof AST_Node) {
       self.key = self.key.transform(tw)
     }
     if (self.value) self.value = self.value.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_Property (M, parent) {
+  })
+
+  _to_mozilla_ast = function To_Moz_Property (M, parent) {
     var key = M.key instanceof AST_Node ? to_moz(M.key) : {
       type: 'Identifier',
       value: M.key
@@ -8026,8 +8033,9 @@ var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
       key: key,
       value: to_moz(M.value)
     }
-  },
-  _print_getter_setter: function (this: any, type: string, output: any) {
+  }
+
+  _print_getter_setter = function (this: any, type: string, output: any) {
     var self = this
     if (self.static) {
       output.print('static')
@@ -8045,15 +8053,25 @@ var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
       })
     }
     self.value._do_print(output, true)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start, this.key) }
-}, {
-  documentation: 'Base class for literal object properties',
-  propdoc: {
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start, this.key) }
+  static documentation = 'Base class for literal object properties'
+  static propdoc = {
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',
     value: '[AST_Node] property value.  For getters and setters this is an AST_Accessor.'
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ObjectProperty'
+  static PROPS = AST_Node.PROPS.concat(['key', 'value'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.key = args.key
+    this.value = args.value
   }
-}, AST_Node)
+}
 
 class AST_ObjectKeyVal extends AST_ObjectProperty {
   _optimize = function (self, compressor) {
