@@ -8200,8 +8200,8 @@ var AST_ObjectGetter: any = DEFNODE('ObjectGetter', ['quote', 'static'], {
   documentation: 'An object getter property'
 }, AST_ObjectProperty)
 
-var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_generator', 'async'], {
-  _optimize: function (self, compressor) {
+class AST_ConciseMethod extends AST_ObjectProperty {
+  _optimize = function (self, compressor) {
     lift_key(self, compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
@@ -8223,28 +8223,35 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_ge
       })
     }
     return self
-  },
-  drop_side_effect_free: function () {
+  }
+
+  drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw = function (compressor: any) {
     return this.computed_key() && this.key.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects = function (compressor: any) {
     return this.computed_key() && this.key.has_side_effects(compressor)
-  },
+  }
+
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return static_size(this.static) + key_size(this.key) + lambda_modifiers(this)
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     static: 'eq',
     is_generator: 'eq',
     async: 'eq'
-  }),
-  _to_mozilla_ast: function To_Moz_MethodDefinition (M, parent) {
+  })
+
+  _to_mozilla_ast = function To_Moz_MethodDefinition (M, parent) {
     if (parent instanceof AST_Object) {
       return {
         type: 'Property',
@@ -8264,8 +8271,9 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_ge
       key: to_moz(M.key),
       value: to_moz(M.value)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     var type
     if (self.is_generator && self.async) {
       type = 'async*'
@@ -8276,15 +8284,27 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_ge
     }
     self._print_getter_setter(type, output)
   }
-}, {
-  propdoc: {
+
+  static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] is this method static (classes only)',
     is_generator: '[boolean] is this a generator method',
     async: '[boolean] is this method async'
-  },
-  documentation: 'An ES6 concise method inside an object or class'
-}, AST_ObjectProperty)
+  }
+
+  static documentation = 'An ES6 concise method inside an object or class'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ConciseMethod'
+  static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.quote = args.quote
+    this.static = args.static
+    this.is_generator = args.is_generator
+    this.async = args.async
+  }
+}
 
 class AST_Class extends AST_Scope {
   _optimize = function (self) {
