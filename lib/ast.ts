@@ -6543,18 +6543,19 @@ var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
   documentation: 'Unary prefix expression, i.e. `typeof i` or `++i`'
 }, AST_Unary)
 
-var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
-  _optimize: function (self, compressor) {
+class AST_UnaryPostfix extends AST_Unary {
+  _optimize (self, compressor) {
     return self.lift_sequences(compressor)
-  },
-  _dot_throw: return_false,
-  _codegen: function (self, output) {
+  }
+
+  _dot_throw = return_false
+  _codegen (self, output) {
     self.expression.print(output)
     output.print(self.operator)
   }
-}, {
-  documentation: 'Unary postfix expression, i.e. `i++`'
-}, AST_Unary)
+
+  static documentation = 'Unary postfix expression, i.e. `i++`'
+}
 
 class AST_Binary extends AST_Node {
   _optimize (self, compressor) {
