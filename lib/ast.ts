@@ -2910,11 +2910,12 @@ var AST_Arrow: any = DEFNODE('Arrow', null, {
   documentation: 'An ES6 Arrow function ((a) => b)'
 }, AST_Lambda)
 
-var AST_Defun: any = DEFNODE('Defun', null, {
-  _size: function () {
+class AST_Defun extends AST_Lambda {
+  _size = function () {
     return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
-  },
-  _to_mozilla_ast: function To_Moz_FunctionDeclaration (M) {
+  }
+
+  _to_mozilla_ast = function To_Moz_FunctionDeclaration (M) {
     return {
       type: 'FunctionDeclaration',
       id: to_moz(M.name),
@@ -2924,9 +2925,16 @@ var AST_Defun: any = DEFNODE('Defun', null, {
       body: to_moz_scope('BlockStatement', M)
     }
   }
-}, {
-  documentation: 'A function definition'
-}, AST_Lambda)
+
+  static documentation = 'A function definition'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Defun'
+  static PROPS = AST_Lambda.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 /* -----[ DESTRUCTURING ]----- */
 var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
