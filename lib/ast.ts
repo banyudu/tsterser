@@ -8055,8 +8055,8 @@ var AST_ObjectProperty: any = DEFNODE('ObjectProperty', ['key', 'value'], {
   }
 }, AST_Node)
 
-var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', ['quote'], {
-  _optimize: function (self, compressor) {
+class AST_ObjectKeyVal extends AST_ObjectProperty {
+  _optimize = function (self, compressor) {
     lift_key(self, compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}
@@ -8085,15 +8085,18 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', ['quote'], {
       }
     }
     return self
-  },
+  }
+
   computed_key () {
     return this.key instanceof AST_Node
-  },
-  shallow_cmp: mkshallow({ key: 'eq' }),
-  _size: function (): number {
+  }
+
+  shallow_cmp = mkshallow({ key: 'eq' })
+  _size = function (): number {
     return key_size(this.key) + 1
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     function get_name (self: any) {
       var def = self.definition()
       return def ? def.mangled_name || def.name : self.name
@@ -8130,12 +8133,21 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', ['quote'], {
       self.value.print(output)
     }
   }
-}, {
-  documentation: 'A key: value object property',
-  propdoc: {
+
+  static documentation = 'A key: value object property'
+  static propdoc = {
     quote: '[string] the original quote character'
   }
-}, AST_ObjectProperty)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ObjectKeyVal'
+  static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.quote = args.quote
+  }
+}
 
 class AST_ObjectSetter extends AST_ObjectProperty {
   drop_side_effect_free = function () {
