@@ -6413,8 +6413,8 @@ var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
   }
 }, AST_Node)
 
-var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
-  _optimize: function (self, compressor) {
+class AST_UnaryPrefix extends AST_Unary {
+  _optimize (self, compressor) {
     var e = self.expression
     if (self.operator == 'delete' &&
           !(e instanceof AST_SymbolRef ||
@@ -6486,8 +6486,9 @@ var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
       }
     }
     return self
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     var e = this.expression
     // Function would be evaluated to an array and so typeof would
     // incorrectly return 'object'. Hence making is a special case.
@@ -6514,21 +6515,26 @@ var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
       case '+': return +e
     }
     return this
-  },
-  negate: function () {
+  }
+
+  negate () {
     if (this.operator == '!') { return this.expression }
     return basic_negation(this)
-  },
-  is_string: function () {
+  }
+
+  is_string () {
     return this.operator == 'typeof'
-  },
-  is_boolean: function () {
+  }
+
+  is_boolean () {
     return unary_bool.has(this.operator)
-  },
-  _dot_throw: function () {
+  }
+
+  _dot_throw () {
     return this.operator == 'void'
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     var op = self.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||
@@ -6539,9 +6545,16 @@ var AST_UnaryPrefix: any = DEFNODE('UnaryPrefix', [], {
     }
     self.expression.print(output)
   }
-}, {
-  documentation: 'Unary prefix expression, i.e. `typeof i` or `++i`'
-}, AST_Unary)
+
+  static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'UnaryPrefix'
+  static PROPS = AST_Unary.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_UnaryPostfix extends AST_Unary {
   _optimize (self, compressor) {
@@ -6555,6 +6568,13 @@ class AST_UnaryPostfix extends AST_Unary {
   }
 
   static documentation = 'Unary postfix expression, i.e. `i++`'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'UnaryPostfix '
+  static PROPS = AST_Unary.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
 }
 
 class AST_Binary extends AST_Node {
