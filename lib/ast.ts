@@ -8532,13 +8532,14 @@ class AST_ClassExpression extends AST_Class {
 
 let mangle_options
 
-var AST_Symbol: any = DEFNODE('Symbol', ['scope', 'name', 'thedef'], {
-  fixed_value: function () {
+class AST_Symbol extends AST_Node {
+  fixed_value = function () {
     var fixed = this.thedef.fixed
     if (!fixed || fixed instanceof AST_Node) return fixed
     return fixed()
-  },
-  mark_enclosed: function () {
+  }
+
+  mark_enclosed = function () {
     var def = this.definition()
     var s = this.scope
     while (s) {
@@ -8546,33 +8547,41 @@ var AST_Symbol: any = DEFNODE('Symbol', ['scope', 'name', 'thedef'], {
       if (s === def.scope) break
       s = s.parent_scope
     }
-  },
-  reference: function () {
+  }
+
+  reference = function () {
     this.definition().references.push(this)
     this.mark_enclosed()
-  },
-  unmangleable: function (options: any) {
+  }
+
+  unmangleable = function (options: any) {
     var def = this.definition()
     return !def || def.unmangleable(options)
-  },
-  unreferenced: function () {
+  }
+
+  unreferenced = function () {
     return !this.definition().references.length && !this.scope.pinned()
-  },
-  definition: function () {
+  }
+
+  definition = function () {
     return this.thedef
-  },
-  global: function () {
+  }
+
+  global = function () {
     return this.thedef.global
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return !mangle_options || this.definition().unmangleable(mangle_options)
       ? this.name.length
       : 2
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     name: 'eq'
-  }),
-  _to_mozilla_ast: function To_Moz_Identifier (M, parent) {
+  })
+
+  _to_mozilla_ast = function To_Moz_Identifier (M, parent) {
     if (M instanceof AST_SymbolMethod && parent.quote) {
       return {
         type: 'Literal',
@@ -8584,23 +8593,36 @@ var AST_Symbol: any = DEFNODE('Symbol', ['scope', 'name', 'thedef'], {
       type: 'Identifier',
       name: def ? def.mangled_name || def.name : M.name
     }
-  },
-  _do_print: function (output: any) {
+  } as any
+
+  _do_print = function (output: any) {
     var def = this.definition()
     output.print_name(def ? def.mangled_name || def.name : this.name)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     self._do_print(output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  propdoc: {
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static propdoc = {
     name: '[string] name of this symbol',
     scope: '[AST_Scope/S] the current scope (not necessarily the definition scope)',
     thedef: '[SymbolDef/S] the definition of this symbol'
-  },
-  documentation: 'Base class for all symbols'
-}, AST_Node)
+  } as any
+
+  static documentation = 'Base class for all symbols'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Symbol'
+  static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.scope = args.scope
+    this.name = args.name
+    this.thedef = args.thedef
+  }
+}
 
 class AST_NewTarget extends AST_Node {
   _size = () => 10
