@@ -8846,7 +8846,7 @@ class AST_Symbol extends AST_Node {
     return this.thedef.global
   }
 
-  _size = function (): number {
+  _size (): number {
     return !mangle_options || this.definition().unmangleable(mangle_options)
       ? this.name.length
       : 2
@@ -9142,8 +9142,8 @@ class AST_Label extends AST_Symbol {
   }
 }
 
-var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
-  _optimize: function (self, compressor) {
+class AST_SymbolRef extends AST_Symbol {
+  _optimize (self, compressor) {
     if (!compressor.option('ie8') &&
           is_undeclared_ref(self) &&
           (!self.scope.uses_with || !compressor.find_parent(AST_With))) {
@@ -9293,19 +9293,23 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
         if (node instanceof AST_SymbolRef) return walk_abort
       })
     }
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free (compressor: any) {
     const safe_access = this.is_declared(compressor) ||
           pure_prop_access_globals.has(this.name)
     return safe_access ? null : this
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     var fixed = this.fixed_value()
     if (!fixed) return this
     var value
@@ -9325,14 +9329,16 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
       if (escaped && depth > escaped) return this
     }
     return value
-  },
-  _find_defs: function (compressor: any, suffix) {
+  }
+
+  _find_defs (compressor: any, suffix) {
     if (!this.global()) return
     var defines = compressor.option('global_defs') as AnyObject
     var name = this.name + suffix
     if (HOP(defines, name)) return to_node(defines[name], this)
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     var d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&
@@ -9370,8 +9376,9 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
       }
     }
     mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1)
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     if (this.name === 'arguments') return false
     if (has_flag(this, UNDEFINED)) return true
     if (!is_strict(compressor)) return false
@@ -9379,18 +9386,19 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
     if (this.is_immutable()) return false
     var fixed = this.fixed_value()
     return !fixed || fixed._dot_throw(compressor)
-  },
-  is_declared: function (compressor: any) {
+  }
+
+  is_declared (compressor: any) {
     return !this.definition?.().undeclared ||
           compressor.option('unsafe') && global_names.has(this.name)
-  },
+  }
 
-  is_immutable: function () {
+  is_immutable () {
     var orig = this.definition?.().orig
     return orig.length == 1 && orig[0] instanceof AST_SymbolLambda
-  },
+  }
 
-  _size: function (): number {
+  _size (): number {
     const { name, thedef } = this
 
     if (thedef && thedef.global) return name.length
@@ -9399,9 +9407,16 @@ var AST_SymbolRef: any = DEFNODE('SymbolRef', null, {
 
     return 2
   }
-}, {
-  documentation: 'Reference to some symbol (not definition/declaration)'
-}, AST_Symbol)
+
+  static documentation = 'Reference to some symbol (not definition/declaration)'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SymbolRef'
+  static PROPS = AST_Symbol.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_SymbolExport extends AST_SymbolRef {
   _optimize = function (self) {
@@ -11851,7 +11866,7 @@ function tighten_body (statements, compressor) {
                     (
                       node instanceof AST_SymbolRef &&
                         !node.is_declared(compressor) &&
-                        !pure_prop_access_globals.has(node)) || // TODO: check type
+                        !pure_prop_access_globals.has(node as any)) || // TODO: check type
                 node instanceof AST_SymbolRef &&
                     parent instanceof AST_Call &&
                     has_annotation(parent, _NOINLINE)
