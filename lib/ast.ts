@@ -7704,8 +7704,8 @@ var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'a
   }
 }, AST_Node)
 
-var AST_Assign: any = DEFNODE('Assign', null, {
-  _optimize: function (self, compressor) {
+class AST_Assign extends AST_Binary {
+  _optimize (self, compressor) {
     var def
     if (compressor.option('dead_code') &&
           self.left instanceof AST_SymbolRef &&
@@ -7762,8 +7762,9 @@ var AST_Assign: any = DEFNODE('Assign', null, {
         }
       }
     }
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free (compressor: any) {
     var left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&
@@ -7779,8 +7780,9 @@ var AST_Assign: any = DEFNODE('Assign', null, {
       return this.right.drop_side_effect_free(compressor)
     }
     return this
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     if (this.right.may_throw(compressor)) return true
     if (!compressor.has_directive('use strict') &&
           this.operator == '=' &&
@@ -7788,19 +7790,23 @@ var AST_Assign: any = DEFNODE('Assign', null, {
       return false
     }
     return this.left.may_throw(compressor)
-  },
-  has_side_effects: return_true,
-  is_string: function (compressor: any) {
+  }
+
+  has_side_effects = return_true
+  is_string (compressor: any) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
-  },
-  is_number: function (compressor: any) {
+  }
+
+  is_number (compressor: any) {
     return binary.has(this.operator.slice(0, -1)) ||
           this.operator == '=' && this.right.is_number(compressor)
-  },
-  is_boolean: function () {
+  }
+
+  is_boolean () {
     return this.operator == '=' && this.right.is_boolean()
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     var node = this
     if (node.left instanceof AST_Destructuring) {
       suppress(node.left)
@@ -7833,21 +7839,30 @@ var AST_Assign: any = DEFNODE('Assign', null, {
     mark(tw, def, true)
     mark_escaped(tw, def, sym.scope, node, value, 0, 1)
     return true
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     return this.operator == '=' &&
           this.right._dot_throw(compressor)
-  },
-  _to_mozilla_ast: M => ({
+  }
+
+  _to_mozilla_ast = M => ({
     type: 'AssignmentExpression',
     operator: M.operator,
     left: to_moz(M.left),
     right: to_moz(M.right)
-  }),
-  needs_parens: needsParens
-}, {
-  documentation: 'An assignment expression — `a = b + 5`'
-}, AST_Binary)
+  })
+
+  needs_parens = needsParens
+  static documentation = 'An assignment expression — `a = b + 5`'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Assign'
+  static PROPS = AST_Binary.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_DefaultAssign extends AST_Binary {
   _optimize (self, compressor) {
