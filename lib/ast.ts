@@ -3355,20 +3355,29 @@ var AST_Break: any = DEFNODE('Break', null, {
   documentation: 'A `break` statement'
 }, AST_LoopControl)
 
-var AST_Continue: any = DEFNODE('Continue', null, {
-  _size: function () {
+class AST_Continue extends AST_LoopControl {
+  _size = function () {
     return this.label ? 9 : 8
-  },
-  _to_mozilla_ast: M => ({
+  }
+
+  _to_mozilla_ast = M => ({
     type: 'ContinueStatement',
     label: to_moz(M.label)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen = function (self, output) {
     self._do_print(output, 'continue')
   }
-}, {
-  documentation: 'A `continue` statement'
-}, AST_LoopControl)
+
+  static documentation = 'A `continue` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Continue'
+  static PROPS = AST_LoopControl.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 var AST_Await: any = DEFNODE('Await', ['expression'], {
   _walk: function (visitor: any) {
