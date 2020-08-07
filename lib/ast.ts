@@ -6297,8 +6297,8 @@ var AST_Sub: any = DEFNODE('Sub', null, {
 
 }, AST_PropAccess)
 
-var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+class AST_Unary extends AST_Node {
+  drop_side_effect_free (compressor: any, first_in_statement) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
         set_flag(this, WRITE_ONLY)
@@ -6314,22 +6314,27 @@ var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
       return expression.negate(compressor, first_in_statement)
     }
     return expression
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) { return false }
     return this.expression.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return unary_side_effects.has(this.operator) ||
           this.expression.has_side_effects(compressor)
-  },
-  is_constant_expression: function () {
+  }
+
+  is_constant_expression () {
     return this.expression.is_constant_expression()
-  },
-  is_number: function () {
+  }
+
+  is_number () {
     return unary.has(this.operator)
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars (tw) {
     var node = this
     if (node.operator !== '++' && node.operator !== '--') return
     var exp = node.expression
@@ -6356,8 +6361,9 @@ var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
     }
     mark(tw, def, true)
     return true
-  },
-  lift_sequences: function (compressor: any) {
+  }
+
+  lift_sequences (compressor: any) {
     if (compressor.option('sequences')) {
       if (this.expression instanceof AST_Sequence) {
         var x = this.expression.expressions.slice()
@@ -6368,33 +6374,39 @@ var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
       }
     }
     return this
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.expression)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     if (this.operator === 'typeof') return 7
     if (this.operator === 'void') return 5
     return this.operator.length
-  },
-  shallow_cmp: mkshallow({ operator: 'eq' }),
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = mkshallow({ operator: 'eq' })
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_Unary (M: any) {
+  })
+
+  _to_mozilla_ast = function To_Moz_Unary (M: any) {
     return {
       type: M.operator == '++' || M.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: M.operator,
       prefix: M instanceof AST_UnaryPrefix,
       argument: to_moz(M.expression)
     }
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens (output: any) {
     var p = output.parent()
     return p instanceof AST_PropAccess && p.expression === this ||
             p instanceof AST_Call && p.expression === this ||
@@ -6405,13 +6417,23 @@ var AST_Unary: any = DEFNODE('Unary', ['operator', 'expression'], {
                 this.operator !== '++' &&
                 this.operator !== '--'
   }
-}, {
-  documentation: 'Base class for unary expressions',
-  propdoc: {
+
+  static documentation = 'Base class for unary expressions'
+  static propdoc = {
     operator: '[string] the operator',
     expression: '[AST_Node] expression that this unary operator applies to'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Unary'
+  static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.operator = args.operator
+    this.expression = args.expression
+  }
+}
 
 class AST_UnaryPrefix extends AST_Unary {
   _optimize (self, compressor) {
