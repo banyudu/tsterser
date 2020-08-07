@@ -8137,36 +8137,52 @@ var AST_ObjectKeyVal: any = DEFNODE('ObjectKeyVal', ['quote'], {
   }
 }, AST_ObjectProperty)
 
-var AST_ObjectSetter: any = DEFNODE('ObjectSetter', ['quote', 'static'], {
-  drop_side_effect_free: function () {
+class AST_ObjectSetter extends AST_ObjectProperty {
+  drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw = function (compressor: any) {
     return this.computed_key() && this.key.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects = function (compressor: any) {
     return this.computed_key() && this.key.has_side_effects(compressor)
-  },
+  }
+
   computed_key () {
     return !(this.key instanceof AST_SymbolMethod)
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return 5 + static_size(this.static) + key_size(this.key)
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     static: 'eq'
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen = function (self, output) {
     self._print_getter_setter('set', output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start, this.key.name) }
-}, {
-  propdoc: {
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start, this.key.name) }
+  static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static setter (classes only)'
-  },
-  documentation: 'An object setter property'
-}, AST_ObjectProperty)
+  }
+
+  static documentation = 'An object setter property'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ObjectSetter'
+  static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.quote = args.quote
+    this.static = args.static
+  }
+}
 
 class AST_ObjectGetter extends AST_ObjectProperty {
   drop_side_effect_free = function () {
