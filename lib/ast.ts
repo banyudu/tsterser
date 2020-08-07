@@ -711,7 +711,7 @@ class AST_StatementWithBody extends AST_Statement {
   static documentation = 'Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`'
   static propdoc = {
     body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
-  }
+  } as any
 
   CTOR = this.constructor
   flags = 0
@@ -792,15 +792,23 @@ var AST_LabeledStatement: any = DEFNODE('LabeledStatement', ['label'], {
   }
 }, AST_StatementWithBody)
 
-var AST_IterationStatement: any = DEFNODE('IterationStatement', ['block_scope'], {
-  is_block_scope: return_true,
-  clone: clone_block_scope
-}, {
-  documentation: 'Internal class.  All loops inherit from it.',
-  propdoc: {
+class AST_IterationStatement extends AST_StatementWithBody {
+  is_block_scope = return_true
+  clone = clone_block_scope
+  static documentation = 'Internal class.  All loops inherit from it.'
+  static propdoc = {
     block_scope: '[AST_Scope] the block scope for this iteration statement.'
   }
-}, AST_StatementWithBody)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'StatementWithBody'
+  static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.block_scope = args.block_scope
+  }
+}
 
 var AST_DWLoop: any = DEFNODE('DWLoop', ['condition'], {}, {
   documentation: 'Base class for do/while statements',
