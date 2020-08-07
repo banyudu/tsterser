@@ -7849,8 +7849,8 @@ var AST_Assign: any = DEFNODE('Assign', null, {
   documentation: 'An assignment expression — `a = b + 5`'
 }, AST_Binary)
 
-var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {
-  _optimize: function (self, compressor) {
+class AST_DefaultAssign extends AST_Binary {
+  _optimize (self, compressor) {
     if (!compressor.option('evaluate')) {
       return self
     }
@@ -7866,9 +7866,16 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {
 
     return self
   }
-}, {
-  documentation: 'A default assignment expression like in `(a = 3) => a`'
-}, AST_Binary)
+
+  static documentation = 'A default assignment expression like in `(a = 3) => a`'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'DefaultAssign'
+  static PROPS = AST_Binary.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 /* -----[ LITERALS ]----- */
 
