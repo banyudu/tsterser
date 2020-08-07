@@ -2690,21 +2690,29 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
   }
 }, AST_Scope)
 
-var AST_Accessor: any = DEFNODE('Accessor', null, {
-  drop_side_effect_free: return_null,
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+class AST_Accessor extends AST_Lambda {
+  drop_side_effect_free = return_null
+  reduce_vars = function (tw: TreeWalker, descend, compressor: any) {
     push(tw)
     reset_variables(tw, compressor, this)
     descend()
     pop(tw)
     return true
-  },
-  _size: function () {
+  }
+
+  _size = function () {
     return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body)
   }
-}, {
-  documentation: 'A setter/getter function.  The `name` property is always null.'
-}, AST_Lambda)
+
+  static documentation = 'A setter/getter function.  The `name` property is always null.'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Accessor'
+  static PROPS = AST_Lambda.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 function To_Moz_FunctionExpression (M, parent) {
   var is_generator = parent.is_generator !== undefined
