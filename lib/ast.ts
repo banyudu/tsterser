@@ -8286,13 +8286,14 @@ var AST_ConciseMethod: any = DEFNODE('ConciseMethod', ['quote', 'static', 'is_ge
   documentation: 'An ES6 concise method inside an object or class'
 }, AST_ObjectProperty)
 
-var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
-  _optimize: function (self) {
+class AST_Class extends AST_Scope {
+  _optimize = function (self) {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return self
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free = function (compressor: any) {
     const with_effects: any[] = []
     const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
@@ -8302,19 +8303,22 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
     }
     if (!with_effects.length) return null
     return make_sequence(this, with_effects)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw = function (compressor: any) {
     if (this.extends && this.extends.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
-  },
-  has_side_effects: function (compressor) {
+  }
+
+  has_side_effects = function (compressor) {
     if (this.extends && this.extends.has_side_effects(compressor)) {
       return true
     }
     return anySideEffect(this.properties, compressor)
-  },
-  _eval: return_this,
-  is_constant_expression: function (scope) {
+  }
+
+  _eval = return_this
+  is_constant_expression = function (scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
       return false
     }
@@ -8329,16 +8333,18 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
     }
 
     return all_refs_local.call(this, scope)
-  },
-  reduce_vars: function (tw, descend) {
+  }
+
+  reduce_vars = function (tw, descend) {
     clear_flag(this, INLINED)
     push(tw)
     descend()
     pop(tw)
     return true
-  },
-  is_block_scope: return_false,
-  _walk: function (visitor: any) {
+  }
+
+  is_block_scope = return_false
+  _walk = function (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.name) {
         this.name._walk(visitor)
@@ -8348,29 +8354,34 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
       }
       this.properties.forEach((prop) => prop._walk(visitor))
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.properties.length
     while (i--) push(this.properties[i])
     if (this.extends) push(this.extends)
     if (this.name) push(this.name)
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return (
       (this.name ? 8 : 7) +
             (this.extends ? 8 : 0)
     )
-  },
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.name) self.name = self.name.transform(tw)
     if (self.extends) self.extends = self.extends.transform(tw)
     self.properties = do_list(self.properties, tw)
-  }),
-  shallow_cmp: mkshallow({
+  })
+
+  shallow_cmp = mkshallow({
     name: 'exist',
     extends: 'exist'
-  }),
-  _to_mozilla_ast: function To_Moz_Class (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_Class (M) {
     var type = M instanceof AST_ClassExpression ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
@@ -8381,8 +8392,9 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
         body: M.properties.map(to_moz)
       }
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     output.print('class')
     output.space()
     if (self.name) {
@@ -8421,17 +8433,27 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
         output.newline()
       })
     } else output.print('{}')
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  propdoc: {
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static propdoc = {
     name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
     extends: '[AST_Node]? optional parent class',
     properties: '[AST_ObjectProperty*] array of properties'
-  },
-  documentation: 'An ES6 class'
+  }
 
-}, AST_Scope /* TODO a class might have a scope but it's not a scope */)
+  static documentation = 'An ES6 class'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Class'
+  static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.name = args.name
+    this.extends = args.extends
+    this.properties = args.properties
+  }
+}
 
 class AST_ClassProperty extends AST_ObjectProperty {
   drop_side_effect_free = function (compressor: any) {
