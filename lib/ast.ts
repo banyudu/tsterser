@@ -6556,8 +6556,8 @@ var AST_UnaryPostfix: any = DEFNODE('UnaryPostfix', null, {
   documentation: 'Unary postfix expression, i.e. `i++`'
 }, AST_Unary)
 
-var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
-  _optimize: function (self, compressor) {
+class AST_Binary extends AST_Node {
+  _optimize (self, compressor) {
     function reversible () {
       return self.left.is_constant() ||
               self.right.is_constant() ||
@@ -7057,8 +7057,9 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       return best_of(compressor, ev, self)
     }
     return self
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     var right = this.right.drop_side_effect_free(compressor)
     if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
     if (lazy_op.has(this.operator)) {
@@ -7071,16 +7072,19 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       if (!left) return this.right.drop_side_effect_free(compressor, first_in_statement)
       return make_sequence(this, [left, right])
     }
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.left.may_throw(compressor) ||
           this.right.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.left.has_side_effects(compressor) ||
           this.right.has_side_effects(compressor)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     if (!non_converting_binary.has(this.operator)) depth++
     var left = this.left._eval(compressor, depth)
     if (left === this.left) return this
@@ -7119,12 +7123,14 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       return this
     }
     return result
-  },
-  is_constant_expression: function () {
+  }
+
+  is_constant_expression () {
     return this.left.is_constant_expression() &&
           this.right.is_constant_expression()
-  },
-  negate: function (compressor: any, first_in_statement) {
+  }
+
+  negate (compressor: any, first_in_statement) {
     var self = this.clone(); var op = this.operator
     if (compressor.option('unsafe_comps')) {
       switch (op) {
@@ -7154,35 +7160,41 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
         return best(this, self, first_in_statement)
     }
     return basic_negation(this)
-  },
-  is_string: function (compressor: any) {
+  }
+
+  is_string (compressor: any) {
     return this.operator == '+' &&
           (this.left.is_string(compressor) || this.right.is_string(compressor))
-  },
-  is_number: function (compressor: any) {
+  }
+
+  is_number (compressor: any) {
     return binary.has(this.operator) || this.operator == '+' &&
           this.left.is_number(compressor) &&
           this.right.is_number(compressor)
-  },
-  is_boolean: function () {
+  }
+
+  is_boolean () {
     return binary_bool.has(this.operator) ||
           lazy_op.has(this.operator) &&
               this.left.is_boolean() &&
               this.right.is_boolean()
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars (tw, descend, compressor: any) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)
     this.right.walk(tw)
     pop(tw)
     return true
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
           (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
-  },
-  lift_sequences: function (compressor: any) {
+  }
+
+  lift_sequences (compressor: any) {
     if (compressor.option('sequences')) {
       if (this.left instanceof AST_Sequence) {
         var x = this.left.expressions.slice()
@@ -7214,19 +7226,22 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       }
     }
     return this
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.left._walk(visitor)
       this.right._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.right)
     push(this.left)
-  },
-  shallow_cmp: mkshallow({ operator: 'eq' }),
-  _size: function (info): number {
+  }
+
+  shallow_cmp = mkshallow({ operator: 'eq' })
+  _size (info): number {
     if (this.operator === 'in') return 4
 
     let size = this.operator.length
@@ -7244,12 +7259,14 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
     }
 
     return size
-  },
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  transform = get_transformer(function (self, tw: any) {
     self.left = self.left.transform(tw)
     self.right = self.right.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_BinaryExpression (M: any) {
+  })
+
+  _to_mozilla_ast = function To_Moz_BinaryExpression (M: any) {
     if (M.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',
@@ -7268,8 +7285,9 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       operator: M.operator,
       right: to_moz(M.right)
     }
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens (output: any) {
     var p = output.parent()
     // (foo && bar)()
     if (p instanceof AST_Call && p.expression === this) { return true }
@@ -7295,8 +7313,9 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
       }
     }
     return undefined
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     var op = self.operator
     self.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */
@@ -7322,15 +7341,25 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
     }
     self.right.print(output)
   }
-}, {
-  documentation: 'Binary expression, i.e. `a + b`',
-  propdoc: {
+
+  static documentation = 'Binary expression, i.e. `a + b`'
+  static propdoc = {
     left: '[AST_Node] left-hand side expression',
     operator: '[string] the operator',
     right: '[AST_Node] right-hand side expression'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Binary'
+  static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.operator = args.operator
+    this.left = args.left
+    this.right = args.right
+  }
+}
 
 class AST_Conditional extends AST_Node {
   _optimize (self, compressor) {
