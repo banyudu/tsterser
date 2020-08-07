@@ -3874,29 +3874,37 @@ var AST_Switch: any = DEFNODE('Switch', ['expression'], {
 
 }, AST_Block)
 
-var AST_SwitchBranch: any = DEFNODE('SwitchBranch', null, {
-  aborts: block_aborts,
-  is_block_scope: return_false,
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: function To_Moz_SwitchCase (M) {
+class AST_SwitchBranch extends AST_Block {
+  aborts = block_aborts
+  is_block_scope = return_false
+  shallow_cmp = pass_through
+  _to_mozilla_ast = function To_Moz_SwitchCase (M) {
     return {
       type: 'SwitchCase',
       test: to_moz(M.expression),
       consequent: M.body.map(to_moz)
     }
-  },
-  _do_print_body: function (this: any, output: any) {
+  }
+
+  _do_print_body = function (this: any, output: any) {
     output.newline()
     this.body.forEach(function (stmt) {
       output.indent()
       stmt.print(output)
       output.newline()
     })
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'Base class for `switch` branches'
-}, AST_Block)
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static documentation = 'Base class for `switch` branches'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SwitchBranch'
+  static PROPS = AST_Block.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Default extends AST_SwitchBranch {
   reduce_vars = function (tw, descend) {
