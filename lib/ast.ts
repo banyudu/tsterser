@@ -7956,8 +7956,8 @@ var AST_Array: any = DEFNODE('Array', ['elements'], {
 
 }, AST_Node)
 
-var AST_Object: any = DEFNODE('Object', ['properties'], {
-  _optimize: function (self, compressor) {
+class AST_Object extends AST_Node {
+  _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
       return optimized
@@ -7981,18 +7981,22 @@ var AST_Object: any = DEFNODE('Object', ['properties'], {
       }
     }
     return self
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     var values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return anyMayThrow(this.properties, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.properties, compressor)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var val = {}
       for (var i = 0, len = this.properties.length; i < len; i++) {
@@ -8015,50 +8019,59 @@ var AST_Object: any = DEFNODE('Object', ['properties'], {
       return val
     }
     return this
-  },
-  is_constant_expression: function () {
+  }
+
+  is_constant_expression () {
     return this.properties.every((l) => l.is_constant_expression())
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     if (!is_strict(compressor)) return false
     for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
     return false
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       var properties = this.properties
       for (var i = 0, len = properties.length; i < len; i++) {
         properties[i]._walk(visitor)
       }
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.properties.length
     while (i--) push(this.properties[i])
-  },
-  _size: function (info): number {
+  }
+
+  _size (info): number {
     let base = 2
     if (first_in_statement(info)) {
       base += 2 // parens
     }
     return base + list_overhead(this.properties)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.properties = do_list(self.properties, tw)
-  }),
-  _to_mozilla_ast: function To_Moz_ObjectExpression (M: any) {
+  })
+
+  _to_mozilla_ast = function To_Moz_ObjectExpression (M: any) {
     return {
       type: 'ObjectExpression',
       properties: M.properties.map(to_moz)
     }
-  },
+  }
+
   // same goes for an object literal, because otherwise it would be
   // interpreted as a block of code.
-  needs_parens: function (output: any) {
+  needs_parens (output: any) {
     return !output.has_parens() && first_in_statement(output)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     if (self.properties.length > 0) {
       output.with_block(function () {
         self.properties.forEach(function (prop, i) {
@@ -8072,14 +8085,23 @@ var AST_Object: any = DEFNODE('Object', ['properties'], {
         output.newline()
       })
     } else print_braced_empty(self, output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'An object literal',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'An object literal'
+  static propdoc = {
     properties: '[AST_ObjectProperty*] array of properties'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Object'
+  static PROPS = AST_Node.PROPS.concat(['properties'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.properties = args.properties
+  }
+}
 
 class AST_ObjectProperty extends AST_Node {
   _optimize = lift_key
