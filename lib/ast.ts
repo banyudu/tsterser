@@ -1120,18 +1120,26 @@ var AST_ForIn: any = DEFNODE('ForIn', ['init', 'object'], {
   }
 }, AST_IterationStatement)
 
-var AST_ForOf: any = DEFNODE('ForOf', ['await'], {
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: M => ({
+class AST_ForOf extends AST_ForIn {
+  shallow_cmp = pass_through
+  _to_mozilla_ast = M => ({
     type: 'ForOfStatement',
     left: to_moz(M.init),
     right: to_moz(M.object),
     body: to_moz(M.body),
     await: M.await
   })
-}, {
-  documentation: 'A `for ... of` statement'
-}, AST_ForIn)
+
+  static documentation = 'A `for ... of` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ForOf'
+  static PROPS = AST_ForIn.PROPS.concat(['await'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.await = args.await
+  }
+}
 
 var AST_With: any = DEFNODE('With', ['expression'], {
   _walk: function (visitor: any) {
