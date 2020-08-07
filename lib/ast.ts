@@ -8433,8 +8433,8 @@ var AST_Class: any = DEFNODE('Class', ['name', 'extends', 'properties'], {
 
 }, AST_Scope /* TODO a class might have a scope but it's not a scope */)
 
-var AST_ClassProperty = DEFNODE('ClassProperty', ['static', 'quote'], {
-  drop_side_effect_free: function (compressor: any) {
+class AST_ClassProperty extends AST_ObjectProperty {
+  drop_side_effect_free = function (compressor: any) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
     const value = this.static && this.value &&
@@ -8442,43 +8442,51 @@ var AST_ClassProperty = DEFNODE('ClassProperty', ['static', 'quote'], {
 
     if (key && value) return make_sequence(this, [key, value])
     return key || value || null
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw = function (compressor: any) {
     return (
       this.computed_key() && this.key.may_throw(compressor) ||
           this.static && this.value && this.value.may_throw(compressor)
     )
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects = function (compressor: any) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
           this.static && this.value && this.value.has_side_effects(compressor)
     )
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.key instanceof AST_Node) { this.key._walk(visitor) }
       if (this.value instanceof AST_Node) { this.value._walk(visitor) }
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.value instanceof AST_Node) push(this.value)
     if (this.key instanceof AST_Node) push(this.key)
-  },
+  }
+
   computed_key () {
     return !(this.key instanceof AST_SymbolClassProperty)
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return (
       static_size(this.static) +
             (typeof this.key === 'string' ? this.key.length + 2 : 0) +
             (this.value ? 1 : 0)
     )
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     static: 'eq'
-  }),
-  _codegen: (self, output) => {
+  })
+
+  _codegen = (self, output) => {
     if (self.static) {
       output.print('static')
       output.space()
@@ -8499,13 +8507,23 @@ var AST_ClassProperty = DEFNODE('ClassProperty', ['static', 'quote'], {
 
     output.semicolon()
   }
-}, {
-  documentation: 'A class property',
-  propdoc: {
+
+  static documentation = 'A class property'
+  static propdoc = {
     static: '[boolean] whether this is a static key',
     quote: '[string] which quote is being used'
   }
-}, AST_ObjectProperty)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ClassProperty'
+  static PROPS = AST_ObjectProperty.PROPS.concat(['static', 'quote'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.static = args.static
+    this.quote = args.quote
+  }
+}
 
 class AST_DefClass extends AST_Class {
   static documentation = 'A class definition'
