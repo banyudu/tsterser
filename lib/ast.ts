@@ -3439,34 +3439,40 @@ class AST_Await extends AST_Node {
   }
 }
 
-var AST_Yield: any = DEFNODE('Yield', ['expression', 'is_star'], {
-  _optimize: function (self, compressor) {
+class AST_Yield extends AST_Node {
+  _optimize = function (self, compressor) {
     if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
       self.expression = null
     }
     return self
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk = function (visitor: any) {
     return visitor._visit(this, this.expression && function () {
       this.expression._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.expression) push(this.expression)
-  },
-  _size: () => 6,
-  shallow_cmp: mkshallow({
+  }
+
+  _size = () => 6
+  shallow_cmp = mkshallow({
     is_star: 'eq'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.expression) self.expression = self.expression.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'YieldExpression',
     argument: to_moz(M.expression),
     delegate: M.is_star
-  }),
-  needs_parens: function (output: any) {
+  })
+
+  needs_parens = function (output: any) {
     var p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
@@ -3482,8 +3488,9 @@ var AST_Yield: any = DEFNODE('Yield', ['expression', 'is_star'], {
     // (yield x)['foo']
     if (p instanceof AST_PropAccess && p.expression === this) { return true }
     return undefined
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     var star = self.is_star ? '*' : ''
     output.print('yield' + star)
     if (self.expression) {
@@ -3491,14 +3498,23 @@ var AST_Yield: any = DEFNODE('Yield', ['expression', 'is_star'], {
       self.expression.print(output)
     }
   }
-}, {
-  documentation: 'A `yield` statement',
-  propdoc: {
+
+  static documentation = 'A `yield` statement'
+  static propdoc = {
     expression: '[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false',
     is_star: '[Boolean] Whether this is a yield or yield* statement'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Yield'
+  static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+    this.is_star = args.is_star
+  }
+}
 
 /* -----[ IF ]----- */
 
