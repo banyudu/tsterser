@@ -702,17 +702,26 @@ var AST_EmptyStatement: any = DEFNODE('EmptyStatement', [], {
   documentation: 'The empty statement (empty block or simply a semicolon)'
 }, AST_Statement)
 
-var AST_StatementWithBody: any = DEFNODE('StatementWithBody', ['body'], {
-  _do_print_body: function (output: any) {
+class AST_StatementWithBody extends AST_Statement {
+  _do_print_body = function (output: any) {
     force_statement(this.body, output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`',
-  propdoc: {
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static documentation = 'Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`'
+  static propdoc = {
     body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
   }
-}, AST_Statement)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'StatementWithBody'
+  static PROPS = AST_Statement.PROPS.concat(['body'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.body = args.body
+  }
+}
 
 var AST_LabeledStatement: any = DEFNODE('LabeledStatement', ['label'], {
   _optimize: function (self, compressor) {
