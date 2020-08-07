@@ -3916,16 +3916,18 @@ var AST_Default: any = DEFNODE('Default', null, {
   documentation: 'A `default` switch branch'
 }, AST_SwitchBranch)
 
-var AST_Case: any = DEFNODE('Case', ['expression'], {
-  may_throw: function (compressor: any) {
+class AST_Case extends AST_SwitchBranch {
+  may_throw = function (compressor: any) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects = function (compressor: any) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars = function (tw) {
     push(tw)
     this.expression.walk(tw)
     pop(tw)
@@ -3933,39 +3935,52 @@ var AST_Case: any = DEFNODE('Case', ['expression'], {
     walk_body(this, tw)
     pop(tw)
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
       walk_body(this, visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
     push(this.expression)
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return 5 + list_overhead(this.body)
-  },
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen = function (self, output) {
     output.print('case')
     output.space()
     self.expression.print(output)
     output.print(':')
     self._do_print_body(output)
   }
-}, {
-  documentation: 'A `case` switch branch',
-  propdoc: {
+
+  static documentation = 'A `case` switch branch'
+  static propdoc = {
     expression: '[AST_Node] the `case` expression'
   }
 
-}, AST_SwitchBranch)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Case'
+  static PROPS = AST_Block.PROPS.concat(['expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+  }
+}
 
 /* -----[ EXCEPTIONS ]----- */
 
