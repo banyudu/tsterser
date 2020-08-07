@@ -7332,8 +7332,8 @@ var AST_Binary: any = DEFNODE('Binary', ['operator', 'left', 'right'], {
 
 }, AST_Node)
 
-var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'alternative'], {
-  _optimize: function (self, compressor) {
+class AST_Conditional extends AST_Node {
+  _optimize (self, compressor) {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
     if (self.condition instanceof AST_Sequence) {
@@ -7589,8 +7589,9 @@ var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'a
         }
       }
     }
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free (compressor: any) {
     var consequent = this.consequent.drop_side_effect_free(compressor)
     var alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
@@ -7612,40 +7613,48 @@ var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'a
     node.consequent = consequent
     node.alternative = alternative
     return node
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.condition.may_throw(compressor) ||
           this.consequent.may_throw(compressor) ||
           this.alternative.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.condition.has_side_effects(compressor) ||
           this.consequent.has_side_effects(compressor) ||
           this.alternative.has_side_effects(compressor)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     var condition = this.condition._eval(compressor, depth)
     if (condition === this.condition) return this
     var node = condition ? this.consequent : this.alternative
     var value = node._eval(compressor, depth)
     return value === node ? this : value
-  },
-  negate: function (compressor: any, first_in_statement) {
+  }
+
+  negate (compressor: any, first_in_statement) {
     var self = this.clone()
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
     return best(this, self, first_in_statement)
-  },
-  is_string: function (compressor: any) {
+  }
+
+  is_string (compressor: any) {
     return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
-  },
-  is_number: function (compressor: any) {
+  }
+
+  is_number (compressor: any) {
     return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
-  },
-  is_boolean: function () {
+  }
+
+  is_boolean () {
     return this.consequent.is_boolean() && this.alternative.is_boolean()
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars (tw) {
     this.condition.walk(tw)
     push(tw)
     this.consequent.walk(tw)
@@ -7654,38 +7663,44 @@ var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'a
     this.alternative.walk(tw)
     pop(tw)
     return true
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     return this.consequent._dot_throw(compressor) ||
           this.alternative._dot_throw(compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
       this.consequent._walk(visitor)
       this.alternative._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.alternative)
     push(this.consequent)
     push(this.condition)
-  },
-  _size: () => 3,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 3
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.consequent = self.consequent.transform(tw)
     self.alternative = self.alternative.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'ConditionalExpression',
     test: to_moz(M.condition),
     consequent: to_moz(M.consequent),
     alternate: to_moz(M.alternative)
-  }),
-  needs_parens: needsParens,
-  _codegen: function (self, output) {
+  })
+
+  needs_parens = needsParens
+  _codegen (self, output) {
     self.condition.print(output)
     output.space()
     output.print('?')
@@ -7695,14 +7710,25 @@ var AST_Conditional: any = DEFNODE('Conditional', ['condition', 'consequent', 'a
     output.colon()
     self.alternative.print(output)
   }
-}, {
-  documentation: 'Conditional expression using the ternary operator, i.e. `a ? b : c`',
-  propdoc: {
+
+  static documentation = 'Conditional expression using the ternary operator, i.e. `a ? b : c`'
+  static propdoc = {
     condition: '[AST_Node]',
     consequent: '[AST_Node]',
     alternative: '[AST_Node]'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Conditional'
+  static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.condition = args.condition
+    this.consequent = args.consequent
+    this.alternative = args.alternative
+  }
+}
 
 class AST_Assign extends AST_Binary {
   _optimize (self, compressor) {
