@@ -7872,25 +7872,29 @@ var AST_DefaultAssign: any = DEFNODE('DefaultAssign', null, {
 
 /* -----[ LITERALS ]----- */
 
-var AST_Array: any = DEFNODE('Array', ['elements'], {
-  _optimize: function (self, compressor) {
+class AST_Array extends AST_Node {
+  _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
       return optimized
     }
     return inline_array_like_spread(self, compressor, self.elements)
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     var values = trim(this.elements, compressor, first_in_statement)
     return values && make_sequence(this, values)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return anyMayThrow(this.elements, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.elements, compressor)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var elements: any[] = []
       for (var i = 0, len = this.elements.length; i < len; i++) {
@@ -7902,37 +7906,44 @@ var AST_Array: any = DEFNODE('Array', ['elements'], {
       return elements
     }
     return this
-  },
-  is_constant_expression: function () {
+  }
+
+  is_constant_expression () {
     return this.elements.every((l) => l.is_constant_expression())
-  },
-  _dot_throw: return_false,
-  _walk: function (visitor: any) {
+  }
+
+  _dot_throw = return_false
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       var elements = this.elements
       for (var i = 0, len = elements.length; i < len; i++) {
         elements[i]._walk(visitor)
       }
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.elements.length
     while (i--) push(this.elements[i])
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return 2 + list_overhead(this.elements)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.elements = do_list(self.elements, tw)
-  }),
-  _to_mozilla_ast: function To_Moz_ArrayExpression (M: any) {
+  })
+
+  _to_mozilla_ast = function To_Moz_ArrayExpression (M: any) {
     return {
       type: 'ArrayExpression',
       elements: M.elements.map(to_moz)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     output.with_square(function () {
       var a = self.elements; var len = a.length
       if (len > 0) output.space()
@@ -7946,15 +7957,23 @@ var AST_Array: any = DEFNODE('Array', ['elements'], {
       })
       if (len > 0) output.space()
     })
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'An array literal',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'An array literal'
+  static propdoc = {
     elements: '[AST_Node*] array of elements'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Array'
+  static PROPS = AST_Node.PROPS.concat(['elements'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.elements = args.elements
+  }
+}
 
 class AST_Object extends AST_Node {
   _optimize (self, compressor) {
