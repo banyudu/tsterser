@@ -4221,20 +4221,29 @@ class AST_Catch extends AST_Block {
   }
 }
 
-var AST_Finally: any = DEFNODE('Finally', null, {
-  shallow_cmp: pass_through,
-  _size: function (): number {
+class AST_Finally extends AST_Block {
+  shallow_cmp = pass_through
+  _size = function (): number {
     return 7 + list_overhead(this.body)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     output.print('finally')
     output.space()
     print_braced(self, output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'A `finally` node; only makes sense as part of a `try` statement'
-}, AST_Block)
+  }
+
+  add_source_map = function (output) { output.add_mapping(this.start) }
+  static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Finally'
+  static PROPS = AST_Block
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.argname = args.argname
+  }
+}
 
 /* -----[ VAR/CONST ]----- */
 
