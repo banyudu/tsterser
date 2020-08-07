@@ -3898,23 +3898,32 @@ var AST_SwitchBranch: any = DEFNODE('SwitchBranch', null, {
   documentation: 'Base class for `switch` branches'
 }, AST_Block)
 
-var AST_Default: any = DEFNODE('Default', null, {
-  reduce_vars: function (tw, descend) {
+class AST_Default extends AST_SwitchBranch {
+  reduce_vars = function (tw, descend) {
     push(tw)
     descend()
     pop(tw)
     return true
-  },
-  _size: function (): number {
+  }
+
+  _size = function (): number {
     return 8 + list_overhead(this.body)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     output.print('default:')
     self._do_print_body(output)
   }
-}, {
-  documentation: 'A `default` switch branch'
-}, AST_SwitchBranch)
+
+  static documentation = 'A `default` switch branch'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Case'
+  static PROPS = AST_SwitchBranch.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Case extends AST_SwitchBranch {
   may_throw = function (compressor: any) {
