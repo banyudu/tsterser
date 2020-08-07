@@ -3379,31 +3379,36 @@ class AST_Continue extends AST_LoopControl {
   }
 }
 
-var AST_Await: any = DEFNODE('Await', ['expression'], {
-  _walk: function (visitor: any) {
+class AST_Await extends AST_Node {
+  _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.expression)
-  },
-  _size: () => 6,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 6
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'AwaitExpression',
     argument: to_moz(M.expression)
-  }),
-  needs_parens: function (output: any) {
+  })
+
+  needs_parens = function (output: any) {
     var p = output.parent()
     return p instanceof AST_PropAccess && p.expression === this ||
             p instanceof AST_Call && p.expression === this ||
             output.option('safari10') && p instanceof AST_UnaryPrefix
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen = function (self, output) {
     output.print('await')
     output.space()
     var e = self.expression
@@ -3418,13 +3423,21 @@ var AST_Await: any = DEFNODE('Await', ['expression'], {
     self.expression.print(output)
     if (parens) output.print(')')
   }
-}, {
-  documentation: 'An `await` statement',
-  propdoc: {
+
+  static documentation = 'An `await` statement'
+  static propdoc = {
     expression: '[AST_Node] the mandatory expression being awaited'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Await'
+  static PROPS = AST_Node.PROPS.concat(['expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+  }
+}
 
 var AST_Yield: any = DEFNODE('Yield', ['expression', 'is_star'], {
   _optimize: function (self, compressor) {
