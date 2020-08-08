@@ -6734,8 +6734,8 @@ class AST_Dot extends AST_PropAccess {
   }
 }
 
-var AST_Sub: any = DEFNODE('Sub', null, {
-  _optimize: function (self, compressor) {
+class AST_Sub extends AST_PropAccess {
+  _optimize (self, compressor) {
     var expr = self.expression
     var prop = self.property
     var property: any
@@ -6863,50 +6863,63 @@ var AST_Sub: any = DEFNODE('Sub', null, {
       return best_of(compressor, ev, self)
     }
     return self
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     if (this.expression.may_throw_on_access(compressor)) return this
     var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
     var property = this.property.drop_side_effect_free(compressor)
     if (!property) return expression
     return make_sequence(this, [expression, property])
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
           this.property.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
           this.property.has_side_effects(compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
       this.property._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.property)
     push(this.expression)
-  },
-  _size: () => 2,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 2
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.property = (self.property).transform(tw)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self.expression.print(output)
     output.print('[');
     (self.property).print(output)
     output.print(']')
   }
-}, {
-  documentation: 'Index-style property access, i.e. `a["foo"]`'
 
-}, AST_PropAccess)
+  static documentation = 'Index-style property access, i.e. `a["foo"]`'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Sub'
+  static PROPS = AST_PropAccess.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Unary extends AST_Node {
   drop_side_effect_free (compressor: any, first_in_statement) {
