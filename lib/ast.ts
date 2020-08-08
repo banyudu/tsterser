@@ -2752,8 +2752,8 @@ function To_Moz_FunctionExpression (M, parent) {
   }
 }
 
-var AST_Function: any = DEFNODE('Function', null, {
-  _optimize: function (self, compressor) {
+class AST_Function extends AST_Lambda {
+  _optimize (self, compressor) {
     self = opt_AST_Lambda(self, compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&
@@ -2767,9 +2767,10 @@ var AST_Function: any = DEFNODE('Function', null, {
       if (!has_special_symbol) return make_node(AST_Arrow, self, self).optimize(compressor)
     }
     return self
-  },
-  drop_side_effect_free: return_null,
-  _eval: function (compressor: any) {
+  }
+
+  drop_side_effect_free = return_null
+  _eval (compressor: any) {
     if (compressor.option('unsafe')) {
       var fn: any = function () {}
       fn.node = this
@@ -2779,12 +2780,14 @@ var AST_Function: any = DEFNODE('Function', null, {
       return fn
     }
     return this
-  },
-  negate: function () {
+  }
+
+  negate () {
     return basic_negation(this)
-  },
-  _dot_throw: return_false,
-  next_mangled: function (options: any, def: any) {
+  }
+
+  _dot_throw = return_false
+  next_mangled (options: any, def: any) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
@@ -2798,15 +2801,17 @@ var AST_Function: any = DEFNODE('Function', null, {
       var name = next_mangled(this, options)
       if (!tricky_name || tricky_name != name) { return name }
     }
-  },
-  _size: function (info) {
+  }
+
+  _size (info) {
     const first: any = !!first_in_statement(info)
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
-  },
-  _to_mozilla_ast: To_Moz_FunctionExpression,
+  }
+
+  _to_mozilla_ast = To_Moz_FunctionExpression
   // a function expression needs parens around it when it's provably
   // the first token to appear in a statement.
-  needs_parens: function (output: any) {
+  needs_parens (output: any) {
     if (!output.has_parens() && first_in_statement(output)) {
       return true
     }
@@ -2834,9 +2839,16 @@ var AST_Function: any = DEFNODE('Function', null, {
 
     return false
   }
-}, {
-  documentation: 'A function expression'
-}, AST_Lambda)
+
+  static documentation = 'A function expression'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Function'
+  static PROPS = AST_Lambda.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Arrow extends AST_Lambda {
   _optimize = opt_AST_Lambda
