@@ -1074,8 +1074,8 @@ var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
   }
 }, AST_IterationStatement)
 
-var AST_ForIn: any = DEFNODE('ForIn', ['init', 'object'], {
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+class AST_ForIn extends AST_IterationStatement {
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     suppress(this.init)
     this.object.walk(tw)
@@ -1086,33 +1086,38 @@ var AST_ForIn: any = DEFNODE('ForIn', ['init', 'object'], {
     pop(tw)
     tw.in_loop = saved_loop
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.init._walk(visitor)
       this.object._walk(visitor)
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
     if (this.object) push(this.object)
     if (this.init) push(this.init)
-  },
-  _size: () => 8,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 8
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.init = self.init?.transform(tw) || null
     self.object = self.object.transform(tw)
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'ForInStatement',
     left: to_moz(M.init),
     right: to_moz(M.object),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('for')
     if (self.await) {
       output.space()
@@ -1129,13 +1134,23 @@ var AST_ForIn: any = DEFNODE('ForIn', ['init', 'object'], {
     output.space()
     self._do_print_body(output)
   }
-}, {
-  documentation: 'A `for ... in` statement',
-  propdoc: {
+
+  static documentation = 'A `for ... in` statement'
+  static propdoc = {
     init: '[AST_Node] the `for/in` initialization code',
     object: "[AST_Node] the object that we're looping through"
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'ForIn'
+  static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.init = args.init
+    this.object = args.object
   }
-}, AST_IterationStatement)
+}
 
 class AST_ForOf extends AST_ForIn {
   shallow_cmp = pass_through
