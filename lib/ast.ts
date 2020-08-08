@@ -551,8 +551,8 @@ var AST_Directive: any = DEFNODE('Directive', ['value', 'quote'], {
   }
 }, AST_Statement)
 
-var AST_SimpleStatement: any = DEFNODE('SimpleStatement', ['body'], {
-  _optimize: function (self, compressor: any) {
+class AST_SimpleStatement extends AST_Statement {
+  _optimize (self, compressor: any) {
     if (compressor.option('side_effects')) {
       var body = self.body
       var node = body.drop_side_effect_free(compressor, true)
@@ -565,41 +565,57 @@ var AST_SimpleStatement: any = DEFNODE('SimpleStatement', ['body'], {
       }
     }
     return self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.body.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.body.has_side_effects(compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_ExpressionStatement (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_ExpressionStatement (M) {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(M.body) // TODO: check type
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     (self.body).print(output)
     output.semicolon()
   }
-}, {
-  documentation: 'A statement consisting of an expression, i.e. a = 1 + 2',
-  propdoc: {
+
+  static documentation = 'A statement consisting of an expression, i.e. a = 1 + 2'
+  static propdoc = {
     body: '[AST_Node] an expression node (should not be instanceof AST_Statement)'
   }
-}, AST_Statement)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'SimpleStatement'
+  static PROPS = AST_Statement.PROPS.concat(['body'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.body = args.body
+  }
+}
 
 function walk_body (node: any, visitor: any) {
   const body = node.body
