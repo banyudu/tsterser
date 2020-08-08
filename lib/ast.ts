@@ -5717,8 +5717,8 @@ var AST_New: any = DEFNODE('New', null, {
   documentation: 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 }, AST_Call)
 
-var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
-  _optimize: function (self, compressor) {
+class AST_Sequence extends AST_Node {
+  _optimize (self, compressor) {
     if (!compressor.option('side_effects')) return self
     var expressions: any[] = []
     filter_for_side_effects()
@@ -5754,8 +5754,9 @@ var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
         expressions.length = end + 1
       }
     }
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free (compressor: any) {
     var last = this.tail_node()
     var expr = last.drop_side_effect_free(compressor)
     if (expr === last) return this
@@ -5765,58 +5766,71 @@ var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
       return make_node(AST_Number, this, { value: 0 })
     }
     return make_sequence(this, expressions)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return anyMayThrow(this.expressions, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.expressions, compressor)
-  },
-  negate: function (compressor: any) {
+  }
+
+  negate (compressor: any) {
     var expressions = this.expressions.slice()
     expressions.push(expressions.pop().negate(compressor))
     return make_sequence(this, expressions)
-  },
-  is_string: function (compressor: any) {
+  }
+
+  is_string (compressor: any) {
     return this.tail_node().is_string(compressor)
-  },
-  is_number: function (compressor: any) {
+  }
+
+  is_number (compressor: any) {
     return this.tail_node().is_number(compressor)
-  },
-  is_boolean: function () {
+  }
+
+  is_boolean () {
     return this.tail_node().is_boolean()
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     return this.tail_node()._dot_throw(compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expressions.forEach(function (node: any) {
         node._walk(visitor)
       })
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.expressions.length
     while (i--) push(this.expressions[i])
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return list_overhead(this.expressions)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     const result = do_list(self.expressions, tw)
     self.expressions = result.length
       ? result
       : [new AST_Number({ value: 0 })]
-  }),
-  _to_mozilla_ast: function To_Moz_SequenceExpression (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_SequenceExpression (M) {
     return {
       type: 'SequenceExpression',
       expressions: M.expressions.map(to_moz)
     }
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens (output: any) {
     var p = output.parent()
     return p instanceof AST_Call || // (foo, bar)() or foo(1, (2, 3), 4)
             p instanceof AST_Unary || // !(foo, bar, baz)
@@ -5833,8 +5847,9 @@ var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
             p instanceof AST_ForOf && this === p.object || // for (e of (foo, bar)) {}
             p instanceof AST_Yield || // yield (foo, bar)
             p instanceof AST_Export // export default (foo, bar)
-  },
-  _do_print: function (this: any, output: any) {
+  }
+
+  _do_print (this: any, output: any) {
     this.expressions.forEach(function (node, index) {
       if (index > 0) {
         output.comma()
@@ -5845,20 +5860,31 @@ var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
       }
       node.print(output)
     })
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     self._do_print(output)
-  },
-  tail_node: function () {
+  }
+
+  tail_node () {
     return this.expressions[this.expressions.length - 1]
   }
-}, {
-  documentation: 'A sequence expression (comma-separated expressions)',
-  propdoc: {
+
+  static documentation = 'A sequence expression (comma-separated expressions)'
+  static propdoc = {
     expressions: '[AST_Node*] array of expressions (at least two)'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Sequence'
+  static PROPS = AST_Node.PROPS.concat(['expressions'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expressions = args.expressions
+  }
+}
+// var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
 
 class AST_PropAccess extends AST_Node {
   _eval (compressor: any, depth) {
@@ -5987,7 +6013,6 @@ class AST_PropAccess extends AST_Node {
     this.property = args.property
   }
 }
-// var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
 
 class AST_Dot extends AST_PropAccess {
   _optimize (self, compressor) {
