@@ -3559,8 +3559,8 @@ class AST_Yield extends AST_Node {
 
 /* -----[ IF ]----- */
 
-var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
-  _optimize: function (self, compressor) {
+class AST_If extends AST_StatementWithBody {
+  _optimize (self, compressor) {
     if (is_empty(self.alternative)) self.alternative = null
 
     if (!compressor.option('conditionals')) return self
@@ -3704,21 +3704,25 @@ var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
       }).optimize(compressor)
     }
     return self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.condition.may_throw(compressor) ||
           this.body && this.body.may_throw(compressor) ||
           this.alternative && this.alternative.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.condition.has_side_effects(compressor) ||
           this.body && this.body.has_side_effects(compressor) ||
           this.alternative && this.alternative.has_side_effects(compressor)
-  },
-  aborts: function () {
+  }
+
+  aborts () {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars (tw) {
     this.condition.walk(tw)
     push(tw)
     this.body.walk(tw)
@@ -3729,37 +3733,43 @@ var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
       pop(tw)
     }
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
       this.body._walk(visitor)
       if (this.alternative) this.alternative._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.alternative) {
       push(this.alternative)
     }
     push(this.body)
     push(this.condition)
-  },
-  _size: () => 4,
-  shallow_cmp: mkshallow({
+  }
+
+  _size = () => 4
+  shallow_cmp = mkshallow({
     alternative: 'exist'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
     if (self.alternative) self.alternative = self.alternative.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'IfStatement',
     test: to_moz(M.condition),
     consequent: to_moz(M.body),
     alternate: to_moz(M.alternative)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('if')
     output.space()
     output.with_parens(function () {
@@ -3776,14 +3786,23 @@ var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
       self._do_print_body(output)
     }
   }
-}, {
-  documentation: 'A `if` statement',
-  propdoc: {
+
+  static documentation = 'A `if` statement'
+  static propdoc = {
     condition: '[AST_Node] the `if` condition',
     alternative: '[AST_Statement?] the `else` part, or null if not present'
   }
 
-}, AST_StatementWithBody)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'If'
+  static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.condition = args.condition
+    this.alternative = args.alternative
+  }
+}
 
 /* -----[ SWITCH ]----- */
 
