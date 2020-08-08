@@ -4288,18 +4288,21 @@ class AST_Finally extends AST_Block {
 
 /* -----[ VAR/CONST ]----- */
 
-var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
-  _optimize: function (self) {
+class AST_Definitions extends AST_Statement {
+  _optimize (self) {
     if (self.definitions.length == 0) { return make_node(AST_EmptyStatement, self) }
     return self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return anyMayThrow(this.definitions, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.definitions, compressor)
-  },
-  to_assignments: function (compressor: any) {
+  }
+
+  to_assignments (compressor: any) {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
       if (def.value && !(def.name instanceof AST_Destructuring)) {
@@ -4328,8 +4331,9 @@ var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
     }, [])
     if (assignments.length == 0) return null
     return make_sequence(this, assignments)
-  },
-  remove_initializers: function () {
+  }
+
+  remove_initializers () {
     var decls: any[] = []
     this.definitions.forEach(function (def) {
       if (def.name instanceof AST_SymbolDeclaration) {
@@ -4347,24 +4351,28 @@ var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
       }
     })
     this.definitions = decls
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       var definitions = this.definitions
       for (var i = 0, len = definitions.length; i < len; i++) {
         definitions[i]._walk(visitor)
       }
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.definitions.length
     while (i--) push(this.definitions[i])
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.definitions = do_list(self.definitions, tw)
-  }),
-  _to_mozilla_ast: function To_Moz_VariableDeclaration (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_VariableDeclaration (M) {
     return {
       type: 'VariableDeclaration',
       kind:
@@ -4372,8 +4380,9 @@ var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
                   : M instanceof AST_Let ? 'let' : 'var',
       declarations: M.definitions.map(to_moz)
     }
-  },
-  _do_print: function (this: any, output: any, kind: string) {
+  }
+
+  _do_print (this: any, output: any, kind: string) {
     output.print(kind)
     output.space()
     this.definitions.forEach(function (def, i) {
@@ -4384,15 +4393,23 @@ var AST_Definitions: any = DEFNODE('Definitions', ['definitions'], {
     var in_for = p instanceof AST_For || p instanceof AST_ForIn
     var output_semicolon = !in_for || p && p.init !== this
     if (output_semicolon) { output.semicolon() }
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'Base class for `var` or `const` nodes (variable declarations/initializations)',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
+  static propdoc = {
     definitions: '[AST_VarDef*] array of variable definitions'
   }
 
-}, AST_Statement)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Definitions'
+  static PROPS = AST_Statement.PROPS.concat(['definitions'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.definitions = args.definitions
+  }
+}
 
 class AST_Var extends AST_Definitions {
   _size = function (): number {
