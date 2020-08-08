@@ -5975,8 +5975,8 @@ var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
   }
 }, AST_Node)
 
-var AST_Dot: any = DEFNODE('Dot', ['quote'], {
-  _optimize: function (self, compressor) {
+class AST_Dot extends AST_PropAccess {
+  _optimize (self, compressor) {
     if (self.property == 'arguments' || self.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
         prop: self.property,
@@ -6037,28 +6037,34 @@ var AST_Dot: any = DEFNODE('Dot', ['quote'], {
       return best_of(compressor, ev, self)
     }
     return self
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     if (this.expression.may_throw_on_access(compressor)) return this
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor)
-  },
-  _find_defs: function (compressor: any, suffix) {
+  }
+
+  _find_defs (compressor: any, suffix) {
     return this.expression._find_defs(compressor, '.' + this.property + suffix)
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     if (!is_strict(compressor)) return false
     if (this.expression instanceof AST_Function && this.property == 'prototype') return false
     return true
-  },
-  is_call_pure: function (compressor: any) {
+  }
+
+  is_call_pure (compressor: any) {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
     let map
@@ -6076,23 +6082,28 @@ var AST_Dot: any = DEFNODE('Dot', ['quote'], {
       map = native_fns.get('Object')
     }
     return map && map.has(this.property)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.expression)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return this.property.length + 1
-  },
-  shallow_cmp: mkshallow({ property: 'eq' }),
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = mkshallow({ property: 'eq' })
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     var expr = self.expression
     expr.print(output)
     var prop: string = self.property as string
@@ -6116,12 +6127,21 @@ var AST_Dot: any = DEFNODE('Dot', ['quote'], {
       output.print_name(prop)
     }
   }
-}, {
-  documentation: 'A dotted property access expression',
-  propdoc: {
+
+  static documentation = 'A dotted property access expression'
+  static propdoc = {
     quote: '[string] the original quote character when transformed from AST_Sub'
   }
-}, AST_PropAccess)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Dot'
+  static PROPS = AST_PropAccess.PROPS.concat(['quote'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.quote = args.quote
+  }
+}
 
 var AST_Sub: any = DEFNODE('Sub', null, {
   _optimize: function (self, compressor) {
