@@ -4702,8 +4702,8 @@ var AST_Import: any = DEFNODE('Import', ['imported_name', 'imported_names', 'mod
 
 }, AST_Node)
 
-var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'], {
-  _walk: function (visitor: any) {
+class AST_Export extends AST_Statement {
+  _walk (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.exported_definition) {
         this.exported_definition._walk(visitor)
@@ -4720,7 +4720,8 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
         this.module_name._walk(visitor)
       }
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.module_name) push(this.module_name)
     if (this.exported_names) {
@@ -4729,8 +4730,9 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
     }
     if (this.exported_value) push(this.exported_value)
     if (this.exported_definition) push(this.exported_definition)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     let size = 7 + (this.is_default ? 8 : 0)
 
     if (this.exported_value) {
@@ -4748,21 +4750,24 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
     }
 
     return size
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     exported_definition: 'exist',
     exported_value: 'exist',
     exported_names: 'exist',
     module_name: 'eq',
     is_default: 'eq'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)
     if (self.exported_value) self.exported_value = self.exported_value.transform(tw)
     if (self.exported_names) do_list(self.exported_names, tw)
     if (self.module_name) self.module_name = self.module_name.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_ExportDeclaration (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_ExportDeclaration (M) {
     if (M.exported_names) {
       if (M.exported_names[0].name.name === '*') {
         return {
@@ -4787,8 +4792,9 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
       type: M.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
       declaration: to_moz(M.exported_value || M.exported_definition)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     output.print('export')
     output.space()
     if (self.is_default) {
@@ -4832,9 +4838,9 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
       output.semicolon()
     }
   }
-}, {
-  documentation: 'An `export` statement',
-  propdoc: {
+
+  static documentation = 'An `export` statement'
+  static propdoc = {
     exported_definition: '[AST_Defun|AST_Definitions|AST_DefClass?] An exported definition',
     exported_value: '[AST_Node?] An exported value',
     exported_names: '[AST_NameMapping*?] List of exported names',
@@ -4842,7 +4848,20 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
     is_default: '[Boolean] Whether this is the default exported value of this module'
   }
 
-}, AST_Statement)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Export'
+  static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.exported_definition = args.exported_definition
+    this.exported_value = args.exported_value
+    this.is_default = args.is_default
+    this.exported_names = args.exported_names
+    this.module_name = args.module_name
+  }
+}
+// var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'], {
 
 /* -----[ OTHER ]----- */
 
