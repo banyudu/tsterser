@@ -947,8 +947,8 @@ var AST_While: any = DEFNODE('While', [], {
   documentation: 'A `while` statement'
 }, AST_DWLoop)
 
-var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
-  _optimize: function (self, compressor) {
+class AST_For extends AST_IterationStatement {
+  _optimize (self, compressor) {
     if (!compressor.option('loops')) return self
     if (compressor.option('side_effects') && self.init) {
       self.init = self.init.drop_side_effect_free(compressor)
@@ -983,8 +983,9 @@ var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
       }
     }
     return if_break_in_loop(self, compressor)
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     if (this.init) this.init.walk(tw)
     const saved_loop = tw.in_loop
@@ -1002,41 +1003,47 @@ var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
     pop(tw)
     tw.in_loop = saved_loop
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       if (this.init) this.init._walk(visitor)
       if (this.condition) this.condition._walk(visitor)
       if (this.step) this.step._walk(visitor)
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
     if (this.step) push(this.step)
     if (this.condition) push(this.condition)
     if (this.init) push(this.init)
-  },
-  _size: () => 8,
-  shallow_cmp: mkshallow({
+  }
+
+  _size = () => 8
+  shallow_cmp = mkshallow({
     init: 'exist',
     condition: 'exist',
     step: 'exist'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.init) self.init = self.init.transform(tw)
     if (self.condition) self.condition = self.condition.transform(tw)
     if (self.step) self.step = self.step.transform(tw)
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'ForStatement',
     init: to_moz(M.init),
     test: to_moz(M.condition),
     update: to_moz(M.step),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('for')
     output.space()
     output.with_parens(function () {
@@ -1065,14 +1072,25 @@ var AST_For: any = DEFNODE('For', ['init', 'condition', 'step'], {
     output.space()
     self._do_print_body(output)
   }
-}, {
-  documentation: 'A `for` statement',
-  propdoc: {
+
+  static documentation = 'A `for` statement'
+  static propdoc = {
     init: '[AST_Node?] the `for` initialization code, or null if empty',
     condition: '[AST_Node?] the `for` termination clause, or null if empty',
     step: '[AST_Node?] the `for` update clause, or null if empty'
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'For'
+  static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.init = args.init
+    this.condition = args.condition
+    this.step = args.step
   }
-}, AST_IterationStatement)
+}
 
 class AST_ForIn extends AST_IterationStatement {
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
