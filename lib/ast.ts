@@ -5860,8 +5860,8 @@ var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
 
 }, AST_Node)
 
-var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
-  _eval: function (compressor: any, depth) {
+class AST_PropAccess extends AST_Node {
+  _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
       if (key instanceof AST_Node) {
@@ -5903,8 +5903,9 @@ var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
       return val[key]
     }
     return this
-  },
-  flatten_object: function (key, compressor) {
+  }
+
+  flatten_object (key, compressor) {
     if (!compressor.option('properties')) return
     var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     var expr = this.expression
@@ -5937,9 +5938,10 @@ var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
         }
       }
     }
-  },
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: function To_Moz_MemberExpression (M) {
+  }
+
+  shallow_cmp = pass_through as any
+  _to_mozilla_ast = function To_Moz_MemberExpression (M) {
     var isComputed = M instanceof AST_Sub
     return {
       type: 'MemberExpression',
@@ -5947,8 +5949,9 @@ var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
       computed: isComputed,
       property: isComputed ? to_moz(M.property) : { type: 'Identifier', name: M.property }
     }
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens (output: any) {
     var p = output.parent()
     if (p instanceof AST_New && p.expression === this) {
       // i.e. new (foo.bar().baz)
@@ -5967,13 +5970,24 @@ var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
     }
     return undefined
   }
-}, {
-  documentation: 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`',
-  propdoc: {
+
+  static documentation = 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`'
+  static propdoc = {
     expression: '[AST_Node] the “container” expression',
     property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'PropAccess'
+  static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+    this.property = args.property
   }
-}, AST_Node)
+}
+// var AST_PropAccess: any = DEFNODE('PropAccess', ['expression', 'property'], {
 
 class AST_Dot extends AST_PropAccess {
   _optimize (self, compressor) {
