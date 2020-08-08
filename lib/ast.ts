@@ -798,7 +798,7 @@ class AST_IterationStatement extends AST_StatementWithBody {
   static documentation = 'Internal class.  All loops inherit from it.'
   static propdoc = {
     block_scope: '[AST_Scope] the block scope for this iteration statement.'
-  }
+  } as any
 
   CTOR = this.constructor
   flags = 0
@@ -810,12 +810,21 @@ class AST_IterationStatement extends AST_StatementWithBody {
   }
 }
 
-var AST_DWLoop: any = DEFNODE('DWLoop', ['condition'], {}, {
-  documentation: 'Base class for do/while statements',
-  propdoc: {
+class AST_DWLoop extends AST_IterationStatement {
+  static documentation = 'Base class for do/while statements'
+  static propdoc = {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
   }
-}, AST_IterationStatement)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'DWLoop'
+  static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.condition = args.condition
+  }
+}
 
 class AST_Do extends AST_DWLoop {
   _optimize (self, compressor) {
