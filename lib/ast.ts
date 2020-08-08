@@ -3787,8 +3787,8 @@ var AST_If: any = DEFNODE('If', ['condition', 'alternative'], {
 
 /* -----[ SWITCH ]----- */
 
-var AST_Switch: any = DEFNODE('Switch', ['expression'], {
-  _optimize: function (self, compressor) {
+class AST_Switch extends AST_Block {
+  _optimize (self, compressor) {
     if (!compressor.option('switches')) return self
     var branch
     var value = self.expression.evaluate(compressor)
@@ -3892,40 +3892,48 @@ var AST_Switch: any = DEFNODE('Switch', ['expression'], {
         extract_declarations_from_unreachable_code(compressor, branch, decl)
       }
     }
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
       walk_body(this, visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
     push(this.expression)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return 8 + list_overhead(this.body)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'SwitchStatement',
     discriminant: to_moz(M.expression),
     cases: M.body.map(to_moz)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('switch')
     output.space()
     output.with_parens(function () {
@@ -3943,15 +3951,23 @@ var AST_Switch: any = DEFNODE('Switch', ['expression'], {
         })
       })
     }
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'A `switch` statement',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'A `switch` statement'
+  static propdoc = {
     expression: '[AST_Node] the `switch` “discriminant”'
   }
 
-}, AST_Block)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Switch'
+  static PROPS = AST_Block.PROPS.concat(['expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+  }
+}
 
 class AST_SwitchBranch extends AST_Block {
   aborts = block_aborts
