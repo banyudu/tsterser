@@ -3063,33 +3063,38 @@ var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
   }
 }, AST_Node)
 
-var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['template_string', 'prefix'], {
-  _optimize: function (self) {
+class AST_PrefixedTemplateString extends AST_Node {
+  _optimize (self) {
     return self
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.prefix._walk(visitor)
       this.template_string._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.template_string)
     push(this.prefix)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.prefix = self.prefix.transform(tw)
     self.template_string = self.template_string.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_TaggedTemplateExpression (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_TaggedTemplateExpression (M) {
     return {
       type: 'TaggedTemplateExpression',
       tag: to_moz(M.prefix),
       quasi: to_moz(M.template_string)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     var tag = self.prefix
     var parenthesize_tag = tag instanceof AST_Lambda ||
             tag instanceof AST_Binary ||
@@ -3102,13 +3107,24 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['templa
     if (parenthesize_tag) output.print(')')
     self.template_string.print(output)
   }
-}, {
-  documentation: 'A templatestring with a prefix, such as String.raw`foobarbaz`',
-  propdoc: {
+
+  static documentation = 'A templatestring with a prefix, such as String.raw`foobarbaz`'
+  static propdoc = {
     template_string: '[AST_TemplateString] The template string',
     prefix: '[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`.'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'PrefixedTemplateString'
+  static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.template_string = args.template_string
+    this.prefix = args.prefix
+  }
+}
+// var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['template_string', 'prefix'], {
 
 class AST_TemplateString extends AST_Node {
   _optimize (self, compressor) {
