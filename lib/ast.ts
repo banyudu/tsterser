@@ -662,8 +662,8 @@ var AST_Block: any = DEFNODE('Block', ['body', 'block_scope'], {
   }
 }, AST_Statement)
 
-var AST_BlockStatement: any = DEFNODE('BlockStatement', [], {
-  _optimize: function (self, compressor) {
+class AST_BlockStatement extends AST_Block {
+  _optimize (self, compressor) {
     tighten_body(self.body, compressor)
     switch (self.body.length) {
       case 1:
@@ -677,17 +677,25 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', [], {
       case 0: return make_node(AST_EmptyStatement, self)
     }
     return self
-  },
-  aborts: block_aborts,
-  _to_mozilla_ast: M => ({
+  }
+
+  aborts = block_aborts
+  _to_mozilla_ast = M => ({
     type: 'BlockStatement',
     body: M.body.map(to_moz)
-  }),
-  _codegen: blockStateMentCodeGen,
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'A block statement'
-}, AST_Block)
+  })
+
+  _codegen = blockStateMentCodeGen
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'A block statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'BlockStatement'
+  static PROPS = AST_Block.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_EmptyStatement extends AST_Statement {
   may_throw = return_false
