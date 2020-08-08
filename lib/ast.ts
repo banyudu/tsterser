@@ -5681,41 +5681,52 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
 
 }, AST_Node)
 
-var AST_New: any = DEFNODE('New', null, {
-  _optimize: function (self, compressor) {
+class AST_New extends AST_Call {
+  _optimize (self, compressor) {
     if (
       compressor.option('unsafe') &&
           is_undeclared_ref(self.expression) &&
           ['Object', 'RegExp', 'Function', 'Error', 'Array'].includes(self.expression.name)
     ) return make_node(AST_Call, self, self).transform(compressor)
     return self
-  },
-  _eval: return_this,
-  _size: function (): number {
+  }
+
+  _eval = return_this
+  _size (): number {
     return 6 + list_overhead(this.args)
-  },
-  _to_mozilla_ast: M => ({
+  }
+
+  _to_mozilla_ast = M => ({
     type: 'NewExpression',
     callee: to_moz(M.expression),
     arguments: M.args.map(to_moz)
-  }),
-  needs_parens: function (output: any) {
+  })
+
+  needs_parens (output: any) {
     var p = output.parent()
     if (this.args.length === 0 &&
             (p instanceof AST_PropAccess || // (new Date).getTime(), (new Date)["getTime"]()
                 p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
     { return true }
     return undefined
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     output.print('new')
     output.space()
     callCodeGen(self, output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'An object instantiation.  Derives from a function call since it has exactly the same properties'
-}, AST_Call)
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'New'
+  static PROPS = AST_Call.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Sequence extends AST_Node {
   _optimize (self, compressor) {
@@ -5884,7 +5895,6 @@ class AST_Sequence extends AST_Node {
     this.expressions = args.expressions
   }
 }
-// var AST_Sequence: any = DEFNODE('Sequence', ['expressions'], {
 
 class AST_PropAccess extends AST_Node {
   _eval (compressor: any, depth) {
