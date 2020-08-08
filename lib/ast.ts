@@ -2559,42 +2559,57 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
   }
 }, AST_Scope)
 
-var AST_Expansion: any = DEFNODE('Expansion', ['expression'], {
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+class AST_Expansion extends AST_Node {
+  drop_side_effect_free (compressor: any, first_in_statement) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
-  },
-  _dot_throw: function (compressor: any) {
+  }
+
+  _dot_throw (compressor: any) {
     return this.expression._dot_throw(compressor)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression.walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.expression)
-  },
-  _size: () => 3,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 3
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  }),
-  _to_mozilla_ast: function To_Moz_Spread (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_Spread (M) {
     return {
       type: to_moz_in_destructuring() ? 'RestElement' : 'SpreadElement',
       argument: to_moz(M.expression)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     output.print('...')
     self.expression.print(output)
   }
-}, {
-  documentation: 'An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list',
-  propdoc: {
+
+  static documentation = 'An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list'
+  static propdoc = {
     expression: '[AST_Node] the thing to be expanded'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Expansion'
+  static PROPS = AST_Node.PROPS.concat(['expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+  }
+}
 
 class AST_Lambda extends AST_Scope {
   _optimize = opt_AST_Lambda
@@ -2735,7 +2750,6 @@ class AST_Lambda extends AST_Scope {
     this.async = args.async
   }
 }
-// var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', 'is_generator', 'async'], {
 
 class AST_Accessor extends AST_Lambda {
   drop_side_effect_free = return_null
