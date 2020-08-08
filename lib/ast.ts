@@ -817,8 +817,8 @@ var AST_DWLoop: any = DEFNODE('DWLoop', ['condition'], {}, {
   }
 }, AST_IterationStatement)
 
-var AST_Do: any = DEFNODE('Do', [], {
-  _optimize: function (self, compressor) {
+class AST_Do extends AST_DWLoop {
+  _optimize (self, compressor) {
     if (!compressor.option('loops')) return self
     var cond = self.condition.tail_node().evaluate(compressor)
     if (!(cond instanceof AST_Node)) {
@@ -846,8 +846,9 @@ var AST_Do: any = DEFNODE('Do', [], {
       }
     }
     return self
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this
@@ -861,29 +862,34 @@ var AST_Do: any = DEFNODE('Do', [], {
     pop(tw)
     tw.in_loop = saved_loop
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.body._walk(visitor)
       this.condition._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.condition)
     push(this.body)
-  },
-  _size: () => 9,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 9
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.body = (self.body).transform(tw)
     self.condition = self.condition.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'DoWhileStatement',
     test: to_moz(M.condition),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('do')
     output.space()
     make_block(self.body, output)
@@ -895,9 +901,16 @@ var AST_Do: any = DEFNODE('Do', [], {
     })
     output.semicolon()
   }
-}, {
-  documentation: 'A `do` statement'
-}, AST_DWLoop)
+
+  static documentation = 'A `do` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Do'
+  static PROPS = AST_DWLoop.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_While extends AST_DWLoop {
   _optimize (self, compressor: any) {
