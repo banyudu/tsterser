@@ -723,37 +723,43 @@ class AST_StatementWithBody extends AST_Statement {
   }
 }
 
-var AST_LabeledStatement: any = DEFNODE('LabeledStatement', ['label'], {
-  _optimize: function (self, compressor) {
+class AST_LabeledStatement extends AST_StatementWithBody {
+  _optimize (self, compressor) {
     if (self.body instanceof AST_Break &&
           compressor.loopcontrol_target(self.body) === self.body) {
       return make_node(AST_EmptyStatement, self)
     }
     return self.label.references.length == 0 ? self.body : self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.body.may_throw(compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return this.body.has_side_effects(compressor)
-  },
-  reduce_vars: function (tw) {
+  }
+
+  reduce_vars (tw) {
     push(tw)
     this.body.walk(tw)
     pop(tw)
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.label._walk(visitor)
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
     push(this.label)
-  },
-  clone: function (deep: boolean) {
+  }
+
+  clone (deep: boolean) {
     var node = this._clone(deep)
     if (deep) {
       var label = node.label
@@ -767,30 +773,42 @@ var AST_LabeledStatement: any = DEFNODE('LabeledStatement', ['label'], {
       }))
     }
     return node
-  },
-  _size: () => 2,
-  shallow_cmp: mkshallow({ 'label.name': 'eq' }),
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 2
+  shallow_cmp = mkshallow({ 'label.name': 'eq' })
+  transform = get_transformer(function (self, tw: any) {
     self.label = self.label.transform(tw)
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'LabeledStatement',
     label: to_moz(M.label),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self.label.print(output)
     output.colon();
     (self.body).print(output)
-  },
-  add_source_map: noop
-}, {
-  documentation: 'Statement with a label',
-  propdoc: {
-    label: '[AST_Label] a label definition'
   }
-}, AST_StatementWithBody)
+
+  add_source_map = noop
+  static documentation: 'Statement with a label'
+  static propdoc = {
+    label: '[AST_Label] a label definition'
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'LabeledStatement'
+  static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.label = args.label
+  }
+}
 
 class AST_IterationStatement extends AST_StatementWithBody {
   is_block_scope = return_true
