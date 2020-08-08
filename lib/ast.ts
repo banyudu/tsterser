@@ -3352,20 +3352,23 @@ var AST_Throw: any = DEFNODE('Throw', null, {
   documentation: 'A `throw` statement'
 }, AST_Exit)
 
-var AST_LoopControl: any = DEFNODE('LoopControl', ['label'], {
-  _walk: function (visitor: any) {
+class AST_LoopControl extends AST_Jump {
+  _walk (visitor: any) {
     return visitor._visit(this, this.label && function () {
       this.label._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.label) push(this.label)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     if (self.label) self.label = self.label.transform(tw)
-  }),
-  _do_print: function (output: any, kind: string) {
+  })
+
+  _do_print (output: any, kind: string) {
     output.print(kind)
     if (this.label) {
       output.space()
@@ -3373,13 +3376,21 @@ var AST_LoopControl: any = DEFNODE('LoopControl', ['label'], {
     }
     output.semicolon()
   }
-}, {
-  documentation: 'Base class for loop control statements (`break` and `continue`)',
-  propdoc: {
+
+  static documentation = 'Base class for loop control statements (`break` and `continue`)'
+  static propdoc = {
     label: '[AST_LabelRef?] the label, or null if none'
   }
 
-}, AST_Jump)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'LoopControl'
+  static PROPS = AST_Jump.PROPS.concat(['label'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.label = args.label
+  }
+}
 
 class AST_Break extends AST_LoopControl {
   _size () {
