@@ -689,18 +689,25 @@ var AST_BlockStatement: any = DEFNODE('BlockStatement', [], {
   documentation: 'A block statement'
 }, AST_Block)
 
-var AST_EmptyStatement: any = DEFNODE('EmptyStatement', [], {
-  may_throw: return_false,
-  has_side_effects: return_false,
-  shallow_cmp: pass_through,
-  _to_mozilla_ast: () => ({ type: 'EmptyStatement' }),
-  _size: () => 1,
-  _codegen: function (_self, output) {
+class AST_EmptyStatement extends AST_Statement {
+  may_throw = return_false
+  has_side_effects = return_false
+  shallow_cmp = pass_through
+  _to_mozilla_ast = () => ({ type: 'EmptyStatement' })
+  _size = () => 1
+  _codegen (_self, output) {
     output.semicolon()
   }
-}, {
-  documentation: 'The empty statement (empty block or simply a semicolon)'
-}, AST_Statement)
+
+  static documentation = 'The empty statement (empty block or simply a semicolon)'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'EmptyStatement'
+  static PROPS = AST_Statement.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_StatementWithBody extends AST_Statement {
   _do_print_body = function (output: any) {
