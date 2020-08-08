@@ -2596,14 +2596,14 @@ var AST_Expansion: any = DEFNODE('Expansion', ['expression'], {
   }
 }, AST_Node)
 
-var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', 'is_generator', 'async'], {
-  _optimize: opt_AST_Lambda,
-  may_throw: return_false,
-  has_side_effects: return_false,
-  _eval: return_this,
-  is_constant_expression: all_refs_local,
-  reduce_vars: mark_lambda,
-  contains_this: function () {
+class AST_Lambda extends AST_Scope {
+  _optimize = opt_AST_Lambda
+  may_throw = return_false
+  has_side_effects = return_false
+  _eval = return_this as any
+  is_constant_expression = all_refs_local
+  reduce_vars = mark_lambda
+  contains_this () {
     return walk(this, (node: any) => {
       if (node instanceof AST_This) return walk_abort
       if (
@@ -2614,9 +2614,10 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
         return true
       }
     })
-  },
-  is_block_scope: return_false,
-  init_scope_vars: function () {
+  }
+
+  is_block_scope = return_false
+  init_scope_vars () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
@@ -2624,8 +2625,9 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
       start: this.start,
       end: this.end
     }))
-  },
-  args_as_names: function () {
+  }
+
+  args_as_names () {
     var out: any[] = []
     for (var i = 0; i < this.argnames.length; i++) {
       if (this.argnames[i] instanceof AST_Destructuring) {
@@ -2635,8 +2637,9 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
       }
     }
     return out
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       if (this.name) this.name._walk(visitor)
       var argnames = this.argnames
@@ -2645,7 +2648,8 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
       }
       walk_body(this, visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
@@ -2654,12 +2658,14 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
     while (i--) push(this.argnames[i])
 
     if (this.name) push(this.name)
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     is_generator: 'eq',
     async: 'eq'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
     if (self.body instanceof AST_Node) {
@@ -2667,9 +2673,10 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
     } else {
       self.body = do_list(self.body, tw)
     }
-  }),
-  _to_mozilla_ast: To_Moz_FunctionExpression,
-  _do_print: function (this: any, output: any, nokeyword: boolean) {
+  })
+
+  _to_mozilla_ast = To_Moz_FunctionExpression as any
+  _do_print (this: any, output: any, nokeyword: boolean) {
     var self = this
     if (!nokeyword) {
       if (self.async) {
@@ -2699,21 +2706,36 @@ var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', '
     })
     output.space()
     print_braced(self, output, true)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     self._do_print(output)
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'Base class for functions',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'Base class for functions'
+  static propdoc = {
     name: '[AST_SymbolDeclaration?] the name of this function',
     argnames: '[AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign*] array of function arguments, destructurings, or expanding arguments',
     uses_arguments: '[boolean/S] tells whether this function accesses the arguments array',
     is_generator: '[boolean] is this a generator method',
     async: '[boolean] is this method async'
   }
-}, AST_Scope)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Lambda'
+  static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.name = args.name
+    this.argnames = args.argnames
+    this.uses_arguments = args.uses_arguments
+    this.is_generator = args.is_generator
+    this.async = args.async
+  }
+}
+// var AST_Lambda: any = DEFNODE('Lambda', ['name', 'argnames', 'uses_arguments', 'is_generator', 'async'], {
 
 class AST_Accessor extends AST_Lambda {
   drop_side_effect_free = return_null
@@ -2753,7 +2775,7 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 class AST_Function extends AST_Lambda {
-  _optimize (self, compressor) {
+  _optimize = function (self, compressor) {
     self = opt_AST_Lambda(self, compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&
@@ -2770,7 +2792,7 @@ class AST_Function extends AST_Lambda {
   }
 
   drop_side_effect_free = return_null
-  _eval (compressor: any) {
+  _eval = function (compressor: any) {
     if (compressor.option('unsafe')) {
       var fn: any = function () {}
       fn.node = this
