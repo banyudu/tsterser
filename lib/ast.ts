@@ -4451,15 +4451,17 @@ class AST_Const extends AST_Definitions {
   }
 }
 
-var AST_VarDef: any = DEFNODE('VarDef', ['name', 'value'], {
-  may_throw: function (compressor: any) {
+class AST_VarDef extends AST_Node {
+  may_throw (compressor: any) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
-  },
-  has_side_effects: function () {
+  }
+
+  has_side_effects () {
     return this.value
-  },
-  reduce_vars: function (tw, descend) {
+  }
+
+  reduce_vars (tw, descend) {
     var node = this
     if (node.name instanceof AST_Destructuring) {
       suppress(node.name)
@@ -4480,33 +4482,40 @@ var AST_VarDef: any = DEFNODE('VarDef', ['name', 'value'], {
         d.fixed = false
       }
     }
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.name._walk(visitor)
       if (this.value) this.value._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.value) push(this.value)
     push(this.name)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return this.value ? 1 : 0
-  },
-  shallow_cmp: mkshallow({
+  }
+
+  shallow_cmp = mkshallow({
     value: 'exist'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  })
+
+  transform = get_transformer(function (self, tw: any) {
     self.name = self.name.transform(tw)
     if (self.value) self.value = self.value.transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'VariableDeclarator',
     id: to_moz(M.name),
     init: to_moz(M.value)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self.name.print(output)
     if (self.value) {
       output.space()
@@ -4517,14 +4526,23 @@ var AST_VarDef: any = DEFNODE('VarDef', ['name', 'value'], {
       parenthesize_for_noin(self.value, output, noin)
     }
   }
-}, {
-  documentation: 'A variable declaration; only appears in a AST_Definitions node',
-  propdoc: {
+
+  static documentation = 'A variable declaration; only appears in a AST_Definitions node'
+  static propdoc = {
     name: '[AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar] name of the variable',
     value: "[AST_Node?] initializer, or null of there's no initializer"
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'VarDef'
+  static PROPS = AST_Node.PROPS.concat(['name', 'value'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.name = args.name
+    this.value = args.value
+  }
+}
 
 class AST_NameMapping extends AST_Node {
   _walk (visitor: any) {
