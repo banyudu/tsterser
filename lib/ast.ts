@@ -1199,8 +1199,8 @@ var AST_With: any = DEFNODE('With', ['expression'], {
 
 /* -----[ scope and functions ]----- */
 
-var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'], {
-  process_expression: function (insert, compressor) {
+class AST_Scope extends AST_Block {
+  process_expression (insert, compressor) {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
       if (insert && node instanceof AST_SimpleStatement) {
@@ -1224,7 +1224,7 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
           })
         })
       }
-      if (node instanceof AST_Class || node instanceof AST_Lambda && node !== self) {
+      if (node instanceof AST_Class || node instanceof AST_Lambda && (node as any) !== self) {
         return node
       }
       if (node instanceof AST_Block) {
@@ -1243,8 +1243,9 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       return node
     })
     self.transform(tt)
-  },
-  drop_unused: function (compressor: any) {
+  }
+
+  drop_unused (compressor: any) {
     const optUnused = compressor.option('unused')
     if (!optUnused) return
     if (compressor.has_directive('use asm')) return
@@ -1275,7 +1276,7 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
     var initializations = new Map()
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
-    var scope = this
+    var scope: any = this
     var tw = new TreeWalker(function (node: any, descend) {
       if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive('use strict')) {
         node.argnames.forEach(function (argname) {
@@ -1427,7 +1428,7 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
             }
           }
         }
-        if ((node instanceof AST_Defun || node instanceof AST_DefClass) && node !== self) {
+        if ((node instanceof AST_Defun || node instanceof AST_DefClass) && (node as any) !== self) {
           const def = node.name?.definition?.()
           const keep = def.global && !drop_funcs || in_use_ids.has(def.id)
           if (!keep) {
@@ -1641,8 +1642,9 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
         return true
       }
     }
-  },
-  hoist_declarations: function (compressor: any) {
+  }
+
+  hoist_declarations (compressor: any) {
     var self = this
     if (compressor.has_directive('use asm')) return self
     // Hoisting makes no sense in an arrow func
@@ -1774,16 +1776,18 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       self.body = dirs.concat(hoisted, self.body)
     }
     return self
-  },
-  make_var_name: function (prefix) {
+  }
+
+  make_var_name (prefix) {
     var var_names = this.var_names()
     prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
     var name = prefix
     for (var i = 0; var_names.has(name); i++) name = prefix + '$' + i
     this.add_var_name(name)
     return name
-  },
-  hoist_properties: function (compressor: any) {
+  }
+
+  hoist_properties (compressor: any) {
     var self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false
@@ -1846,9 +1850,10 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       }
     })
     return self.transform(hoister)
-  },
-  init_scope_vars,
-  var_names: function varNames (this: any): Set<string> | null {
+  }
+
+  init_scope_vars = init_scope_vars
+  var_names = function varNames (this: any): Set<string> | null {
     var var_names = this._var_name_cache
     if (!var_names) {
       this._var_name_cache = var_names = new Set(
@@ -1865,9 +1870,9 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       })
     }
     return var_names
-  },
+  }
 
-  add_var_name: function (name: string) {
+  add_var_name (name: string) {
     // TODO change enclosed too
     if (!this._added_var_names) {
       // TODO stop adding var names entirely
@@ -1876,10 +1881,10 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
     this._added_var_names.add(name)
     if (!this._var_name_cache) this.var_names() // regen cache
     this._var_name_cache.add(name)
-  },
+  }
 
   // TODO create function that asks if we can inline
-  add_child_scope: function (scope: any) {
+  add_child_scope (scope: any) {
     // `scope` is going to be moved into wherever the compressor is
     // right now. Update the required scopes' information
 
@@ -1914,22 +1919,26 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
         }
       }
     }
-  },
-  is_block_scope: function () {
+  }
+
+  is_block_scope () {
     return this._block_scope || false
-  },
-  find_variable: function (name: any | string) {
+  }
+
+  find_variable (name: any | string) {
     if (name instanceof AST_Symbol) name = name.name
     return this.variables.get(name) ||
           (this.parent_scope && this.parent_scope.find_variable(name))
-  },
-  def_function: function (this: any, symbol: any, init: boolean) {
+  }
+
+  def_function (this: any, symbol: any, init: boolean) {
     var def = this.def_variable(symbol, init)
     if (!def.init || def.init instanceof AST_Defun) def.init = init
     this.functions.set(symbol.name, def)
     return def
-  },
-  def_variable: function (symbol: any, init: boolean) {
+  }
+
+  def_variable (symbol: any, init?: boolean) {
     var def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
@@ -1942,29 +1951,34 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       def.global = !this.parent_scope
     }
     return symbol.thedef = def
-  },
-  next_mangled: function (options: any) {
+  }
+
+  next_mangled (options: any, def: any) {
     return next_mangled(this, options)
-  },
-  get_defun_scope: function () {
+  }
+
+  get_defun_scope () {
     var self = this
     while (self.is_block_scope()) {
       self = self.parent_scope
     }
     return self
-  },
-  clone: function (deep: boolean) {
+  }
+
+  clone (deep: boolean) {
     var node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
     if (this.enclosed) node.enclosed = this.enclosed.slice()
     if (this._block_scope) node._block_scope = this._block_scope
     return node
-  },
-  pinned: function () {
+  }
+
+  pinned () {
     return this.uses_eval || this.uses_with
-  },
-  figure_out_scope: function (options: any, { parent_scope = null, toplevel = this } = {}) {
+  }
+
+  figure_out_scope (options: any, { parent_scope = null, toplevel = this } = {}) {
     options = defaults(options, {
       cache: null,
       ie8: false,
@@ -2233,9 +2247,9 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
       }
     }
   }
-}, {
-  documentation: 'Base class for all statements introducing a lexical scope',
-  propdoc: {
+
+  static documentation = 'Base class for all statements introducing a lexical scope'
+  static propdoc = {
     variables: '[Map/S] a map of name -> SymbolDef for all variables/functions defined in this scope',
     functions: '[Map/S] like `variables`, but only lists function declarations',
     uses_with: '[boolean/S] tells whether this scope uses the `with` statement',
@@ -2243,8 +2257,24 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
     parent_scope: '[AST_Scope?/S] link to the parent scope',
     enclosed: '[SymbolDef*/S] a list of all symbol definitions that are accessed from this scope or any subscopes',
     cname: '[integer/S] current index for mangling variables (used internally by the mangler)'
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Scope'
+  static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.variables = args.variables
+    this.functions = args.functions
+    this.uses_with = args.uses_with
+    this.uses_eval = args.uses_eval
+    this.parent_scope = args.parent_scope
+    this.enclosed = args.enclosed
+    this.cname = args.cname
+    this._var_name_cache = args._var_name_cache
   }
-}, AST_Block)
+}
 
 class AST_Toplevel extends AST_Scope {
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
@@ -2656,7 +2686,7 @@ class AST_Lambda extends AST_Scope {
   }
 
   is_block_scope = return_false
-  init_scope_vars () {
+  init_scope_vars = function () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
@@ -2918,7 +2948,7 @@ class AST_Arrow extends AST_Lambda {
   }
 
   _dot_throw = return_false
-  init_scope_vars () {
+  init_scope_vars = function () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
   }
