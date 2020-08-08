@@ -2246,14 +2246,15 @@ var AST_Scope: any = DEFNODE('Scope', ['variables', 'functions', 'uses_with', 'u
   }
 }, AST_Block)
 
-var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+class AST_Toplevel extends AST_Scope {
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     this.globals.forEach(function (def) {
       reset_def(compressor, def)
     })
     reset_variables(tw, compressor, this)
-  },
-  resolve_defines: function (compressor: any) {
+  }
+
+  resolve_defines (compressor: any) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
     return this.transform(new TreeTransformer(function (node: any) {
@@ -2271,8 +2272,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       }
       return def
     }))
-  },
-  reset_opt_flags: function (compressor: any) {
+  }
+
+  reset_opt_flags (compressor: any) {
     const self = this
     const reduce_vars = compressor.option('reduce_vars')
 
@@ -2296,8 +2298,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
     preparation.loop_ids = new Map()
     preparation.defs_to_safe_ids = new Map()
     self.walk(preparation)
-  },
-  drop_console: function () {
+  }
+
+  drop_console () {
     return this.transform(new TreeTransformer(function (self) {
       if (self.TYPE == 'Call') {
         var exp = self.expression
@@ -2312,8 +2315,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
         }
       }
     }))
-  },
-  def_global: function (node: any) {
+  }
+
+  def_global (node: any) {
     var globals = this.globals; var name = node.name
     if (globals.has(name)) {
       return globals.get(name)
@@ -2324,17 +2328,19 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       globals.set(name, g)
       return g
     }
-  },
-  is_block_scope: return_false,
-  next_mangled: function (options: any) {
+  }
+
+  is_block_scope = return_false
+  next_mangled (options: any) {
     let name
     const mangled_names = this.mangled_names
     do {
       name = next_mangled(this, options)
     } while (mangled_names.has(name))
     return name
-  },
-  _default_mangler_options: function (options: any) {
+  }
+
+  _default_mangler_options (options: any) {
     options = defaults(options, {
       eval: false,
       ie8: false,
@@ -2355,8 +2361,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
     // Never mangle arguments
     options.reserved.add('arguments')
     return options
-  },
-  wrap_commonjs: function (name: string) {
+  }
+
+  wrap_commonjs (name: string) {
     var body = this.body
     var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
     var wrapped_tl = parse(_wrapped_tl)
@@ -2367,8 +2374,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       return undefined
     }))
     return wrapped_tl
-  },
-  wrap_enclose: function (args_values: string) {
+  }
+
+  wrap_enclose (args_values: string) {
     if (typeof args_values !== 'string') args_values = ''
     var index = args_values.indexOf(':')
     if (index < 0) index = args_values.length
@@ -2385,20 +2393,24 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       }
       return undefined
     }))
-  },
-  shallow_cmp: pass_through,
-  _size: function () {
+  }
+
+  shallow_cmp = pass_through
+  _size () {
     return list_overhead(this.body)
-  },
-  _to_mozilla_ast: function To_Moz_Program (M) {
+  }
+
+  _to_mozilla_ast = function To_Moz_Program (M) {
     return to_moz_scope('Program', M)
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     display_body(self.body as any[], true, output, true)
     output.print('')
-  },
-  add_source_map: noop,
-  compute_char_frequency: function (options: any) {
+  }
+
+  add_source_map = noop
+  compute_char_frequency (options: any) {
     printMangleOptions = this._default_mangler_options(options)
     try {
       base54.consider(this.print_to_string(), 1)
@@ -2406,8 +2418,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       printMangleOptions = undefined
     }
     base54.sort()
-  },
-  expand_names: function (options: any) {
+  }
+
+  expand_names (options: any) {
     base54.reset()
     base54.sort()
     options = this._default_mangler_options(options)
@@ -2440,8 +2453,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
         sym.name = name
       })
     }
-  },
-  find_colliding_names: function (options: any) {
+  }
+
+  find_colliding_names (options: any) {
     const cache = options.cache && options.cache.props
     const avoid = new Set()
       options.reserved?.forEach(to_avoid)
@@ -2462,8 +2476,9 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
         else if (!def.unmangleable(options)) return
         to_avoid(name)
       }
-  },
-  mangle_names: function (options: any) {
+  }
+
+  mangle_names (options: any) {
     options = this._default_mangler_options(options)
 
     // We only need to mangle declaration nodes.  Special logic wired
@@ -2552,12 +2567,21 @@ var AST_Toplevel: any = DEFNODE('Toplevel', ['globals'], {
       }
     }
   }
-}, {
-  documentation: 'The toplevel scope',
-  propdoc: {
+
+  static documentation = 'The toplevel scope'
+  static propdoc = {
     globals: '[Map/S] a map of name -> SymbolDef for all undeclared names'
   }
-}, AST_Scope)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Toplevel'
+  static PROPS = AST_Scope.PROPS.concat(['globals'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.globals = args.globals
+  }
+}
 
 class AST_Expansion extends AST_Node {
   drop_side_effect_free (compressor: any, first_in_statement) {
