@@ -3110,8 +3110,8 @@ var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['templa
   }
 }, AST_Node)
 
-var AST_TemplateString: any = DEFNODE('TemplateString', ['segments'], {
-  _optimize: function (self, compressor) {
+class AST_TemplateString extends AST_Node {
+  _optimize (self, compressor) {
     if (!compressor.option('evaluate') ||
       compressor.parent() instanceof AST_PrefixedTemplateString) { return self }
 
@@ -3172,38 +3172,46 @@ var AST_TemplateString: any = DEFNODE('TemplateString', ['segments'], {
       }
     }
     return self
-  },
-  drop_side_effect_free: function (compressor: any) {
+  }
+
+  drop_side_effect_free (compressor: any) {
     var values = trim(this.segments, compressor, first_in_statement)
     return values && make_sequence(this, values)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.segments, compressor)
-  },
-  _eval: function () {
+  }
+
+  _eval () {
     if (this.segments.length !== 1) return this
     return this.segments[0].value
-  },
-  is_string: return_true,
-  _walk: function (visitor: any) {
+  }
+
+  is_string = return_true
+  _walk (visitor: any) {
     return visitor._visit(this, function (this: any) {
       this.segments.forEach(function (seg) {
         seg._walk(visitor)
       })
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.segments.length
     while (i--) push(this.segments[i])
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return 2 + (Math.floor(this.segments.length / 2) * 3) /* "${}" */
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.segments = do_list(self.segments, tw)
-  }),
-  _to_mozilla_ast: function To_Moz_TemplateLiteral (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_TemplateLiteral (M) {
     var quasis: any[] = []
     var expressions: any[] = []
     for (var i = 0; i < M.segments.length; i++) {
@@ -3225,8 +3233,9 @@ var AST_TemplateString: any = DEFNODE('TemplateString', ['segments'], {
       quasis: quasis,
       expressions: expressions
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     var is_tagged = output.parent() instanceof AST_PrefixedTemplateString
 
     output.print('`')
@@ -3242,15 +3251,23 @@ var AST_TemplateString: any = DEFNODE('TemplateString', ['segments'], {
       }
     }
     output.print('`')
-  },
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: 'A template string literal',
-  propdoc: {
+  }
+
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = 'A template string literal'
+  static propdoc = {
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'TemplateString'
+  static PROPS = AST_Node.PROPS.concat(['segments'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.segments = args.segments
+  }
+}
 
 class AST_TemplateSegment extends AST_Node {
   drop_side_effect_free = return_null
