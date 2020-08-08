@@ -3381,20 +3381,29 @@ var AST_LoopControl: any = DEFNODE('LoopControl', ['label'], {
 
 }, AST_Jump)
 
-var AST_Break: any = DEFNODE('Break', null, {
-  _size: function () {
+class AST_Break extends AST_LoopControl {
+  _size () {
     return this.label ? 6 : 5
-  },
-  _to_mozilla_ast: M => ({
+  }
+
+  _to_mozilla_ast = M => ({
     type: 'BreakStatement',
     label: to_moz(M.label)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self._do_print(output, 'break')
   }
-}, {
-  documentation: 'A `break` statement'
-}, AST_LoopControl)
+
+  static documentation = 'A `break` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Break'
+  static PROPS = AST_LoopControl.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Continue extends AST_LoopControl {
   _size = function () {
