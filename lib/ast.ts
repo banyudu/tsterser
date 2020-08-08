@@ -1158,29 +1158,33 @@ class AST_ForOf extends AST_ForIn {
   }
 }
 
-var AST_With: any = DEFNODE('With', ['expression'], {
-  _walk: function (visitor: any) {
+class AST_With extends AST_StatementWithBody {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
     push(this.expression)
-  },
-  _size: () => 6,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 6
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'WithStatement',
     object: to_moz(M.expression),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('with')
     output.space()
     output.with_parens(function () {
@@ -1190,12 +1194,20 @@ var AST_With: any = DEFNODE('With', ['expression'], {
     self._do_print_body(output)
   }
 
-}, {
-  documentation: 'A `with` statement',
-  propdoc: {
+  static documentation = 'A `with` statement'
+  static propdoc = {
     expression: '[AST_Node] the `with` expression'
   }
-}, AST_StatementWithBody)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Scope'
+  static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+  }
+}
 
 /* -----[ scope and functions ]----- */
 
