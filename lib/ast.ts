@@ -262,11 +262,11 @@ const mkshallow = (props) => {
     })
     .join(' && ')
 
-  return new Function('other', 'return ' + comparisons)
+  return new Function('other', 'return ' + comparisons) as any
 }
 
 const get_transformer = descend => {
-  return function (this: any, tw: any, in_list: boolean) {
+  return function (this: any, tw: any, in_list?: boolean) {
     let transformed: any | undefined
     tw.push(this)
     if (tw.before) transformed = tw.before(this, descend, in_list)
@@ -618,49 +618,67 @@ function clone_block_scope (deep: boolean) {
   return clone
 }
 
-var AST_Block: any = DEFNODE('Block', ['body', 'block_scope'], {
-  _optimize: function (self, compressor) {
+class AST_Block extends AST_Statement {
+  _optimize (self, compressor) {
     tighten_body(self.body, compressor)
     return self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return anyMayThrow(this.body, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     return anySideEffect(this.body, compressor)
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
-  },
-  is_block_scope: return_true,
-  _walk: function (visitor: any) {
+  }
+
+  is_block_scope = return_true
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       walk_body(this, visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
-  },
-  clone: clone_block_scope,
-  _size: function () {
+  }
+
+  clone = clone_block_scope
+  _size () {
     return 2 + list_overhead(this.body)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.body = do_list(self.body, tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'BlockStatement',
     body: M.body.map(to_moz)
-  })
-}, {
-  documentation: 'A body of statements (usually braced)',
-  propdoc: {
+  }) as any
+
+  static documentation = 'A body of statements (usually braced)'
+  static propdoc = {
     body: '[AST_Statement*] an array of statements',
     block_scope: '[AST_Scope] the block scope'
+  } as any
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Block'
+  static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.body = args.body
+    this.block_scope = args.block_scope
   }
-}, AST_Statement)
+}
 
 class AST_BlockStatement extends AST_Block {
   _optimize (self, compressor) {
@@ -2034,7 +2052,7 @@ class AST_Scope extends AST_Block {
     }
   }
 
-  is_block_scope () {
+  is_block_scope = function () {
     return this._block_scope || false
   }
 
@@ -2078,7 +2096,7 @@ class AST_Scope extends AST_Block {
     return self
   }
 
-  clone (deep: boolean) {
+  clone = function (deep: boolean) {
     var node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
@@ -3006,10 +3024,10 @@ class AST_Function extends AST_Lambda {
     }
   }
 
-  _size (info) {
+  _size = function (info: any) {
     const first: any = !!first_in_statement(info)
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
-  }
+  } as any
 
   _to_mozilla_ast = To_Moz_FunctionExpression
   // a function expression needs parens around it when it's provably
@@ -3066,7 +3084,7 @@ class AST_Arrow extends AST_Lambda {
     this.uses_arguments = false
   }
 
-  _size (): number {
+  _size (info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (
