@@ -2954,8 +2954,8 @@ class AST_Defun extends AST_Lambda {
 }
 
 /* -----[ DESTRUCTURING ]----- */
-var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
-  _optimize: function (self, compressor) {
+class AST_Destructuring extends AST_Node {
+  _optimize (self, compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
           !self.is_array &&
@@ -3002,19 +3002,22 @@ var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
       }
       return true
     }
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.names.forEach(function (name: any) {
         name._walk(visitor)
       })
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.names.length
     while (i--) push(this.names[i])
-  },
-  all_symbols: function () {
+  }
+
+  all_symbols () {
     var out: any[] = []
     this.walk(new TreeWalker(function (node: any) {
       if (node instanceof AST_Symbol) {
@@ -3022,15 +3025,15 @@ var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
       }
     }))
     return out
-  },
-  _size: () => 2,
-  shallow_cmp: mkshallow({
-    is_array: 'eq'
-  }),
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 2
+  shallow_cmp = mkshallow({ is_array: 'eq' })
+  transform = get_transformer(function (self, tw: any) {
     self.names = do_list(self.names, tw)
-  }),
-  _to_mozilla_ast: function To_Moz_ObjectPattern (M) {
+  })
+
+  _to_mozilla_ast = function To_Moz_ObjectPattern (M) {
     if (M.is_array) {
       return {
         type: 'ArrayPattern',
@@ -3041,8 +3044,9 @@ var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
       type: 'ObjectPattern',
       properties: M.names.map(to_moz)
     }
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     output.print(self.is_array ? '[' : '{')
     var len = self.names.length
     self.names.forEach(function (name, i) {
@@ -3055,13 +3059,23 @@ var AST_Destructuring: any = DEFNODE('Destructuring', ['names', 'is_array'], {
     })
     output.print(self.is_array ? ']' : '}')
   }
-}, {
-  documentation: 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names',
-  propdoc: {
+
+  static documentation = 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names'
+  static propdoc = {
     names: '[AST_Node*] Array of properties or elements',
     is_array: '[Boolean] Whether the destructuring represents an object or array'
   }
-}, AST_Node)
+
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Destructuring'
+  static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.names = args.names
+    this.is_array = args.is_array
+  }
+}
 
 class AST_PrefixedTemplateString extends AST_Node {
   _optimize (self) {
@@ -3124,7 +3138,6 @@ class AST_PrefixedTemplateString extends AST_Node {
     this.prefix = args.prefix
   }
 }
-// var AST_PrefixedTemplateString: any = DEFNODE('PrefixedTemplateString', ['template_string', 'prefix'], {
 
 class AST_TemplateString extends AST_Node {
   _optimize (self, compressor) {
