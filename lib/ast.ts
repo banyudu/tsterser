@@ -3272,27 +3272,36 @@ var AST_TemplateSegment: any = DEFNODE('TemplateSegment', ['value', 'raw'], {
 
 /* -----[ JUMPS ]----- */
 
-var AST_Jump: any = DEFNODE('Jump', null, {
-  aborts: return_this,
-  shallow_cmp: pass_through,
-  add_source_map: function (output) { output.add_mapping(this.start) }
-}, {
-  documentation: "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
-}, AST_Statement)
+class AST_Jump extends AST_Statement {
+  aborts = return_this
+  shallow_cmp = pass_through
+  add_source_map (output) { output.add_mapping(this.start) }
+  static documentation = "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Jump'
+  static PROPS = AST_Statement.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
-var AST_Exit: any = DEFNODE('Exit', ['value'], {
-  _walk: function (visitor: any) {
+class AST_Exit extends AST_Jump {
+  _walk (visitor: any) {
     return visitor._visit(this, this.value && function () {
       this.value._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     if (this.value) push(this.value)
-  },
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  transform = get_transformer(function (self, tw: any) {
     if (self.value) self.value = self.value.transform(tw)
-  }),
-  _do_print: function (output: any, kind: string) {
+  })
+
+  _do_print (output: any, kind: string) {
     output.print(kind)
     if (this.value) {
       output.space()
@@ -3307,50 +3316,77 @@ var AST_Exit: any = DEFNODE('Exit', ['value'], {
     }
     output.semicolon()
   }
-}, {
-  documentation: 'Base class for “exits” (`return` and `throw`)',
-  propdoc: {
+
+  static documentation = 'Base class for “exits” (`return` and `throw`)'
+  static propdoc = {
     value: '[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return'
   }
 
-}, AST_Jump)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Exit'
+  static PROPS = AST_Jump.PROPS.concat(['value'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.value = args.value
+  }
+}
 
-var AST_Return: any = DEFNODE('Return', null, {
-  _optimize: function (self, compressor) {
+class AST_Return extends AST_Exit {
+  _optimize (self, compressor) {
     if (self.value && is_undefined(self.value, compressor)) {
       self.value = null
     }
     return self
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     return this.value && this.value.may_throw(compressor)
-  },
-  _size: function () {
+  }
+
+  _size () {
     return this.value ? 7 : 6
-  },
-  _to_mozilla_ast: M => ({
+  }
+
+  _to_mozilla_ast = M => ({
     type: 'ReturnStatement',
     argument: to_moz(M.value)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self._do_print(output, 'return')
   }
-}, {
-  documentation: 'A `return` statement'
-}, AST_Exit)
 
-var AST_Throw: any = DEFNODE('Throw', null, {
-  _size: () => 6,
-  _to_mozilla_ast: M => ({
+  static documentation: 'A `return` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Return'
+  static PROPS = AST_Exit.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
+
+class AST_Throw extends AST_Exit {
+  _size = () => 6
+  _to_mozilla_ast = M => ({
     type: 'ThrowStatement',
     argument: to_moz(M.value)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     self._do_print(output, 'throw')
   }
-}, {
-  documentation: 'A `throw` statement'
-}, AST_Exit)
+
+  static documentation = 'A `throw` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Throw'
+  static PROPS = AST_Exit.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_LoopControl extends AST_Jump {
   _walk (visitor: any) {
