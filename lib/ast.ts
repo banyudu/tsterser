@@ -2838,18 +2838,20 @@ var AST_Function: any = DEFNODE('Function', null, {
   documentation: 'A function expression'
 }, AST_Lambda)
 
-var AST_Arrow: any = DEFNODE('Arrow', null, {
-  _optimize: opt_AST_Lambda,
-  drop_side_effect_free: return_null,
-  negate: function () {
+class AST_Arrow extends AST_Lambda {
+  _optimize = opt_AST_Lambda
+  drop_side_effect_free = return_null
+  negate () {
     return basic_negation(this)
-  },
-  _dot_throw: return_false,
-  init_scope_vars: function () {
+  }
+
+  _dot_throw = return_false
+  init_scope_vars () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (
@@ -2862,8 +2864,9 @@ var AST_Arrow: any = DEFNODE('Arrow', null, {
     }
 
     return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size())
-  },
-  _to_mozilla_ast: function To_Moz_ArrowFunctionExpression (M) {
+  }
+
+  _to_mozilla_ast = function To_Moz_ArrowFunctionExpression (M) {
     var body = {
       type: 'BlockStatement',
       body: M.body.map(to_moz)
@@ -2874,12 +2877,14 @@ var AST_Arrow: any = DEFNODE('Arrow', null, {
       async: M.async,
       body: body
     }
-  },
-  needs_parens: function (output: any) {
+  }
+
+  needs_parens (output: any) {
     var p = output.parent()
     return p instanceof AST_PropAccess && p.expression === this
-  },
-  _do_print: function (this: any, output: any) {
+  }
+
+  _do_print (this: any, output: any) {
     var self = this
     var parent = output.parent()
     var needs_parens = (parent instanceof AST_Binary && !(parent instanceof AST_Assign)) ||
@@ -2923,9 +2928,16 @@ var AST_Arrow: any = DEFNODE('Arrow', null, {
     }
     if (needs_parens) { output.print(')') }
   }
-}, {
-  documentation: 'An ES6 Arrow function ((a) => b)'
-}, AST_Lambda)
+
+  static documentation = 'An ES6 Arrow function ((a) => b)'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Arrow'
+  static PROPS = AST_Lambda.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Defun extends AST_Lambda {
   _size = function () {
