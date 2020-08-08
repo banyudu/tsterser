@@ -899,11 +899,12 @@ var AST_Do: any = DEFNODE('Do', [], {
   documentation: 'A `do` statement'
 }, AST_DWLoop)
 
-var AST_While: any = DEFNODE('While', [], {
-  _optimize: function (self, compressor: any) {
+class AST_While extends AST_DWLoop {
+  _optimize (self, compressor: any) {
     return compressor.option('loops') ? make_node(AST_For, self, self).optimize(compressor) : self
-  },
-  reduce_vars: function (tw: TreeWalker, descend, compressor: any) {
+  }
+
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this
@@ -912,29 +913,34 @@ var AST_While: any = DEFNODE('While', [], {
     pop(tw)
     tw.in_loop = saved_loop
     return true
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.condition._walk(visitor)
       this.body._walk(visitor)
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     push(this.body)
     push(this.condition)
-  },
-  _size: () => 7,
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  _size = () => 7
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'WhileStatement',
     test: to_moz(M.condition),
     body: to_moz(M.body)
-  }),
-  _codegen: function (self, output) {
+  })
+
+  _codegen (self, output) {
     output.print('while')
     output.space()
     output.with_parens(function () {
@@ -943,9 +949,16 @@ var AST_While: any = DEFNODE('While', [], {
     output.space()
     self._do_print_body(output)
   }
-}, {
-  documentation: 'A `while` statement'
-}, AST_DWLoop)
+
+  static documentation = 'A `while` statement'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'While'
+  static PROPS = AST_DWLoop.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_For extends AST_IterationStatement {
   _optimize (self, compressor) {
