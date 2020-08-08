@@ -4846,8 +4846,8 @@ var AST_Export: any = DEFNODE('Export', ['exported_definition', 'exported_value'
 
 /* -----[ OTHER ]----- */
 
-var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
-  _optimize: function (self, compressor) {
+class AST_Call extends AST_Node {
+  _optimize (self, compressor) {
     var exp = self.expression
     var fn = exp
     inline_array_like_spread(self, compressor, self.args)
@@ -5518,8 +5518,9 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
       }
       return expressions.map(exp => exp.clone(true))
     }
-  },
-  drop_side_effect_free: function (compressor: any, first_in_statement) {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
         var exprs = this.args.slice()
@@ -5540,23 +5541,26 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
     }
     var args = trim(this.args, compressor, first_in_statement)
     return args && make_sequence(this, args)
-  },
-  may_throw: function (compressor: any) {
+  }
+
+  may_throw (compressor: any) {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
     return !(this.expression instanceof AST_Lambda) ||
           anyMayThrow(this.expression.body, compressor)
-  },
-  has_side_effects: function (compressor: any) {
+  }
+
+  has_side_effects (compressor: any) {
     if (!this.is_expr_pure(compressor) &&
           (!this.expression.is_call_pure(compressor) ||
               this.expression.has_side_effects(compressor))) {
       return true
     }
     return anySideEffect(this.args, compressor)
-  },
-  _eval: function (compressor: any, depth) {
+  }
+
+  _eval (compressor: any, depth) {
     var exp = this.expression
     if (compressor.option('unsafe') && exp instanceof AST_PropAccess) {
       var key = exp.property
@@ -5605,8 +5609,9 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
       }
     }
     return this
-  },
-  is_expr_pure: function (compressor: any) {
+  }
+
+  is_expr_pure (compressor: any) {
     if (compressor.option('unsafe')) {
       var expr = this.expression
       var first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
@@ -5626,10 +5631,12 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
       }
     }
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
-  },
+  }
+
   initialize () {
     if (this._annotations == null) this._annotations = 0
-  },
+  }
+
   _walk (visitor: any) {
     return visitor._visit(this, function () {
       var args = this.args
@@ -5638,26 +5645,31 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
       }
       this.expression._walk(visitor) // TODO why do we need to crawl this last?
     })
-  },
+  }
+
   _children_backwards (push: Function) {
     let i = this.args.length
     while (i--) push(this.args[i])
     push(this.expression)
-  },
-  _size: function (): number {
+  }
+
+  _size (): number {
     return 2 + list_overhead(this.args)
-  },
-  shallow_cmp: pass_through,
-  transform: get_transformer(function (self, tw: any) {
+  }
+
+  shallow_cmp = pass_through
+  transform = get_transformer(function (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.args = do_list(self.args, tw)
-  }),
-  _to_mozilla_ast: M => ({
+  })
+
+  _to_mozilla_ast = M => ({
     type: 'CallExpression',
     callee: to_moz(M.expression),
     arguments: M.args.map(to_moz)
-  }),
-  needs_parens: function (output: any) {
+  })
+
+  needs_parens (output: any) {
     var p = output.parent(); var p1
     if (p instanceof AST_New && p.expression === this ||
             p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function) { return true }
@@ -5669,17 +5681,28 @@ var AST_Call: any = DEFNODE('Call', ['expression', 'args', '_annotations'], {
             p.expression === this &&
             (p1 = output.parent(1)) instanceof AST_Assign &&
             p1.left === p
-  },
-  _codegen: callCodeGen
-}, {
-  documentation: 'A function call expression',
-  propdoc: {
+  }
+
+  _codegen = callCodeGen
+  static documentation = 'A function call expression'
+  static propdoc = {
     expression: '[AST_Node] expression to invoke as function',
     args: '[AST_Node*] array of arguments',
     _annotations: '[number] bitfield containing information about the call'
   }
 
-}, AST_Node)
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Call'
+  static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
+  constructor (args?) { // eslint-disable-line
+    super(args)
+    this.expression = args.expression
+    this.args = args.args
+    this._annotations = args._annotations
+    this.initialize()
+  }
+}
 
 class AST_New extends AST_Call {
   _optimize (self, compressor) {
@@ -5711,7 +5734,7 @@ class AST_New extends AST_Call {
     return undefined
   }
 
-  _codegen (self, output) {
+  _codegen = function (self, output) {
     output.print('new')
     output.space()
     callCodeGen(self, output)
