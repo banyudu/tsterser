@@ -481,21 +481,30 @@ var AST_Node = DEFNODE('Node', ['start', 'end'], {
 
 /* -----[ statements ]----- */
 
-var AST_Statement: any = DEFNODE('Statement', null, {
-  _eval: function () {
+class AST_Statement extends AST_Node {
+  _eval () {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
-  },
-  aborts: return_null,
-  negate: function () {
+  }
+
+  aborts = return_null
+  negate () {
     throw new Error('Cannot negate a statement')
-  },
-  _codegen: function (self, output) {
+  }
+
+  _codegen (self, output) {
     (self.body).print(output)
     output.semicolon()
   }
-}, {
-  documentation: 'Base class of all statements'
-}, AST_Node)
+
+  static documentation = 'Base class of all statements'
+  CTOR = this.constructor
+  flags = 0
+  TYPE = 'Statement'
+  static PROPS = AST_Node.PROPS
+  constructor (args?) { // eslint-disable-line
+    super(args)
+  }
+}
 
 class AST_Debugger extends AST_Statement {
   _optimize (self, compressor) {
@@ -4110,7 +4119,7 @@ class AST_If extends AST_StatementWithBody {
           this.alternative && this.alternative.has_side_effects(compressor)
   }
 
-  aborts () {
+  aborts = function () {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
   }
 
