@@ -265,24 +265,6 @@ const mkshallow = (props) => {
   return new Function('other', 'return ' + comparisons) as any
 }
 
-const get_transformer = descend => {
-  return function (this: any, tw: any, in_list?: boolean) {
-    let transformed: any | undefined
-    tw.push(this)
-    if (tw.before) transformed = tw.before(this, descend, in_list)
-    if (transformed === undefined) {
-      transformed = this
-      descend(transformed, tw)
-      if (tw.after) {
-        const after_ret = tw.after(transformed, in_list)
-        if (after_ret !== undefined) transformed = after_ret
-      }
-    }
-    tw.pop()
-    return transformed
-  }
-}
-
 class AST_Token {
   static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
   TYPE = 'Token'
@@ -399,7 +381,24 @@ class AST_Node {
     return size
   }
 
-  transform = get_transformer(noop)
+  transform (this: any, tw: any, in_list?: boolean) {
+    let transformed: any | undefined
+    tw.push(this)
+    if (tw.before) transformed = tw.before(this, this._transform, in_list)
+    if (transformed === undefined) {
+      transformed = this
+      this._transform(transformed, tw)
+      if (tw.after) {
+        const after_ret = tw.after(transformed, in_list)
+        if (after_ret !== undefined) transformed = after_ret
+      }
+    }
+    tw.pop()
+    return transformed
+  }
+
+  _transform (self, tw: any) {}
+
   shallow_cmp (other?: any): any {
     throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
   }
@@ -608,9 +607,9 @@ class AST_SimpleStatement extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ExpressionStatement (M) {
     return {
@@ -695,9 +694,9 @@ class AST_Block extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.body = do_list(self.body, tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'BlockStatement',
@@ -852,10 +851,10 @@ class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp = mkshallow({ 'label.name': 'eq' })
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.label = self.label.transform(tw)
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'LabeledStatement',
@@ -985,10 +984,10 @@ class AST_Do extends AST_DWLoop {
 
   _size = () => 9
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.body = (self.body).transform(tw)
     self.condition = self.condition.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'DoWhileStatement',
@@ -1049,10 +1048,10 @@ class AST_While extends AST_DWLoop {
 
   _size = () => 7
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'WhileStatement',
@@ -1161,12 +1160,12 @@ class AST_For extends AST_IterationStatement {
     step: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.init) self.init = self.init.transform(tw)
     if (self.condition) self.condition = self.condition.transform(tw)
     if (self.step) self.step = self.step.transform(tw)
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'ForStatement',
@@ -1256,11 +1255,11 @@ class AST_ForIn extends AST_IterationStatement {
 
   _size = () => 8
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.init = self.init?.transform(tw) || null
     self.object = self.object.transform(tw)
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'ForInStatement',
@@ -1342,10 +1341,10 @@ class AST_With extends AST_StatementWithBody {
 
   _size = () => 6
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = (self.body).transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'WithStatement',
@@ -2832,9 +2831,9 @@ class AST_Expansion extends AST_Node {
 
   _size = () => 3
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_Spread (M) {
     return {
@@ -2938,7 +2937,7 @@ class AST_Lambda extends AST_Scope {
     async: 'eq'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
     if (self.body instanceof AST_Node) {
@@ -2946,7 +2945,7 @@ class AST_Lambda extends AST_Scope {
     } else {
       self.body = do_list(self.body, tw)
     }
-  })
+  }
 
   _to_mozilla_ast = To_Moz_FunctionExpression as any
   _do_print (this: any, output: any, nokeyword: boolean) {
@@ -3353,9 +3352,9 @@ class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp = mkshallow({ is_array: 'eq' })
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.names = do_list(self.names, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ObjectPattern (M) {
     if (M.is_array) {
@@ -3422,10 +3421,10 @@ class AST_PrefixedTemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.prefix = self.prefix.transform(tw)
     self.template_string = self.template_string.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_TaggedTemplateExpression (M) {
     return {
@@ -3565,9 +3564,9 @@ class AST_TemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.segments = do_list(self.segments, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_TemplateLiteral (M) {
     var quasis: any[] = []
@@ -3684,9 +3683,9 @@ class AST_Exit extends AST_Jump {
     if (this.value) push(this.value)
   }
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.value) self.value = self.value.transform(tw)
-  })
+  }
 
   _do_print (output: any, kind: string) {
     output.print(kind)
@@ -3788,9 +3787,9 @@ class AST_LoopControl extends AST_Jump {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.label) self.label = self.label.transform(tw)
-  })
+  }
 
   _do_print (output: any, kind: string) {
     output.print(kind)
@@ -3879,9 +3878,9 @@ class AST_Await extends AST_Node {
 
   _size = () => 6
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'AwaitExpression',
@@ -3953,9 +3952,9 @@ class AST_Yield extends AST_Node {
     is_star: 'eq'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.expression) self.expression = self.expression.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'YieldExpression',
@@ -4209,11 +4208,11 @@ class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
     if (self.alternative) self.alternative = self.alternative.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'IfStatement',
@@ -4394,10 +4393,10 @@ class AST_Switch extends AST_Block {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'SwitchStatement',
@@ -4538,10 +4537,10 @@ class AST_Case extends AST_SwitchBranch {
     return 5 + list_overhead(this.body)
   }
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
-  })
+  }
 
   _codegen = function (self, output) {
     output.print('case')
@@ -4637,11 +4636,11 @@ class AST_Try extends AST_Block {
     bfinally: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.body = do_list(self.body, tw)
     if (self.bcatch) self.bcatch = self.bcatch.transform(tw)
     if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_TryStatement (M) {
     return {
@@ -4713,10 +4712,10 @@ class AST_Catch extends AST_Block {
     argname: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.argname) self.argname = self.argname.transform(tw)
     self.body = do_list(self.body, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_CatchClause (M) {
     return {
@@ -4864,9 +4863,9 @@ class AST_Definitions extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.definitions = do_list(self.definitions, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_VariableDeclaration (M) {
     return {
@@ -5020,10 +5019,10 @@ class AST_VarDef extends AST_Node {
     value: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.name = self.name.transform(tw)
     if (self.value) self.value = self.value.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'VariableDeclarator',
@@ -5082,10 +5081,10 @@ class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.foreign_name = self.foreign_name.transform(tw)
     self.name = self.name.transform(tw)
-  })
+  }
 
   _codegen (self, output) {
     var is_import = output.parent() instanceof AST_Import
@@ -5184,11 +5183,11 @@ class AST_Import extends AST_Node {
     imported_names: 'exist'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.imported_name) self.imported_name = self.imported_name.transform(tw)
     if (self.imported_names) do_list(self.imported_names, tw)
     self.module_name = self.module_name.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ImportDeclaration (M) {
     var specifiers: any[] = []
@@ -5337,12 +5336,12 @@ class AST_Export extends AST_Statement {
     is_default: 'eq'
   })
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)
     if (self.exported_value) self.exported_value = self.exported_value.transform(tw)
     if (self.exported_names) do_list(self.exported_names, tw)
     if (self.module_name) self.module_name = self.module_name.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ExportDeclaration (M) {
     if (M.exported_names) {
@@ -6257,10 +6256,10 @@ class AST_Call extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.args = do_list(self.args, tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'CallExpression',
@@ -6450,12 +6449,12 @@ class AST_Sequence extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     const result = do_list(self.expressions, tw)
     self.expressions = result.length
       ? result
       : [new AST_Number({ value: 0 })]
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_SequenceExpression (M) {
     return {
@@ -6776,9 +6775,9 @@ class AST_Dot extends AST_PropAccess {
   }
 
   shallow_cmp = mkshallow({ property: 'eq' })
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  })
+  }
 
   _codegen (self, output) {
     var expr = self.expression
@@ -6985,10 +6984,10 @@ class AST_Sub extends AST_PropAccess {
   }
 
   _size = () => 2
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
     self.property = (self.property).transform(tw)
-  })
+  }
 
   _codegen (self, output) {
     self.expression.print(output)
@@ -7105,9 +7104,9 @@ class AST_Unary extends AST_Node {
   }
 
   shallow_cmp = mkshallow({ operator: 'eq' })
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.expression = self.expression.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_Unary (M: any) {
     return {
@@ -8020,10 +8019,10 @@ class AST_Binary extends AST_Node {
     return size
   }
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.left = self.left.transform(tw)
     self.right = self.right.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_BinaryExpression (M: any) {
     if (M.operator == '=' && to_moz_in_destructuring()) {
@@ -8478,11 +8477,11 @@ class AST_Conditional extends AST_Node {
 
   _size = () => 3
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.condition = self.condition.transform(tw)
     self.consequent = self.consequent.transform(tw)
     self.alternative = self.alternative.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = M => ({
     type: 'ConditionalExpression',
@@ -8774,9 +8773,9 @@ class AST_Array extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.elements = do_list(self.elements, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ArrayExpression (M: any) {
     return {
@@ -8917,9 +8916,9 @@ class AST_Object extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     self.properties = do_list(self.properties, tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_ObjectExpression (M: any) {
     return {
@@ -9012,12 +9011,12 @@ class AST_ObjectProperty extends AST_Node {
   }
 
   shallow_cmp = pass_through as any
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.key instanceof AST_Node) {
       self.key = self.key.transform(tw)
     }
     if (self.value) self.value = self.value.transform(tw)
-  })
+  }
 
   _to_mozilla_ast = function To_Moz_Property (M, parent) {
     var key = M.key instanceof AST_Node ? to_moz(M.key) : {
@@ -9513,11 +9512,11 @@ class AST_Class extends AST_Scope {
     )
   }
 
-  transform = get_transformer(function (self, tw: any) {
+  _transform (self, tw: any) {
     if (self.name) self.name = self.name.transform(tw)
     if (self.extends) self.extends = self.extends.transform(tw)
     self.properties = do_list(self.properties, tw)
-  })
+  }
 
   shallow_cmp = mkshallow({
     name: 'exist',
