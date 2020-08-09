@@ -67,12 +67,12 @@ import {
   member,
   return_null,
   keep_name
-} from './utils'
+} from '../utils'
 
-import { parse, js_error, is_basic_identifier_string, is_identifier_string, PRECEDENCE, RESERVED_WORDS, JS_Parse_Error } from './parse'
-import { OutputStream } from './output'
+import { parse, js_error, is_basic_identifier_string, is_identifier_string, PRECEDENCE, RESERVED_WORDS, JS_Parse_Error } from '../parse'
+import { OutputStream } from '../output'
 
-import { base54, function_defs, SymbolDef, setFunctionDefs } from './scope'
+import { base54, function_defs, SymbolDef, setFunctionDefs } from '../scope'
 
 import {
   UNUSED,
@@ -107,13 +107,13 @@ import {
   commutativeOperators,
   identifier_atom,
   clear_flag
-} from './constants'
+} from '../constants'
 
-import { equivalent_to } from './equivalent-to'
+import { equivalent_to } from '../equivalent-to'
 
-import Compressor from './compressor'
+import Compressor from '../compressor'
 
-import TreeWalker from './tree-walker'
+import TreeWalker from '../tree-walker'
 
 let unmangleable_names: Set<any> | null = null
 
