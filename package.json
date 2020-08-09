@@ -13,8 +13,8 @@
   "main": "dist/bundle.min.js",
   "module": "main.js",
   "exports": {
-    "import": "main.js",
-    "require": "dist/bundle.min.js"
+    "import": "./main.js",
+    "require": "./dist/bundle.min.js"
   },
   "types": "tools/terser.d.ts",
   "bin": {

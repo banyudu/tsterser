@@ -283,50 +283,6 @@ const get_transformer = descend => {
   }
 }
 
-function DEFNODE (type: string, props: string[], methods: AnyObject, staticMethods: AnyObject, base: any | null) {
-  const name = `AST_${type}`
-  props = props || []
-  const factory = () => {
-    const BasicClass = base || class {}
-    const obj = {
-      [name]: class extends BasicClass {
-        initialize: any
-
-        CTOR = this.constructor
-        flags = 0
-        TYPE = type || undefined
-
-        static PROPS = props.concat(BasicClass.PROPS || [])
-
-        constructor (args) {
-          super(args)
-          if (args) {
-            props.forEach(item => this[item] = args[item])
-          }
-          this.initialize?.()
-        }
-      }
-    }
-    return obj[name]
-  }
-  var Node: any = factory()
-  if (methods) {
-    for (const i in methods) {
-      if (HOP(methods, i)) {
-        Node.prototype[i] = methods[i]
-      }
-    }
-  }
-  if (staticMethods) {
-    for (const i in staticMethods) {
-      if (HOP(staticMethods, i)) {
-        Node[i] = staticMethods[i]
-      }
-    }
-  }
-  return Node
-}
-
 class AST_Token {
   static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
   TYPE = 'Token'
@@ -338,38 +294,46 @@ class AST_Token {
   }
 }
 
-var AST_Node = DEFNODE('Node', ['start', 'end'], {
-  _optimize: function (self) {
+class AST_Node {
+  start: any
+  end: any
+  _optimize (self, compressor?: any) {
     return self
-  },
-  drop_side_effect_free: return_this,
-  may_throw: return_true,
-  has_side_effects: return_true,
-  _eval: return_this,
-  is_constant_expression: return_false,
-  negate: function () {
+  }
+
+  drop_side_effect_free (compressor: any, first_in_statement) {
+    return this
+  }
+
+  may_throw (compressor: any) { return true }
+  has_side_effects (compressor: any) { return true }
+  _eval (compressor?: any, depth?: number): any { return this }
+  is_constant_expression (scope: any) { return false }
+  negate (compressor: any, first_in_statement?: any) {
     return basic_negation(this)
-  },
-  _find_defs: noop,
-  is_string: return_false,
-  is_number: return_false,
-  is_boolean: return_false,
-  reduce_vars: noop,
-  _dot_throw: is_strict,
+  }
+
+  _find_defs (compressor: any, suffix) {}
+  is_string (compressor: any) { return false }
+  is_number (compressor: any) { return false }
+  is_boolean () { return false }
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {}
+  _dot_throw (compressor) { return is_strict(compressor) }
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
   // then its value is returned; otherwise the element itself
   // is returned.
   // They can be distinguished as constant value is never a
   // descendant of AST_Node.
-  evaluate: function (compressor: any) {
+  evaluate (compressor: any) {
     if (!compressor.option('evaluate')) return this
     var val = this._eval(compressor, 1)
     if (!val || val instanceof RegExp) return val
     if (typeof val === 'function' || typeof val === 'object') return this
     return val
-  },
-  is_constant: function () {
+  }
+
+  is_constant () {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
     if (this instanceof AST_Constant) {
@@ -379,20 +343,23 @@ var AST_Node = DEFNODE('Node', ['start', 'end'], {
               this.expression instanceof AST_Constant &&
               unaryPrefix.has(this.operator)
     }
-  },
-  is_call_pure: return_false,
+  }
+
+  is_call_pure (compressor: any) { return false }
 
   // may_throw_on_access()
   // returns true if this node may be null, undefined or contain `AST_Accessor`
-  may_throw_on_access: function (compressor: any) {
+  may_throw_on_access (compressor: any) {
     return !compressor.option('pure_getters') ||
           this._dot_throw(compressor)
-  },
-  equivalent_to: function (node: any) {
+  }
+
+  equivalent_to (node: any) {
     return equivalent_to(this, node)
-  },
-  is_block_scope: return_false,
-  _clone: function (deep: boolean) {
+  }
+
+  is_block_scope = return_false
+  _clone (deep?: boolean) {
     if (deep) {
       var self = this.clone()
       return self.transform(new TreeTransformer(function (node: any) {
@@ -402,46 +369,54 @@ var AST_Node = DEFNODE('Node', ['start', 'end'], {
       }))
     }
     return new this.CTOR(this)
-  },
-  clone: function (deep: boolean) {
+  }
+
+  clone (deep?: boolean) {
     return this._clone(deep)
-  },
-  _walk: function (visitor: any) {
+  }
+
+  _walk (visitor: any) {
     return visitor._visit(this)
-  },
-  walk: function (visitor: any) {
+  }
+
+  walk (visitor: any) {
     return this._walk(visitor) // not sure the indirection will be any help
-  },
-  _children_backwards: () => {},
-  _size: () => 0,
-  size: function (compressor, stack) {
+  }
+
+  _children_backwards (push: Function) {}
+  _size (info: any) { return 0 }
+  size (compressor, stack) {
     // mangle_options = (default_options as any).mangle;
 
     let size = 0
     walk_parent(this, (node, info) => {
-      size += node._size(info)
+      size += node?._size(info) || 0
     }, stack || (compressor && compressor.stack))
 
     // just to save a bit of memory
     // mangle_options = undefined;
 
     return size
-  },
-  transform: get_transformer(noop),
-  shallow_cmp: function () {
+  }
+
+  transform = get_transformer(noop)
+  shallow_cmp (other?: any): any {
     throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
-  },
-  print (output: any, force_parens: boolean) {
+  }
+
+  print (output: any, force_parens?: boolean) {
     return this._print(output, force_parens)
-  },
-  _print: print,
-  print_to_string: function (options: any) {
+  }
+
+  _print = print
+  print_to_string (options?: any) {
     var output = OutputStream(options)
     this.print(output)
     return output.get()
-  },
-  needs_parens: return_false,
-  optimize: function (compressor: any) {
+  }
+
+  needs_parens (output: any) { return false }
+  optimize (compressor: any) {
     if (!this._optimize) {
       throw new Error('optimize not defined')
     }
@@ -451,38 +426,53 @@ var AST_Node = DEFNODE('Node', ['start', 'end'], {
     var opt = this._optimize(self, compressor)
     set_flag(opt, OPTIMIZED)
     return opt
-  },
-  to_mozilla_ast: function (parent) {
+  }
+
+  to_mozilla_ast = function (parent) {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
     return set_moz_loc(this, this._to_mozilla_ast(this, parent))
-  },
-  add_source_map: noop,
-  tail_node: return_this
-}, {
-  documentation: 'Base class of all AST nodes',
-  propdoc: {
+  }
+
+  add_source_map (output: any) {}
+  tail_node () { return this }
+  static documentation = 'Base class of all AST nodes'
+  static propdoc = {
     start: '[AST_Token] The first token of this node',
     end: '[AST_Token] The last token of this node'
-  },
-  warn_function: null,
-  warn: function (txt, props) {
+  } as any
+
+  static warn_function = null
+  static warn (txt, props?) {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
-  },
-  from_mozilla_ast: function (node: any) {
+  }
+
+  static from_mozilla_ast (node: any) {
     var save_stack = FROM_MOZ_STACK
     FROM_MOZ_STACK = []
     var ast = from_moz(node)
     FROM_MOZ_STACK = save_stack
     return ast
   }
-}, null)
+
+  CTOR = this.constructor as any
+  flags = 0
+  TYPE = 'Node'
+  static PROPS = ['start', 'end']
+  constructor (args = {} as any) { // eslint-disable-line
+    this.start = args.start
+    this.end = args.end
+  }
+}
+// var AST_Node = DEFNODE('Node', ['start', 'end'], {
 
 /* -----[ statements ]----- */
 
 class AST_Statement extends AST_Node {
-  _eval () {
+  body: any
+
+  _eval (): any {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
   }
 
@@ -532,6 +522,8 @@ class AST_Debugger extends AST_Statement {
 }
 
 class AST_Directive extends AST_Statement {
+  value: any
+  quote: any
   _optimize (self, compressor) {
     if (compressor.option('directives') &&
           (!directives.has(self.value) || compressor.has_directive(self.value) !== self)) {
@@ -541,7 +533,7 @@ class AST_Directive extends AST_Statement {
   }
 
   shallow_cmp = mkshallow({ value: 'eq' })
-  _size (): number {
+  _size = function (): number {
     // TODO string encoding stuff
     return 2 + this.value.length
   }
@@ -665,6 +657,9 @@ function clone_block_scope (deep: boolean) {
 }
 
 class AST_Block extends AST_Statement {
+  block_scope: any
+  expression: any
+
   _optimize (self, compressor) {
     tighten_body(self.body, compressor)
     return self
@@ -803,6 +798,7 @@ class AST_StatementWithBody extends AST_Statement {
 }
 
 class AST_LabeledStatement extends AST_StatementWithBody {
+  label: any
   _optimize (self, compressor) {
     if (self.body instanceof AST_Break &&
           compressor.loopcontrol_target(self.body) === self.body) {
@@ -890,6 +886,10 @@ class AST_LabeledStatement extends AST_StatementWithBody {
 }
 
 class AST_IterationStatement extends AST_StatementWithBody {
+  block_scope: any
+  init?: any
+  condition: any
+  step: any
   is_block_scope = return_true
   clone = clone_block_scope
   static documentation = 'Internal class.  All loops inherit from it.'
@@ -908,6 +908,7 @@ class AST_IterationStatement extends AST_StatementWithBody {
 }
 
 class AST_DWLoop extends AST_IterationStatement {
+  condition: any
   static documentation = 'Base class for do/while statements'
   static propdoc = {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
@@ -1225,6 +1226,7 @@ class AST_For extends AST_IterationStatement {
 }
 
 class AST_ForIn extends AST_IterationStatement {
+  object: any
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
     reset_block_variables(compressor, this)
     suppress(this.init)
@@ -1303,6 +1305,7 @@ class AST_ForIn extends AST_IterationStatement {
 }
 
 class AST_ForOf extends AST_ForIn {
+  await: any
   shallow_cmp = pass_through
   _to_mozilla_ast = M => ({
     type: 'ForOfStatement',
@@ -1324,6 +1327,7 @@ class AST_ForOf extends AST_ForIn {
 }
 
 class AST_With extends AST_StatementWithBody {
+  expression: any
   _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -1377,6 +1381,17 @@ class AST_With extends AST_StatementWithBody {
 /* -----[ scope and functions ]----- */
 
 class AST_Scope extends AST_Block {
+  functions: any
+  globals: any
+  variables: any
+  enclosed: any
+  _added_var_names?: Set<any>
+  _var_name_cache: any
+  parent_scope: any
+  uses_eval: any
+  uses_with: any
+  cname: any
+
   process_expression (insert, compressor) {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
@@ -1889,7 +1904,7 @@ class AST_Scope extends AST_Block {
         // collect only vars which don't show up in self's arguments list
         var defs: any[] = []
         const is_lambda = self instanceof AST_Lambda
-        const args_as_names = is_lambda ? self.args_as_names() : null
+        const args_as_names = is_lambda ? (self as unknown as AST_Lambda).args_as_names() : null
         vars.forEach((def, name) => {
           if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
             vars.delete(name)
@@ -2454,6 +2469,10 @@ class AST_Scope extends AST_Block {
 }
 
 class AST_Toplevel extends AST_Scope {
+  variables: any
+  globals: any
+  mangled_names: any
+
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
     this.globals.forEach(function (def) {
       reset_def(compressor, def)
@@ -2603,7 +2622,7 @@ class AST_Toplevel extends AST_Scope {
   }
 
   shallow_cmp = pass_through
-  _size () {
+  _size = function () {
     return list_overhead(this.body)
   }
 
@@ -2791,6 +2810,8 @@ class AST_Toplevel extends AST_Scope {
 }
 
 class AST_Expansion extends AST_Node {
+  expression: any
+
   drop_side_effect_free (compressor: any, first_in_statement) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
@@ -2843,6 +2864,12 @@ class AST_Expansion extends AST_Node {
 }
 
 class AST_Lambda extends AST_Scope {
+  argnames: any
+  uses_arguments: any
+  name: any
+  is_generator: any
+  async: any
+
   _optimize = opt_AST_Lambda
   may_throw = return_false
   has_side_effects = return_false
@@ -3020,6 +3047,8 @@ function To_Moz_FunctionExpression (M, parent) {
 }
 
 class AST_Function extends AST_Lambda {
+  name: any
+
   _optimize = function (self, compressor) {
     self = opt_AST_Lambda(self, compressor)
     if (compressor.option('unsafe_arrows') &&
@@ -3130,7 +3159,7 @@ class AST_Arrow extends AST_Lambda {
     this.uses_arguments = false
   }
 
-  _size (info?: any): number {
+  _size = function (info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (
@@ -3219,6 +3248,7 @@ class AST_Arrow extends AST_Lambda {
 }
 
 class AST_Defun extends AST_Lambda {
+  name: any
   _size = function () {
     return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
   }
@@ -3246,6 +3276,9 @@ class AST_Defun extends AST_Lambda {
 
 /* -----[ DESTRUCTURING ]----- */
 class AST_Destructuring extends AST_Node {
+  is_array: any
+  names: any[]
+
   _optimize (self, compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
@@ -3369,6 +3402,9 @@ class AST_Destructuring extends AST_Node {
 }
 
 class AST_PrefixedTemplateString extends AST_Node {
+  template_string: any
+  prefix: any
+
   _optimize (self) {
     return self
   }
@@ -3431,6 +3467,8 @@ class AST_PrefixedTemplateString extends AST_Node {
 }
 
 class AST_TemplateString extends AST_Node {
+  segments: any
+
   _optimize (self, compressor) {
     if (!compressor.option('evaluate') ||
       compressor.parent() instanceof AST_PrefixedTemplateString) { return self }
@@ -3442,7 +3480,7 @@ class AST_TemplateString extends AST_Node {
         var result = segment.evaluate?.(compressor)
         // Evaluate to constant value
         // Constant value shorter than ${segment}
-        if (result !== segment && (result + '').length <= segment.size?.() + '${}'.length) {
+        if (result !== segment && (result + '').length <= segment.size?.(undefined, undefined) + '${}'.length) {
           // There should always be a previous and next segment if segment is a node
           segments[segments.length - 1].value = segments[segments.length - 1].value + result + self.segments[++i].value
           continue
@@ -3590,6 +3628,9 @@ class AST_TemplateString extends AST_Node {
 }
 
 class AST_TemplateSegment extends AST_Node {
+  value: any
+  raw: any
+
   drop_side_effect_free = return_null
   has_side_effects = return_false
   shallow_cmp = mkshallow({ value: 'eq' })
@@ -3632,6 +3673,7 @@ class AST_Jump extends AST_Statement {
 }
 
 class AST_Exit extends AST_Jump {
+  value: any
   _walk (visitor: any) {
     return visitor._visit(this, this.value && function () {
       this.value._walk(visitor)
@@ -3734,6 +3776,7 @@ class AST_Throw extends AST_Exit {
 }
 
 class AST_LoopControl extends AST_Jump {
+  label: any
   _walk (visitor: any) {
     return visitor._visit(this, this.label && function () {
       this.label._walk(visitor)
@@ -3822,6 +3865,8 @@ class AST_Continue extends AST_LoopControl {
 }
 
 class AST_Await extends AST_Node {
+  expression: any
+
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
@@ -3882,6 +3927,10 @@ class AST_Await extends AST_Node {
 }
 
 class AST_Yield extends AST_Node {
+  value: any
+  is_star: boolean
+  expression: any
+
   _optimize = function (self, compressor) {
     if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
       self.expression = null
@@ -3961,6 +4010,9 @@ class AST_Yield extends AST_Node {
 /* -----[ IF ]----- */
 
 class AST_If extends AST_StatementWithBody {
+  condition: any
+  alternative: any
+
   _optimize (self, compressor) {
     if (is_empty(self.alternative)) self.alternative = null
 
@@ -4517,6 +4569,9 @@ class AST_Case extends AST_SwitchBranch {
 /* -----[ EXCEPTIONS ]----- */
 
 class AST_Try extends AST_Block {
+  bfinally: any
+  bcatch: any
+
   _optimize = function (self, compressor) {
     tighten_body(self.body, compressor)
     if (self.bcatch && self.bfinally && self.bfinally.body.every(is_empty)) self.bfinally = null
@@ -4631,6 +4686,8 @@ class AST_Try extends AST_Block {
 }
 
 class AST_Catch extends AST_Block {
+  argname: any
+
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
       if (this.argname) this.argname._walk(visitor)
@@ -4699,6 +4756,7 @@ class AST_Catch extends AST_Block {
 }
 
 class AST_Finally extends AST_Block {
+  argname: any
   shallow_cmp = pass_through
   _size = function (): number {
     return 7 + list_overhead(this.body)
@@ -4715,7 +4773,7 @@ class AST_Finally extends AST_Block {
   CTOR = this.constructor
   flags = 0
   TYPE = 'Finally'
-  static PROPS = AST_Block
+  static PROPS = AST_Block.PROPS.concat(['argname'])
   constructor (args?) { // eslint-disable-line
     super(args)
     this.argname = args.argname
@@ -4725,6 +4783,8 @@ class AST_Finally extends AST_Block {
 /* -----[ VAR/CONST ]----- */
 
 class AST_Definitions extends AST_Statement {
+  definitions: any[]
+
   _optimize (self) {
     if (self.definitions.length == 0) { return make_node(AST_EmptyStatement, self) }
     return self
@@ -4905,6 +4965,9 @@ class AST_Const extends AST_Definitions {
 }
 
 class AST_VarDef extends AST_Node {
+  name: any
+  value: any
+
   may_throw (compressor: any) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
@@ -4998,6 +5061,9 @@ class AST_VarDef extends AST_Node {
 }
 
 class AST_NameMapping extends AST_Node {
+  name: any
+  foreign_name: any
+
   _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.foreign_name._walk(visitor)
@@ -5064,6 +5130,10 @@ class AST_NameMapping extends AST_Node {
 }
 
 class AST_Import extends AST_Node {
+  imported_name: any
+  module_name: any
+  imported_names: any
+
   _optimize (self) {
     return self
   }
@@ -5204,6 +5274,12 @@ class AST_Import extends AST_Node {
 }
 
 class AST_Export extends AST_Statement {
+  is_default: any
+  module_name: any
+  exported_value: any
+  exported_definition: any
+  exported_names: any
+
   _walk (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.exported_definition) {
@@ -5366,6 +5442,10 @@ class AST_Export extends AST_Statement {
 /* -----[ OTHER ]----- */
 
 class AST_Call extends AST_Node {
+  _annotations: any
+  expression: any
+  args: any[]
+
   _optimize (self, compressor) {
     var exp = self.expression
     var fn = exp
@@ -6271,6 +6351,7 @@ class AST_New extends AST_Call {
 }
 
 class AST_Sequence extends AST_Node {
+  expressions: any
   _optimize (self, compressor) {
     if (!compressor.option('side_effects')) return self
     var expressions: any[] = []
@@ -6439,6 +6520,9 @@ class AST_Sequence extends AST_Node {
 }
 
 class AST_PropAccess extends AST_Node {
+  expression: any
+  property: any
+
   _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
@@ -6567,6 +6651,8 @@ class AST_PropAccess extends AST_Node {
 }
 
 class AST_Dot extends AST_PropAccess {
+  quote: any
+
   _optimize (self, compressor) {
     if (self.property == 'arguments' || self.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
@@ -6922,6 +7008,8 @@ class AST_Sub extends AST_PropAccess {
 }
 
 class AST_Unary extends AST_Node {
+  operator: any
+  expression: any
   drop_side_effect_free (compressor: any, first_in_statement) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
@@ -7224,6 +7312,10 @@ class AST_UnaryPostfix extends AST_Unary {
 }
 
 class AST_Binary extends AST_Node {
+  left: any
+  operator: any
+  right: any
+
   _optimize (self, compressor) {
     function reversible () {
       return self.left.is_constant() ||
@@ -8029,6 +8121,10 @@ class AST_Binary extends AST_Node {
 }
 
 class AST_Conditional extends AST_Node {
+  alternative: any
+  consequent: any
+  condition: any
+
   _optimize (self, compressor) {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
@@ -8617,6 +8713,8 @@ class AST_DefaultAssign extends AST_Binary {
 /* -----[ LITERALS ]----- */
 
 class AST_Array extends AST_Node {
+  elements: any
+
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
@@ -8720,6 +8818,8 @@ class AST_Array extends AST_Node {
 }
 
 class AST_Object extends AST_Node {
+  properties: any
+
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
     if (optimized !== self) {
@@ -8867,6 +8967,10 @@ class AST_Object extends AST_Node {
 }
 
 class AST_ObjectProperty extends AST_Node {
+  key: any
+  value: any
+  quote: any
+
   _optimize = lift_key
   drop_side_effect_free = function (compressor: any, first_in_statement) {
     const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
@@ -9012,6 +9116,10 @@ class AST_ObjectProperty extends AST_Node {
 }
 
 class AST_ObjectKeyVal extends AST_ObjectProperty {
+  quote: any
+  key: any
+  value: any
+
   _optimize = function (self, compressor) {
     lift_key(self, compressor)
     // p:function(){} ---> p(){}
@@ -9106,6 +9214,9 @@ class AST_ObjectKeyVal extends AST_ObjectProperty {
 }
 
 class AST_ObjectSetter extends AST_ObjectProperty {
+  quote: any
+  static: any
+
   drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
   }
@@ -9153,6 +9264,9 @@ class AST_ObjectSetter extends AST_ObjectProperty {
 }
 
 class AST_ObjectGetter extends AST_ObjectProperty {
+  static: any
+  quote: any
+
   drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
   }
@@ -9201,6 +9315,11 @@ class AST_ObjectGetter extends AST_ObjectProperty {
 }
 
 class AST_ConciseMethod extends AST_ObjectProperty {
+  async: any
+  is_generator: any
+  static: any
+  quote: any
+
   _optimize = function (self, compressor) {
     lift_key(self, compressor)
     // p(){return x;} ---> p:()=>x
@@ -9307,6 +9426,10 @@ class AST_ConciseMethod extends AST_ObjectProperty {
 }
 
 class AST_Class extends AST_Scope {
+  extends: any
+  properties: any
+  name: any
+
   _optimize = function (self) {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
@@ -9476,6 +9599,9 @@ class AST_Class extends AST_Scope {
 }
 
 class AST_ClassProperty extends AST_ObjectProperty {
+  quote: any
+  static: any
+
   drop_side_effect_free = function (compressor: any) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
@@ -9568,6 +9694,10 @@ class AST_ClassProperty extends AST_ObjectProperty {
 }
 
 class AST_DefClass extends AST_Class {
+  name: any
+  extends: any
+  properties: any[]
+
   static documentation = 'A class definition'
   CTOR = this.constructor
   flags = 0
@@ -9579,6 +9709,8 @@ class AST_DefClass extends AST_Class {
 }
 
 class AST_ClassExpression extends AST_Class {
+  name: any
+
   needs_parens = first_in_statement
   static documentation: 'A class expression.'
   CTOR = this.constructor
@@ -9593,6 +9725,10 @@ class AST_ClassExpression extends AST_Class {
 let mangle_options
 
 class AST_Symbol extends AST_Node {
+  thedef: any
+  name: any
+  scope: any
+
   fixed_value = function () {
     var fixed = this.thedef.fixed
     if (!fixed || fixed instanceof AST_Node) return fixed
@@ -9716,6 +9852,9 @@ class AST_NewTarget extends AST_Node {
 }
 
 class AST_SymbolDeclaration extends AST_Symbol {
+  init: any
+  thedef: any
+
   may_throw = return_false
   has_side_effects = return_false
   _find_defs = function (compressor: any) {
@@ -9904,6 +10043,10 @@ class AST_SymbolImportForeign extends AST_Symbol {
 }
 
 class AST_Label extends AST_Symbol {
+  thedef: any
+  references: any
+  mangled_name: any
+
   // labels are always mangleable
   unmangleable = return_false
   initialize = function () {
@@ -9928,6 +10071,9 @@ class AST_Label extends AST_Symbol {
 }
 
 class AST_SymbolRef extends AST_Symbol {
+  scope: any
+  thedef: any
+
   _optimize (self, compressor) {
     if (!compressor.option('ie8') &&
           is_undeclared_ref(self) &&
@@ -10234,6 +10380,8 @@ class AST_SymbolExportForeign extends AST_Symbol {
 }
 
 class AST_LabelRef extends AST_Symbol {
+  thedef: any
+
   static documentation = 'Reference to a label symbol'
   CTOR = this.constructor
   flags = 0
@@ -10304,6 +10452,9 @@ function To_Moz_Literal (M) {
 }
 
 class AST_Constant extends AST_Node {
+  value: any
+  literal: any
+
   drop_side_effect_free = return_null
   may_throw = return_false
   has_side_effects = return_false
@@ -10336,6 +10487,9 @@ class AST_Constant extends AST_Node {
 }
 
 class AST_String extends AST_Constant {
+  value: any
+  quote: any
+
   is_string = return_true
   _size = function (): number {
     return this.value.length + 2
@@ -11690,7 +11844,7 @@ function skip_string (node: any) {
   }
 }
 
-function print (this: any, output: any, force_parens: boolean) {
+function print (this: any, output: any, force_parens?: boolean) {
   var self = this; var generator = self._codegen
   if (self instanceof AST_Scope) {
     output.active_scope = self
