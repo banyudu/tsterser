@@ -154,3 +154,5 @@ export const ASSIGN_OPS = makePredicate('+ - / * % >> << >>> | ^ &')
 export const ASSIGN_OPS_COMMUTATIVE = makePredicate('* | ^ &')
 
 export const identifier_atom = makePredicate('Infinity NaN undefined')
+
+export const walk_abort = Symbol('abort walk')

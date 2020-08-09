@@ -118,12 +118,12 @@ export {
   AST_While,
   AST_With,
   AST_Yield,
-  TreeTransformer,
-  TreeWalker,
   _INLINE,
   _NOINLINE,
   _PURE
 } from './lib/ast'
+export { default as TreeTransformer } from './lib/tree-transformer'
+export { default as TreeWalker } from './lib/tree-walker'
 export {
   defaults,
   push_uniq,

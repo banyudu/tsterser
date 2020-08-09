@@ -58,10 +58,10 @@ import {
   AST_Sequence,
   AST_String,
   AST_Sub,
-  TreeTransformer,
   TreeWalker
 } from './ast'
 import { domprops } from '../tools/domprops'
+import TreeTransformer from './tree-transformer'
 
 function find_builtins (reserved: Set<string | undefined>) {
   domprops.forEach(add)
