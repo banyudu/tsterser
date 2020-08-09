@@ -1180,3 +1180,44 @@ function From_Moz_Class (M) {
 export function setFromMozStack (val) {
   FROM_MOZ_STACK = val
 }
+
+export const pass_through = () => true
+
+// Creates a shallow compare function
+export const mkshallow = (props) => {
+  const comparisons = Object
+    .keys(props)
+    .map(key => {
+      if (props[key] === 'eq') {
+        return `this.${key} === other.${key}`
+      } else if (props[key] === 'exist') {
+        return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
+      } else {
+        throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`)
+      }
+    })
+    .join(' && ')
+
+  return new Function('other', 'return ' + comparisons) as any
+}
+
+export function to_moz (node: any | null) {
+  if (TO_MOZ_STACK === null) { TO_MOZ_STACK = [] }
+  TO_MOZ_STACK.push(node)
+  var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
+  TO_MOZ_STACK.pop()
+  if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null }
+  return ast
+}
+
+let TO_MOZ_STACK: Array<any | null> | null = null
+
+export function to_moz_in_destructuring () {
+  var i = TO_MOZ_STACK?.length
+  while (i--) {
+    if (TO_MOZ_STACK?.[i] instanceof AST_Destructuring) {
+      return true
+    }
+  }
+  return false
+}

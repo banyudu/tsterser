@@ -67,6 +67,10 @@ import {
   member,
   return_null,
   walk_parent,
+  pass_through,
+  mkshallow,
+  to_moz,
+  to_moz_in_destructuring,
   keep_name
 } from '../utils'
 
@@ -115,15 +119,16 @@ import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 
 import AST_Node from './node'
+import AST_Token from './token'
+import AST_Statement from './statement'
+import AST_Debugger from './debugger'
+import AST_Directive from './directive'
+import AST_SimpleStatement from './simple-statement'
+import AST_EmptyStatement from './empty-statement'
 
 let unmangleable_names: Set<any> | null = null
 
 let printMangleOptions
-
-interface AST {
-  new (...args: any[]): any
-  _to_mozilla_ast: Function
-}
 
 // return true if the node at the top of the stack (that means the
 // innermost node in the current output) is lexically the first in
@@ -207,29 +212,6 @@ const list_overhead = (array) => array.length && array.length - 1
 /* #__INLINE__ */
 const def_size = (size, def) => size + list_overhead(def.definitions)
 
-const pass_through = () => true
-
-var TO_MOZ_STACK: Array<any | null> | null = null
-
-function to_moz (node: any | null) {
-  if (TO_MOZ_STACK === null) { TO_MOZ_STACK = [] }
-  TO_MOZ_STACK.push(node)
-  var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
-  TO_MOZ_STACK.pop()
-  if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null }
-  return ast
-}
-
-function to_moz_in_destructuring () {
-  var i = TO_MOZ_STACK?.length
-  while (i--) {
-    if (TO_MOZ_STACK?.[i] instanceof AST_Destructuring) {
-      return true
-    }
-  }
-  return false
-}
-
 function to_moz_block (node: any) {
   return {
     type: 'BlockStatement',
@@ -248,206 +230,7 @@ function to_moz_scope (type: string, node: any) {
   }
 }
 
-// Creates a shallow compare function
-const mkshallow = (props) => {
-  const comparisons = Object
-    .keys(props)
-    .map(key => {
-      if (props[key] === 'eq') {
-        return `this.${key} === other.${key}`
-      } else if (props[key] === 'exist') {
-        return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
-      } else {
-        throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`)
-      }
-    })
-    .join(' && ')
-
-  return new Function('other', 'return ' + comparisons) as any
-}
-
-class AST_Token {
-  static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
-  TYPE = 'Token'
-
-  constructor (args: any = {}) {
-    if (args) {
-      AST_Token.PROPS.map((item) => (this[item] = args[item]))
-    }
-  }
-}
-
 /* -----[ statements ]----- */
-
-class AST_Statement extends AST_Node {
-  body: any
-
-  _eval (): any {
-    throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
-  }
-
-  aborts = return_null
-  negate () {
-    throw new Error('Cannot negate a statement')
-  }
-
-  _codegen (self, output) {
-    (self.body).print(output)
-    output.semicolon()
-  }
-
-  static documentation = 'Base class of all statements'
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'Statement'
-  static PROPS = AST_Node.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Debugger extends AST_Statement {
-  _optimize (self, compressor) {
-    if (compressor.option('drop_debugger')) { return make_node(AST_EmptyStatement, self) }
-    return self
-  }
-
-  shallow_cmp = pass_through
-  _size = () => 8
-  _to_mozilla_ast = () => ({ type: 'DebuggerStatement' })
-  _codegen (_self, output) {
-    output.print('debugger')
-    output.semicolon()
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'Represents a debugger statement'
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'Debugger'
-  static PROPS = AST_Statement.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Directive extends AST_Statement {
-  value: any
-  quote: any
-  _optimize (self, compressor) {
-    if (compressor.option('directives') &&
-          (!directives.has(self.value) || compressor.has_directive(self.value) !== self)) {
-      return make_node(AST_EmptyStatement, self)
-    }
-    return self
-  }
-
-  shallow_cmp = mkshallow({ value: 'eq' })
-  _size = function (): number {
-    // TODO string encoding stuff
-    return 2 + this.value.length
-  }
-
-  _to_mozilla_ast = function To_Moz_Directive (M) {
-    return {
-      type: 'ExpressionStatement',
-      expression: {
-        type: 'Literal',
-        value: M.value,
-        raw: M.print_to_string()
-      },
-      directive: M.value
-    }
-  }
-
-  _codegen (self, output) {
-    output.print_string(self.value, self.quote)
-    output.semicolon()
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'Represents a directive, like "use strict";'
-  static propdoc = {
-    value: "[string] The value of this directive as a plain string (it's not an AST_String!)",
-    quote: '[string] the original quote character'
-  } as any
-
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'Statement'
-  static PROPS = AST_Statement.PROPS.concat(['value', 'quote'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.value = args.value
-    this.quote = args.quote
-  }
-}
-
-class AST_SimpleStatement extends AST_Statement {
-  _optimize (self, compressor: any) {
-    if (compressor.option('side_effects')) {
-      var body = self.body
-      var node = body.drop_side_effect_free(compressor, true)
-      if (!node) {
-        compressor.warn('Dropping side-effect-free statement [{file}:{line},{col}]', self.start)
-        return make_node(AST_EmptyStatement, self)
-      }
-      if (node !== body) {
-        return make_node(AST_SimpleStatement, self, { body: node })
-      }
-    }
-    return self
-  }
-
-  may_throw (compressor: any) {
-    return this.body.may_throw(compressor)
-  }
-
-  has_side_effects (compressor: any) {
-    return this.body.has_side_effects(compressor)
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.body._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.body)
-  }
-
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.body = (self.body).transform(tw)
-  }
-
-  _to_mozilla_ast = function To_Moz_ExpressionStatement (M) {
-    return {
-      type: 'ExpressionStatement',
-      expression: to_moz(M.body) // TODO: check type
-    }
-  }
-
-  _codegen (self, output) {
-    (self.body).print(output)
-    output.semicolon()
-  }
-
-  static documentation = 'A statement consisting of an expression, i.e. a = 1 + 2'
-  static propdoc = {
-    body: '[AST_Node] an expression node (should not be instanceof AST_Statement)'
-  }
-
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'SimpleStatement'
-  static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.body = args.body
-  }
-}
 
 function walk_body (node: any, visitor: any) {
   const body = node.body
@@ -561,26 +344,6 @@ class AST_BlockStatement extends AST_Block {
   flags = 0
   TYPE = 'BlockStatement'
   static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_EmptyStatement extends AST_Statement {
-  may_throw = return_false
-  has_side_effects = return_false
-  shallow_cmp = pass_through
-  _to_mozilla_ast = () => ({ type: 'EmptyStatement' })
-  _size = () => 1
-  _codegen (_self, output) {
-    output.semicolon()
-  }
-
-  static documentation = 'The empty statement (empty block or simply a semicolon)'
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'EmptyStatement'
-  static PROPS = AST_Statement.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
@@ -11643,8 +11406,6 @@ export function is_iife_call (node: any) {
   if (node.TYPE != 'Call') return false
   return node.expression instanceof AST_Function || is_iife_call(node.expression)
 }
-
-var directives = new Set(['use asm', 'use strict'])
 
 function can_be_extracted_from_if_block (node: any) {
   return !(
