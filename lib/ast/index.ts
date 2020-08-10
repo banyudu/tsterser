@@ -125,6 +125,7 @@ import AST_Debugger from './debugger'
 import AST_Directive from './directive'
 import AST_SimpleStatement from './simple-statement'
 import AST_EmptyStatement from './empty-statement'
+import AST_NewTarget from './new-target'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9392,37 +9393,6 @@ class AST_Symbol extends AST_Node {
     this.scope = args.scope
     this.name = args.name
     this.thedef = args.thedef
-  }
-}
-
-class AST_NewTarget extends AST_Node {
-  _size = () => 10
-  shallow_cmp = pass_through
-  _to_mozilla_ast = function To_Moz_MetaProperty () {
-    return {
-      type: 'MetaProperty',
-      meta: {
-        type: 'Identifier',
-        name: 'new'
-      },
-      property: {
-        type: 'Identifier',
-        name: 'target'
-      }
-    }
-  }
-
-  _codegen = function (_self, output) {
-    output.print('new.target')
-  }
-
-  static documentation: 'A reference to new.target'
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'NewTarget'
-  static PROPS = AST_Node.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
   }
 }
 
