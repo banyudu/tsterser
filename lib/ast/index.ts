@@ -2614,9 +2614,7 @@ class AST_Function extends AST_Lambda {
 
     if (output.option('webkit')) {
       var p = output.parent()
-      if (p instanceof AST_PropAccess && p.expression === this) {
-        return true
-      }
+      if (p?._needs_parens(this)) { return true }
     }
 
     if (output.option('wrap_iife')) {
@@ -3428,7 +3426,7 @@ class AST_Yield extends AST_Node {
     if (p instanceof AST_Unary) { return true }
     // (yield x).foo
     // (yield x)['foo']
-    if (p instanceof AST_PropAccess && p.expression === this) { return true }
+    if (p?._needs_parens(this)) { return true }
     return undefined
   }
 
@@ -5941,6 +5939,10 @@ class AST_PropAccess extends AST_Node {
   expression: any
   property: any
 
+  _needs_parens (child: AST_Node) {
+    return this.expression === child
+  }
+
   _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
@@ -7462,7 +7464,7 @@ class AST_Binary extends AST_Node {
     // typeof (foo && bar)
     if (p instanceof AST_Unary) { return true }
     // (foo && bar)["prop"], (foo && bar).prop
-    if (p instanceof AST_PropAccess && p.expression === this) { return true }
+    if (p?._needs_parens(this)) { return true }
     // this deals with precedence: 3 * (2 + 1)
     if (p instanceof AST_Binary) {
       const po = p.operator
@@ -9779,7 +9781,7 @@ class AST_Number extends AST_Constant {
 
   needs_parens = function (output: any) {
     var p = output.parent()
-    if (p instanceof AST_PropAccess && p.expression === this) {
+    if (p?._needs_parens(this)) {
       var value = this.getValue()
       if (value < 0 || /^0/.test(make_num(value))) {
         return true
@@ -9831,7 +9833,7 @@ class AST_BigInt extends AST_Constant {
 
   needs_parens = function (output: any) {
     var p = output.parent()
-    if (p instanceof AST_PropAccess && p.expression === this) {
+    if (p?._needs_parens(this)) {
       var value = this.getValue()
       if (value.startsWith('-')) {
         return true
@@ -10324,7 +10326,7 @@ function needsParens (output: any) {
   // (a = foo) ? bar : baz
   if (p instanceof AST_Conditional && p.condition === this) { return true }
   // (a = foo)["prop"] —or— (a = foo).prop
-  if (p instanceof AST_PropAccess && p.expression === this) { return true }
+  if (p?._needs_parens(this)) { return true }
   // ({a, b} = {a: 1, b: 2}), a destructuring assignment
   if (this instanceof AST_Assign && this.left instanceof AST_Destructuring && this.left.is_array === false) { return true }
   return undefined

@@ -32,6 +32,10 @@ import {
 export default class AST_Node {
   start: any
   end: any
+  _needs_parens (child: AST_Node) {
+    return false
+  }
+
   _optimize (self, compressor?: any) {
     return self
   }
