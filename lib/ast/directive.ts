@@ -45,7 +45,6 @@ export default class AST_Directive extends AST_Statement {
   } as any
 
   CTOR = this.constructor
-  flags = 0
   TYPE = 'Statement'
   static PROPS = AST_Statement.PROPS.concat(['value', 'quote'])
   constructor (args?) { // eslint-disable-line

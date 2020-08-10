@@ -13,7 +13,6 @@ export default class AST_EmptyStatement extends AST_Statement {
 
   static documentation = 'The empty statement (empty block or simply a semicolon)'
   CTOR = this.constructor
-  flags = 0
   TYPE = 'EmptyStatement'
   static PROPS = AST_Statement.PROPS
   constructor (args?) { // eslint-disable-line
