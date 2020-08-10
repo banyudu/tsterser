@@ -32,6 +32,7 @@
         "@typescript-eslint/no-extraneous-class": "warn",
         "@typescript-eslint/no-throw-literal": "off",
         "@typescript-eslint/no-base-to-string": "off",
-        "no-void": "warn"
+        "no-void": "warn",
+        "import/no-cycle": "error"
     }
 }
