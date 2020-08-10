@@ -130,6 +130,7 @@ import AST_NewTarget from './new-target'
 import AST_Expansion from './expansion'
 import AST_TemplateSegment from './template-segment'
 import AST_Constant from './constant'
+import AST_String from './string'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9758,39 +9759,6 @@ class AST_Super extends AST_This {
 
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_String extends AST_Constant {
-  value: any
-  quote: any
-
-  is_string = return_true
-  _size = function (): number {
-    return this.value.length + 2
-  }
-
-  shallow_cmp = mkshallow({
-    value: 'eq'
-  })
-
-  _codegen = function (self, output) {
-    output.print_string(self.getValue(), self.quote, output.in_directive)
-  }
-
-  static documentation = 'A string literal'
-  static propdoc = {
-    value: '[string] the contents of this string',
-    quote: '[string] the original quote character'
-  }
-
-  TYPE = 'String'
-  static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
-
-  constructor (args) {
-    super(args)
-    this.value = args.value
-    this.quote = args.quote
   }
 }
 
