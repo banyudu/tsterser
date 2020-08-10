@@ -58,7 +58,6 @@ export default class AST_SimpleStatement extends AST_Statement {
     body: '[AST_Node] an expression node (should not be instanceof AST_Statement)'
   }
 
-  CTOR = this.constructor
   TYPE = 'SimpleStatement'
   static PROPS = AST_Statement.PROPS.concat(['body'])
   constructor (args?) { // eslint-disable-line

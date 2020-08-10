@@ -306,8 +306,6 @@ class AST_Block extends AST_Statement {
     block_scope: '[AST_Scope] the block scope'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'Block'
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
   constructor (args?) { // eslint-disable-line
@@ -343,7 +341,6 @@ class AST_BlockStatement extends AST_Block {
   _codegen = blockStateMentCodeGen
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'A block statement'
-  CTOR = this.constructor
 
   TYPE = 'BlockStatement'
   static PROPS = AST_Block.PROPS
@@ -362,8 +359,6 @@ class AST_StatementWithBody extends AST_Statement {
   static propdoc = {
     body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
   } as any
-
-  CTOR = this.constructor
 
   TYPE = 'StatementWithBody'
   static PROPS = AST_Statement.PROPS.concat(['body'])
@@ -451,8 +446,6 @@ class AST_LabeledStatement extends AST_StatementWithBody {
     label: '[AST_Label] a label definition'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'LabeledStatement'
   static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
   constructor (args?) { // eslint-disable-line
@@ -473,8 +466,6 @@ class AST_IterationStatement extends AST_StatementWithBody {
     block_scope: '[AST_Scope] the block scope for this iteration statement.'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'StatementWithBody'
   static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
   constructor (args?) { // eslint-disable-line
@@ -489,8 +480,6 @@ class AST_DWLoop extends AST_IterationStatement {
   static propdoc = {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'DWLoop'
   static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
@@ -586,7 +575,6 @@ class AST_Do extends AST_DWLoop {
   }
 
   static documentation = 'A `do` statement'
-  CTOR = this.constructor
 
   TYPE = 'Do'
   static PROPS = AST_DWLoop.PROPS
@@ -647,7 +635,6 @@ class AST_While extends AST_DWLoop {
   }
 
   static documentation = 'A `while` statement'
-  CTOR = this.constructor
 
   TYPE = 'While'
   static PROPS = AST_DWLoop.PROPS
@@ -789,8 +776,6 @@ class AST_For extends AST_IterationStatement {
     step: '[AST_Node?] the `for` update clause, or null if empty'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'For'
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
   constructor (args?) { // eslint-disable-line
@@ -869,8 +854,6 @@ class AST_ForIn extends AST_IterationStatement {
     object: "[AST_Node] the object that we're looping through"
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'ForIn'
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
   constructor (args?) { // eslint-disable-line
@@ -892,7 +875,6 @@ class AST_ForOf extends AST_ForIn {
   })
 
   static documentation = 'A `for ... of` statement'
-  CTOR = this.constructor
 
   TYPE = 'ForOf'
   static PROPS = AST_ForIn.PROPS.concat(['await'])
@@ -943,8 +925,6 @@ class AST_With extends AST_StatementWithBody {
   static propdoc = {
     expression: '[AST_Node] the `with` expression'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Scope'
   static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
@@ -2029,8 +2009,6 @@ class AST_Scope extends AST_Block {
     cname: '[integer/S] current index for mangling variables (used internally by the mangler)'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'Scope'
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
   constructor (args?) { // eslint-disable-line
@@ -2377,8 +2355,6 @@ class AST_Toplevel extends AST_Scope {
     globals: '[Map/S] a map of name -> SymbolDef for all undeclared names'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Toplevel'
   static PROPS = AST_Scope.PROPS.concat(['globals'])
   constructor (args?) { // eslint-disable-line
@@ -2519,8 +2495,6 @@ class AST_Lambda extends AST_Scope {
     async: '[boolean] is this method async'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Lambda'
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
   constructor (args?) { // eslint-disable-line
@@ -2548,7 +2522,6 @@ class AST_Accessor extends AST_Lambda {
   }
 
   static documentation = 'A setter/getter function.  The `name` property is always null.'
-  CTOR = this.constructor
 
   TYPE = 'Accessor'
   static PROPS = AST_Lambda.PROPS
@@ -2661,7 +2634,6 @@ class AST_Function extends AST_Lambda {
   }
 
   static documentation = 'A function expression'
-  CTOR = this.constructor
 
   TYPE = 'Function'
   static PROPS = AST_Lambda.PROPS
@@ -2762,7 +2734,6 @@ class AST_Arrow extends AST_Lambda {
   }
 
   static documentation = 'An ES6 Arrow function ((a) => b)'
-  CTOR = this.constructor
 
   TYPE = 'Arrow'
   static PROPS = AST_Lambda.PROPS
@@ -2789,7 +2760,6 @@ class AST_Defun extends AST_Lambda {
   }
 
   static documentation = 'A function definition'
-  CTOR = this.constructor
 
   TYPE = 'Defun'
   static PROPS = AST_Lambda.PROPS
@@ -2914,8 +2884,6 @@ class AST_Destructuring extends AST_Node {
     is_array: '[Boolean] Whether the destructuring represents an object or array'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Destructuring'
   static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
   constructor (args?) { // eslint-disable-line
@@ -2978,8 +2946,6 @@ class AST_PrefixedTemplateString extends AST_Node {
     template_string: '[AST_TemplateString] The template string',
     prefix: '[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`.'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'PrefixedTemplateString'
   static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
@@ -3141,8 +3107,6 @@ class AST_TemplateString extends AST_Node {
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'TemplateString'
   static PROPS = AST_Node.PROPS.concat(['segments'])
   constructor (args?) { // eslint-disable-line
@@ -3158,7 +3122,6 @@ class AST_Jump extends AST_Statement {
   shallow_cmp = pass_through
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
-  CTOR = this.constructor
 
   TYPE = 'Jump'
   static PROPS = AST_Statement.PROPS
@@ -3204,8 +3167,6 @@ class AST_Exit extends AST_Jump {
     value: '[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Exit'
   static PROPS = AST_Jump.PROPS.concat(['value'])
   constructor (args?) { // eslint-disable-line
@@ -3240,7 +3201,6 @@ class AST_Return extends AST_Exit {
   }
 
   static documentation: 'A `return` statement'
-  CTOR = this.constructor
 
   TYPE = 'Return'
   static PROPS = AST_Exit.PROPS
@@ -3261,7 +3221,6 @@ class AST_Throw extends AST_Exit {
   }
 
   static documentation = 'A `throw` statement'
-  CTOR = this.constructor
 
   TYPE = 'Throw'
   static PROPS = AST_Exit.PROPS
@@ -3301,8 +3260,6 @@ class AST_LoopControl extends AST_Jump {
     label: '[AST_LabelRef?] the label, or null if none'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'LoopControl'
   static PROPS = AST_Jump.PROPS.concat(['label'])
   constructor (args?) { // eslint-disable-line
@@ -3326,7 +3283,6 @@ class AST_Break extends AST_LoopControl {
   }
 
   static documentation = 'A `break` statement'
-  CTOR = this.constructor
 
   TYPE = 'Break'
   static PROPS = AST_LoopControl.PROPS
@@ -3350,7 +3306,6 @@ class AST_Continue extends AST_LoopControl {
   }
 
   static documentation = 'A `continue` statement'
-  CTOR = this.constructor
 
   TYPE = 'Continue'
   static PROPS = AST_LoopControl.PROPS
@@ -3410,8 +3365,6 @@ class AST_Await extends AST_Node {
   static propdoc = {
     expression: '[AST_Node] the mandatory expression being awaited'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Await'
   static PROPS = AST_Node.PROPS.concat(['expression'])
@@ -3490,8 +3443,6 @@ class AST_Yield extends AST_Node {
     expression: '[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false',
     is_star: '[Boolean] Whether this is a yield or yield* statement'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Yield'
   static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
@@ -3741,8 +3692,6 @@ class AST_If extends AST_StatementWithBody {
     alternative: '[AST_Statement?] the `else` part, or null if not present'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'If'
   static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
   constructor (args?) { // eslint-disable-line
@@ -3926,8 +3875,6 @@ class AST_Switch extends AST_Block {
     expression: '[AST_Node] the `switch` “discriminant”'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Switch'
   static PROPS = AST_Block.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
@@ -3959,7 +3906,6 @@ class AST_SwitchBranch extends AST_Block {
 
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'Base class for `switch` branches'
-  CTOR = this.constructor
 
   TYPE = 'SwitchBranch'
   static PROPS = AST_Block.PROPS
@@ -3986,7 +3932,6 @@ class AST_Default extends AST_SwitchBranch {
   }
 
   static documentation = 'A `default` switch branch'
-  CTOR = this.constructor
 
   TYPE = 'Case'
   static PROPS = AST_SwitchBranch.PROPS
@@ -4050,8 +3995,6 @@ class AST_Case extends AST_SwitchBranch {
   static propdoc = {
     expression: '[AST_Node] the `case` expression'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Case'
   static PROPS = AST_Block.PROPS.concat(['expression'])
@@ -4169,8 +4112,6 @@ class AST_Try extends AST_Block {
     bfinally: '[AST_Finally?] the finally block, or null if not present'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Try'
   static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
   constructor (args?) { // eslint-disable-line
@@ -4240,8 +4181,6 @@ class AST_Catch extends AST_Block {
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Catch'
   static PROPS = AST_Block.PROPS.concat(['argname'])
   constructor (args?) { // eslint-disable-line
@@ -4265,7 +4204,6 @@ class AST_Finally extends AST_Block {
 
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
-  CTOR = this.constructor
 
   TYPE = 'Finally'
   static PROPS = AST_Block.PROPS.concat(['argname'])
@@ -4392,8 +4330,6 @@ class AST_Definitions extends AST_Statement {
     definitions: '[AST_VarDef*] array of variable definitions'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Definitions'
   static PROPS = AST_Statement.PROPS.concat(['definitions'])
   constructor (args?) { // eslint-disable-line
@@ -4412,7 +4348,6 @@ class AST_Var extends AST_Definitions {
   }
 
   static documentation = 'A `var` statement'
-  CTOR = this.constructor
 
   TYPE = 'Var'
   static PROPS = AST_Definitions.PROPS
@@ -4431,7 +4366,6 @@ class AST_Let extends AST_Definitions {
   }
 
   static documentation = 'A `let` statement'
-  CTOR = this.constructor
 
   TYPE = 'Let'
   static PROPS = AST_Definitions.PROPS
@@ -4450,7 +4384,6 @@ class AST_Const extends AST_Definitions {
   }
 
   static documentation = 'A `const` statement'
-  CTOR = this.constructor
 
   TYPE = 'Const'
   static PROPS = AST_Definitions.PROPS
@@ -4544,8 +4477,6 @@ class AST_VarDef extends AST_Node {
     value: "[AST_Node?] initializer, or null of there's no initializer"
   }
 
-  CTOR = this.constructor
-
   TYPE = 'VarDef'
   static PROPS = AST_Node.PROPS.concat(['name', 'value'])
   constructor (args?) { // eslint-disable-line
@@ -4612,8 +4543,6 @@ class AST_NameMapping extends AST_Node {
     foreign_name: '[AST_SymbolExportForeign|AST_SymbolImportForeign] The name being exported/imported (as specified in the module)',
     name: '[AST_SymbolExport|AST_SymbolImport] The name as it is visible to this module.'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'NameMapping'
   static PROPS = AST_Node.PROPS.concat(['foreign_name', 'name'])
@@ -4755,8 +4684,6 @@ class AST_Import extends AST_Node {
     imported_names: '[AST_NameMapping*] The names of non-default imported variables',
     module_name: '[AST_String] String literal describing where this module came from'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Import'
   static PROPS = AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
@@ -4919,8 +4846,6 @@ class AST_Export extends AST_Statement {
     module_name: '[AST_String?] Name of the file to load exports from',
     is_default: '[Boolean] Whether this is the default exported value of this module'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Export'
   static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
@@ -5785,8 +5710,6 @@ class AST_Call extends AST_Node {
     _annotations: '[number] bitfield containing information about the call'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Call'
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
   constructor (args?) { // eslint-disable-line
@@ -5836,7 +5759,6 @@ class AST_New extends AST_Call {
 
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
-  CTOR = this.constructor
 
   TYPE = 'New'
   static PROPS = AST_Call.PROPS
@@ -6004,8 +5926,6 @@ class AST_Sequence extends AST_Node {
     expressions: '[AST_Node*] array of expressions (at least two)'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Sequence'
   static PROPS = AST_Node.PROPS.concat(['expressions'])
   constructor (args?) { // eslint-disable-line
@@ -6133,8 +6053,6 @@ class AST_PropAccess extends AST_Node {
     expression: '[AST_Node] the “container” expression',
     property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
   } as any
-
-  CTOR = this.constructor
 
   TYPE = 'PropAccess'
   static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
@@ -6304,8 +6222,6 @@ class AST_Dot extends AST_PropAccess {
   static propdoc = {
     quote: '[string] the original quote character when transformed from AST_Sub'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Dot'
   static PROPS = AST_PropAccess.PROPS.concat(['quote'])
@@ -6493,7 +6409,6 @@ class AST_Sub extends AST_PropAccess {
   }
 
   static documentation = 'Index-style property access, i.e. `a["foo"]`'
-  CTOR = this.constructor
 
   TYPE = 'Sub'
   static PROPS = AST_PropAccess.PROPS
@@ -6630,8 +6545,6 @@ class AST_Unary extends AST_Node {
     operator: '[string] the operator',
     expression: '[AST_Node] expression that this unary operator applies to'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Unary'
   static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
@@ -6776,7 +6689,6 @@ class AST_UnaryPrefix extends AST_Unary {
   }
 
   static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
-  CTOR = this.constructor
 
   TYPE = 'UnaryPrefix'
   static PROPS = AST_Unary.PROPS
@@ -6797,7 +6709,6 @@ class AST_UnaryPostfix extends AST_Unary {
   }
 
   static documentation = 'Unary postfix expression, i.e. `i++`'
-  CTOR = this.constructor
 
   TYPE = 'UnaryPostfix '
   static PROPS = AST_Unary.PROPS
@@ -7603,8 +7514,6 @@ class AST_Binary extends AST_Node {
     right: '[AST_Node] right-hand side expression'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Binary'
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
   constructor (args?) { // eslint-disable-line
@@ -8005,8 +7914,6 @@ class AST_Conditional extends AST_Node {
     alternative: '[AST_Node]'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Conditional'
   static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
   constructor (args?) { // eslint-disable-line
@@ -8168,7 +8075,6 @@ class AST_Assign extends AST_Binary {
 
   needs_parens = needsParens
   static documentation = 'An assignment expression — `a = b + 5`'
-  CTOR = this.constructor
 
   TYPE = 'Assign'
   static PROPS = AST_Binary.PROPS
@@ -8196,7 +8102,6 @@ class AST_DefaultAssign extends AST_Binary {
   }
 
   static documentation = 'A default assignment expression like in `(a = 3) => a`'
-  CTOR = this.constructor
 
   TYPE = 'DefaultAssign'
   static PROPS = AST_Binary.PROPS
@@ -8301,8 +8206,6 @@ class AST_Array extends AST_Node {
   static propdoc = {
     elements: '[AST_Node*] array of elements'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Array'
   static PROPS = AST_Node.PROPS.concat(['elements'])
@@ -8451,8 +8354,6 @@ class AST_Object extends AST_Node {
     properties: '[AST_ObjectProperty*] array of properties'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Object'
   static PROPS = AST_Node.PROPS.concat(['properties'])
   constructor (args?) { // eslint-disable-line
@@ -8599,8 +8500,6 @@ class AST_ObjectProperty extends AST_Node {
     value: '[AST_Node] property value.  For getters and setters this is an AST_Accessor.'
   } as any
 
-  CTOR = this.constructor
-
   TYPE = 'ObjectProperty'
   static PROPS = AST_Node.PROPS.concat(['key', 'value'])
   constructor (args?) { // eslint-disable-line
@@ -8698,8 +8597,6 @@ class AST_ObjectKeyVal extends AST_ObjectProperty {
     quote: '[string] the original quote character'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'ObjectKeyVal'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
   constructor (args?) { // eslint-disable-line
@@ -8747,7 +8644,6 @@ class AST_ObjectSetter extends AST_ObjectProperty {
   }
 
   static documentation = 'An object setter property'
-  CTOR = this.constructor
 
   TYPE = 'ObjectSetter'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
@@ -8798,7 +8694,6 @@ class AST_ObjectGetter extends AST_ObjectProperty {
   }
 
   static documentation = 'An object getter property'
-  CTOR = this.constructor
 
   TYPE = 'ObjectGetter'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
@@ -8907,7 +8802,6 @@ class AST_ConciseMethod extends AST_ObjectProperty {
   }
 
   static documentation = 'An ES6 concise method inside an object or class'
-  CTOR = this.constructor
 
   TYPE = 'ConciseMethod'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
@@ -9081,7 +8975,6 @@ class AST_Class extends AST_Scope {
   }
 
   static documentation = 'An ES6 class'
-  CTOR = this.constructor
 
   TYPE = 'Class'
   static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
@@ -9177,8 +9070,6 @@ class AST_ClassProperty extends AST_ObjectProperty {
     quote: '[string] which quote is being used'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'ClassProperty'
   static PROPS = AST_ObjectProperty.PROPS.concat(['static', 'quote'])
   constructor (args?) { // eslint-disable-line
@@ -9194,7 +9085,6 @@ class AST_DefClass extends AST_Class {
   properties: any[]
 
   static documentation = 'A class definition'
-  CTOR = this.constructor
 
   TYPE = 'DefClass'
   static PROPS = AST_Class.PROPS
@@ -9208,7 +9098,6 @@ class AST_ClassExpression extends AST_Class {
 
   needs_parens = first_in_statement
   static documentation: 'A class expression.'
-  CTOR = this.constructor
 
   TYPE = 'ClassExpression'
   static PROPS = AST_Class.PROPS
@@ -9303,7 +9192,6 @@ class AST_Symbol extends AST_Node {
   } as any
 
   static documentation = 'Base class for all symbols'
-  CTOR = this.constructor
 
   TYPE = 'Symbol'
   static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
@@ -9327,7 +9215,6 @@ class AST_SymbolDeclaration extends AST_Symbol {
   }
 
   static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
-  CTOR = this.constructor
 
   TYPE = 'SymbolDeclaration'
   static PROPS = AST_Symbol.PROPS.concat(['init'])
@@ -9339,7 +9226,6 @@ class AST_SymbolDeclaration extends AST_Symbol {
 
 class AST_SymbolVar extends AST_SymbolDeclaration {
   static documentation = 'Symbol defining a variable'
-  CTOR = this.constructor
 
   TYPE = 'SymbolVar'
   static PROPS = AST_SymbolDeclaration.PROPS
@@ -9350,7 +9236,6 @@ class AST_SymbolVar extends AST_SymbolDeclaration {
 
 class AST_SymbolBlockDeclaration extends AST_SymbolDeclaration {
   static documentation = 'Base class for block-scoped declaration symbols'
-  CTOR = this.constructor
 
   TYPE = 'SymbolBlockDeclaration'
   static PROPS = AST_SymbolDeclaration.PROPS
@@ -9361,7 +9246,6 @@ class AST_SymbolBlockDeclaration extends AST_SymbolDeclaration {
 
 class AST_SymbolConst extends AST_SymbolBlockDeclaration {
   static documentation = 'A constant declaration'
-  CTOR = this.constructor
 
   TYPE = 'SymbolConst'
   static PROPS = AST_SymbolBlockDeclaration.PROPS
@@ -9372,7 +9256,6 @@ class AST_SymbolConst extends AST_SymbolBlockDeclaration {
 
 class AST_SymbolLet extends AST_SymbolBlockDeclaration {
   static documentation = 'A block-scoped `let` declaration'
-  CTOR = this.constructor
 
   TYPE = 'SymbolLet'
   static PROPS = AST_SymbolBlockDeclaration.PROPS
@@ -9383,7 +9266,6 @@ class AST_SymbolLet extends AST_SymbolBlockDeclaration {
 
 class AST_SymbolFunarg extends AST_SymbolVar {
   static documentation = 'Symbol naming a function argument'
-  CTOR = this.constructor
 
   TYPE = 'SymbolFunarg'
   static PROPS = AST_SymbolVar.PROPS
@@ -9394,7 +9276,6 @@ class AST_SymbolFunarg extends AST_SymbolVar {
 
 class AST_SymbolDefun extends AST_SymbolDeclaration {
   static documentation = 'Symbol defining a function'
-  CTOR = this.constructor
 
   TYPE = 'SymbolDefun'
   static PROPS = AST_SymbolDeclaration.PROPS
@@ -9405,7 +9286,6 @@ class AST_SymbolDefun extends AST_SymbolDeclaration {
 
 class AST_SymbolMethod extends AST_Symbol {
   static documentation = 'Symbol in an object defining a method'
-  CTOR = this.constructor
 
   TYPE = 'SymbolMethod'
   static PROPS = AST_Symbol.PROPS
@@ -9423,7 +9303,6 @@ class AST_SymbolClassProperty extends AST_Symbol {
   }
 
   static documentation = 'Symbol for a class property'
-  CTOR = this.constructor
 
   TYPE = 'SymbolClassProperty'
   static PROPS = AST_Symbol.PROPS
@@ -9434,7 +9313,6 @@ class AST_SymbolClassProperty extends AST_Symbol {
 
 class AST_SymbolLambda extends AST_SymbolDeclaration {
   static documentation = 'Symbol naming a function expression'
-  CTOR = this.constructor
 
   TYPE = 'SymbolLambda'
   static PROPS = AST_SymbolDeclaration.PROPS
@@ -9445,7 +9323,6 @@ class AST_SymbolLambda extends AST_SymbolDeclaration {
 
 class AST_SymbolDefClass extends AST_SymbolBlockDeclaration {
   static documentation = "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
-  CTOR = this.constructor
 
   TYPE = 'SymbolDefClass'
   static PROPS = AST_SymbolBlockDeclaration.PROPS
@@ -9456,7 +9333,6 @@ class AST_SymbolDefClass extends AST_SymbolBlockDeclaration {
 
 class AST_SymbolClass extends AST_SymbolDeclaration {
   static documentation = "Symbol naming a class's name. Lexically scoped to the class."
-  CTOR = this.constructor
 
   TYPE = 'SymbolClass'
   static PROPS = AST_SymbolDeclaration.PROPS
@@ -9471,7 +9347,6 @@ class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
   }
 
   static documentation = 'Symbol naming the exception in catch'
-  CTOR = this.constructor
 
   TYPE = 'SymbolCatch '
   static PROPS = AST_SymbolBlockDeclaration.PROPS
@@ -9482,7 +9357,6 @@ class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
 
 class AST_SymbolImport extends AST_SymbolBlockDeclaration {
   static documentation = 'Symbol referring to an imported name'
-  CTOR = this.constructor
 
   TYPE = 'SymbolImport'
   static PROPS = AST_SymbolBlockDeclaration.PROPS
@@ -9497,7 +9371,6 @@ class AST_SymbolImportForeign extends AST_Symbol {
   }
 
   static documentation = "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes"
-  CTOR = this.constructor
 
   TYPE = 'SymbolImportForeign'
   static PROPS = AST_Symbol.PROPS
@@ -9522,8 +9395,6 @@ class AST_Label extends AST_Symbol {
   static propdoc = {
     references: '[AST_LoopControl*] a list of nodes referring to this label'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'Label'
   static PROPS = AST_Symbol.PROPS.concat(['references'])
@@ -9804,7 +9675,6 @@ class AST_SymbolRef extends AST_Symbol {
   }
 
   static documentation = 'Reference to some symbol (not definition/declaration)'
-  CTOR = this.constructor
 
   TYPE = 'SymbolRef'
   static PROPS = AST_Symbol.PROPS
@@ -9819,7 +9689,6 @@ class AST_SymbolExport extends AST_SymbolRef {
   }
 
   static documentation = 'Symbol referring to a name to export'
-  CTOR = this.constructor
 
   TYPE = 'SymbolExport'
   static PROPS = AST_SymbolRef.PROPS
@@ -9834,7 +9703,6 @@ class AST_SymbolExportForeign extends AST_Symbol {
   }
 
   static documentation = "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
-  CTOR = this.constructor
 
   TYPE = 'SymbolExportForeign'
   static PROPS = AST_Symbol.PROPS
@@ -9847,7 +9715,6 @@ class AST_LabelRef extends AST_Symbol {
   thedef: any
 
   static documentation = 'Reference to a label symbol'
-  CTOR = this.constructor
 
   TYPE = 'LabelRef'
   static PROPS = AST_Symbol.PROPS
@@ -9865,7 +9732,6 @@ class AST_This extends AST_Symbol {
   }
 
   static documentation = 'The `this` symbol'
-  CTOR = this.constructor
 
   TYPE = 'This'
   static PROPS = AST_Symbol.PROPS
@@ -9884,7 +9750,6 @@ class AST_Super extends AST_This {
   }
 
   static documentation: 'The `super` symbol'
-  CTOR = this.constructor
 
   TYPE = 'Super'
   static PROPS = AST_This.PROPS
@@ -9940,8 +9805,6 @@ class AST_Constant extends AST_Node {
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'Base class for all constants'
 
-  CTOR = this.constructor
-
   TYPE = 'String'
   static PROPS = AST_Node.PROPS
 
@@ -9972,8 +9835,6 @@ class AST_String extends AST_Constant {
     value: '[string] the contents of this string',
     quote: '[string] the original quote character'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'String'
   static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
@@ -10025,8 +9886,6 @@ class AST_Number extends AST_Constant {
     literal: '[string] numeric value as string (optional)'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'Number'
   static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
 
@@ -10069,8 +9928,6 @@ class AST_BigInt extends AST_Constant {
   static propdoc = {
     value: '[string] big int value'
   }
-
-  CTOR = this.constructor
 
   TYPE = 'BigInt'
   static PROPS = AST_Constant.PROPS.concat(['value'])
@@ -10140,8 +9997,6 @@ class AST_RegExp extends AST_Constant {
     value: '[RegExp] the actual regexp'
   }
 
-  CTOR = this.constructor
-
   TYPE = 'RegExp'
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
@@ -10161,7 +10016,6 @@ class AST_Atom extends AST_Constant {
   } as Function
 
   static documentation = 'Base class for atoms'
-  CTOR = this.constructor
 
   TYPE = 'Null'
   static PROPS = AST_Constant.PROPS
@@ -10173,7 +10027,6 @@ class AST_Null extends AST_Atom {
   _size = () => 4
   _to_mozilla_ast = To_Moz_Literal
   static documentation: 'The `null` atom'
-  CTOR = this.constructor
 
   TYPE = 'Null'
   static PROPS = AST_Atom.PROPS
@@ -10200,7 +10053,6 @@ class AST_NaN extends AST_Atom {
   value = 0 / 0
   _size = () => 3
   static documentation: 'The impossible value'
-  CTOR = this.constructor
 
   TYPE = 'NaN'
   static PROPS = AST_Atom.PROPS
@@ -10234,7 +10086,6 @@ class AST_Undefined extends AST_Atom {
   value = (function () {}())
   _size = () => 6 // "void 0"
   static documentation: 'The `undefined` value'
-  CTOR = this.constructor
 
   TYPE = 'Undefined'
   static PROPS = AST_Atom.PROPS
@@ -10249,7 +10100,6 @@ class AST_Hole extends AST_Atom {
 
   _codegen = noop
   static documentation = 'A hole in an array'
-  CTOR = this.constructor
 
   TYPE = 'Hole'
 
@@ -10281,7 +10131,6 @@ class AST_Infinity extends AST_Atom {
   value = 1 / 0
   _size = () => 8
   static documentation: 'The `Infinity` value'
-  CTOR = this.constructor
 
   TYPE = 'Infinity'
 
@@ -10330,7 +10179,6 @@ class AST_Boolean extends AST_Atom {
 
   _to_mozilla_ast = To_Moz_Literal
   static documentation = 'Base class for booleans'
-  CTOR = this.constructor
 
   TYPE = 'Boolean'
 
@@ -10342,7 +10190,6 @@ class AST_False extends AST_Boolean {
   value = false
   _size = () => 5
   static documentation = 'The `false` atom'
-  CTOR = this.constructor
 
   TYPE = 'False'
 
@@ -10354,8 +10201,6 @@ class AST_True extends AST_Boolean {
   value = true
   _size = () => 4
   static documentation = 'The `true` atom'
-
-  CTOR = this.constructor
 
   TYPE = 'True'
 

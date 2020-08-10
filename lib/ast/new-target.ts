@@ -23,7 +23,7 @@ export default class AST_NewTarget extends AST_Node {
   }
 
   static documentation: 'A reference to new.target'
-  CTOR = this.constructor
+
   TYPE = 'NewTarget'
   static PROPS = AST_Node.PROPS
   constructor (args?) { // eslint-disable-line

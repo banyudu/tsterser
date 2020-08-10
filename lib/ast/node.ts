@@ -208,7 +208,10 @@ export default class AST_Node {
     return ast
   }
 
-  CTOR = this.constructor as any
+  get CTOR (): new (...args: any[]) => any {
+    return this.constructor as any
+  }
+
   flags = 0
   TYPE = 'Node'
   static PROPS = ['start', 'end']

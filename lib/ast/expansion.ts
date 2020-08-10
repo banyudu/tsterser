@@ -45,7 +45,6 @@ export default class AST_Expansion extends AST_Node {
     expression: '[AST_Node] the thing to be expanded'
   }
 
-  CTOR = this.constructor
   TYPE = 'Expansion'
   static PROPS = AST_Node.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
