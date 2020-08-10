@@ -127,6 +127,7 @@ import AST_SimpleStatement from './simple-statement'
 import AST_EmptyStatement from './empty-statement'
 import AST_NewTarget from './new-target'
 import AST_Expansion from './expansion'
+import AST_TemplateSegment from './template-segment'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -3147,35 +3148,6 @@ class AST_TemplateString extends AST_Node {
   constructor (args?) { // eslint-disable-line
     super(args)
     this.segments = args.segments
-  }
-}
-
-class AST_TemplateSegment extends AST_Node {
-  value: any
-  raw: any
-
-  drop_side_effect_free = return_null
-  has_side_effects = return_false
-  shallow_cmp = mkshallow({ value: 'eq' })
-  _size (): number {
-    return this.value.length
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'A segment of a template string literal'
-  static propdoc = {
-    value: 'Content of the segment',
-    raw: 'Raw content of the segment'
-  }
-
-  CTOR = this.constructor
-  flags = 0
-  TYPE = 'TemplateSegment'
-  static PROPS = AST_Node.PROPS.concat(['value', 'raw'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.value = args.value
-    this.raw = args.raw
   }
 }
 
