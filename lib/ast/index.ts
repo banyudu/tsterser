@@ -1743,12 +1743,14 @@ class AST_Scope extends AST_Block {
     return this.uses_eval || this.uses_with
   }
 
-  figure_out_scope (options: any, { parent_scope = null, toplevel = this } = {}) {
+  figure_out_scope (options: any, data: any = {}) {
     options = defaults(options, {
       cache: null,
       ie8: false,
       safari10: false
     })
+
+    const { parent_scope = null, toplevel = this } = data
 
     if (!(toplevel instanceof AST_Toplevel)) {
       throw new Error('Invalid toplevel scope')
