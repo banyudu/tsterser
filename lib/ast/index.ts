@@ -71,6 +71,7 @@ import {
   mkshallow,
   to_moz,
   to_moz_in_destructuring,
+  To_Moz_Literal,
   keep_name
 } from '../utils'
 
@@ -128,6 +129,7 @@ import AST_EmptyStatement from './empty-statement'
 import AST_NewTarget from './new-target'
 import AST_Expansion from './expansion'
 import AST_TemplateSegment from './template-segment'
+import AST_Constant from './constant'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9753,60 +9755,6 @@ class AST_Super extends AST_This {
 
   TYPE = 'Super'
   static PROPS = AST_This.PROPS
-
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-function To_Moz_Literal (M) {
-  var value = M.value
-  if (typeof value === 'number' && (value < 0 || (value === 0 && 1 / value < 0))) {
-    return {
-      type: 'UnaryExpression',
-      operator: '-',
-      prefix: true,
-      argument: {
-        type: 'Literal',
-        value: -value,
-        raw: M.start.raw
-      }
-    }
-  }
-  return {
-    type: 'Literal',
-    value: value,
-    raw: M.start.raw
-  }
-}
-
-class AST_Constant extends AST_Node {
-  value: any
-  literal: any
-
-  drop_side_effect_free = return_null
-  may_throw = return_false
-  has_side_effects = return_false
-  _eval = function (_arg: any) {
-    return this.getValue()
-  }
-
-  is_constant_expression = return_true
-  _dot_throw = return_false
-  getValue = function () {
-    return this.value
-  }
-
-  _to_mozilla_ast = To_Moz_Literal as Function
-  _codegen = function (self, output) {
-    output.print(self.getValue())
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'Base class for all constants'
-
-  TYPE = 'String'
-  static PROPS = AST_Node.PROPS
 
   constructor (args?) { // eslint-disable-line
     super(args)
