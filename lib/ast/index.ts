@@ -133,6 +133,7 @@ import AST_TemplateSegment from './template-segment'
 import AST_Constant from './constant'
 import AST_String from './string'
 import AST_Number from './number'
+import AST_BigInt from './big-int'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9763,48 +9764,6 @@ class AST_Super extends AST_This {
 
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_BigInt extends AST_Constant {
-  _eval = return_this
-  _size = function (): number {
-    return this.value.length
-  }
-
-  shallow_cmp = mkshallow({ value: 'eq' })
-
-  _to_mozilla_ast = M => ({
-    type: 'BigIntLiteral',
-    value: M.value
-  })
-
-  _codegen = function (self, output) {
-    output.print(self.getValue() + 'n')
-  }
-
-  needs_parens = function (output: any) {
-    var p = output.parent()
-    if (p?._needs_parens(this)) {
-      var value = this.getValue()
-      if (value.startsWith('-')) {
-        return true
-      }
-    }
-    return undefined
-  }
-
-  static documentation = 'A big int literal'
-  static propdoc = {
-    value: '[string] big int value'
-  }
-
-  TYPE = 'BigInt'
-  static PROPS = AST_Constant.PROPS.concat(['value'])
-
-  constructor (args) {
-    super(args)
-    this.value = args.value
   }
 }
 
