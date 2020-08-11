@@ -6,7 +6,7 @@ export default class AST_Atom extends AST_Constant {
   _to_mozilla_ast = function To_Moz_Atom (M) {
     return {
       type: 'Identifier',
-      name: String(M.value)
+      name: String(this.value)
     }
   } as Function
 

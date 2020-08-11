@@ -44,7 +44,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   _to_mozilla_ast = function To_Moz_ExpressionStatement (M) {
     return {
       type: 'ExpressionStatement',
-      expression: to_moz(M.body) // TODO: check type
+      expression: to_moz(this.body) // TODO: check type
     }
   }
 

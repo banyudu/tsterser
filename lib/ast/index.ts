@@ -2174,7 +2174,7 @@ class AST_Toplevel extends AST_Scope {
   }
 
   _to_mozilla_ast = function To_Moz_Program (M) {
-    return to_moz_scope('Program', M)
+    return to_moz_scope('Program', this)
   }
 
   _codegen (self, output) {
@@ -2662,12 +2662,12 @@ class AST_Arrow extends AST_Lambda {
   _to_mozilla_ast = function To_Moz_ArrowFunctionExpression (M) {
     var body = {
       type: 'BlockStatement',
-      body: M.body.map(to_moz)
+      body: this.body.map(to_moz)
     }
     return {
       type: 'ArrowFunctionExpression',
-      params: M.argnames.map(to_moz),
-      async: M.async,
+      params: this.argnames.map(to_moz),
+      async: this.async,
       body: body
     }
   }
@@ -2740,11 +2740,11 @@ class AST_Defun extends AST_Lambda {
   _to_mozilla_ast = function To_Moz_FunctionDeclaration (M) {
     return {
       type: 'FunctionDeclaration',
-      id: to_moz(M.name),
-      params: M.argnames.map(to_moz),
-      generator: M.is_generator,
-      async: M.async,
-      body: to_moz_scope('BlockStatement', M)
+      id: to_moz(this.name),
+      params: this.argnames.map(to_moz),
+      generator: this.is_generator,
+      async: this.async,
+      body: to_moz_scope('BlockStatement', this)
     }
   }
 
@@ -2841,15 +2841,15 @@ class AST_Destructuring extends AST_Node {
   }
 
   _to_mozilla_ast = function To_Moz_ObjectPattern (M) {
-    if (M.is_array) {
+    if (this.is_array) {
       return {
         type: 'ArrayPattern',
-        elements: M.names.map(to_moz)
+        elements: this.names.map(to_moz)
       }
     }
     return {
       type: 'ObjectPattern',
-      properties: M.names.map(to_moz)
+      properties: this.names.map(to_moz)
     }
   }
 
@@ -2911,8 +2911,8 @@ class AST_PrefixedTemplateString extends AST_Node {
   _to_mozilla_ast = function To_Moz_TaggedTemplateExpression (M) {
     return {
       type: 'TaggedTemplateExpression',
-      tag: to_moz(M.prefix),
-      quasi: to_moz(M.template_string)
+      tag: to_moz(this.prefix),
+      quasi: to_moz(this.template_string)
     }
   }
 
@@ -3051,17 +3051,17 @@ class AST_TemplateString extends AST_Node {
   _to_mozilla_ast = function To_Moz_TemplateLiteral (M) {
     var quasis: any[] = []
     var expressions: any[] = []
-    for (var i = 0; i < M.segments.length; i++) {
+    for (var i = 0; i < this.segments.length; i++) {
       if (i % 2 !== 0) {
-        expressions.push(to_moz(M.segments[i]))
+        expressions.push(to_moz(this.segments[i]))
       } else {
         quasis.push({
           type: 'TemplateElement',
           value: {
-            raw: M.segments[i].raw,
-            cooked: M.segments[i].value
+            raw: this.segments[i].raw,
+            cooked: this.segments[i].value
           },
-          tail: i === M.segments.length - 1
+          tail: i === this.segments.length - 1
         })
       }
     }
@@ -3879,8 +3879,8 @@ class AST_SwitchBranch extends AST_Block {
   _to_mozilla_ast = function To_Moz_SwitchCase (M) {
     return {
       type: 'SwitchCase',
-      test: to_moz(M.expression),
-      consequent: M.body.map(to_moz)
+      test: to_moz(this.expression),
+      consequent: this.body.map(to_moz)
     }
   }
 
@@ -4073,10 +4073,10 @@ class AST_Try extends AST_Block {
   _to_mozilla_ast = function To_Moz_TryStatement (M) {
     return {
       type: 'TryStatement',
-      block: to_moz_block(M),
-      handler: to_moz(M.bcatch),
+      block: to_moz_block(this),
+      handler: to_moz(this.bcatch),
       guardedHandlers: [],
-      finalizer: to_moz(M.bfinally)
+      finalizer: to_moz(this.bfinally)
     }
   }
 
@@ -4146,9 +4146,9 @@ class AST_Catch extends AST_Block {
   _to_mozilla_ast = function To_Moz_CatchClause (M) {
     return {
       type: 'CatchClause',
-      param: to_moz(M.argname),
+      param: to_moz(this.argname),
       guard: null,
-      body: to_moz_block(M)
+      body: to_moz_block(this)
     }
   }
 
@@ -4294,9 +4294,9 @@ class AST_Definitions extends AST_Statement {
     return {
       type: 'VariableDeclaration',
       kind:
-                M instanceof AST_Const ? 'const'
-                  : M instanceof AST_Let ? 'let' : 'var',
-      declarations: M.definitions.map(to_moz)
+                this instanceof AST_Const ? 'const'
+                  : this instanceof AST_Let ? 'let' : 'var',
+      declarations: this.definitions.map(to_moz)
     }
   }
 
@@ -4605,19 +4605,19 @@ class AST_Import extends AST_Node {
 
   _to_mozilla_ast = function To_Moz_ImportDeclaration (M) {
     var specifiers: any[] = []
-    if (M.imported_name) {
+    if (this.imported_name) {
       specifiers.push({
         type: 'ImportDefaultSpecifier',
-        local: to_moz(M.imported_name)
+        local: to_moz(this.imported_name)
       })
     }
-    if (M.imported_names && M.imported_names[0].foreign_name.name === '*') {
+    if (this.imported_names && this.imported_names[0].foreign_name.name === '*') {
       specifiers.push({
         type: 'ImportNamespaceSpecifier',
-        local: to_moz(M.imported_names[0].name)
+        local: to_moz(this.imported_names[0].name)
       })
-    } else if (M.imported_names) {
-      M.imported_names.forEach(function (name_mapping) {
+    } else if (this.imported_names) {
+      this.imported_names.forEach(function (name_mapping) {
         specifiers.push({
           type: 'ImportSpecifier',
           local: to_moz(name_mapping.name),
@@ -4628,7 +4628,7 @@ class AST_Import extends AST_Node {
     return {
       type: 'ImportDeclaration',
       specifiers: specifiers,
-      source: to_moz(M.module_name)
+      source: to_moz(this.module_name)
     }
   }
 
@@ -4756,29 +4756,29 @@ class AST_Export extends AST_Statement {
   }
 
   _to_mozilla_ast = function To_Moz_ExportDeclaration (M) {
-    if (M.exported_names) {
-      if (M.exported_names[0].name.name === '*') {
+    if (this.exported_names) {
+      if (this.exported_names[0].name.name === '*') {
         return {
           type: 'ExportAllDeclaration',
-          source: to_moz(M.module_name)
+          source: to_moz(this.module_name)
         }
       }
       return {
         type: 'ExportNamedDeclaration',
-        specifiers: M.exported_names.map(function (name_mapping) {
+        specifiers: this.exported_names.map(function (name_mapping) {
           return {
             type: 'ExportSpecifier',
             exported: to_moz(name_mapping.foreign_name),
             local: to_moz(name_mapping.name)
           }
         }),
-        declaration: to_moz(M.exported_definition),
-        source: to_moz(M.module_name)
+        declaration: to_moz(this.exported_definition),
+        source: to_moz(this.module_name)
       }
     }
     return {
-      type: M.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
-      declaration: to_moz(M.exported_value || M.exported_definition)
+      type: this.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
+      declaration: to_moz(this.exported_value || this.exported_definition)
     }
   }
 
@@ -5866,7 +5866,7 @@ class AST_Sequence extends AST_Node {
   _to_mozilla_ast = function To_Moz_SequenceExpression (M) {
     return {
       type: 'SequenceExpression',
-      expressions: M.expressions.map(to_moz)
+      expressions: this.expressions.map(to_moz)
     }
   }
 
@@ -6012,12 +6012,12 @@ class AST_PropAccess extends AST_Node {
 
   shallow_cmp = pass_through as any
   _to_mozilla_ast = function To_Moz_MemberExpression (M) {
-    var isComputed = M instanceof AST_Sub
+    var isComputed = this instanceof AST_Sub
     return {
       type: 'MemberExpression',
-      object: to_moz(M.expression),
+      object: to_moz(this.expression),
       computed: isComputed,
-      property: isComputed ? to_moz(M.property) : { type: 'Identifier', name: M.property }
+      property: isComputed ? to_moz(this.property) : { type: 'Identifier', name: this.property }
     }
   }
 
@@ -6514,10 +6514,10 @@ class AST_Unary extends AST_Node {
 
   _to_mozilla_ast = function To_Moz_Unary (M: any) {
     return {
-      type: M.operator == '++' || M.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
-      operator: M.operator,
-      prefix: M instanceof AST_UnaryPrefix,
-      argument: to_moz(M.expression)
+      type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
+      operator: this.operator,
+      prefix: this instanceof AST_UnaryPrefix,
+      argument: to_moz(this.expression)
     }
   }
 
@@ -7429,23 +7429,23 @@ class AST_Binary extends AST_Node {
   }
 
   _to_mozilla_ast = function To_Moz_BinaryExpression (M: any) {
-    if (M.operator == '=' && to_moz_in_destructuring()) {
+    if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',
-        left: to_moz(M.left),
-        right: to_moz(M.right)
+        left: to_moz(this.left),
+        right: to_moz(this.right)
       }
     }
 
-    const type = M.operator == '&&' || M.operator == '||' || M.operator === '??'
+    const type = this.operator == '&&' || this.operator == '||' || this.operator === '??'
       ? 'LogicalExpression'
       : 'BinaryExpression'
 
     return {
       type,
-      left: to_moz(M.left),
-      operator: M.operator,
-      right: to_moz(M.right)
+      left: to_moz(this.left),
+      operator: this.operator,
+      right: to_moz(this.right)
     }
   }
 
@@ -8178,7 +8178,7 @@ class AST_Array extends AST_Node {
   _to_mozilla_ast = function To_Moz_ArrayExpression (M: any) {
     return {
       type: 'ArrayExpression',
-      elements: M.elements.map(to_moz)
+      elements: this.elements.map(to_moz)
     }
   }
 
@@ -8319,7 +8319,7 @@ class AST_Object extends AST_Node {
   _to_mozilla_ast = function To_Moz_ObjectExpression (M: any) {
     return {
       type: 'ObjectExpression',
-      properties: M.properties.map(to_moz)
+      properties: this.properties.map(to_moz)
     }
   }
 
@@ -8413,42 +8413,42 @@ class AST_ObjectProperty extends AST_Node {
   }
 
   _to_mozilla_ast = function To_Moz_Property (M, parent) {
-    var key = M.key instanceof AST_Node ? to_moz(M.key) : {
+    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
       type: 'Identifier',
-      value: M.key
+      value: this.key
     }
-    if (typeof M.key === 'number') {
+    if (typeof this.key === 'number') {
       key = {
         type: 'Literal',
-        value: Number(M.key)
+        value: Number(this.key)
       }
     }
-    if (typeof M.key === 'string') {
+    if (typeof this.key === 'string') {
       key = {
         type: 'Identifier',
-        name: M.key
+        name: this.key
       }
     }
     var kind
-    var string_or_num = typeof M.key === 'string' || typeof M.key === 'number'
-    var computed = string_or_num ? false : !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef
-    if (M instanceof AST_ObjectKeyVal) {
+    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
+    if (this instanceof AST_ObjectKeyVal) {
       kind = 'init'
       computed = !string_or_num
     } else
-    if (M instanceof AST_ObjectGetter) {
+    if (this instanceof AST_ObjectGetter) {
       kind = 'get'
     } else
-    if (M instanceof AST_ObjectSetter) {
+    if (this instanceof AST_ObjectSetter) {
       kind = 'set'
     }
-    if (M instanceof AST_ClassProperty) {
+    if (this instanceof AST_ClassProperty) {
       return {
         type: 'FieldDefinition',
         computed,
         key,
-        value: to_moz(M.value),
-        static: M.static
+        value: to_moz(this.value),
+        static: this.static
       }
     }
     if (parent instanceof AST_Class) {
@@ -8456,9 +8456,9 @@ class AST_ObjectProperty extends AST_Node {
         type: 'MethodDefinition',
         computed: computed,
         kind: kind,
-        static: M.static,
-        key: to_moz(M.key),
-        value: to_moz(M.value)
+        static: this.static,
+        key: to_moz(this.key),
+        value: to_moz(this.value)
       }
     }
     return {
@@ -8466,7 +8466,7 @@ class AST_ObjectProperty extends AST_Node {
       computed: computed,
       kind: kind,
       key: key,
-      value: to_moz(M.value)
+      value: to_moz(this.value)
     }
   }
 
@@ -8761,21 +8761,21 @@ class AST_ConciseMethod extends AST_ObjectProperty {
     if (parent instanceof AST_Object) {
       return {
         type: 'Property',
-        computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
+        computed: !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef,
         kind: 'init',
         method: true,
         shorthand: false,
-        key: to_moz(M.key),
-        value: to_moz(M.value)
+        key: to_moz(this.key),
+        value: to_moz(this.value)
       }
     }
     return {
       type: 'MethodDefinition',
-      computed: !(M.key instanceof AST_Symbol) || M.key instanceof AST_SymbolRef,
-      kind: M.key === 'constructor' ? 'constructor' : 'method',
-      static: M.static,
-      key: to_moz(M.key),
-      value: to_moz(M.value)
+      computed: !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef,
+      kind: this.key === 'constructor' ? 'constructor' : 'method',
+      static: this.static,
+      key: to_moz(this.key),
+      value: to_moz(this.value)
     }
   }
 
@@ -8911,14 +8911,14 @@ class AST_Class extends AST_Scope {
   })
 
   _to_mozilla_ast = function To_Moz_Class (M) {
-    var type = M instanceof AST_ClassExpression ? 'ClassExpression' : 'ClassDeclaration'
+    var type = this instanceof AST_ClassExpression ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
-      superClass: to_moz(M.extends),
-      id: M.name ? to_moz(M.name) : null,
+      superClass: to_moz(this.extends),
+      id: this.name ? to_moz(this.name) : null,
       body: {
         type: 'ClassBody',
-        body: M.properties.map(to_moz)
+        body: this.properties.map(to_moz)
       }
     }
   }
@@ -9159,16 +9159,16 @@ class AST_Symbol extends AST_Node {
   })
 
   _to_mozilla_ast = function To_Moz_Identifier (M, parent) {
-    if (M instanceof AST_SymbolMethod && parent.quote) {
+    if (this instanceof AST_SymbolMethod && parent.quote) {
       return {
         type: 'Literal',
-        value: M.name
+        value: this.name
       }
     }
-    var def = M.definition()
+    var def = this.definition()
     return {
       type: 'Identifier',
-      name: def ? def.mangled_name || def.name : M.name
+      name: def ? def.mangled_name || def.name : this.name
     }
   } as any
 

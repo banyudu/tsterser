@@ -32,12 +32,12 @@ export default class AST_RegExp extends AST_Constant {
   }
 
   _to_mozilla_ast = function To_Moz_RegExpLiteral (M) {
-    const pattern = M.value.source
-    const flags = M.value.flags
+    const pattern = this.value.source
+    const flags = this.value.flags
     return {
       type: 'Literal',
       value: null,
-      raw: M.print_to_string(),
+      raw: this.print_to_string(),
       regex: { pattern, flags }
     }
   }

@@ -25,10 +25,10 @@ export default class AST_Directive extends AST_Statement {
       type: 'ExpressionStatement',
       expression: {
         type: 'Literal',
-        value: M.value,
-        raw: M.print_to_string()
+        value: this.value,
+        raw: this.print_to_string()
       },
-      directive: M.value
+      directive: this.value
     }
   }
 

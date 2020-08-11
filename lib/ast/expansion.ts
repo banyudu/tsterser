@@ -31,7 +31,7 @@ export default class AST_Expansion extends AST_Node {
   _to_mozilla_ast = function To_Moz_Spread (M) {
     return {
       type: to_moz_in_destructuring() ? 'RestElement' : 'SpreadElement',
-      argument: to_moz(M.expression)
+      argument: to_moz(this.expression)
     }
   }
 
