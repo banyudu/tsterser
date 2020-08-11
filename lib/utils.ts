@@ -1457,3 +1457,21 @@ export function is_undefined (node, compressor?) {
             node.operator == 'void' &&
             !node.expression.has_side_effects(compressor)
 }
+
+export function force_statement (stat: any, output: any) {
+  if (output.option('braces')) {
+    make_block(stat, output)
+  } else {
+    if (!stat || stat instanceof AST_EmptyStatement) { output.force_semicolon() } else { stat.print(output) }
+  }
+}
+
+export function make_block (stmt: any, output: any) {
+  if (!stmt || stmt instanceof AST_EmptyStatement) { output.print('{}') } else if (stmt instanceof AST_BlockStatement) { stmt.print?.(output) } else {
+    output.with_block(function () {
+      output.indent()
+      stmt.print(output)
+      output.newline()
+    })
+  }
+}

@@ -79,6 +79,8 @@ import {
   first_in_statement,
   literals_in_boolean_context,
   is_undefined,
+  force_statement,
+  make_block,
   keep_name
 } from '../utils'
 
@@ -148,6 +150,8 @@ import AST_Jump from './jump'
 import AST_Exit from './exit'
 import AST_LoopControl from './loop-control'
 import AST_Return from './return'
+import AST_StatementWithBody from './statement-with-body'
+import AST_Throw from './throw'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -346,25 +350,6 @@ class AST_BlockStatement extends AST_Block {
   static PROPS = AST_Block.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_StatementWithBody extends AST_Statement {
-  _do_print_body = function (output: any) {
-    force_statement(this.body, output)
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`'
-  static propdoc = {
-    body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
-  } as any
-
-  TYPE = 'StatementWithBody'
-  static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.body = args.body
   }
 }
 
@@ -3134,28 +3119,6 @@ class AST_TemplateString extends AST_Node {
 }
 
 /* -----[ JUMPS ]----- */
-
-class AST_Throw extends AST_Exit {
-  _size = () => 6
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'ThrowStatement',
-      argument: to_moz(this.value)
-    }
-  }
-
-  _codegen (self, output) {
-    self._do_print(output, 'throw')
-  }
-
-  static documentation = 'A `throw` statement'
-
-  TYPE = 'Throw'
-  static PROPS = AST_Exit.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
 
 class AST_Break extends AST_LoopControl {
   _size () {
@@ -10174,24 +10137,6 @@ function print_property_name (key: string, quote: string, output: any) {
     return output.print_string(key, quote)
   }
   return output.print_name(key)
-}
-
-function force_statement (stat: any, output: any) {
-  if (output.option('braces')) {
-    make_block(stat, output)
-  } else {
-    if (!stat || stat instanceof AST_EmptyStatement) { output.force_semicolon() } else { stat.print(output) }
-  }
-}
-
-function make_block (stmt: any, output: any) {
-  if (!stmt || stmt instanceof AST_EmptyStatement) { output.print('{}') } else if (stmt instanceof AST_BlockStatement) { stmt.print?.(output) } else {
-    output.with_block(function () {
-      output.indent()
-      stmt.print(output)
-      output.newline()
-    })
-  }
 }
 
 export {
