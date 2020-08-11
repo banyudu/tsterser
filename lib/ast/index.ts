@@ -140,6 +140,7 @@ import AST_String from './string'
 import AST_Number from './number'
 import AST_BigInt from './big-int'
 import AST_RegExp from './reg-exp'
+import AST_Atom from './atom'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9751,21 +9752,6 @@ class AST_Super extends AST_This {
   constructor (args?) { // eslint-disable-line
     super(args)
   }
-}
-
-class AST_Atom extends AST_Constant {
-  shallow_cmp = pass_through
-  _to_mozilla_ast = function To_Moz_Atom (M) {
-    return {
-      type: 'Identifier',
-      name: String(M.value)
-    }
-  } as Function
-
-  static documentation = 'Base class for atoms'
-
-  TYPE = 'Null'
-  static PROPS = AST_Constant.PROPS
 }
 
 class AST_Null extends AST_Atom {
