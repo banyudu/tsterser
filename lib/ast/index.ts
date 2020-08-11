@@ -78,6 +78,7 @@ import {
   merge_sequence,
   first_in_statement,
   literals_in_boolean_context,
+  is_undefined,
   keep_name
 } from '../utils'
 
@@ -143,6 +144,10 @@ import AST_RegExp from './reg-exp'
 import AST_Atom from './atom'
 import AST_Null from './null'
 import AST_Hole from './hole'
+import AST_Jump from './jump'
+import AST_Exit from './exit'
+import AST_LoopControl from './loop-control'
+import AST_Return from './return'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -3130,100 +3135,6 @@ class AST_TemplateString extends AST_Node {
 
 /* -----[ JUMPS ]----- */
 
-class AST_Jump extends AST_Statement {
-  aborts = return_this
-  shallow_cmp = pass_through
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
-
-  TYPE = 'Jump'
-  static PROPS = AST_Statement.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Exit extends AST_Jump {
-  value: any
-  _walk (visitor: any) {
-    return visitor._visit(this, this.value && function () {
-      this.value._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.value) push(this.value)
-  }
-
-  _transform (self, tw: any) {
-    if (self.value) self.value = self.value.transform(tw)
-  }
-
-  _do_print (output: any, kind: string) {
-    output.print(kind)
-    if (this.value) {
-      output.space()
-      const comments = this.value.start.comments_before
-      if (comments && comments.length && !output.printed_comments.has(comments)) {
-        output.print('(')
-        this.value.print(output)
-        output.print(')')
-      } else {
-        this.value.print(output)
-      }
-    }
-    output.semicolon()
-  }
-
-  static documentation = 'Base class for “exits” (`return` and `throw`)'
-  static propdoc = {
-    value: '[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return'
-  }
-
-  TYPE = 'Exit'
-  static PROPS = AST_Jump.PROPS.concat(['value'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.value = args.value
-  }
-}
-
-class AST_Return extends AST_Exit {
-  _optimize (self, compressor) {
-    if (self.value && is_undefined(self.value, compressor)) {
-      self.value = null
-    }
-    return self
-  }
-
-  may_throw (compressor: any) {
-    return this.value && this.value.may_throw(compressor)
-  }
-
-  _size () {
-    return this.value ? 7 : 6
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'ReturnStatement',
-      argument: to_moz(this.value)
-    }
-  }
-
-  _codegen (self, output) {
-    self._do_print(output, 'return')
-  }
-
-  static documentation: 'A `return` statement'
-
-  TYPE = 'Return'
-  static PROPS = AST_Exit.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
 class AST_Throw extends AST_Exit {
   _size = () => 6
   _to_mozilla_ast (parent): any {
@@ -3243,45 +3154,6 @@ class AST_Throw extends AST_Exit {
   static PROPS = AST_Exit.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_LoopControl extends AST_Jump {
-  label: any
-  _walk (visitor: any) {
-    return visitor._visit(this, this.label && function () {
-      this.label._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.label) push(this.label)
-  }
-
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    if (self.label) self.label = self.label.transform(tw)
-  }
-
-  _do_print (output: any, kind: string) {
-    output.print(kind)
-    if (this.label) {
-      output.space()
-      this.label.print(output)
-    }
-    output.semicolon()
-  }
-
-  static documentation = 'Base class for loop control statements (`break` and `continue`)'
-  static propdoc = {
-    label: '[AST_LabelRef?] the label, or null if none'
-  }
-
-  TYPE = 'LoopControl'
-  static PROPS = AST_Jump.PROPS.concat(['label'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.label = args.label
   }
 }
 
@@ -12131,14 +12003,6 @@ function extract_declarations_from_unreachable_code (compressor, stat, target) {
       return true
     }
   })
-}
-
-function is_undefined (node, compressor?) {
-  return has_flag(node, UNDEFINED) ||
-        node instanceof AST_Undefined ||
-        node instanceof AST_UnaryPrefix &&
-            node.operator == 'void' &&
-            !node.expression.has_side_effects(compressor)
 }
 
 function is_object (node: any) {

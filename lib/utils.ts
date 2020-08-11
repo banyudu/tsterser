@@ -43,7 +43,7 @@
 
 'use strict'
 
-import { walk_abort } from './constants'
+import { walk_abort, UNDEFINED, has_flag } from './constants'
 import {
   AST_Accessor,
   AST_Array,
@@ -133,6 +133,7 @@ import {
   AST_Try,
   AST_UnaryPostfix,
   AST_UnaryPrefix,
+  AST_Undefined,
   AST_Var,
   AST_VarDef,
   AST_While,
@@ -1346,4 +1347,12 @@ function best_of_statement (ast1, ast2) {
 
 export function best_of_expression (ast1, ast2) {
   return ast1.size() > ast2.size() ? ast2 : ast1
+}
+
+export function is_undefined (node, compressor?) {
+  return has_flag(node, UNDEFINED) ||
+        node instanceof AST_Undefined ||
+        node instanceof AST_UnaryPrefix &&
+            node.operator == 'void' &&
+            !node.expression.has_side_effects(compressor)
 }
