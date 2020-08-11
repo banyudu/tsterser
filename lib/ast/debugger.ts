@@ -10,7 +10,10 @@ export default class AST_Debugger extends AST_Statement {
 
   shallow_cmp = pass_through
   _size = () => 8
-  _to_mozilla_ast = () => ({ type: 'DebuggerStatement' })
+  _to_mozilla_ast (): any {
+    return { type: 'DebuggerStatement' }
+  }
+
   _codegen (_self, output) {
     output.print('debugger')
     output.semicolon()

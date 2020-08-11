@@ -4,7 +4,7 @@ import { pass_through } from '../utils'
 export default class AST_NewTarget extends AST_Node {
   _size = () => 10
   shallow_cmp = pass_through
-  _to_mozilla_ast = function To_Moz_MetaProperty () {
+  _to_mozilla_ast () {
     return {
       type: 'MetaProperty',
       meta: {

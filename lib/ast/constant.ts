@@ -18,7 +18,10 @@ export default class AST_Constant extends AST_Node {
     return this.value
   }
 
-  _to_mozilla_ast = To_Moz_Literal as Function
+  _to_mozilla_ast (M, parent): any {
+    return To_Moz_Literal(M)
+  }
+
   _codegen = function (self, output) {
     output.print(self.getValue())
   }

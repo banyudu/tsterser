@@ -5,7 +5,10 @@ export default class AST_EmptyStatement extends AST_Statement {
   may_throw = return_false
   has_side_effects = return_false
   shallow_cmp = pass_through
-  _to_mozilla_ast = () => ({ type: 'EmptyStatement' })
+  _to_mozilla_ast (): any {
+    return { type: 'EmptyStatement' }
+  }
+
   _size = () => 1
   _codegen (_self, output) {
     output.semicolon()
