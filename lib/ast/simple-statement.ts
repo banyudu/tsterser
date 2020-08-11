@@ -41,7 +41,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(this.body) // TODO: check type

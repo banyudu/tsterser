@@ -31,7 +31,7 @@ export default class AST_RegExp extends AST_Constant {
     )
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     const pattern = this.value.source
     const flags = this.value.flags
     return {

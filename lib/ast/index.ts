@@ -286,10 +286,10 @@ class AST_Block extends AST_Statement {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'BlockStatement',
-      body: M.body.map(to_moz)
+      body: this.body.map(to_moz)
     }
   }
 
@@ -326,10 +326,10 @@ class AST_BlockStatement extends AST_Block {
   }
 
   aborts = block_aborts
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'BlockStatement',
-      body: M.body.map(to_moz)
+      body: this.body.map(to_moz)
     }
   }
 
@@ -423,11 +423,11 @@ class AST_LabeledStatement extends AST_StatementWithBody {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'LabeledStatement',
-      label: to_moz(M.label),
-      body: to_moz(M.body)
+      label: to_moz(this.label),
+      body: to_moz(this.body)
     }
   }
 
@@ -552,11 +552,11 @@ class AST_Do extends AST_DWLoop {
     self.condition = self.condition.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'DoWhileStatement',
-      test: to_moz(M.condition),
-      body: to_moz(M.body)
+      test: to_moz(this.condition),
+      body: to_moz(this.body)
     }
   }
 
@@ -617,11 +617,11 @@ class AST_While extends AST_DWLoop {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'WhileStatement',
-      test: to_moz(M.condition),
-      body: to_moz(M.body)
+      test: to_moz(this.condition),
+      body: to_moz(this.body)
     }
   }
 
@@ -732,13 +732,13 @@ class AST_For extends AST_IterationStatement {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ForStatement',
-      init: to_moz(M.init),
-      test: to_moz(M.condition),
-      update: to_moz(M.step),
-      body: to_moz(M.body)
+      init: to_moz(this.init),
+      test: to_moz(this.condition),
+      update: to_moz(this.step),
+      body: to_moz(this.body)
     }
   }
 
@@ -826,12 +826,12 @@ class AST_ForIn extends AST_IterationStatement {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ForInStatement',
-      left: to_moz(M.init),
-      right: to_moz(M.object),
-      body: to_moz(M.body)
+      left: to_moz(this.init),
+      right: to_moz(this.object),
+      body: to_moz(this.body)
     }
   }
 
@@ -871,13 +871,13 @@ class AST_ForIn extends AST_IterationStatement {
 class AST_ForOf extends AST_ForIn {
   await: any
   shallow_cmp = pass_through
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ForOfStatement',
-      left: to_moz(M.init),
-      right: to_moz(M.object),
-      body: to_moz(M.body),
-      await: M.await
+      left: to_moz(this.init),
+      right: to_moz(this.object),
+      body: to_moz(this.body),
+      await: this.await
     }
   }
 
@@ -912,11 +912,11 @@ class AST_With extends AST_StatementWithBody {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'WithStatement',
-      object: to_moz(M.expression),
-      body: to_moz(M.body)
+      object: to_moz(this.expression),
+      body: to_moz(this.body)
     }
   }
 
@@ -2191,7 +2191,7 @@ class AST_Toplevel extends AST_Scope {
     return list_overhead(this.body)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return to_moz_scope('Program', this)
   }
 
@@ -2457,8 +2457,8 @@ class AST_Lambda extends AST_Scope {
     }
   }
 
-  _to_mozilla_ast (M, parent) {
-    return To_Moz_FunctionExpression(M, parent)
+  _to_mozilla_ast (parent) {
+    return To_Moz_FunctionExpression(this, parent)
   }
 
   _do_print (this: any, output: any, nokeyword: boolean) {
@@ -2613,8 +2613,8 @@ class AST_Function extends AST_Lambda {
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
   } as any
 
-  _to_mozilla_ast (M, parent) {
-    return To_Moz_FunctionExpression(M, parent)
+  _to_mozilla_ast (parent) {
+    return To_Moz_FunctionExpression(this, parent)
   }
 
   // a function expression needs parens around it when it's provably
@@ -2683,7 +2683,7 @@ class AST_Arrow extends AST_Lambda {
     return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size())
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     var body = {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
@@ -2761,7 +2761,7 @@ class AST_Defun extends AST_Lambda {
     return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'FunctionDeclaration',
       id: to_moz(this.name),
@@ -2864,7 +2864,7 @@ class AST_Destructuring extends AST_Node {
     self.names = do_list(self.names, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     if (this.is_array) {
       return {
         type: 'ArrayPattern',
@@ -2932,7 +2932,7 @@ class AST_PrefixedTemplateString extends AST_Node {
     self.template_string = self.template_string.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'TaggedTemplateExpression',
       tag: to_moz(this.prefix),
@@ -3072,7 +3072,7 @@ class AST_TemplateString extends AST_Node {
     self.segments = do_list(self.segments, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     var quasis: any[] = []
     var expressions: any[] = []
     for (var i = 0; i < this.segments.length; i++) {
@@ -3204,10 +3204,10 @@ class AST_Return extends AST_Exit {
     return this.value ? 7 : 6
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ReturnStatement',
-      argument: to_moz(M.value)
+      argument: to_moz(this.value)
     }
   }
 
@@ -3226,10 +3226,10 @@ class AST_Return extends AST_Exit {
 
 class AST_Throw extends AST_Exit {
   _size = () => 6
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ThrowStatement',
-      argument: to_moz(M.value)
+      argument: to_moz(this.value)
     }
   }
 
@@ -3290,10 +3290,10 @@ class AST_Break extends AST_LoopControl {
     return this.label ? 6 : 5
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'BreakStatement',
-      label: to_moz(M.label)
+      label: to_moz(this.label)
     }
   }
 
@@ -3315,10 +3315,10 @@ class AST_Continue extends AST_LoopControl {
     return this.label ? 9 : 8
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ContinueStatement',
-      label: to_moz(M.label)
+      label: to_moz(this.label)
     }
   }
 
@@ -3354,10 +3354,10 @@ class AST_Await extends AST_Node {
     self.expression = self.expression.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'AwaitExpression',
-      argument: to_moz(M.expression)
+      argument: to_moz(this.expression)
     }
   }
 
@@ -3428,11 +3428,11 @@ class AST_Yield extends AST_Node {
     if (self.expression) self.expression = self.expression.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'YieldExpression',
-      argument: to_moz(M.expression),
-      delegate: M.is_star
+      argument: to_moz(this.expression),
+      delegate: this.is_star
     }
   }
 
@@ -3686,12 +3686,12 @@ class AST_If extends AST_StatementWithBody {
     if (self.alternative) self.alternative = self.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'IfStatement',
-      test: to_moz(M.condition),
-      consequent: to_moz(M.body),
-      alternate: to_moz(M.alternative)
+      test: to_moz(this.condition),
+      consequent: to_moz(this.body),
+      alternate: to_moz(this.alternative)
     }
   }
 
@@ -3870,11 +3870,11 @@ class AST_Switch extends AST_Block {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'SwitchStatement',
-      discriminant: to_moz(M.expression),
-      cases: M.body.map(to_moz)
+      discriminant: to_moz(this.expression),
+      cases: this.body.map(to_moz)
     }
   }
 
@@ -3916,7 +3916,7 @@ class AST_SwitchBranch extends AST_Block {
   aborts = block_aborts
   is_block_scope = return_false
   shallow_cmp = pass_through
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'SwitchCase',
       test: to_moz(this.expression),
@@ -4110,7 +4110,7 @@ class AST_Try extends AST_Block {
     if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'TryStatement',
       block: to_moz_block(this),
@@ -4183,7 +4183,7 @@ class AST_Catch extends AST_Block {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'CatchClause',
       param: to_moz(this.argname),
@@ -4330,7 +4330,7 @@ class AST_Definitions extends AST_Statement {
     self.definitions = do_list(self.definitions, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'VariableDeclaration',
       kind:
@@ -4482,11 +4482,11 @@ class AST_VarDef extends AST_Node {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'VariableDeclarator',
-      id: to_moz(M.name),
-      init: to_moz(M.value)
+      id: to_moz(this.name),
+      init: to_moz(this.value)
     }
   }
 
@@ -4645,7 +4645,7 @@ class AST_Import extends AST_Node {
     self.module_name = self.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     var specifiers: any[] = []
     if (this.imported_name) {
       specifiers.push({
@@ -4797,7 +4797,7 @@ class AST_Export extends AST_Statement {
     if (self.module_name) self.module_name = self.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     if (this.exported_names) {
       if (this.exported_names[0].name.name === '*') {
         return {
@@ -5713,11 +5713,11 @@ class AST_Call extends AST_Node {
     self.args = do_list(self.args, tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'CallExpression',
-      callee: to_moz(M.expression),
-      arguments: M.args.map(to_moz)
+      callee: to_moz(this.expression),
+      arguments: this.args.map(to_moz)
     }
   }
 
@@ -5769,11 +5769,11 @@ class AST_New extends AST_Call {
     return 6 + list_overhead(this.args)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'NewExpression',
-      callee: to_moz(M.expression),
-      arguments: M.args.map(to_moz)
+      callee: to_moz(this.expression),
+      arguments: this.args.map(to_moz)
     }
   }
 
@@ -5909,7 +5909,7 @@ class AST_Sequence extends AST_Node {
       : [new AST_Number({ value: 0 })]
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'SequenceExpression',
       expressions: this.expressions.map(to_moz)
@@ -6057,7 +6057,7 @@ class AST_PropAccess extends AST_Node {
   }
 
   shallow_cmp = pass_through as any
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     var isComputed = this instanceof AST_Sub
     return {
       type: 'MemberExpression',
@@ -6558,7 +6558,7 @@ class AST_Unary extends AST_Node {
     self.expression = self.expression.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,
@@ -7474,7 +7474,7 @@ class AST_Binary extends AST_Node {
     self.right = self.right.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',
@@ -7931,12 +7931,12 @@ class AST_Conditional extends AST_Node {
     self.alternative = self.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'ConditionalExpression',
-      test: to_moz(M.condition),
-      consequent: to_moz(M.consequent),
-      alternate: to_moz(M.alternative)
+      test: to_moz(this.condition),
+      consequent: to_moz(this.consequent),
+      alternate: to_moz(this.alternative)
     }
   }
 
@@ -8111,12 +8111,12 @@ class AST_Assign extends AST_Binary {
           this.right._dot_throw(compressor)
   }
 
-  _to_mozilla_ast (M, parent): any {
+  _to_mozilla_ast (parent): any {
     return {
       type: 'AssignmentExpression',
-      operator: M.operator,
-      left: to_moz(M.left),
-      right: to_moz(M.right)
+      operator: this.operator,
+      left: to_moz(this.left),
+      right: to_moz(this.right)
     }
   }
 
@@ -8225,7 +8225,7 @@ class AST_Array extends AST_Node {
     self.elements = do_list(self.elements, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'ArrayExpression',
       elements: this.elements.map(to_moz)
@@ -8366,7 +8366,7 @@ class AST_Object extends AST_Node {
     self.properties = do_list(self.properties, tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'ObjectExpression',
       properties: this.properties.map(to_moz)
@@ -8462,7 +8462,7 @@ class AST_ObjectProperty extends AST_Node {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     var key = this.key instanceof AST_Node ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
@@ -8807,7 +8807,7 @@ class AST_ConciseMethod extends AST_ObjectProperty {
     async: 'eq'
   })
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     if (parent instanceof AST_Object) {
       return {
         type: 'Property',
@@ -8960,7 +8960,7 @@ class AST_Class extends AST_Scope {
     extends: 'exist'
   })
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     var type = this instanceof AST_ClassExpression ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
@@ -9208,7 +9208,7 @@ class AST_Symbol extends AST_Node {
     name: 'eq'
   })
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     if (this instanceof AST_SymbolMethod && parent.quote) {
       return {
         type: 'Literal',
@@ -9942,8 +9942,8 @@ class AST_Boolean extends AST_Atom {
     return self
   }
 
-  _to_mozilla_ast (M, parent): any {
-    return To_Moz_Literal(M)
+  _to_mozilla_ast (parent): any {
+    return To_Moz_Literal(this)
   }
 
   static documentation = 'Base class for booleans'

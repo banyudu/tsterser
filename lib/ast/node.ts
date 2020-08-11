@@ -190,7 +190,7 @@ export default class AST_Node {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
-    return set_moz_loc(this, this._to_mozilla_ast(this, parent))
+    return set_moz_loc(this, this._to_mozilla_ast(parent))
   }
 
   add_source_map (output: any) {}

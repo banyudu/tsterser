@@ -9,9 +9,9 @@ export default class AST_BigInt extends AST_Constant {
 
   shallow_cmp = mkshallow({ value: 'eq' })
 
-  _to_mozilla_ast (M, parent): any { return {
+  _to_mozilla_ast (parent): any { return {
     type: 'BigIntLiteral',
-    value: M.value
+    value: this.value
   } }
 
   _codegen = function (self, output) {

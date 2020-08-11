@@ -20,7 +20,7 @@ export default class AST_Directive extends AST_Statement {
     return 2 + this.value.length
   }
 
-  _to_mozilla_ast (M, parent) {
+  _to_mozilla_ast (parent) {
     return {
       type: 'ExpressionStatement',
       expression: {
