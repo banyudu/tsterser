@@ -3008,3 +3008,11 @@ export function trim (nodes: any[], compressor: any, first_in_statement?) {
   }
   return changed ? ret.length ? ret : null : nodes
 }
+
+export function print_braced_empty (self: any, output: any) {
+  output.print('{')
+  output.with_indent(output.next_indent(), function () {
+    output.append_comments(self, true)
+  })
+  output.print('}')
+}
