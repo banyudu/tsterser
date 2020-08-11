@@ -2972,3 +2972,39 @@ export function block_aborts () {
   }
   return null
 }
+
+export function inline_array_like_spread (self, compressor, elements) {
+  for (var i = 0; i < elements.length; i++) {
+    var el = elements[i]
+    if (el instanceof AST_Expansion) {
+      var expr = el.expression
+      if (expr instanceof AST_Array) {
+        elements.splice(i, 1, ...expr.elements)
+        // Step back one, as the element at i is now new.
+        i--
+      }
+      // In array-like spread, spreading a non-iterable value is TypeError.
+      // We therefore can’t optimize anything else, unlike with object spread.
+    }
+  }
+  return self
+}
+
+// Drop side-effect-free elements from an array of expressions.
+// Returns an array of expressions with side-effects or null
+// if all elements were dropped. Note: original array may be
+// returned if nothing changed.
+export function trim (nodes: any[], compressor: any, first_in_statement?) {
+  var len = nodes.length
+  if (!len) return null
+  var ret: any[] = []; var changed = false
+  for (var i = 0; i < len; i++) {
+    var node = nodes[i].drop_side_effect_free(compressor, first_in_statement)
+    changed = (node !== nodes[i]) || changed
+    if (node) {
+      ret.push(node)
+      first_in_statement = false
+    }
+  }
+  return changed ? ret.length ? ret : null : nodes
+}
