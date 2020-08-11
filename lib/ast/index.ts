@@ -182,6 +182,8 @@ import AST_Break from './break'
 import AST_LabeledStatement from './labeled-statement'
 import AST_IterationStatement from './iteration-statement'
 import AST_With from './with'
+import AST_DWLoop from './dw-loop'
+import AST_Continue from './continue'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -296,21 +298,6 @@ class AST_BlockStatement extends AST_Block {
   static PROPS = AST_Block.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_DWLoop extends AST_IterationStatement {
-  condition: any
-  static documentation = 'Base class for do/while statements'
-  static propdoc = {
-    condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
-  }
-
-  TYPE = 'DWLoop'
-  static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.condition = args.condition
   }
 }
 
