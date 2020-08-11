@@ -53,7 +53,6 @@ import {
   push_uniq,
   regexp_source_fix,
   return_false,
-  sort_regexp_flags,
   return_true,
   return_this,
   remove,
@@ -73,6 +72,12 @@ import {
   to_moz_in_destructuring,
   To_Moz_Literal,
   make_num,
+  best_of_expression,
+  best_of,
+  make_sequence,
+  merge_sequence,
+  first_in_statement,
+  literals_in_boolean_context,
   keep_name
 } from '../utils'
 
@@ -134,34 +139,11 @@ import AST_Constant from './constant'
 import AST_String from './string'
 import AST_Number from './number'
 import AST_BigInt from './big-int'
+import AST_RegExp from './reg-exp'
 
 let unmangleable_names: Set<any> | null = null
 
 let printMangleOptions
-
-// return true if the node at the top of the stack (that means the
-// innermost node in the current output) is lexically the first in
-// a statement.
-export function first_in_statement (stack: any) {
-  let node = stack.parent(-1)
-  for (let i = 0, p; p = stack.parent(i); i++) {
-    if (p instanceof AST_Statement && p.body === node) { return true }
-    if ((p instanceof AST_Sequence && p.expressions[0] === node) ||
-            (p.TYPE === 'Call' && p.expression === node) ||
-            (p instanceof AST_PrefixedTemplateString && p.prefix === node) ||
-            (p instanceof AST_Dot && p.expression === node) ||
-            (p instanceof AST_Sub && p.expression === node) ||
-            (p instanceof AST_Conditional && p.condition === node) ||
-            (p instanceof AST_Binary && p.left === node) ||
-            (p instanceof AST_UnaryPostfix && p.expression === node)
-    ) {
-      node = p
-    } else {
-      return false
-    }
-  }
-  return undefined
-}
 
 // Returns whether the leftmost item in the expression is an object
 export function left_is_object (node: any): boolean {
@@ -6730,6 +6712,10 @@ class AST_Binary extends AST_Node {
   operator: any
   right: any
 
+  _codegen_should_output_space (child: AST_Node) {
+    return /^\w/.test(this.operator) && this.left === child
+  }
+
   _optimize (self, compressor) {
     function reversible () {
       return self.left.is_constant() ||
@@ -9767,74 +9753,6 @@ class AST_Super extends AST_This {
   }
 }
 
-class AST_RegExp extends AST_Constant {
-  value: any
-  _optimize = literals_in_boolean_context
-  _eval = function (compressor: any) {
-    let evaluated = compressor.evaluated_regexps.get(this)
-    if (evaluated === undefined) {
-      try {
-        evaluated = (0, eval)(this.print_to_string())
-      } catch (e) {
-        evaluated = null
-      }
-      compressor.evaluated_regexps.set(this, evaluated)
-    }
-    return evaluated || this
-  }
-
-  _size = function (): number {
-    return this.value.toString().length
-  }
-
-  shallow_cmp = function (other) {
-    return (
-      this.value.flags === other.value.flags &&
-            this.value.source === other.value.source
-    )
-  }
-
-  _to_mozilla_ast = function To_Moz_RegExpLiteral (M) {
-    const pattern = M.value.source
-    const flags = M.value.flags
-    return {
-      type: 'Literal',
-      value: null,
-      raw: M.print_to_string(),
-      regex: { pattern, flags }
-    }
-  }
-
-  _codegen = function (self, output) {
-    let { source, flags } = self.getValue()
-    source = regexp_source_fix(source)
-    flags = flags ? sort_regexp_flags(flags) : ''
-    source = source.replace(r_slash_script, slash_script_replace)
-        output.print?.(output.to_utf8(`/${source}/${flags}`))
-        const parent = output.parent()
-        if (
-          parent instanceof AST_Binary &&
-            /^\w/.test(parent.operator) &&
-            parent.left === self
-        ) {
-          output.print(' ')
-        }
-  }
-
-  static documentation = 'A regexp literal'
-  static propdoc = {
-    value: '[RegExp] the actual regexp'
-  }
-
-  TYPE = 'RegExp'
-  static PROPS = AST_Constant.PROPS.concat(['value'])
-
-  constructor (args) {
-    super(args)
-    this.value = args.value
-  }
-}
-
 class AST_Atom extends AST_Constant {
   shallow_cmp = pass_through
   _to_mozilla_ast = function To_Moz_Atom (M) {
@@ -10365,9 +10283,6 @@ function print_property_name (key: string, quote: string, output: any) {
   return output.print_name(key)
 }
 
-const r_slash_script = /(<\s*\/\s*script)/i
-const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
-
 function force_statement (stat: any, output: any) {
   if (output.option('braces')) {
     make_block(stat, output)
@@ -10424,23 +10339,6 @@ export function safe_to_flatten (value, compressor) {
   if (!(value instanceof AST_Lambda || value instanceof AST_Class)) return true
   if (!(value instanceof AST_Lambda && value.contains_this())) return true
   return compressor.parent() instanceof AST_New
-}
-
-export function make_sequence (orig, expressions) {
-  if (expressions.length == 1) return expressions[0]
-  if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
-  return make_node(AST_Sequence, orig, {
-    expressions: expressions.reduce(merge_sequence, [])
-  })
-}
-
-export function merge_sequence (array, node) {
-  if (node instanceof AST_Sequence) {
-    array.push(...node.expressions)
-  } else {
-    array.push(node)
-  }
-  return array
 }
 
 // we shouldn't compress (1,func)(something) to
@@ -10834,10 +10732,6 @@ function best (orig, alt, first_in_statement) {
 }
 
 /* -----[ boolean/negation helpers ]----- */
-export function best_of_expression (ast1, ast2) {
-  return ast1.size() > ast2.size() ? ast2 : ast1
-}
-
 // determine if expression is constant
 function all_refs_local (scope) {
   let result: any = true
@@ -12226,21 +12120,6 @@ function is_undefined (node, compressor?) {
             !node.expression.has_side_effects(compressor)
 }
 
-function best_of_statement (ast1, ast2) {
-  return best_of_expression(
-    make_node(AST_SimpleStatement, ast1, {
-      body: ast1
-    }),
-    make_node(AST_SimpleStatement, ast2, {
-      body: ast2
-    })
-  ).body
-}
-
-export function best_of (compressor, ast1, ast2) {
-  return (first_in_statement(compressor) ? best_of_statement : best_of_expression)(ast1, ast2)
-}
-
 function is_object (node: any) {
   return node instanceof AST_Array ||
         node instanceof AST_Lambda ||
@@ -12355,16 +12234,6 @@ function is_nullish_check (check, check_subject, compressor) {
   }
 
   return false
-}
-
-function literals_in_boolean_context (self, compressor) {
-  if (compressor.in_boolean_context()) {
-    return best_of(compressor, self, make_sequence(self, [
-      self,
-      make_node(AST_True, self)
-    ]).optimize(compressor))
-  }
-  return self
 }
 
 // TODO this only works with AST_Defun, shouldn't it work for other ways of defining functions?

@@ -32,6 +32,8 @@ import {
 export default class AST_Node {
   start: any
   end: any
+  _codegen_should_output_space (child: AST_Node) { return false }
+
   _needs_parens (child: AST_Node) {
     return false
   }

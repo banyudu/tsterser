@@ -1277,3 +1277,73 @@ export function best_of_string (a: string[]) {
   }
   return best
 }
+
+export function literals_in_boolean_context (self, compressor) {
+  if (compressor.in_boolean_context()) {
+    return best_of(compressor, self, make_sequence(self, [
+      self,
+      make_node(AST_True, self)
+    ]).optimize(compressor))
+  }
+  return self
+}
+
+export function make_sequence (orig, expressions) {
+  if (expressions.length == 1) return expressions[0]
+  if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
+  return make_node(AST_Sequence, orig, {
+    expressions: expressions.reduce(merge_sequence, [])
+  })
+}
+
+export function merge_sequence (array, node) {
+  if (node instanceof AST_Sequence) {
+    array.push(...node.expressions)
+  } else {
+    array.push(node)
+  }
+  return array
+}
+
+export function best_of (compressor, ast1, ast2) {
+  return (first_in_statement(compressor) ? best_of_statement : best_of_expression)(ast1, ast2)
+}
+
+// return true if the node at the top of the stack (that means the
+// innermost node in the current output) is lexically the first in
+// a statement.
+export function first_in_statement (stack: any) {
+  let node = stack.parent(-1)
+  for (let i = 0, p; p = stack.parent(i); i++) {
+    if (p instanceof AST_Statement && p.body === node) { return true }
+    if ((p instanceof AST_Sequence && p.expressions[0] === node) ||
+            (p.TYPE === 'Call' && p.expression === node) ||
+            (p instanceof AST_PrefixedTemplateString && p.prefix === node) ||
+            (p instanceof AST_Dot && p.expression === node) ||
+            (p instanceof AST_Sub && p.expression === node) ||
+            (p instanceof AST_Conditional && p.condition === node) ||
+            (p instanceof AST_Binary && p.left === node) ||
+            (p instanceof AST_UnaryPostfix && p.expression === node)
+    ) {
+      node = p
+    } else {
+      return false
+    }
+  }
+  return undefined
+}
+
+function best_of_statement (ast1, ast2) {
+  return best_of_expression(
+    make_node(AST_SimpleStatement, ast1, {
+      body: ast1
+    }),
+    make_node(AST_SimpleStatement, ast2, {
+      body: ast2
+    })
+  ).body
+}
+
+export function best_of_expression (ast1, ast2) {
+  return ast1.size() > ast2.size() ? ast2 : ast1
+}
