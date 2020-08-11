@@ -104,6 +104,7 @@ import {
   read_property,
   as_statement_array,
   has_break_or_continue,
+  block_aborts,
   keep_name
 } from '../utils'
 
@@ -154,6 +155,8 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Default from './default'
+import AST_Case from './case'
 import AST_Node from './node'
 import AST_Token from './token'
 import AST_Statement from './statement'
@@ -187,6 +190,7 @@ import AST_DWLoop from './dw-loop'
 import AST_Continue from './continue'
 import AST_While from './while'
 import AST_Do from './do'
+import AST_SwitchBranch from './switch-branch'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -3308,127 +3312,6 @@ class AST_Switch extends AST_Block {
   }
 
   TYPE = 'Switch'
-  static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
-  }
-}
-
-class AST_SwitchBranch extends AST_Block {
-  aborts = block_aborts
-  is_block_scope = return_false
-  shallow_cmp = pass_through
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'SwitchCase',
-      test: to_moz(this.expression),
-      consequent: this.body.map(to_moz)
-    }
-  }
-
-  _do_print_body = function (this: any, output: any) {
-    output.newline()
-    this.body.forEach(function (stmt) {
-      output.indent()
-      stmt.print(output)
-      output.newline()
-    })
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'Base class for `switch` branches'
-
-  TYPE = 'SwitchBranch'
-  static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Default extends AST_SwitchBranch {
-  reduce_vars = function (tw, descend) {
-    push(tw)
-    descend()
-    pop(tw)
-    return true
-  }
-
-  _size = function (): number {
-    return 8 + list_overhead(this.body)
-  }
-
-  _codegen = function (self, output) {
-    output.print('default:')
-    self._do_print_body(output)
-  }
-
-  static documentation = 'A `default` switch branch'
-
-  TYPE = 'Case'
-  static PROPS = AST_SwitchBranch.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Case extends AST_SwitchBranch {
-  may_throw = function (compressor: any) {
-    return this.expression.may_throw(compressor) ||
-          anyMayThrow(this.body, compressor)
-  }
-
-  has_side_effects = function (compressor: any) {
-    return this.expression.has_side_effects(compressor) ||
-          anySideEffect(this.body, compressor)
-  }
-
-  reduce_vars = function (tw) {
-    push(tw)
-    this.expression.walk(tw)
-    pop(tw)
-    push(tw)
-    walk_body(this, tw)
-    pop(tw)
-    return true
-  }
-
-  _walk = function (visitor: any) {
-    return visitor._visit(this, function () {
-      this.expression._walk(visitor)
-      walk_body(this, visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.body.length
-    while (i--) push(this.body[i])
-    push(this.expression)
-  }
-
-  _size = function (): number {
-    return 5 + list_overhead(this.body)
-  }
-
-  _transform (self, tw: any) {
-    self.expression = self.expression.transform(tw)
-    self.body = do_list(self.body, tw)
-  }
-
-  _codegen = function (self, output) {
-    output.print('case')
-    output.space()
-    self.expression.print(output)
-    output.print(':')
-    self._do_print_body(output)
-  }
-
-  static documentation = 'A `case` switch branch'
-  static propdoc = {
-    expression: '[AST_Node] the `case` expression'
-  }
-
-  TYPE = 'Case'
   static PROPS = AST_Block.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -10344,13 +10227,4 @@ export function print (this: any, output: any, force_parens?: boolean) {
       }
     }
   }
-}
-
-function block_aborts () {
-  for (var i = 0; i < this.body.length; i++) {
-    if (aborts(this.body[i])) {
-      return this.body[i]
-    }
-  }
-  return null
 }
