@@ -141,6 +141,8 @@ import AST_Number from './number'
 import AST_BigInt from './big-int'
 import AST_RegExp from './reg-exp'
 import AST_Atom from './atom'
+import AST_Null from './null'
+import AST_Hole from './hole'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9754,17 +9756,6 @@ class AST_Super extends AST_This {
   }
 }
 
-class AST_Null extends AST_Atom {
-  _dot_throw = return_true
-  value = null
-  _size = () => 4
-  _to_mozilla_ast = To_Moz_Literal
-  static documentation: 'The `null` atom'
-
-  TYPE = 'Null'
-  static PROPS = AST_Atom.PROPS
-}
-
 class AST_NaN extends AST_Atom {
   _optimize = function (self, compressor) {
     var lhs = is_lhs(compressor.self(), compressor.parent())
@@ -9821,21 +9812,6 @@ class AST_Undefined extends AST_Atom {
   static documentation: 'The `undefined` value'
 
   TYPE = 'Undefined'
-  static PROPS = AST_Atom.PROPS
-}
-
-class AST_Hole extends AST_Atom {
-  value = (function () {}())
-
-  to_mozilla_ast = function To_Moz_ArrayHole () { return null }
-
-  _size = () => 0 // comma is taken into account
-
-  _codegen = noop
-  static documentation = 'A hole in an array'
-
-  TYPE = 'Hole'
-
   static PROPS = AST_Atom.PROPS
 }
 
