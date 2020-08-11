@@ -103,6 +103,7 @@ import {
   is_ref_of,
   read_property,
   as_statement_array,
+  has_break_or_continue,
   keep_name
 } from '../utils'
 
@@ -184,6 +185,8 @@ import AST_IterationStatement from './iteration-statement'
 import AST_With from './with'
 import AST_DWLoop from './dw-loop'
 import AST_Continue from './continue'
+import AST_While from './while'
+import AST_Do from './do'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -296,164 +299,6 @@ class AST_BlockStatement extends AST_Block {
 
   TYPE = 'BlockStatement'
   static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Do extends AST_DWLoop {
-  _optimize (self, compressor) {
-    if (!compressor.option('loops')) return self
-    var cond = self.condition.tail_node().evaluate(compressor)
-    if (!(cond instanceof AST_Node)) {
-      if (cond) {
-        return make_node('AST_For', self, {
-          body: make_node('AST_BlockStatement', self.body, {
-            body: [
-              self.body,
-              make_node('AST_SimpleStatement', self.condition, {
-                body: self.condition
-              })
-            ]
-          })
-        }).optimize(compressor)
-      }
-      if (!has_break_or_continue(self, compressor.parent())) {
-        return make_node('AST_BlockStatement', self.body, {
-          body: [
-            self.body,
-            make_node('AST_SimpleStatement', self.condition, {
-              body: self.condition
-            })
-          ]
-        }).optimize(compressor)
-      }
-    }
-    return self
-  }
-
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
-    reset_block_variables(compressor, this)
-    const saved_loop = tw.in_loop
-    tw.in_loop = this
-    push(tw)
-    this.body.walk(tw)
-    if (has_break_or_continue(this)) {
-      pop(tw)
-      push(tw)
-    }
-    this.condition.walk(tw)
-    pop(tw)
-    tw.in_loop = saved_loop
-    return true
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.body._walk(visitor)
-      this.condition._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.condition)
-    push(this.body)
-  }
-
-  _size = () => 9
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.body = (self.body).transform(tw)
-    self.condition = self.condition.transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'DoWhileStatement',
-      test: to_moz(this.condition),
-      body: to_moz(this.body)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('do')
-    output.space()
-    make_block(self.body, output)
-    output.space()
-    output.print('while')
-    output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
-    })
-    output.semicolon()
-  }
-
-  static documentation = 'A `do` statement'
-
-  TYPE = 'Do'
-  static PROPS = AST_DWLoop.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_While extends AST_DWLoop {
-  _optimize (self, compressor: any) {
-    return compressor.option('loops') ? make_node('AST_For', self, self).optimize(compressor) : self
-  }
-
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
-    reset_block_variables(compressor, this)
-    const saved_loop = tw.in_loop
-    tw.in_loop = this
-    push(tw)
-    descend()
-    pop(tw)
-    tw.in_loop = saved_loop
-    return true
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.condition._walk(visitor)
-      this.body._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.body)
-    push(this.condition)
-  }
-
-  _size = () => 7
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.condition = self.condition.transform(tw)
-    self.body = (self.body).transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'WhileStatement',
-      test: to_moz(this.condition),
-      body: to_moz(this.body)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('while')
-    output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
-    })
-    output.space()
-    self._do_print_body(output)
-  }
-
-  static documentation = 'A `while` statement'
-
-  TYPE = 'While'
-  static PROPS = AST_DWLoop.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
@@ -10023,20 +9868,6 @@ function mark_lambda (tw, descend, compressor) {
   descend()
   pop(tw)
   return true
-}
-
-export function has_break_or_continue (loop, parent?) {
-  var found = false
-  var tw = new TreeWalker(function (node: any) {
-    if (found || node instanceof AST_Scope) return true
-    if (node instanceof AST_LoopControl && tw.loopcontrol_target(node) === loop) {
-      return found = true
-    }
-  })
-  if (parent instanceof AST_LabeledStatement) tw.push(parent)
-  tw.push(loop)
-  loop.body.walk(tw)
-  return found
 }
 
 export function recursive_ref (compressor, def) {
