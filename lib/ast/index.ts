@@ -155,6 +155,9 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_SymbolExportForeign from './symbol-export-foreign'
+import AST_LabelRef from './label-ref'
+import AST_This from './this'
 import AST_Label from './label'
 import AST_SymbolImportForeign from './symbol-import-foreign'
 import AST_SymbolImport from './symbol-import'
@@ -8743,53 +8746,6 @@ class AST_SymbolExport extends AST_SymbolRef {
 
   TYPE = 'SymbolExport'
   static PROPS = AST_SymbolRef.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolExportForeign extends AST_Symbol {
-  _size = function (): number {
-    return this.name.length
-  }
-
-  static documentation = "A symbol exported from this module, but it is used in the other module, and its real name is irrelevant for this module's purposes"
-
-  TYPE = 'SymbolExportForeign'
-  static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_LabelRef extends AST_Symbol {
-  thedef: any
-
-  static documentation = 'Reference to a label symbol'
-
-  TYPE = 'LabelRef'
-  static PROPS = AST_Symbol.PROPS
-}
-
-class AST_This extends AST_Symbol {
-  drop_side_effect_free = return_null
-  may_throw = return_false
-  has_side_effects = return_false
-  _size = () => 4
-  shallow_cmp = pass_through
-  _to_mozilla_ast (): any {
-    return { type: 'ThisExpression' }
-  }
-
-  _codegen = function (_self, output) {
-    output.print('this')
-  }
-
-  static documentation = 'The `this` symbol'
-
-  TYPE = 'This'
-  static PROPS = AST_Symbol.PROPS
-
   constructor (args?) { // eslint-disable-line
     super(args)
   }
