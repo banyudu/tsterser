@@ -127,15 +127,12 @@ export default class AST_Node {
   _children_backwards (push: Function) {}
   _size (info: any) { return 0 }
   size (compressor, stack) {
-    // mangle_options = (default_options as any).mangle;
-
     let size = 0
     walk_parent(this, (node, info) => {
       size += node?._size(info) || 0
     }, stack || (compressor && compressor.stack))
 
     // just to save a bit of memory
-    // mangle_options = undefined;
 
     return size
   }
