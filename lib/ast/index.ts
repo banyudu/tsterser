@@ -72,6 +72,7 @@ import {
   to_moz,
   to_moz_in_destructuring,
   To_Moz_Literal,
+  make_num,
   keep_name
 } from '../utils'
 
@@ -131,6 +132,7 @@ import AST_Expansion from './expansion'
 import AST_TemplateSegment from './template-segment'
 import AST_Constant from './constant'
 import AST_String from './string'
+import AST_Number from './number'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -9764,56 +9766,6 @@ class AST_Super extends AST_This {
   }
 }
 
-class AST_Number extends AST_Constant {
-  is_number = return_true
-  _size = function (): number {
-    const { value } = this
-    if (value === 0) return 1
-    if (value > 0 && Math.floor(value) === value) {
-      return Math.floor(Math.log10(value) + 1)
-    }
-    return value.toString().length
-  }
-
-  shallow_cmp = mkshallow({
-    value: 'eq'
-  })
-
-  needs_parens = function (output: any) {
-    var p = output.parent()
-    if (p?._needs_parens(this)) {
-      var value = this.getValue()
-      if (value < 0 || /^0/.test(make_num(value))) {
-        return true
-      }
-    }
-    return undefined
-  }
-
-  _codegen = function (self, output) {
-    if ((output.option('keep_numbers') || output.use_asm) && self.start && self.start.raw != null) {
-      output.print(self.start.raw)
-    } else {
-      output.print(make_num(self.getValue()))
-    }
-  }
-
-  static documentation = 'A number literal'
-  static propdoc = {
-    value: '[number] the numeric value',
-    literal: '[string] numeric value as string (optional)'
-  }
-
-  TYPE = 'Number'
-  static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
-
-  constructor (args) {
-    super(args)
-    this.value = args.value
-    this.literal = args.literal
-  }
-}
-
 class AST_BigInt extends AST_Constant {
   _eval = return_this
   _size = function (): number {
@@ -10463,41 +10415,6 @@ function force_statement (stat: any, output: any) {
   } else {
     if (!stat || stat instanceof AST_EmptyStatement) { output.force_semicolon() } else { stat.print(output) }
   }
-}
-
-function best_of_string (a: string[]) {
-  var best = a[0]; var len = best.length
-  for (var i = 1; i < a.length; ++i) {
-    if (a[i].length < len) {
-      best = a[i]
-      len = best.length
-    }
-  }
-  return best
-}
-
-function make_num (num: number) {
-  var str = num.toString(10).replace(/^0\./, '.').replace('e+', 'e')
-  var candidates = [str]
-  if (Math.floor(num) === num) {
-    if (num < 0) {
-      candidates.push('-0x' + (-num).toString(16).toLowerCase())
-    } else {
-      candidates.push('0x' + num.toString(16).toLowerCase())
-    }
-  }
-  var match: RegExpExecArray | null, len, digits
-  if (match = /^\.0+/.exec(str)) {
-    len = match[0].length
-    digits = str.slice(len)
-    candidates.push(digits + 'e-' + (digits.length + len - 1))
-  } else if (match = /0+$/.exec(str)) {
-    len = match[0].length
-    candidates.push(str.slice(0, -len) + 'e' + len)
-  } else if (match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str)) {
-    candidates.push(match[1] + match[2] + 'e' + (Number(match[3]) - match[2].length))
-  }
-  return best_of_string(candidates)
 }
 
 function make_block (stmt: any, output: any) {

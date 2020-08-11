@@ -1242,3 +1242,38 @@ export function To_Moz_Literal (M) {
     raw: M.start.raw
   }
 }
+
+export function make_num (num: number) {
+  var str = num.toString(10).replace(/^0\./, '.').replace('e+', 'e')
+  var candidates = [str]
+  if (Math.floor(num) === num) {
+    if (num < 0) {
+      candidates.push('-0x' + (-num).toString(16).toLowerCase())
+    } else {
+      candidates.push('0x' + num.toString(16).toLowerCase())
+    }
+  }
+  var match: RegExpExecArray | null, len, digits
+  if (match = /^\.0+/.exec(str)) {
+    len = match[0].length
+    digits = str.slice(len)
+    candidates.push(digits + 'e-' + (digits.length + len - 1))
+  } else if (match = /0+$/.exec(str)) {
+    len = match[0].length
+    candidates.push(str.slice(0, -len) + 'e' + len)
+  } else if (match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str)) {
+    candidates.push(match[1] + match[2] + 'e' + (Number(match[3]) - match[2].length))
+  }
+  return best_of_string(candidates)
+}
+
+export function best_of_string (a: string[]) {
+  var best = a[0]; var len = best.length
+  for (var i = 1; i < a.length; ++i) {
+    if (a[i].length < len) {
+      best = a[i]
+      len = best.length
+    }
+  }
+  return best
+}
