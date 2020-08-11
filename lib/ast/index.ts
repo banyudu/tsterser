@@ -155,6 +155,22 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Label from './label'
+import AST_SymbolImportForeign from './symbol-import-foreign'
+import AST_SymbolImport from './symbol-import'
+import AST_SymbolCatch from './symbol-catch'
+import AST_SymbolClass from './symbol-class'
+import AST_SymbolDefClass from './symbol-def-class'
+import AST_SymbolLambda from './symbol-lambda'
+import AST_SymbolClassProperty from './symbol-class-property'
+import AST_SymbolMethod from './symbol-method'
+import AST_SymbolDefun from './symbol-defun'
+import AST_SymbolFunarg from './symbol-funarg'
+import AST_SymbolLet from './symbol-let'
+import AST_SymbolConst from './symbol-const'
+import AST_SymbolBlockDeclaration from './symbol-block-declaration'
+import AST_SymbolVar from './symbol-var'
+import AST_SymbolDeclaration from './symbol-declaration'
 import AST_Symbol from './symbol'
 import AST_Default from './default'
 import AST_Case from './case'
@@ -8437,222 +8453,6 @@ class AST_ClassExpression extends AST_Class {
   static PROPS = AST_Class.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_SymbolDeclaration extends AST_Symbol {
-  init: any
-  thedef: any
-
-  may_throw = return_false
-  has_side_effects = return_false
-  _find_defs = function (compressor: any) {
-    if (!this.global()) return
-    if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
-  }
-
-  static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
-
-  TYPE = 'SymbolDeclaration'
-  static PROPS = AST_Symbol.PROPS.concat(['init'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.init = args.init
-  }
-}
-
-class AST_SymbolVar extends AST_SymbolDeclaration {
-  static documentation = 'Symbol defining a variable'
-
-  TYPE = 'SymbolVar'
-  static PROPS = AST_SymbolDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolBlockDeclaration extends AST_SymbolDeclaration {
-  static documentation = 'Base class for block-scoped declaration symbols'
-
-  TYPE = 'SymbolBlockDeclaration'
-  static PROPS = AST_SymbolDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolConst extends AST_SymbolBlockDeclaration {
-  static documentation = 'A constant declaration'
-
-  TYPE = 'SymbolConst'
-  static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolLet extends AST_SymbolBlockDeclaration {
-  static documentation = 'A block-scoped `let` declaration'
-
-  TYPE = 'SymbolLet'
-  static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolFunarg extends AST_SymbolVar {
-  static documentation = 'Symbol naming a function argument'
-
-  TYPE = 'SymbolFunarg'
-  static PROPS = AST_SymbolVar.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolDefun extends AST_SymbolDeclaration {
-  static documentation = 'Symbol defining a function'
-
-  TYPE = 'SymbolDefun'
-  static PROPS = AST_SymbolDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolMethod extends AST_Symbol {
-  static documentation = 'Symbol in an object defining a method'
-
-  _to_mozilla_ast (parent): any {
-    if (parent.quote) {
-      return {
-        type: 'Literal',
-        value: this.name
-      }
-    }
-    var def = this.definition()
-    return {
-      type: 'Identifier',
-      name: def ? def.mangled_name || def.name : this.name
-    }
-  }
-
-  TYPE = 'SymbolMethod'
-  static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolClassProperty extends AST_Symbol {
-  may_throw = return_false
-  has_side_effects = return_false
-  // TODO take propmangle into account
-  _size = function (): number {
-    return this.name.length
-  }
-
-  static documentation = 'Symbol for a class property'
-
-  TYPE = 'SymbolClassProperty'
-  static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolLambda extends AST_SymbolDeclaration {
-  static documentation = 'Symbol naming a function expression'
-
-  TYPE = 'SymbolLambda'
-  static PROPS = AST_SymbolDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolDefClass extends AST_SymbolBlockDeclaration {
-  static documentation = "Symbol naming a class's name in a class declaration. Lexically scoped to its containing scope, and accessible within the class."
-
-  TYPE = 'SymbolDefClass'
-  static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolClass extends AST_SymbolDeclaration {
-  static documentation = "Symbol naming a class's name. Lexically scoped to the class."
-
-  TYPE = 'SymbolClass'
-  static PROPS = AST_SymbolDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
-  reduce_vars = function () {
-    this.definition().fixed = false
-  }
-
-  static documentation = 'Symbol naming the exception in catch'
-
-  TYPE = 'SymbolCatch '
-  static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolImport extends AST_SymbolBlockDeclaration {
-  static documentation = 'Symbol referring to an imported name'
-
-  TYPE = 'SymbolImport'
-  static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_SymbolImportForeign extends AST_Symbol {
-  _size = function (): number {
-    return this.name.length
-  }
-
-  static documentation = "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes"
-
-  TYPE = 'SymbolImportForeign'
-  static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Label extends AST_Symbol {
-  thedef: any
-  references: any
-  mangled_name: any
-
-  // labels are always mangleable
-  unmangleable = return_false
-  initialize = function () {
-    this.references = []
-    this.thedef = this
-  }
-
-  static documentation = 'Symbol naming a label (declaration)'
-  static propdoc = {
-    references: '[AST_LoopControl*] a list of nodes referring to this label'
-  }
-
-  TYPE = 'Label'
-  static PROPS = AST_Symbol.PROPS.concat(['references'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.references = args.references
-    this.initialize()
   }
 }
 
