@@ -101,7 +101,6 @@ import {
   is_lhs,
   is_modified,
   is_ref_of,
-  clone_block_scope,
   read_property,
   as_statement_array,
   keep_name
@@ -181,6 +180,8 @@ import AST_Throw from './throw'
 import AST_Block from './block'
 import AST_Break from './break'
 import AST_LabeledStatement from './labeled-statement'
+import AST_IterationStatement from './iteration-statement'
+import AST_With from './with'
 
 let unmangleable_names: Set<any> | null = null
 
@@ -295,26 +296,6 @@ class AST_BlockStatement extends AST_Block {
   static PROPS = AST_Block.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
-  }
-}
-
-class AST_IterationStatement extends AST_StatementWithBody {
-  block_scope: any
-  init?: any
-  condition: any
-  step: any
-  is_block_scope = return_true
-  clone = clone_block_scope
-  static documentation = 'Internal class.  All loops inherit from it.'
-  static propdoc = {
-    block_scope: '[AST_Scope] the block scope for this iteration statement.'
-  } as any
-
-  TYPE = 'StatementWithBody'
-  static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.block_scope = args.block_scope
   }
 }
 
@@ -735,58 +716,6 @@ class AST_ForOf extends AST_ForIn {
   constructor (args?) { // eslint-disable-line
     super(args)
     this.await = args.await
-  }
-}
-
-class AST_With extends AST_StatementWithBody {
-  expression: any
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.expression._walk(visitor)
-      this.body._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.body)
-    push(this.expression)
-  }
-
-  _size = () => 6
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.expression = self.expression.transform(tw)
-    self.body = (self.body).transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'WithStatement',
-      object: to_moz(this.expression),
-      body: to_moz(this.body)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('with')
-    output.space()
-    output.with_parens(function () {
-      self.expression.print(output)
-    })
-    output.space()
-    self._do_print_body(output)
-  }
-
-  static documentation = 'A `with` statement'
-  static propdoc = {
-    expression: '[AST_Node] the `with` expression'
-  }
-
-  TYPE = 'Scope'
-  static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
   }
 }
 
@@ -2976,31 +2905,6 @@ class AST_TemplateString extends AST_Node {
 }
 
 /* -----[ JUMPS ]----- */
-
-class AST_Continue extends AST_LoopControl {
-  _size = function () {
-    return this.label ? 9 : 8
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'ContinueStatement',
-      label: to_moz(this.label)
-    }
-  }
-
-  _codegen = function (self, output) {
-    self._do_print(output, 'continue')
-  }
-
-  static documentation = 'A `continue` statement'
-
-  TYPE = 'Continue'
-  static PROPS = AST_LoopControl.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
 
 class AST_Await extends AST_Node {
   expression: any
