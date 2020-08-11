@@ -158,3 +158,6 @@ export const identifier_atom = makePredicate('Infinity NaN undefined')
 export const walk_abort = Symbol('abort walk')
 
 export const directives = new Set(['use asm', 'use strict'])
+export const _PURE = 0b00000001
+export const _INLINE = 0b00000010
+export const _NOINLINE = 0b00000100
