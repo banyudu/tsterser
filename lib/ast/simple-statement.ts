@@ -1,5 +1,4 @@
 import AST_Statement from './statement'
-import { AST_EmptyStatement } from './'
 import { make_node, pass_through, to_moz } from '../utils'
 
 export default class AST_SimpleStatement extends AST_Statement {
@@ -9,10 +8,10 @@ export default class AST_SimpleStatement extends AST_Statement {
       var node = body.drop_side_effect_free(compressor, true)
       if (!node) {
         compressor.warn('Dropping side-effect-free statement [{file}:{line},{col}]', self.start)
-        return make_node(AST_EmptyStatement, self)
+        return make_node('AST_EmptyStatement', self)
       }
       if (node !== body) {
-        return make_node(AST_SimpleStatement, self, { body: node })
+        return make_node('AST_SimpleStatement', self, { body: node })
       }
     }
     return self

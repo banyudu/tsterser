@@ -85,11 +85,13 @@ import {
   AST_Hole,
   AST_If,
   AST_Import,
+  AST_Infinity,
   AST_Label,
   AST_LabeledStatement,
   AST_LabelRef,
   AST_Let,
   AST_NameMapping,
+  AST_NaN,
   AST_New,
   AST_NewTarget,
   AST_Null,
@@ -182,11 +184,13 @@ const AST_DICT = {
   AST_Hole,
   AST_If,
   AST_Import,
+  AST_Infinity,
   AST_Label,
   AST_LabeledStatement,
   AST_LabelRef,
   AST_Let,
   AST_NameMapping,
+  AST_NaN,
   AST_New,
   AST_NewTarget,
   AST_Null,
@@ -351,16 +355,13 @@ var MAP = (function () {
   return MAP
 })()
 
-function make_node (ctor: any, orig?: any, props?: any) {
-  if (typeof ctor === 'string') {
-    ctor = AST_DICT[ctor]
-  }
+function make_node (ctor: string, orig?: any, props?: any) {
   if (!props) props = {}
   if (orig) {
     if (!props.start) props.start = orig.start
     if (!props.end) props.end = orig.end
   }
-  return new ctor(props)
+  return new AST_DICT[ctor](props)
 }
 
 function push_uniq<T> (array: T[], el: T) {
@@ -734,7 +735,7 @@ var MOZ_TO_ME: any = {
   ArrowFunctionExpression: function (M) {
     const body = M.body.type === 'BlockStatement'
       ? from_moz(M.body).body
-      : [make_node(AST_Return, {}, { value: from_moz(M.body) })]
+      : [make_node('AST_Return', {}, { value: from_moz(M.body) })]
     return new AST_Arrow({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -1383,7 +1384,7 @@ export function literals_in_boolean_context (self, compressor) {
   if (compressor.in_boolean_context()) {
     return best_of(compressor, self, make_sequence(self, [
       self,
-      make_node(AST_True, self)
+      make_node('AST_True', self)
     ]).optimize(compressor))
   }
   return self
@@ -1392,7 +1393,7 @@ export function literals_in_boolean_context (self, compressor) {
 export function make_sequence (orig, expressions) {
   if (expressions.length == 1) return expressions[0]
   if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
-  return make_node(AST_Sequence, orig, {
+  return make_node('AST_Sequence', orig, {
     expressions: expressions.reduce(merge_sequence, [])
   })
 }
@@ -1436,10 +1437,10 @@ export function first_in_statement (stack: any) {
 
 function best_of_statement (ast1, ast2) {
   return best_of_expression(
-    make_node(AST_SimpleStatement, ast1, {
+    make_node('AST_SimpleStatement', ast1, {
       body: ast1
     }),
-    make_node(AST_SimpleStatement, ast2, {
+    make_node('AST_SimpleStatement', ast2, {
       body: ast2
     })
   ).body

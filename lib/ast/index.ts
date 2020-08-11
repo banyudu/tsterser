@@ -325,7 +325,7 @@ class AST_BlockStatement extends AST_Block {
           return self.body[0]
         }
         break
-      case 0: return make_node(AST_EmptyStatement, self)
+      case 0: return make_node('AST_EmptyStatement', self)
     }
     return self
   }
@@ -373,7 +373,7 @@ class AST_LabeledStatement extends AST_StatementWithBody {
   _optimize (self, compressor) {
     if (self.body instanceof AST_Break &&
           compressor.loopcontrol_target(self.body) === self.body) {
-      return make_node(AST_EmptyStatement, self)
+      return make_node('AST_EmptyStatement', self)
     }
     return self.label.references.length == 0 ? self.body : self
   }
@@ -497,11 +497,11 @@ class AST_Do extends AST_DWLoop {
     var cond = self.condition.tail_node().evaluate(compressor)
     if (!(cond instanceof AST_Node)) {
       if (cond) {
-        return make_node(AST_For, self, {
-          body: make_node(AST_BlockStatement, self.body, {
+        return make_node('AST_For', self, {
+          body: make_node('AST_BlockStatement', self.body, {
             body: [
               self.body,
-              make_node(AST_SimpleStatement, self.condition, {
+              make_node('AST_SimpleStatement', self.condition, {
                 body: self.condition
               })
             ]
@@ -509,10 +509,10 @@ class AST_Do extends AST_DWLoop {
         }).optimize(compressor)
       }
       if (!has_break_or_continue(self, compressor.parent())) {
-        return make_node(AST_BlockStatement, self.body, {
+        return make_node('AST_BlockStatement', self.body, {
           body: [
             self.body,
-            make_node(AST_SimpleStatement, self.condition, {
+            make_node('AST_SimpleStatement', self.condition, {
               body: self.condition
             })
           ]
@@ -589,7 +589,7 @@ class AST_Do extends AST_DWLoop {
 
 class AST_While extends AST_DWLoop {
   _optimize (self, compressor: any) {
-    return compressor.option('loops') ? make_node(AST_For, self, self).optimize(compressor) : self
+    return compressor.option('loops') ? make_node('AST_For', self, self).optimize(compressor) : self
   }
 
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
@@ -673,14 +673,14 @@ class AST_For extends AST_IterationStatement {
           if (self.init instanceof AST_Statement) {
             body.push(self.init)
           } else if (self.init) {
-            body.push(make_node(AST_SimpleStatement, self.init, {
+            body.push(make_node('AST_SimpleStatement', self.init, {
               body: self.init
             }))
           }
-          body.push(make_node(AST_SimpleStatement, self.condition, {
+          body.push(make_node('AST_SimpleStatement', self.condition, {
             body: self.condition
           }))
-          return make_node(AST_BlockStatement, self, { body: body }).optimize(compressor)
+          return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
         }
       }
     }
@@ -966,21 +966,21 @@ class AST_Scope extends AST_Block {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
       if (insert && node instanceof AST_SimpleStatement) {
-        return make_node(AST_Return, node, {
+        return make_node('AST_Return', node, {
           value: node.body
         })
       }
       if (!insert && node instanceof AST_Return) {
         if (compressor) {
           var value = node.value && node.value.drop_side_effect_free?.(compressor, true)
-          return value ? make_node(AST_SimpleStatement, node, {
+          return value ? make_node('AST_SimpleStatement', node, {
             body: value
-          }) : make_node(AST_EmptyStatement, node)
+          }) : make_node('AST_EmptyStatement', node)
         }
-        return make_node(AST_SimpleStatement, node, {
-          body: node.value || make_node(AST_UnaryPrefix, node, {
+        return make_node('AST_SimpleStatement', node, {
+          body: node.value || make_node('AST_UnaryPrefix', node, {
             operator: 'void',
-            expression: make_node(AST_Number, node, {
+            expression: make_node('AST_Number', node, {
               value: 0
             })
           })
@@ -1146,7 +1146,7 @@ class AST_Scope extends AST_Block {
                 return maintain_this_binding(parent, node, node.right.transform(tt))
               }
             } else if (!in_use) {
-              return in_list ? MAP.skip : make_node(AST_Number, node, {
+              return in_list ? MAP.skip : make_node('AST_Number', node, {
                 value: 0
               })
             }
@@ -1200,12 +1200,12 @@ class AST_Scope extends AST_Block {
               // Classes might have extends with side effects
               const side_effects = node.drop_side_effect_free(compressor)
               if (side_effects) {
-                return make_node(AST_SimpleStatement, node, {
+                return make_node('AST_SimpleStatement', node, {
                   body: side_effects
                 })
               }
             }
-            return in_list ? MAP.skip : make_node(AST_EmptyStatement, node)
+            return in_list ? MAP.skip : make_node('AST_EmptyStatement', node)
           }
         }
         if (node instanceof AST_Definitions && !(parent instanceof AST_ForIn && parent.init === node)) {
@@ -1238,9 +1238,9 @@ class AST_Scope extends AST_Block {
                 if (var_defs.length > 1 && (!def.value || sym.orig.indexOf(def.name) > sym.eliminated)) {
                   compressor.warn('Dropping duplicated definition of variable {name} [{file}:{line},{col}]', template(def.name))
                   if (def.value) {
-                    var ref = make_node(AST_SymbolRef, def.name, def.name)
+                    var ref = make_node('AST_SymbolRef', def.name, def.name)
                     sym.references.push(ref)
-                    var assign = make_node(AST_Assign, def, {
+                    var assign = make_node('AST_Assign', def, {
                       operator: '=',
                       left: ref,
                       right: def.value
@@ -1261,7 +1261,7 @@ class AST_Scope extends AST_Block {
                     side_effects.push(def.value)
                     def.value = make_sequence(def.value, side_effects)
                   } else {
-                    body.push(make_node(AST_SimpleStatement, node, {
+                    body.push(make_node('AST_SimpleStatement', node, {
                       body: make_sequence(node, side_effects)
                     }))
                   }
@@ -1292,17 +1292,17 @@ class AST_Scope extends AST_Block {
             body.push(node)
           }
           if (side_effects.length > 0) {
-            body.push(make_node(AST_SimpleStatement, node, {
+            body.push(make_node('AST_SimpleStatement', node, {
               body: make_sequence(node, side_effects)
             }))
           }
           switch (body.length) {
             case 0:
-              return in_list ? MAP.skip : make_node(AST_EmptyStatement, node)
+              return in_list ? MAP.skip : make_node('AST_EmptyStatement', node)
             case 1:
               return body[0]
             default:
-              return in_list ? MAP.splice(body) : make_node(AST_BlockStatement, node, {
+              return in_list ? MAP.splice(body) : make_node('AST_BlockStatement', node, {
                 body: body
               })
           }
@@ -1434,13 +1434,13 @@ class AST_Scope extends AST_Block {
           if (node !== self) {
             if (node instanceof AST_Directive) {
               dirs.push(node)
-              return make_node(AST_EmptyStatement, node)
+              return make_node('AST_EmptyStatement', node)
             }
             if (hoist_funs && node instanceof AST_Defun &&
                           !(tt.parent() instanceof AST_Export) &&
                           tt.parent() === self) {
               hoisted.push(node)
-              return make_node(AST_EmptyStatement, node)
+              return make_node('AST_EmptyStatement', node)
             }
             if (hoist_vars && node instanceof AST_Var) {
               node.definitions.forEach(function (def) {
@@ -1453,15 +1453,15 @@ class AST_Scope extends AST_Block {
               if (p instanceof AST_ForIn && p.init === node) {
                 if (seq == null) {
                   var def = node.definitions[0].name
-                  return make_node(AST_SymbolRef, def, def)
+                  return make_node('AST_SymbolRef', def, def)
                 }
                 return seq
               }
               if (p instanceof AST_For && p.init === node) {
                 return seq
               }
-              if (!seq) return make_node(AST_EmptyStatement, node)
-              return make_node(AST_SimpleStatement, node, {
+              if (!seq) return make_node('AST_EmptyStatement', node)
+              return make_node('AST_SimpleStatement', node, {
                 body: seq
               })
             }
@@ -1529,7 +1529,7 @@ class AST_Scope extends AST_Block {
             }
             break
           }
-          defs = make_node(AST_Var, self, {
+          defs = make_node('AST_Var', self, {
             definitions: defs
           })
           hoisted.push(defs)
@@ -1576,7 +1576,7 @@ class AST_Scope extends AST_Block {
           const defs = new Map()
           const assignments: any[] = []
           value.properties.forEach(function (prop) {
-            assignments.push(make_node(AST_VarDef, node, {
+            assignments.push(make_node('AST_VarDef', node, {
               name: make_sym(sym, prop.key, defs),
               value: prop.value
             }))
@@ -1590,7 +1590,7 @@ class AST_Scope extends AST_Block {
         const defs = defs_by_id.get(node.expression.definition?.().id)
         if (defs) {
           const def = defs.get(String(get_value(node.property)))
-          const sym = make_node(AST_SymbolRef, node, {
+          const sym = make_node('AST_SymbolRef', node, {
             name: def.name,
             scope: node.expression.scope,
             thedef: def
@@ -1601,7 +1601,7 @@ class AST_Scope extends AST_Block {
       }
 
       function make_sym (sym: any | any, key: string, defs: Map<string, any>) {
-        const new_var = make_node(sym.CTOR, sym, {
+        const new_var = make_node(sym.constructor.name, sym, {
           name: self.make_var_name(sym.name + '_' + key),
           scope: self
         })
@@ -2106,7 +2106,7 @@ class AST_Toplevel extends AST_Scope {
             name = name.expression
           }
           if (is_undeclared_ref(name) && name.name == 'console') {
-            return make_node(AST_Undefined, self)
+            return make_node('AST_Undefined', self)
           }
         }
       }
@@ -2574,7 +2574,7 @@ class AST_Function extends AST_Lambda {
       const has_special_symbol = walk(self, (node: any) => {
         if (node instanceof AST_This) return walk_abort
       })
-      if (!has_special_symbol) return make_node(AST_Arrow, self, self).optimize(compressor)
+      if (!has_special_symbol) return make_node('AST_Arrow', self, self).optimize(compressor)
     }
     return self
   }
@@ -3013,14 +3013,14 @@ class AST_TemplateString extends AST_Node {
 
     // `foo` => "foo"
     if (segments.length == 1) {
-      return make_node(AST_String, self, segments[0])
+      return make_node('AST_String', self, segments[0])
     }
     if (segments.length === 3 && segments[1] instanceof AST_Node) {
       // `foo${bar}` => "foo" + bar
       if (segments[2].value === '') {
-        return make_node(AST_Binary, self, {
+        return make_node('AST_Binary', self, {
           operator: '+',
-          left: make_node(AST_String, self, {
+          left: make_node('AST_String', self, {
             value: segments[0].value
           }),
           right: segments[1]
@@ -3028,10 +3028,10 @@ class AST_TemplateString extends AST_Node {
       }
       // `{bar}baz` => bar + "baz"
       if (segments[0].value === '') {
-        return make_node(AST_Binary, self, {
+        return make_node('AST_Binary', self, {
           operator: '+',
           left: segments[1],
-          right: make_node(AST_String, self, {
+          right: make_node('AST_String', self, {
             value: segments[2].value
           })
         })
@@ -3376,22 +3376,22 @@ class AST_If extends AST_StatementWithBody {
         compressor.warn('Condition always false [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
         extract_declarations_from_unreachable_code(compressor, self.body, body)
-        body.push(make_node(AST_SimpleStatement, self.condition, {
+        body.push(make_node('AST_SimpleStatement', self.condition, {
           body: self.condition
         }))
         if (self.alternative) body.push(self.alternative)
-        return make_node(AST_BlockStatement, self, { body: body }).optimize(compressor)
+        return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
       } else if (!(cond instanceof AST_Node)) {
         compressor.warn('Condition always true [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
-        body.push(make_node(AST_SimpleStatement, self.condition, {
+        body.push(make_node('AST_SimpleStatement', self.condition, {
           body: self.condition
         }))
         body.push(self.body)
         if (self.alternative) {
           extract_declarations_from_unreachable_code(compressor, self.alternative, body)
         }
-        return make_node(AST_BlockStatement, self, { body: body }).optimize(compressor)
+        return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
       }
     }
     var negated = self.condition.negate(compressor)
@@ -3404,18 +3404,18 @@ class AST_If extends AST_StatementWithBody {
       // here because they are only used in an equality comparison later on.
       self.condition = negated
       var tmp = self.body
-      self.body = self.alternative || make_node(AST_EmptyStatement, self)
+      self.body = self.alternative || make_node('AST_EmptyStatement', self)
       self.alternative = tmp
     }
     if (is_empty(self.body) && is_empty(self.alternative)) {
-      return make_node(AST_SimpleStatement, self.condition, {
+      return make_node('AST_SimpleStatement', self.condition, {
         body: self.condition.clone()
       }).optimize(compressor)
     }
     if (self.body instanceof AST_SimpleStatement &&
           self.alternative instanceof AST_SimpleStatement) {
-      return make_node(AST_SimpleStatement, self, {
-        body: make_node(AST_Conditional, self, {
+      return make_node('AST_SimpleStatement', self, {
+        body: make_node('AST_Conditional', self, {
           condition: self.condition,
           consequent: self.body.body,
           alternative: self.alternative.body
@@ -3431,16 +3431,16 @@ class AST_If extends AST_StatementWithBody {
         negated_is_best = true
       }
       if (negated_is_best) {
-        return make_node(AST_SimpleStatement, self, {
-          body: make_node(AST_Binary, self, {
+        return make_node('AST_SimpleStatement', self, {
+          body: make_node('AST_Binary', self, {
             operator: '||',
             left: negated,
             right: self.body.body
           })
         }).optimize(compressor)
       }
-      return make_node(AST_SimpleStatement, self, {
-        body: make_node(AST_Binary, self, {
+      return make_node('AST_SimpleStatement', self, {
+        body: make_node('AST_Binary', self, {
           operator: '&&',
           left: self.condition,
           right: self.body.body
@@ -3449,8 +3449,8 @@ class AST_If extends AST_StatementWithBody {
     }
     if (self.body instanceof AST_EmptyStatement &&
           self.alternative instanceof AST_SimpleStatement) {
-      return make_node(AST_SimpleStatement, self, {
-        body: make_node(AST_Binary, self, {
+      return make_node('AST_SimpleStatement', self, {
+        body: make_node('AST_Binary', self, {
           operator: '||',
           left: self.condition,
           right: self.alternative.body
@@ -3460,19 +3460,19 @@ class AST_If extends AST_StatementWithBody {
     if (self.body instanceof AST_Exit &&
           self.alternative instanceof AST_Exit &&
           self.body.TYPE == self.alternative.TYPE) {
-      return make_node(self.body.CTOR, self, {
-        value: make_node(AST_Conditional, self, {
+      return make_node(self.body.constructor?.name, self, {
+        value: make_node('AST_Conditional', self, {
           condition: self.condition,
-          consequent: self.body.value || make_node(AST_Undefined, self.body),
-          alternative: self.alternative.value || make_node(AST_Undefined, self.alternative)
+          consequent: self.body.value || make_node('AST_Undefined', self.body),
+          alternative: self.alternative.value || make_node('AST_Undefined', self.alternative)
         }).transform(compressor)
       }).optimize(compressor)
     }
     if (self.body instanceof AST_If &&
           !self.body.alternative &&
           !self.alternative) {
-      self = make_node(AST_If, self, {
-        condition: make_node(AST_Binary, self.condition, {
+      self = make_node('AST_If', self, {
+        condition: make_node('AST_Binary', self.condition, {
           operator: '&&',
           left: self.condition,
           right: self.body.condition
@@ -3485,7 +3485,7 @@ class AST_If extends AST_StatementWithBody {
       if (self.alternative) {
         var alt = self.alternative
         self.alternative = null
-        return make_node(AST_BlockStatement, self, {
+        return make_node('AST_BlockStatement', self, {
           body: [self, alt]
         }).optimize(compressor)
       }
@@ -3495,7 +3495,7 @@ class AST_If extends AST_StatementWithBody {
       self.body = self.alternative
       self.condition = negated_is_best ? negated : self.condition.negate(compressor)
       self.alternative = null
-      return make_node(AST_BlockStatement, self, {
+      return make_node('AST_BlockStatement', self, {
         body: [self, body]
       }).optimize(compressor)
     }
@@ -3648,7 +3648,7 @@ class AST_Switch extends AST_Block {
       if (aborts(branch)) {
         var prev = body[body.length - 1]
         if (aborts(prev) && prev.body.length == branch.body.length &&
-                  make_node(AST_BlockStatement, prev, prev).equivalent_to(make_node(AST_BlockStatement, branch, branch))) {
+                  make_node('AST_BlockStatement', prev, prev).equivalent_to(make_node('AST_BlockStatement', branch, branch))) {
           prev.body = []
         }
       }
@@ -3667,8 +3667,8 @@ class AST_Switch extends AST_Block {
       if (body.pop() === default_branch) default_branch = null
     }
     if (body.length == 0) {
-      return make_node(AST_BlockStatement, self, {
-        body: decl.concat(make_node(AST_SimpleStatement, self.expression, {
+      return make_node('AST_BlockStatement', self, {
+        body: decl.concat(make_node('AST_SimpleStatement', self.expression, {
           body: self.expression
         }))
       }).optimize(compressor)
@@ -3686,14 +3686,14 @@ class AST_Switch extends AST_Block {
         var statements = body[0].body.slice()
         var exp = body[0].expression
         if (exp) {
-          statements.unshift(make_node(AST_SimpleStatement, exp, {
+          statements.unshift(make_node('AST_SimpleStatement', exp, {
             body: exp
           }))
         }
-        statements.unshift(make_node(AST_SimpleStatement, self.expression, {
+        statements.unshift(make_node('AST_SimpleStatement', self.expression, {
           body: self.expression
         }))
-        return make_node(AST_BlockStatement, self, {
+        return make_node('AST_BlockStatement', self, {
           body: statements
         }).optimize(compressor)
       }
@@ -3920,7 +3920,7 @@ class AST_Try extends AST_Block {
         extract_declarations_from_unreachable_code(compressor, self.bcatch, body)
       }
       if (self.bfinally) body.push(...self.bfinally.body)
-      return make_node(AST_BlockStatement, self, {
+      return make_node('AST_BlockStatement', self, {
         body: body
       }).optimize(compressor)
     }
@@ -4120,7 +4120,7 @@ class AST_Definitions extends AST_Statement {
   definitions: any[]
 
   _optimize (self) {
-    if (self.definitions.length == 0) { return make_node(AST_EmptyStatement, self) }
+    if (self.definitions.length == 0) { return make_node('AST_EmptyStatement', self) }
     return self
   }
 
@@ -4136,8 +4136,8 @@ class AST_Definitions extends AST_Statement {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
       if (def.value && !(def.name instanceof AST_Destructuring)) {
-        var name = make_node(AST_SymbolRef, def.name, def.name)
-        a.push(make_node(AST_Assign, def, {
+        var name = make_node('AST_SymbolRef', def.name, def.name)
+        a.push(make_node('AST_Assign', def, {
           operator: '=',
           left: name,
           right: def.value
@@ -4145,11 +4145,11 @@ class AST_Definitions extends AST_Statement {
         if (reduce_vars) name.definition().fixed = false
       } else if (def.value) {
         // Because it's a destructuring, do not turn into an assignment.
-        var varDef = make_node(AST_VarDef, def, {
+        var varDef = make_node('AST_VarDef', def, {
           name: def.name,
           value: def.value
         })
-        var var_ = make_node(AST_Var, def, {
+        var var_ = make_node('AST_Var', def, {
           definitions: [varDef]
         })
         a.push(var_)
@@ -4172,7 +4172,7 @@ class AST_Definitions extends AST_Statement {
       } else {
         walk(def.name, (node: any) => {
           if (node instanceof AST_SymbolDeclaration) {
-            decls.push(make_node(AST_VarDef, def, {
+            decls.push(make_node('AST_VarDef', def, {
               name: node,
               value: null
             }))
@@ -4815,7 +4815,7 @@ class AST_Call extends AST_Node {
           if (node) {
             self.args[pos++] = node
           } else if (!trim) {
-            self.args[pos++] = make_node(AST_Number, self.args[i], {
+            self.args[pos++] = make_node('AST_Number', self.args[i], {
               value: 0
             })
             continue
@@ -4832,7 +4832,7 @@ class AST_Call extends AST_Node {
         switch (exp.name) {
           case 'Array':
             if (self.args.length != 1) {
-              return make_node(AST_Array, self, {
+              return make_node('AST_Array', self, {
                 elements: self.args
               }).optimize(compressor)
             } else if (self.args[0] instanceof AST_Number && self.args[0].value <= 11) {
@@ -4843,33 +4843,33 @@ class AST_Call extends AST_Node {
             break
           case 'Object':
             if (self.args.length == 0) {
-              return make_node(AST_Object, self, {
+              return make_node('AST_Object', self, {
                 properties: []
               })
             }
             break
           case 'String':
             if (self.args.length == 0) {
-              return make_node(AST_String, self, {
+              return make_node('AST_String', self, {
                 value: ''
               })
             }
             if (self.args.length <= 1) {
-              return make_node(AST_Binary, self, {
+              return make_node('AST_Binary', self, {
                 left: self.args[0],
                 operator: '+',
-                right: make_node(AST_String, self, { value: '' })
+                right: make_node('AST_String', self, { value: '' })
               }).optimize(compressor)
             }
             break
           case 'Number':
             if (self.args.length == 0) {
-              return make_node(AST_Number, self, {
+              return make_node('AST_Number', self, {
                 value: 0
               })
             }
             if (self.args.length == 1 && compressor.option('unsafe_math')) {
-              return make_node(AST_UnaryPrefix, self, {
+              return make_node('AST_UnaryPrefix', self, {
                 expression: self.args[0],
                 operator: '+'
               }).optimize(compressor)
@@ -4879,10 +4879,10 @@ class AST_Call extends AST_Node {
             if (self.args.length == 1 && self.args[0] instanceof AST_String && compressor.option('unsafe_symbols')) { self.args.length = 0 }
             break
           case 'Boolean':
-            if (self.args.length == 0) return make_node(AST_False, self)
+            if (self.args.length == 0) return make_node('AST_False', self)
             if (self.args.length == 1) {
-              return make_node(AST_UnaryPrefix, self, {
-                expression: make_node(AST_UnaryPrefix, self, {
+              return make_node('AST_UnaryPrefix', self, {
+                expression: make_node('AST_UnaryPrefix', self, {
                   expression: self.args[0],
                   operator: '!'
                 }),
@@ -4902,7 +4902,7 @@ class AST_Call extends AST_Node {
             ) {
               let [source, flags] = params
               source = regexp_source_fix(new RegExp(source).source)
-              const rx = make_node(AST_RegExp, self, {
+              const rx = make_node('AST_RegExp', self, {
                 value: { source, flags }
               })
               if (rx._eval(compressor) !== rx) {
@@ -4921,8 +4921,8 @@ class AST_Call extends AST_Node {
         switch (exp.property) {
           case 'toString':
             if (self.args.length == 0 && !exp.expression.may_throw_on_access(compressor)) {
-              return make_node(AST_Binary, self, {
-                left: make_node(AST_String, self, { value: '' }),
+              return make_node('AST_Binary', self, {
+                left: make_node('AST_String', self, { value: '' }),
                 operator: '+',
                 right: exp.expression
               }).optimize(compressor)
@@ -4946,7 +4946,7 @@ class AST_Call extends AST_Node {
                     consts.push(value)
                   } else {
                     if (consts.length > 0) {
-                      elements.push(make_node(AST_String, self, {
+                      elements.push(make_node('AST_String', self, {
                         value: consts.join(separator)
                       }))
                       consts.length = 0
@@ -4955,18 +4955,18 @@ class AST_Call extends AST_Node {
                   }
                 }
                 if (consts.length > 0) {
-                  elements.push(make_node(AST_String, self, {
+                  elements.push(make_node('AST_String', self, {
                     value: consts.join(separator)
                   }))
                 }
-                if (elements.length == 0) return make_node(AST_String, self, { value: '' })
+                if (elements.length == 0) return make_node('AST_String', self, { value: '' })
                 if (elements.length == 1) {
                   if (elements[0].is_string(compressor)) {
                     return elements[0]
                   }
-                  return make_node(AST_Binary, elements[0], {
+                  return make_node('AST_Binary', elements[0], {
                     operator: '+',
-                    left: make_node(AST_String, self, { value: '' }),
+                    left: make_node('AST_String', self, { value: '' }),
                     right: elements[0]
                   })
                 }
@@ -4976,10 +4976,10 @@ class AST_Call extends AST_Node {
                           elements[1].is_string(compressor)) {
                     first = elements.shift()
                   } else {
-                    first = make_node(AST_String, self, { value: '' })
+                    first = make_node('AST_String', self, { value: '' })
                   }
                   return elements.reduce(function (prev, el) {
-                    return make_node(AST_Binary, el, {
+                    return make_node('AST_Binary', el, {
                       operator: '+',
                       left: prev,
                       right: el
@@ -5001,7 +5001,7 @@ class AST_Call extends AST_Node {
               var arg = self.args[0]
               var index = arg ? arg.evaluate(compressor) : 0
               if (index !== arg) {
-                return make_node(AST_Sub, exp, {
+                return make_node('AST_Sub', exp, {
                   expression: exp.expression,
                   property: make_node_from_constant(index | 0, arg || exp)
                 }).optimize(compressor)
@@ -5012,8 +5012,8 @@ class AST_Call extends AST_Node {
             if (self.args.length == 2 && self.args[1] instanceof AST_Array) {
               var args = self.args[1].elements.slice()
               args.unshift(self.args[0])
-              return make_node(AST_Call, self, {
-                expression: make_node(AST_Dot, exp, {
+              return make_node('AST_Call', self, {
+                expression: make_node('AST_Dot', exp, {
                   expression: exp.expression,
                   property: 'call'
                 }),
@@ -5029,11 +5029,11 @@ class AST_Call extends AST_Node {
             if (func instanceof AST_Lambda && !func.contains_this()) {
               return (self.args.length ? make_sequence(this, [
                 self.args[0],
-                make_node(AST_Call, self, {
+                make_node('AST_Call', self, {
                   expression: exp.expression,
                   args: self.args.slice(1)
                 })
-              ]) : make_node(AST_Call, self, {
+              ]) : make_node('AST_Call', self, {
                 expression: exp.expression,
                 args: []
               })).optimize(compressor)
@@ -5047,7 +5047,7 @@ class AST_Call extends AST_Node {
           exp.name == 'Function') {
       // new Function() => function(){}
       if (self.args.length == 0) {
-        return make_node(AST_Function, self, {
+        return make_node('AST_Function', self, {
           argnames: [],
           body: []
         }).optimize(compressor)
@@ -5081,12 +5081,12 @@ class AST_Call extends AST_Node {
           const code2 = OutputStream()
           blockStateMentCodeGen.call(fun, fun, code2)
           self.args = [
-            make_node(AST_String, self, {
+            make_node('AST_String', self, {
               value: fun.argnames.map(function (arg) {
                 return arg.print_to_string()
               }).join(',')
             }),
-            make_node(AST_String, self.args[self.args.length - 1], {
+            make_node('AST_String', self.args[self.args.length - 1], {
               value: code2.get().replace(/^{|}$/g, '')
             })
           ]
@@ -5110,7 +5110,7 @@ class AST_Call extends AST_Node {
         if (returned) {
           returned = returned.clone(true)
         } else {
-          returned = make_node(AST_Undefined, self)
+          returned = make_node('AST_Undefined', self)
         }
         const args = self.args.concat(returned)
         return make_sequence(self, args).optimize(compressor)
@@ -5137,12 +5137,12 @@ class AST_Call extends AST_Node {
           // Replace with a larger but more effish (0, bag.no_this) wrapper.
 
           return make_sequence(self, [
-            make_node(AST_Number, self, { value: 0 }),
+            make_node('AST_Number', self, { value: 0 }),
             self.args[0].optimize(compressor)
           ])
         }
         // replace call with first argument or undefined if none passed
-        return (self.args[0] || make_node(AST_Undefined)).optimize(compressor)
+        return (self.args[0] || make_node('AST_Undefined')).optimize(compressor)
       }
     }
     if (can_inline) {
@@ -5188,7 +5188,7 @@ class AST_Call extends AST_Node {
     }
     const can_drop_this_call = is_regular_func && compressor.option('side_effects') && fn.body.every(is_empty)
     if (can_drop_this_call) {
-      const args = self.args.concat(make_node(AST_Undefined, self))
+      const args = self.args.concat(make_node('AST_Undefined', self))
       return make_sequence(self, args).optimize(compressor)
     }
     if (compressor.option('negate_iife') &&
@@ -5204,13 +5204,13 @@ class AST_Call extends AST_Node {
     return self
 
     function return_value (stat) {
-      if (!stat) return make_node(AST_Undefined, self)
+      if (!stat) return make_node('AST_Undefined', self)
       if (stat instanceof AST_Return) {
-        if (!stat.value) return make_node(AST_Undefined, self)
+        if (!stat.value) return make_node('AST_Undefined', self)
         return stat.value.clone(true)
       }
       if (stat instanceof AST_SimpleStatement) {
-        return make_node(AST_UnaryPrefix, stat, {
+        return make_node('AST_UnaryPrefix', stat, {
           operator: 'void',
           expression: (stat.body).clone(true)
         })
@@ -5364,15 +5364,15 @@ class AST_Call extends AST_Node {
       scope.enclosed.push(def)
       if (!scope.var_names().has(name.name)) {
         scope.add_var_name(name.name)
-        decls.push(make_node(AST_VarDef, name, {
+        decls.push(make_node('AST_VarDef', name, {
           name: name,
           value: null
         }))
       }
-      var sym = make_node(AST_SymbolRef, name, name)
+      var sym = make_node('AST_SymbolRef', name, name)
       def.references.push(sym)
       if (value) {
-        expressions.push(make_node(AST_Assign, self, {
+        expressions.push(make_node('AST_Assign', self, {
           operator: '=',
           left: sym,
           right: value.clone()
@@ -5391,9 +5391,9 @@ class AST_Call extends AST_Node {
         if (has_flag(name, UNUSED) || !name.name || scope.var_names().has(name.name)) {
           if (value) expressions.push(value)
         } else {
-          var symbol = make_node(AST_SymbolVar, name, name)
+          var symbol = make_node('AST_SymbolVar', name, name)
                   name.definition?.().orig.push(symbol)
-                  if (!value && in_loop) value = make_node(AST_Undefined, self)
+                  if (!value && in_loop) value = make_node('AST_Undefined', self)
                   append_var(decls, expressions, symbol, value)
         }
       }
@@ -5414,12 +5414,12 @@ class AST_Call extends AST_Node {
             argname.name != name.name
           )) {
             var def = fn.variables.get(name.name)
-            var sym = make_node(AST_SymbolRef, name, name)
+            var sym = make_node('AST_SymbolRef', name, name)
             def.references.push(sym)
-            expressions.splice(pos++, 0, make_node(AST_Assign, var_def, {
+            expressions.splice(pos++, 0, make_node('AST_Assign', var_def, {
               operator: '=',
               left: sym,
-              right: make_node(AST_Undefined, name)
+              right: make_node('AST_Undefined', name)
             }))
           }
         }
@@ -5434,7 +5434,7 @@ class AST_Call extends AST_Node {
       expressions.push(returned_value)
       if (decls.length) {
         const i = scope.body.indexOf(compressor.parent(level - 1)) + 1
-        scope.body.splice(i, 0, make_node(AST_Var, fn, {
+        scope.body.splice(i, 0, make_node('AST_Var', fn, {
           definitions: decls
         }))
       }
@@ -5632,7 +5632,7 @@ class AST_New extends AST_Call {
       compressor.option('unsafe') &&
           is_undeclared_ref(self.expression) &&
           ['Object', 'RegExp', 'Function', 'Error', 'Array'].includes(self.expression.name)
-    ) return make_node(AST_Call, self, self).transform(compressor)
+    ) return make_node('AST_Call', self, self).transform(compressor)
     return self
   }
 
@@ -5705,7 +5705,7 @@ class AST_Sequence extends AST_Node {
     function trim_right_for_undefined () {
       while (end > 0 && is_undefined(expressions[end], compressor)) end--
       if (end < expressions.length - 1) {
-        expressions[end] = make_node(AST_UnaryPrefix, self, {
+        expressions[end] = make_node('AST_UnaryPrefix', self, {
           operator: 'void',
           expression: expressions[end]
         })
@@ -5721,7 +5721,7 @@ class AST_Sequence extends AST_Node {
     var expressions = this.expressions.slice(0, -1)
     if (expr) expressions.push(expr)
     if (!expressions.length) {
-      return make_node(AST_Number, this, { value: 0 })
+      return make_node('AST_Number', this, { value: 0 })
     }
     return make_sequence(this, expressions)
   }
@@ -5907,11 +5907,11 @@ class AST_PropAccess extends AST_Node {
                           arrows && prop instanceof AST_ConciseMethod && !prop.is_generator
           })) break
           if (!safe_to_flatten(prop.value, compressor)) break
-          return make_node(AST_Sub, this, {
-            expression: make_node(AST_Array, expr, {
+          return make_node('AST_Sub', this, {
+            expression: make_node('AST_Array', expr, {
               elements: props.map(function (prop) {
                 var v = prop.value
-                if (v instanceof AST_Accessor) v = make_node(AST_Function, v, v)
+                if (v instanceof AST_Accessor) v = make_node('AST_Function', v, v)
                 var k = prop.key
                 if (k instanceof AST_Node && !(k instanceof AST_SymbolMethod)) {
                   return make_sequence(prop, [k, v])
@@ -5919,7 +5919,7 @@ class AST_PropAccess extends AST_Node {
                 return v
               })
             }),
-            property: make_node(AST_Number, this, {
+            property: make_node('AST_Number', this, {
               value: i
             })
           })
@@ -5995,33 +5995,33 @@ class AST_Dot extends AST_PropAccess {
       if (is_undeclared_ref(exp)) {
         switch (exp.name) {
           case 'Array':
-            self.expression = make_node(AST_Array, self.expression, {
+            self.expression = make_node('AST_Array', self.expression, {
               elements: []
             })
             break
           case 'Function':
-            self.expression = make_node(AST_Function, self.expression, {
+            self.expression = make_node('AST_Function', self.expression, {
               argnames: [],
               body: []
             })
             break
           case 'Number':
-            self.expression = make_node(AST_Number, self.expression, {
+            self.expression = make_node('AST_Number', self.expression, {
               value: 0
             })
             break
           case 'Object':
-            self.expression = make_node(AST_Object, self.expression, {
+            self.expression = make_node('AST_Object', self.expression, {
               properties: []
             })
             break
           case 'RegExp':
-            self.expression = make_node(AST_RegExp, self.expression, {
+            self.expression = make_node('AST_RegExp', self.expression, {
               value: { source: 't', flags: '' }
             })
             break
           case 'String':
-            self.expression = make_node(AST_String, self.expression, {
+            self.expression = make_node('AST_String', self.expression, {
               value: ''
             })
             break
@@ -6164,7 +6164,7 @@ class AST_Sub extends AST_PropAccess {
         property = '' + key
         if (is_basic_identifier_string(property) &&
                   property.length <= prop.size() + 1) {
-          return make_node(AST_Dot, self, {
+          return make_node('AST_Dot', self, {
             expression: expr,
             property: property,
             quote: prop.quote
@@ -6202,7 +6202,7 @@ class AST_Sub extends AST_PropAccess {
         }
       } else if (!argname && !compressor.option('keep_fargs') && index < fn.argnames.length + 5) {
         while (index >= fn.argnames.length) {
-          argname = make_node(AST_SymbolFunarg, fn, {
+          argname = make_node('AST_SymbolFunarg', fn, {
             name: fn.make_var_name('argument_' + fn.argnames.length),
             scope: fn
           })
@@ -6211,7 +6211,7 @@ class AST_Sub extends AST_PropAccess {
         }
       }
       if (argname) {
-        var sym = make_node(AST_SymbolRef, self, argname)
+        var sym = make_node('AST_SymbolRef', self, argname)
         sym.reference({})
         clear_flag(argname, UNUSED)
         return sym
@@ -6241,7 +6241,7 @@ class AST_Sub extends AST_PropAccess {
           }
         }
         if (retValue instanceof AST_Expansion) break FLATTEN
-        retValue = retValue instanceof AST_Hole ? make_node(AST_Undefined, retValue) : retValue
+        retValue = retValue instanceof AST_Hole ? make_node('AST_Undefined', retValue) : retValue
         if (!flatten) values.unshift(retValue)
         while (--i >= 0) {
           let value = elements[i]
@@ -6254,11 +6254,11 @@ class AST_Sub extends AST_PropAccess {
           values.push(retValue)
           return make_sequence(self, values).optimize(compressor)
         } else {
-          return make_node(AST_Sub, self, {
-            expression: make_node(AST_Array, expr, {
+          return make_node('AST_Sub', self, {
+            expression: make_node('AST_Array', expr, {
               elements: values
             }),
-            property: make_node(AST_Number, prop, {
+            property: make_node('AST_Number', prop, {
               value: index
             })
           })
@@ -6381,13 +6381,13 @@ class AST_Unary extends AST_Node {
     def.references.push(exp)
     def.chained = true
     def.fixed = function () {
-      return make_node(AST_Binary, node, {
+      return make_node('AST_Binary', node, {
         operator: node.operator.slice(0, -1),
-        left: make_node(AST_UnaryPrefix, node, {
+        left: make_node('AST_UnaryPrefix', node, {
           operator: '+',
           expression: fixed instanceof AST_Node ? fixed : fixed()
         }),
-        right: make_node(AST_Number, node, {
+        right: make_node('AST_Number', node, {
           value: 1
         })
       })
@@ -6475,10 +6475,10 @@ class AST_UnaryPrefix extends AST_Unary {
               is_identifier_atom(e))) {
       if (e instanceof AST_Sequence) {
         const exprs = e.expressions.slice()
-        exprs.push(make_node(AST_True, self))
+        exprs.push(make_node('AST_True', self))
         return make_sequence(self, exprs).optimize(compressor)
       }
-      return make_sequence(self, [e, make_node(AST_True, self)]).optimize(compressor)
+      return make_sequence(self, [e, make_node('AST_True', self)]).optimize(compressor)
     }
     var seq = self.lift_sequences(compressor)
     if (seq !== self) {
@@ -6490,7 +6490,7 @@ class AST_UnaryPrefix extends AST_Unary {
         self.expression = e
         return self
       } else {
-        return make_node(AST_Undefined, self).optimize(compressor)
+        return make_node('AST_Undefined', self).optimize(compressor)
       }
     }
     if (compressor.in_boolean_context()) {
@@ -6508,9 +6508,9 @@ class AST_UnaryPrefix extends AST_Unary {
           // typeof always returns a non-empty string, thus it's
           // always true in booleans
           compressor.warn('Boolean expression always true [{file}:{line},{col}]', self.start)
-          return (e instanceof AST_SymbolRef ? make_node(AST_True, self) : make_sequence(self, [
+          return (e instanceof AST_SymbolRef ? make_node('AST_True', self) : make_sequence(self, [
             e,
-            make_node(AST_True, self)
+            make_node('AST_True', self)
           ])).optimize(compressor)
       }
     }
@@ -6520,9 +6520,9 @@ class AST_UnaryPrefix extends AST_Unary {
     if (e instanceof AST_Binary &&
           (self.operator == '+' || self.operator == '-') &&
           (e.operator == '*' || e.operator == '/' || e.operator == '%')) {
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: e.operator,
-        left: make_node(AST_UnaryPrefix, e.left, {
+        left: make_node('AST_UnaryPrefix', e.left, {
           operator: self.operator,
           expression: e.left
         }),
@@ -6683,7 +6683,7 @@ class AST_Binary extends AST_Node {
         case '!=':
         // void 0 == x => null == x
           if (!is_strict_comparison && is_undefined(self.left, compressor)) {
-            self.left = make_node(AST_Null, self.left)
+            self.left = make_node('AST_Null', self.left)
           } else if (compressor.option('typeofs') &&
               // "undefined" == typeof x => undefined === x
               self.left instanceof AST_String &&
@@ -6694,7 +6694,7 @@ class AST_Binary extends AST_Node {
             if (expr instanceof AST_SymbolRef ? expr.is_declared(compressor)
               : !(expr instanceof AST_PropAccess && compressor.option('ie8'))) {
               self.right = expr
-              self.left = make_node(AST_Undefined, self.left).optimize(compressor)
+              self.left = make_node('AST_Undefined', self.left).optimize(compressor)
               if (self.operator.length == 2) self.operator += '='
             }
           } else if (self.left instanceof AST_SymbolRef &&
@@ -6702,7 +6702,7 @@ class AST_Binary extends AST_Node {
               self.right instanceof AST_SymbolRef &&
               self.left.definition?.() === self.right.definition?.() &&
               is_object(self.left.fixed_value())) {
-            return make_node(self.operator[0] == '=' ? AST_True : AST_False, self)
+            return make_node(self.operator[0] == '=' ? 'AST_True' : 'AST_False', self)
           }
           break
         case '&&':
@@ -6719,13 +6719,13 @@ class AST_Binary extends AST_Node {
                   lhs.left instanceof AST_Null && is_undefined(self.right.left, compressor)) &&
               !lhs.right.has_side_effects(compressor) &&
               lhs.right.equivalent_to(self.right.right)) {
-            var combined = make_node(AST_Binary, self, {
+            var combined = make_node('AST_Binary', self, {
               operator: lhs.operator.slice(0, -1),
-              left: make_node(AST_Null, self),
+              left: make_node('AST_Null', self),
               right: lhs.right
             })
             if (lhs !== self.left) {
-              combined = make_node(AST_Binary, self, {
+              combined = make_node('AST_Binary', self, {
                 operator: self.operator,
                 left: self.left.left,
                 right: combined
@@ -6743,21 +6743,21 @@ class AST_Binary extends AST_Node {
         compressor.warn('+ in boolean context always true [{file}:{line},{col}]', self.start)
         return make_sequence(self, [
           self.right,
-          make_node(AST_True, self)
+          make_node('AST_True', self)
         ]).optimize(compressor)
       }
       if (rr && typeof rr === 'string') {
         compressor.warn('+ in boolean context always true [{file}:{line},{col}]', self.start)
         return make_sequence(self, [
           self.left,
-          make_node(AST_True, self)
+          make_node('AST_True', self)
         ]).optimize(compressor)
       }
     }
     if (compressor.option('comparisons') && self.is_boolean()) {
       if (!(compressor.parent() instanceof AST_Binary) ||
               compressor.parent() instanceof AST_Assign) {
-        var negated = make_node(AST_UnaryPrefix, self, {
+        var negated = make_node('AST_UnaryPrefix', self, {
           operator: '!',
           expression: self.negate(compressor, first_in_statement(compressor))
         })
@@ -6811,7 +6811,7 @@ class AST_Binary extends AST_Node {
               compressor.warn('Boolean && always false [{file}:{line},{col}]', self.start)
               return make_sequence(self, [
                 self.left,
-                make_node(AST_False, self)
+                make_node('AST_False', self)
               ]).optimize(compressor)
             } else {
               set_flag(self, FALSY)
@@ -6827,7 +6827,7 @@ class AST_Binary extends AST_Node {
           if (self.left.operator == '||') {
             var lr = self.left.right.evaluate(compressor)
             if (!lr) {
-              return make_node(AST_Conditional, self, {
+              return make_node('AST_Conditional', self, {
                 condition: self.left.left,
                 consequent: self.right,
                 alternative: self.left.right
@@ -6860,7 +6860,7 @@ class AST_Binary extends AST_Node {
               compressor.warn('Boolean || always true [{file}:{line},{col}]', self.start)
               return make_sequence(self, [
                 self.left,
-                make_node(AST_True, self)
+                make_node('AST_True', self)
               ]).optimize(compressor)
             } else {
               set_flag(self, TRUTHY)
@@ -6869,7 +6869,7 @@ class AST_Binary extends AST_Node {
           if (self.left.operator == '&&') {
             var lr = self.left.right.evaluate(compressor)
             if (lr && !(lr instanceof AST_Node)) {
-              return make_node(AST_Conditional, self, {
+              return make_node('AST_Conditional', self, {
                 condition: self.left.left,
                 consequent: self.left.right,
                 alternative: self.right
@@ -6903,14 +6903,14 @@ class AST_Binary extends AST_Node {
                   self.right instanceof AST_Binary &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
-            var binary = make_node(AST_Binary, self, {
+            var binary = make_node('AST_Binary', self, {
               operator: '+',
               left: self.left,
               right: self.right.left
             })
             var l = binary.optimize(compressor)
             if (binary !== l) {
-              self = make_node(AST_Binary, self, {
+              self = make_node('AST_Binary', self, {
                 operator: '+',
                 left: l,
                 right: self.right.right
@@ -6922,14 +6922,14 @@ class AST_Binary extends AST_Node {
                   self.left instanceof AST_Binary &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor)) {
-            var binary = make_node(AST_Binary, self, {
+            var binary = make_node('AST_Binary', self, {
               operator: '+',
               left: self.left.right,
               right: self.right
             })
             var r = binary.optimize(compressor)
             if (binary !== r) {
-              self = make_node(AST_Binary, self, {
+              self = make_node('AST_Binary', self, {
                 operator: '+',
                 left: self.left.left,
                 right: r
@@ -6943,16 +6943,16 @@ class AST_Binary extends AST_Node {
                   self.right instanceof AST_Binary &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
-            var binary = make_node(AST_Binary, self, {
+            var binary = make_node('AST_Binary', self, {
               operator: '+',
               left: self.left.right,
               right: self.right.left
             })
             var m = binary.optimize(compressor)
             if (binary !== m) {
-              self = make_node(AST_Binary, self, {
+              self = make_node('AST_Binary', self, {
                 operator: '+',
-                left: make_node(AST_Binary, self.left, {
+                left: make_node('AST_Binary', self.left, {
                   operator: '+',
                   left: self.left.left,
                   right: m
@@ -6965,7 +6965,7 @@ class AST_Binary extends AST_Node {
           if (self.right instanceof AST_UnaryPrefix &&
                   self.right.operator == '-' &&
                   self.left.is_number(compressor)) {
-            self = make_node(AST_Binary, self, {
+            self = make_node('AST_Binary', self, {
               operator: '-',
               left: self.left,
               right: self.right.expression
@@ -6977,7 +6977,7 @@ class AST_Binary extends AST_Node {
                   self.left.operator == '-' &&
                   reversible() &&
                   self.right.is_number(compressor)) {
-            self = make_node(AST_Binary, self, {
+            self = make_node('AST_Binary', self, {
               operator: '-',
               left: self.right,
               right: self.left.expression
@@ -7026,7 +7026,7 @@ class AST_Binary extends AST_Node {
                   !(self.left instanceof AST_Binary &&
                       self.left.operator != self.operator &&
                       PRECEDENCE[self.left.operator] >= PRECEDENCE[self.operator])) {
-            var reversed = make_node(AST_Binary, self, {
+            var reversed = make_node('AST_Binary', self, {
               operator: self.operator,
               left: self.right,
               right: self.left
@@ -7042,9 +7042,9 @@ class AST_Binary extends AST_Node {
             // a + (b + c) => (a + b) + c
             if (self.right instanceof AST_Binary &&
                       self.right.operator == self.operator) {
-              self = make_node(AST_Binary, self, {
+              self = make_node('AST_Binary', self, {
                 operator: self.operator,
-                left: make_node(AST_Binary, self.left, {
+                left: make_node('AST_Binary', self.left, {
                   operator: self.operator,
                   left: self.left,
                   right: self.right.left,
@@ -7060,9 +7060,9 @@ class AST_Binary extends AST_Node {
                       self.left instanceof AST_Binary &&
                       self.left.operator == self.operator) {
               if (self.left.left instanceof AST_Constant) {
-                self = make_node(AST_Binary, self, {
+                self = make_node('AST_Binary', self, {
                   operator: self.operator,
-                  left: make_node(AST_Binary, self.left, {
+                  left: make_node('AST_Binary', self.left, {
                     operator: self.operator,
                     left: self.left.left,
                     right: self.right,
@@ -7072,9 +7072,9 @@ class AST_Binary extends AST_Node {
                   right: self.left.right
                 })
               } else if (self.left.right instanceof AST_Constant) {
-                self = make_node(AST_Binary, self, {
+                self = make_node('AST_Binary', self, {
                   operator: self.operator,
-                  left: make_node(AST_Binary, self.left, {
+                  left: make_node('AST_Binary', self.left, {
                     operator: self.operator,
                     left: self.left.right,
                     right: self.right,
@@ -7092,11 +7092,11 @@ class AST_Binary extends AST_Node {
                       self.right instanceof AST_Binary &&
                       self.right.operator == self.operator &&
                       self.right.left instanceof AST_Constant) {
-              self = make_node(AST_Binary, self, {
+              self = make_node('AST_Binary', self, {
                 operator: self.operator,
-                left: make_node(AST_Binary, self.left, {
+                left: make_node('AST_Binary', self.left, {
                   operator: self.operator,
-                  left: make_node(AST_Binary, self.left.left, {
+                  left: make_node('AST_Binary', self.left.left, {
                     operator: self.operator,
                     left: self.left.right,
                     right: self.right.left,
@@ -7123,7 +7123,7 @@ class AST_Binary extends AST_Node {
                       (self.left.is_string(compressor) &&
                           self.right.right.is_string(compressor)))))
     ) {
-      self.left = make_node(AST_Binary, self.left, {
+      self.left = make_node('AST_Binary', self.left, {
         operator: self.operator,
         left: self.left,
         right: self.right.left
@@ -7465,7 +7465,7 @@ class AST_Conditional extends AST_Node {
     }
     var negated = cond.negate(compressor, first_in_statement(compressor))
     if (best_of(compressor, cond, negated) === negated) {
-      self = make_node(AST_Conditional, self, {
+      self = make_node('AST_Conditional', self, {
         condition: negated,
         consequent: self.alternative,
         alternative: self.consequent
@@ -7478,7 +7478,7 @@ class AST_Conditional extends AST_Node {
     if (condition instanceof AST_SymbolRef &&
           consequent instanceof AST_SymbolRef &&
           condition.definition?.() === consequent.definition?.()) {
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '||',
         left: condition,
         right: alternative
@@ -7495,10 +7495,10 @@ class AST_Conditional extends AST_Node {
           (!self.condition.has_side_effects(compressor) ||
               consequent.operator == '=' &&
                   !consequent.left.has_side_effects(compressor))) {
-      return make_node(AST_Assign, self, {
+      return make_node('AST_Assign', self, {
         operator: consequent.operator,
         left: consequent.left,
-        right: make_node(AST_Conditional, self, {
+        right: make_node('AST_Conditional', self, {
           condition: self.condition,
           consequent: consequent.right,
           alternative: alternative.right
@@ -7516,7 +7516,7 @@ class AST_Conditional extends AST_Node {
           !consequent.expression.has_side_effects(compressor) &&
           typeof (arg_index = single_arg_diff()) === 'number') {
       var node = consequent.clone()
-      node.args[arg_index] = make_node(AST_Conditional, self, {
+      node.args[arg_index] = make_node('AST_Conditional', self, {
         condition: self.condition,
         consequent: consequent.args[arg_index],
         alternative: alternative.args[arg_index]
@@ -7526,8 +7526,8 @@ class AST_Conditional extends AST_Node {
     // a ? b : c ? b : d --> (a || c) ? b : d
     if (alternative instanceof AST_Conditional &&
           consequent.equivalent_to(alternative.consequent)) {
-      return make_node(AST_Conditional, self, {
-        condition: make_node(AST_Binary, self, {
+      return make_node('AST_Conditional', self, {
+        condition: make_node('AST_Binary', self, {
           operator: '||',
           left: condition,
           right: alternative.condition
@@ -7542,7 +7542,7 @@ class AST_Conditional extends AST_Node {
       compressor.option('ecma') >= 2020 &&
           is_nullish_check(condition, alternative, compressor)
     ) {
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '??',
         left: alternative,
         right: consequent
@@ -7553,7 +7553,7 @@ class AST_Conditional extends AST_Node {
     if (alternative instanceof AST_Sequence &&
           consequent.equivalent_to(alternative.expressions[alternative.expressions.length - 1])) {
       return make_sequence(self, [
-        make_node(AST_Binary, self, {
+        make_node('AST_Binary', self, {
           operator: '||',
           left: condition,
           right: make_sequence(self, alternative.expressions.slice(0, -1))
@@ -7565,9 +7565,9 @@ class AST_Conditional extends AST_Node {
     if (alternative instanceof AST_Binary &&
           alternative.operator == '&&' &&
           consequent.equivalent_to(alternative.right)) {
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '&&',
-        left: make_node(AST_Binary, self, {
+        left: make_node('AST_Binary', self, {
           operator: '||',
           left: condition,
           right: alternative.left
@@ -7578,8 +7578,8 @@ class AST_Conditional extends AST_Node {
     // x?y?z:a:a --> x&&y?z:a
     if (consequent instanceof AST_Conditional &&
           consequent.alternative.equivalent_to(alternative)) {
-      return make_node(AST_Conditional, self, {
-        condition: make_node(AST_Binary, self, {
+      return make_node('AST_Conditional', self, {
+        condition: make_node('AST_Binary', self, {
           left: self.condition,
           operator: '&&',
           right: consequent.condition
@@ -7599,9 +7599,9 @@ class AST_Conditional extends AST_Node {
     if (consequent instanceof AST_Binary &&
           consequent.operator == '||' &&
           consequent.right.equivalent_to(alternative)) {
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '||',
-        left: make_node(AST_Binary, self, {
+        left: make_node('AST_Binary', self, {
           operator: '&&',
           left: self.condition,
           right: consequent.left
@@ -7616,7 +7616,7 @@ class AST_Conditional extends AST_Node {
         return booleanize(self.condition)
       }
       // c ? true : x ---> !!c || x
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '||',
         left: booleanize(self.condition),
         right: self.alternative
@@ -7628,7 +7628,7 @@ class AST_Conditional extends AST_Node {
         return booleanize(self.condition.negate(compressor))
       }
       // c ? false : x ---> !c && x
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '&&',
         left: booleanize(self.condition.negate(compressor)),
         right: self.alternative
@@ -7636,7 +7636,7 @@ class AST_Conditional extends AST_Node {
     }
     if (is_true(self.alternative)) {
       // c ? x : true ---> !c || x
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '||',
         left: booleanize(self.condition.negate(compressor)),
         right: self.consequent
@@ -7644,7 +7644,7 @@ class AST_Conditional extends AST_Node {
     }
     if (is_false(self.alternative)) {
       // c ? x : false ---> !!c && x
-      return make_node(AST_Binary, self, {
+      return make_node('AST_Binary', self, {
         operator: '&&',
         left: booleanize(self.condition),
         right: self.consequent
@@ -7656,7 +7656,7 @@ class AST_Conditional extends AST_Node {
     function booleanize (node: any) {
       if (node.is_boolean()) return node
       // !!expression
-      return make_node(AST_UnaryPrefix, node, {
+      return make_node('AST_UnaryPrefix', node, {
         operator: '!',
         expression: node.negate(compressor)
       })
@@ -7707,14 +7707,14 @@ class AST_Conditional extends AST_Node {
     var alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
     if (!consequent) {
-      return alternative ? make_node(AST_Binary, this, {
+      return alternative ? make_node('AST_Binary', this, {
         operator: '||',
         left: this.condition,
         right: alternative
       }) : this.condition.drop_side_effect_free(compressor)
     }
     if (!alternative) {
-      return make_node(AST_Binary, this, {
+      return make_node('AST_Binary', this, {
         operator: '&&',
         left: this.condition,
         right: consequent
@@ -7856,7 +7856,7 @@ class AST_Assign extends AST_Binary {
           if (is_reachable(def.scope, [def])) break
           if (self.operator == '=') return self.right
           def.fixed = false
-          return make_node(AST_Binary, self, {
+          return make_node('AST_Binary', self, {
             operator: self.operator.slice(0, -1),
             left: self.left,
             right: self.right
@@ -7887,7 +7887,7 @@ class AST_Assign extends AST_Binary {
 
     function in_try (level, node) {
       var right = self.right
-      self.right = make_node(AST_Null, right)
+      self.right = make_node('AST_Null', right)
       var may_throw = node.may_throw(compressor)
       self.right = right
       var scope = self.left.definition?.().scope
@@ -7965,7 +7965,7 @@ class AST_Assign extends AST_Binary {
     def.fixed = eq ? function () {
       return node.right
     } : function () {
-      return make_node(AST_Binary, node, {
+      return make_node('AST_Binary', node, {
         operator: node.operator.slice(0, -1),
         left: fixed instanceof AST_Node ? fixed : fixed(),
         right: node.right
@@ -8450,13 +8450,13 @@ class AST_ObjectKeyVal extends AST_ObjectProperty {
               Array.isArray(value.body) &&
               !value.contains_this()
       if ((is_arrow_with_block || value instanceof AST_Function) && !value.name) {
-        return make_node(AST_ConciseMethod, self, {
+        return make_node('AST_ConciseMethod', self, {
           async: value.async,
           is_generator: value.is_generator,
-          key: key instanceof AST_Node ? key : make_node(AST_SymbolMethod, self, {
+          key: key instanceof AST_Node ? key : make_node('AST_SymbolMethod', self, {
             name: key
           }),
-          value: make_node(AST_Accessor, value, value),
+          value: make_node('AST_Accessor', value, value),
           quote: self.quote
         })
       }
@@ -8641,10 +8641,10 @@ class AST_ConciseMethod extends AST_ObjectProperty {
           self.value.body[0] instanceof AST_Return &&
           self.value.body[0].value &&
           !self.value.contains_this()) {
-      var arrow = make_node(AST_Arrow, self.value, self.value)
+      var arrow = make_node('AST_Arrow', self.value, self.value)
       arrow.async = self.async
       arrow.is_generator = self.is_generator
-      return make_node(AST_ObjectKeyVal, self, {
+      return make_node('AST_ObjectKeyVal', self, {
         key: self.key instanceof AST_SymbolMethod ? self.key.name : self.key,
         value: arrow,
         quote: self.quote
@@ -9334,11 +9334,11 @@ class AST_SymbolRef extends AST_Symbol {
           (!self.scope.uses_with || !compressor.find_parent(AST_With))) {
       switch (self.name) {
         case 'undefined':
-          return make_node(AST_Undefined, self).optimize(compressor)
+          return make_node('AST_Undefined', self).optimize(compressor)
         case 'NaN':
-          return make_node(AST_NaN, self).optimize(compressor)
+          return make_node('AST_NaN', self).optimize(compressor)
         case 'Infinity':
-          return make_node(AST_Infinity, self).optimize(compressor)
+          return make_node('AST_Infinity', self).optimize(compressor)
       }
     }
     var parent = compressor.parent()
@@ -9399,18 +9399,18 @@ class AST_SymbolRef extends AST_Symbol {
       if (can_pull_in) {
         if (fixed instanceof AST_DefClass) {
           set_flag(fixed, SQUEEZED)
-          fixed = make_node(AST_ClassExpression, fixed, fixed)
+          fixed = make_node('AST_ClassExpression', fixed, fixed)
         }
         if (fixed instanceof AST_Defun) {
           set_flag(fixed, SQUEEZED)
-          fixed = make_node(AST_Function, fixed, fixed)
+          fixed = make_node('AST_Function', fixed, fixed)
         }
         if (def.recursive_refs > 0 && fixed.name instanceof AST_SymbolDefun) {
           const defun_def = fixed.name.definition?.()
           let lambda_def = fixed.variables.get(fixed.name.name)
           let name = lambda_def && lambda_def.orig[0]
           if (!(name instanceof AST_SymbolLambda)) {
-            name = make_node(AST_SymbolLambda, fixed.name, fixed.name)
+            name = make_node('AST_SymbolLambda', fixed.name, fixed.name)
             name.scope = fixed
             fixed.name = name
             lambda_def = fixed.def_function(name)
@@ -9715,7 +9715,7 @@ class AST_Undefined extends AST_Atom {
     if (compressor.option('unsafe_undefined')) {
       var undef = find_variable(compressor, 'undefined')
       if (undef) {
-        var ref = make_node(AST_SymbolRef, self, {
+        var ref = make_node('AST_SymbolRef', self, {
           name: 'undefined',
           scope: undef.scope,
           thedef: undef
@@ -9726,9 +9726,9 @@ class AST_Undefined extends AST_Atom {
     }
     var lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && is_atomic(lhs, self)) return self
-    return make_node(AST_UnaryPrefix, self, {
+    return make_node('AST_UnaryPrefix', self, {
       operator: 'void',
-      expression: make_node(AST_Number, self, {
+      expression: make_node('AST_Number', self, {
         value: 0
       })
     })
@@ -9754,12 +9754,12 @@ class AST_Infinity extends AST_Atom {
     ) {
       return self
     }
-    return make_node(AST_Binary, self, {
+    return make_node('AST_Binary', self, {
       operator: '/',
-      left: make_node(AST_Number, self, {
+      left: make_node('AST_Number', self, {
         value: 1
       }),
-      right: make_node(AST_Number, self, {
+      right: make_node('AST_Number', self, {
         value: 0
       })
     })
@@ -9777,7 +9777,7 @@ class AST_Infinity extends AST_Atom {
 class AST_Boolean extends AST_Atom {
   _optimize = function (self, compressor) {
     if (compressor.in_boolean_context()) {
-      return make_node(AST_Number, self, {
+      return make_node('AST_Number', self, {
         value: +self.value
       })
     }
@@ -9786,7 +9786,7 @@ class AST_Boolean extends AST_Atom {
       if (p instanceof AST_Binary && (p.operator == '===' || p.operator == '!==')) {
         p.operator = p.operator.replace(/=$/, '')
       }
-      return make_node(AST_Number, self, {
+      return make_node('AST_Number', self, {
         value: +self.value
       })
     }
@@ -9800,13 +9800,13 @@ class AST_Boolean extends AST_Atom {
           line: p.start.line,
           col: p.start.col
         })
-        return make_node(AST_Number, self, {
+        return make_node('AST_Number', self, {
           value: +self.value
         })
       }
-      return make_node(AST_UnaryPrefix, self, {
+      return make_node('AST_UnaryPrefix', self, {
         operator: '!',
-        expression: make_node(AST_Number, self, {
+        expression: make_node('AST_Number', self, {
           value: 1 - self.value
         })
       })
@@ -10241,7 +10241,7 @@ export function maintain_this_binding (parent, orig, val) {
   if (parent instanceof AST_UnaryPrefix && parent.operator == 'delete' ||
         parent instanceof AST_Call && parent.expression === orig &&
             (val instanceof AST_PropAccess || val instanceof AST_SymbolRef && val.name == 'eval')) {
-    return make_sequence(orig, [make_node(AST_Number, orig, { value: 0 }), val])
+    return make_sequence(orig, [make_node('AST_Number', orig, { value: 0 }), val])
   }
   return val
 }
@@ -10396,7 +10396,7 @@ function safe_to_read (tw, def) {
     if (def.fixed == null) {
       var orig = def.orig[0]
       if (orig instanceof AST_SymbolFunarg || orig.name == 'arguments') return false
-      def.fixed = make_node(AST_Undefined, orig)
+      def.fixed = make_node('AST_Undefined', orig)
     }
     return true
   }
@@ -10478,7 +10478,7 @@ function mark_lambda (tw, descend, compressor) {
       if (d.orig.length > 1) return
       if (d.fixed === undefined && (!this.uses_arguments || tw.has_directive('use strict'))) {
         d.fixed = function () {
-          return iife.args[i] || make_node(AST_Undefined, iife)
+          return iife.args[i] || make_node('AST_Undefined', iife)
         }
         tw.loop_ids.set(d.id, tw.in_loop)
         mark(tw, d, true)
@@ -10543,31 +10543,31 @@ function read_property (obj, key) {
 export function make_node_from_constant (val, orig) {
   switch (typeof val) {
     case 'string':
-      return make_node(AST_String, orig, {
+      return make_node('AST_String', orig, {
         value: val
       })
     case 'number':
-      if (isNaN(val)) return make_node(AST_NaN, orig)
+      if (isNaN(val)) return make_node('AST_NaN', orig)
       if (isFinite(val)) {
-        return 1 / val < 0 ? make_node(AST_UnaryPrefix, orig, {
+        return 1 / val < 0 ? make_node('AST_UnaryPrefix', orig, {
           operator: '-',
-          expression: make_node(AST_Number, orig, { value: -val })
-        }) : make_node(AST_Number, orig, { value: val })
+          expression: make_node('AST_Number', orig, { value: -val })
+        }) : make_node('AST_Number', orig, { value: val })
       }
-      return val < 0 ? make_node(AST_UnaryPrefix, orig, {
+      return val < 0 ? make_node('AST_UnaryPrefix', orig, {
         operator: '-',
-        expression: make_node(AST_Infinity, orig)
-      }) : make_node(AST_Infinity, orig)
+        expression: make_node('AST_Infinity', orig)
+      }) : make_node('AST_Infinity', orig)
     case 'boolean':
-      return make_node(val ? AST_True : AST_False, orig)
+      return make_node(val ? 'AST_True' : 'AST_False', orig)
     case 'undefined':
-      return make_node(AST_Undefined, orig)
+      return make_node('AST_Undefined', orig)
     default:
       if (val === null) {
-        return make_node(AST_Null, orig, { value: null })
+        return make_node('AST_Null', orig, { value: null })
       }
       if (val instanceof RegExp) {
-        return make_node(AST_RegExp, orig, {
+        return make_node('AST_RegExp', orig, {
           value: {
             source: regexp_source_fix(val.source),
             flags: val.flags
@@ -10581,9 +10581,9 @@ export function make_node_from_constant (val, orig) {
 }
 
 function to_node (value, orig) {
-  if (value instanceof AST_Node) return make_node(value.CTOR, orig, value)
+  if (value instanceof AST_Node) return make_node(value.constructor.name, orig, value)
   if (Array.isArray(value)) {
-    return make_node(AST_Array, orig, {
+    return make_node('AST_Array', orig, {
       elements: value.map(function (value) {
         return to_node(value, orig)
       })
@@ -10593,13 +10593,13 @@ function to_node (value, orig) {
     var props: any[] = []
     for (var key in value) {
       if (HOP(value, key)) {
-        props.push(make_node(AST_ObjectKeyVal, orig, {
+        props.push(make_node('AST_ObjectKeyVal', orig, {
           key: key,
           value: to_node(value[key], orig)
         }))
       }
     }
-    return make_node(AST_Object, orig, {
+    return make_node('AST_Object', orig, {
       properties: props
     })
   }
@@ -10608,7 +10608,7 @@ function to_node (value, orig) {
 
 // method to negate an expression
 export function basic_negation (exp) {
-  return make_node(AST_UnaryPrefix, exp, {
+  return make_node('AST_UnaryPrefix', exp, {
     operator: '!',
     expression: exp
   })
@@ -10616,7 +10616,7 @@ export function basic_negation (exp) {
 function best (orig, alt, first_in_statement) {
   var negated = basic_negation(orig)
   if (first_in_statement) {
-    var stat = make_node(AST_SimpleStatement, alt, {
+    var stat = make_node('AST_SimpleStatement', alt, {
       body: alt
     })
     return best_of_expression(negated, stat) === stat ? alt : negated
@@ -10749,24 +10749,24 @@ function if_break_in_loop (self, compressor) {
     if (self.init instanceof AST_Statement) {
       body.push(self.init)
     } else if (self.init) {
-      body.push(make_node(AST_SimpleStatement, self.init, {
+      body.push(make_node('AST_SimpleStatement', self.init, {
         body: self.init
       }))
     }
     if (self.condition) {
-      body.push(make_node(AST_SimpleStatement, self.condition, {
+      body.push(make_node('AST_SimpleStatement', self.condition, {
         body: self.condition
       }))
     }
     extract_declarations_from_unreachable_code(compressor, self.body, body)
-    return make_node(AST_BlockStatement, self, {
+    return make_node('AST_BlockStatement', self, {
       body: body
     })
   }
   if (first instanceof AST_If) {
     if (is_break(first.body)) { // TODO: check type
       if (self.condition) {
-        self.condition = make_node(AST_Binary, self.condition, {
+        self.condition = make_node('AST_Binary', self.condition, {
           left: self.condition,
           operator: '&&',
           right: first.condition.negate(compressor)
@@ -10777,7 +10777,7 @@ function if_break_in_loop (self, compressor) {
       drop_it(first.alternative)
     } else if (is_break(first.alternative)) {
       if (self.condition) {
-        self.condition = make_node(AST_Binary, self.condition, {
+        self.condition = make_node('AST_Binary', self.condition, {
           left: self.condition,
           operator: '&&',
           right: first.condition
@@ -10802,7 +10802,7 @@ function if_break_in_loop (self, compressor) {
       self.body.body = rest.concat(self.body.body.slice(1))
       self.body = self.body.transform(compressor)
     } else {
-      self.body = make_node(AST_BlockStatement, self.body, {
+      self.body = make_node('AST_BlockStatement', self.body, {
         body: rest
       }).transform(compressor)
     }
@@ -10939,7 +10939,7 @@ function tighten_body (statements, compressor) {
           col: node.start.col
         })
         if (candidate instanceof AST_UnaryPostfix) {
-          return make_node(AST_UnaryPrefix, candidate, candidate)
+          return make_node('AST_UnaryPrefix', candidate, candidate)
         }
         if (candidate instanceof AST_VarDef) {
           var def = candidate.name.definition?.()
@@ -10952,9 +10952,9 @@ function tighten_body (statements, compressor) {
               return maintain_this_binding(parent, node, value)
             }
           }
-          return make_node(AST_Assign, candidate, {
+          return make_node('AST_Assign', candidate, {
             operator: '=',
-            left: make_node(AST_SymbolRef, candidate.name, candidate.name),
+            left: make_node('AST_SymbolRef', candidate.name, candidate.name),
             right: value
           })
         }
@@ -11147,7 +11147,7 @@ function tighten_body (statements, compressor) {
           const def = sym.definition && sym.definition?.()
           const is_reassigned = def && def.orig.length > 1
           if (is_reassigned) continue
-          args.unshift(make_node(AST_VarDef, sym, {
+          args.unshift(make_node('AST_VarDef', sym, {
             name: sym,
             value: arg
           }))
@@ -11158,23 +11158,23 @@ function tighten_body (statements, compressor) {
             if (elements.every((arg) =>
               !has_overlapping_symbol(fn, arg, fn_strict)
             )) {
-              candidates.unshift([make_node(AST_VarDef, sym, {
+              candidates.unshift([make_node('AST_VarDef', sym, {
                 name: sym.expression,
-                value: make_node(AST_Array, iife, {
+                value: make_node('AST_Array', iife, {
                   elements: elements
                 })
               })])
             }
           } else {
             if (!arg) {
-              arg = make_node(AST_Undefined, sym).transform(compressor)
+              arg = make_node('AST_Undefined', sym).transform(compressor)
             } else if (arg instanceof AST_Lambda && arg.pinned?.() ||
                             has_overlapping_symbol(fn, arg, fn_strict)
             ) {
               arg = null
             }
             if (arg) {
-              candidates.unshift([make_node(AST_VarDef, sym, {
+              candidates.unshift([make_node('AST_VarDef', sym, {
                 name: sym,
                 value: arg
               })])
@@ -11324,7 +11324,7 @@ function tighten_body (statements, compressor) {
         var declared = def.orig.length - def.eliminated
         if (declared > 1 && !(expr.name instanceof AST_SymbolFunarg) ||
                     (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
-          return make_node(AST_SymbolRef, expr.name, expr.name)
+          return make_node('AST_SymbolRef', expr.name, expr.name)
         }
       } else {
         const lhs = expr[expr instanceof AST_Assign ? 'left' : 'expression']
@@ -11360,7 +11360,7 @@ function tighten_body (statements, compressor) {
         } else {
           var args = iife.args
           if (args[index]) {
-            args[index] = make_node(AST_Number, args[index], {
+            args[index] = make_node('AST_Number', args[index], {
               value: 0
             })
           }
@@ -11374,7 +11374,7 @@ function tighten_body (statements, compressor) {
           found = true
           if (node instanceof AST_VarDef) {
             node.value = node.name instanceof AST_SymbolConst
-              ? make_node(AST_Undefined, node.value) // `const` always needs value.
+              ? make_node('AST_Undefined', node.value) // `const` always needs value.
               : null
             return node
           }
@@ -11484,7 +11484,7 @@ function tighten_body (statements, compressor) {
         }
         if (stat.value instanceof AST_UnaryPrefix && stat.value.operator == 'void') {
           CHANGED = true
-          statements[i] = make_node(AST_SimpleStatement, stat, {
+          statements[i] = make_node('AST_SimpleStatement', stat, {
             body: stat.value.expression
           })
           continue
@@ -11501,10 +11501,10 @@ function tighten_body (statements, compressor) {
           stat = stat.clone()
           stat.condition = stat.condition.negate(compressor)
           var body = as_statement_array_with_return(stat.body, ab)
-          stat.body = make_node(AST_BlockStatement, stat, {
+          stat.body = make_node('AST_BlockStatement', stat, {
             body: as_statement_array(stat.alternative).concat(extract_functions())
           })
-          stat.alternative = make_node(AST_BlockStatement, stat, {
+          stat.alternative = make_node('AST_BlockStatement', stat, {
             body: body
           })
           statements[i] = stat.transform(compressor)
@@ -11518,11 +11518,11 @@ function tighten_body (statements, compressor) {
           }
           CHANGED = true
           stat = stat.clone()
-          stat.body = make_node(AST_BlockStatement, stat.body, {
+          stat.body = make_node('AST_BlockStatement', stat.body, {
             body: as_statement_array(stat.body).concat(extract_functions())
           })
           var body = as_statement_array_with_return(stat.alternative, ab)
-          stat.alternative = make_node(AST_BlockStatement, stat.alternative, {
+          stat.alternative = make_node('AST_BlockStatement', stat.alternative, {
             body: body
           })
           statements[i] = stat.transform(compressor)
@@ -11538,7 +11538,7 @@ function tighten_body (statements, compressor) {
         if (!value && !stat.alternative &&
                     (in_lambda && !next || next instanceof AST_Return && !next.value)) {
           CHANGED = true
-          statements[i] = make_node(AST_SimpleStatement, stat.condition, {
+          statements[i] = make_node('AST_SimpleStatement', stat.condition, {
             body: stat.condition
           })
           continue
@@ -11560,7 +11560,7 @@ function tighten_body (statements, compressor) {
                         next instanceof AST_Return)) {
           CHANGED = true
           stat = stat.clone()
-          stat.alternative = next || make_node(AST_Return, stat, {
+          stat.alternative = next || make_node('AST_Return', stat, {
             value: null
           })
           statements[i] = stat.transform(compressor)
@@ -11579,10 +11579,10 @@ function tighten_body (statements, compressor) {
                     next_index(j) == statements.length && next instanceof AST_SimpleStatement) {
           CHANGED = true
           stat = stat.clone()
-          stat.alternative = make_node(AST_BlockStatement, next, {
+          stat.alternative = make_node('AST_BlockStatement', next, {
             body: [
               next,
-              make_node(AST_Return, next, {
+              make_node('AST_Return', next, {
                 value: null
               })
             ]
@@ -11636,7 +11636,7 @@ function tighten_body (statements, compressor) {
     function as_statement_array_with_return (node, ab) {
       var body = as_statement_array(node).slice(0, -1)
       if (ab.value) {
-        body.push(make_node(AST_SimpleStatement, ab.value, {
+        body.push(make_node('AST_SimpleStatement', ab.value, {
           body: ab.value.expression
         }))
       }
@@ -11711,7 +11711,7 @@ function tighten_body (statements, compressor) {
     function push_seq () {
       if (!seq.length) return
       var body = make_sequence(seq[0], seq)
-      statements[n++] = make_node(AST_SimpleStatement, body, { body: body })
+      statements[n++] = make_node('AST_SimpleStatement', body, { body: body })
       seq = []
     }
     for (var i = 0, len = statements.length; i < len; i++) {
@@ -11762,7 +11762,7 @@ function tighten_body (statements, compressor) {
       var stat = statements[i]
       if (prev) {
         if (stat instanceof AST_Exit) {
-          stat.value = cons_seq(stat.value || make_node(AST_Undefined, stat).transform(compressor))
+          stat.value = cons_seq(stat.value || make_node('AST_Undefined', stat).transform(compressor))
         } else if (stat instanceof AST_For) {
           if (!(stat.init instanceof AST_Definitions)) {
             const abort = walk(prev.body, (node: any) => {
@@ -11801,9 +11801,9 @@ function tighten_body (statements, compressor) {
         var alt = to_simple_statement(stat.alternative, decls)
         if (body !== false && alt !== false && decls.length > 0) {
           var len = decls.length
-          decls.push(make_node(AST_If, stat, {
+          decls.push(make_node('AST_If', stat, {
             condition: stat.condition,
-            body: body || make_node(AST_EmptyStatement, stat.body),
+            body: body || make_node('AST_EmptyStatement', stat.body),
             alternative: alt
           }))
           decls.unshift(n, 1);
@@ -11857,7 +11857,7 @@ function tighten_body (statements, compressor) {
       if (!def.value.properties.every(diff)) break
       var p = def.value.properties.filter(function (p) { return p.key === prop })[0]
       if (!p) {
-        def.value.properties.push(make_node(AST_ObjectKeyVal, node, {
+        def.value.properties.push(make_node('AST_ObjectKeyVal', node, {
           key: prop,
           value: node.right
         }))
@@ -11989,10 +11989,10 @@ function extract_declarations_from_unreachable_code (compressor, stat, target) {
       node instanceof AST_Defun &&
             (node === stat || !compressor.has_directive('use strict'))
     ) {
-      target.push(node === stat ? node : make_node(AST_Var, node, {
+      target.push(node === stat ? node : make_node('AST_Var', node, {
         definitions: [
-          make_node(AST_VarDef, node, {
-            name: make_node(AST_SymbolVar, node.name, node.name),
+          make_node('AST_VarDef', node, {
+            name: make_node('AST_SymbolVar', node.name, node.name),
             value: null
           })
         ]
@@ -12219,11 +12219,11 @@ function lift_key (self, compressor) {
     if (self instanceof AST_ObjectKeyVal) {
       self.key = self.key.value
     } else if (self instanceof AST_ClassProperty) {
-      self.key = make_node(AST_SymbolClassProperty, self.key, {
+      self.key = make_node('AST_SymbolClassProperty', self.key, {
         name: self.key.value
       })
     } else {
-      self.key = make_node(AST_SymbolMethod, self.key, {
+      self.key = make_node('AST_SymbolMethod', self.key, {
         name: self.key.value
       })
     }

@@ -1,10 +1,9 @@
 import AST_Statement from './statement'
 import { make_node, pass_through } from '../utils'
-import { AST_EmptyStatement } from './'
 
 export default class AST_Debugger extends AST_Statement {
   _optimize (self, compressor) {
-    if (compressor.option('drop_debugger')) { return make_node(AST_EmptyStatement, self) }
+    if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', self) }
     return self
   }
 

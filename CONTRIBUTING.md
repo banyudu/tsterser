@@ -54,7 +54,7 @@ Tests that cannot be expressed as a simple AST can be found in `test/mocha`.
 ```js
 def_optimize(AST_Debugger, function(self, compressor) {
     if (compressor.option("drop_debugger"))
-        return make_node(AST_EmptyStatement, self);
+        return make_node('AST_EmptyStatement', self);
     return self;
 });
 ```

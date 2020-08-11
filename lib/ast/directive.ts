@@ -1,6 +1,5 @@
 import AST_Statement from './statement'
 import { directives } from '../constants'
-import { AST_EmptyStatement } from './'
 import { make_node, mkshallow } from '../utils'
 
 export default class AST_Directive extends AST_Statement {
@@ -9,7 +8,7 @@ export default class AST_Directive extends AST_Statement {
   _optimize (self, compressor) {
     if (compressor.option('directives') &&
           (!directives.has(self.value) || compressor.has_directive(self.value) !== self)) {
-      return make_node(AST_EmptyStatement, self)
+      return make_node('AST_EmptyStatement', self)
     }
     return self
   }
