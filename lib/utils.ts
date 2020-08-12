@@ -3143,3 +3143,27 @@ export function display_body (body: any[], is_toplevel: boolean, output: any, al
   })
   output.in_directive = false
 }
+
+export function parenthesize_for_noin (node: any, output: any, noin: boolean) {
+  var parens = false
+  // need to take some precautions here:
+  //    https://github.com/mishoo/UglifyJS2/issues/60
+  if (noin) {
+    parens = walk(node, (node: any) => {
+      if (node instanceof AST_Scope) return true
+      if (node instanceof AST_Binary && node.operator == 'in') {
+        return walk_abort // makes walk() return true
+      }
+      return undefined
+    })
+  }
+  node.print(output, parens)
+}
+
+export const suppress = node => walk(node, (node: any) => {
+  if (!(node instanceof AST_Symbol)) return
+  var d = node.definition?.()
+  if (!d) return
+  if (node instanceof AST_SymbolRef) d.references.push(node)
+  d.fixed = false
+})
