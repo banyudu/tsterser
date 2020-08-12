@@ -100,14 +100,15 @@ import {
   read_property,
   as_statement_array,
   has_break_or_continue,
-  block_aborts,
   trim,
   inline_array_like_spread,
   print_braced_empty,
-  def_size,
   lambda_modifiers,
   is_undeclared_ref,
   is_empty,
+  display_body,
+  print_braced,
+  blockStateMentCodeGen,
   keep_name
 } from '../utils'
 
@@ -158,6 +159,10 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_BlockStatement from './block-statement'
+import AST_Var from './var'
+import AST_Let from './let'
+import AST_Const from './const'
 import AST_If from './if'
 import AST_Export from './export'
 import AST_Definitions from './definitions'
@@ -260,10 +265,6 @@ function init_scope_vars (parent_scope: any) {
   this._var_name_cache = null
 }
 
-function blockStateMentCodeGen (self, output) {
-  print_braced(self, output)
-}
-
 function callCodeGen (self, output) {
   self.expression.print(output)
   if (self instanceof AST_New && self.args.length === 0) { return }
@@ -297,42 +298,6 @@ function to_moz_scope (type: string, node: any) {
 }
 
 /* -----[ statements ]----- */
-
-class AST_BlockStatement extends AST_Block {
-  _optimize (self, compressor) {
-    tighten_body(self.body, compressor)
-    switch (self.body.length) {
-      case 1:
-        if (!compressor.has_directive('use strict') &&
-              compressor.parent() instanceof AST_If &&
-              can_be_extracted_from_if_block(self.body[0]) ||
-              can_be_evicted_from_block(self.body[0])) {
-          return self.body[0]
-        }
-        break
-      case 0: return make_node('AST_EmptyStatement', self)
-    }
-    return self
-  }
-
-  aborts = block_aborts
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'BlockStatement',
-      body: this.body.map(to_moz)
-    }
-  }
-
-  _codegen = blockStateMentCodeGen
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'A block statement'
-
-  TYPE = 'BlockStatement'
-  static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
 
 class AST_For extends AST_IterationStatement {
   _optimize (self, compressor) {
@@ -2960,76 +2925,6 @@ class AST_Finally extends AST_Block {
 }
 
 /* -----[ VAR/CONST ]----- */
-
-class AST_Var extends AST_Definitions {
-  _size = function (): number {
-    return def_size(4, this)
-  }
-
-  _codegen = function (self, output) {
-    self._do_print(output, 'var')
-  }
-
-  static documentation = 'A `var` statement'
-
-  TYPE = 'Var'
-  static PROPS = AST_Definitions.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Let extends AST_Definitions {
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'VariableDeclaration',
-      kind: 'let',
-      declarations: this.definitions.map(to_moz)
-    }
-  }
-
-  _size = function (): number {
-    return def_size(4, this)
-  }
-
-  _codegen = function (self, output) {
-    self._do_print(output, 'let')
-  }
-
-  static documentation = 'A `let` statement'
-
-  TYPE = 'Let'
-  static PROPS = AST_Definitions.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Const extends AST_Definitions {
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'VariableDeclaration',
-      kind: 'const',
-      declarations: this.definitions.map(to_moz)
-    }
-  }
-
-  _size = function (): number {
-    return def_size(6, this)
-  }
-
-  _codegen = function (self, output) {
-    self._do_print(output, 'const')
-  }
-
-  static documentation = 'A `const` statement'
-
-  TYPE = 'Const'
-  static PROPS = AST_Definitions.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
 
 class AST_VarDef extends AST_Node {
   name: any
@@ -6965,51 +6860,6 @@ function needsParens (output: any) {
   return undefined
 }
 
-/* -----[ PRINTERS ]----- */
-
-/* -----[ statements ]----- */
-
-function display_body (body: any[], is_toplevel: boolean, output: any, allow_directives: boolean) {
-  var last = body.length - 1
-  output.in_directive = allow_directives
-  body.forEach(function (stmt, i) {
-    if (output.in_directive === true && !(stmt instanceof AST_Directive ||
-            stmt instanceof AST_EmptyStatement ||
-            (stmt instanceof AST_SimpleStatement && stmt.body instanceof AST_String)
-    )) {
-      output.in_directive = false
-    }
-    if (!(stmt instanceof AST_EmptyStatement)) {
-      output.indent()
-      stmt.print(output)
-      if (!(i == last && is_toplevel)) {
-        output.newline()
-        if (is_toplevel) output.newline()
-      }
-    }
-    if (output.in_directive === true &&
-            stmt instanceof AST_SimpleStatement &&
-            stmt.body instanceof AST_String
-    ) {
-      output.in_directive = false
-    }
-  })
-  output.in_directive = false
-}
-
-function print_braced (self: any, output: any, allow_directives?: boolean) {
-  if ((self.body as any[]).length > 0) {
-    output.with_block(function () {
-      display_body((self.body as any[]), false, output, !!allow_directives)
-    })
-  } else print_braced_empty(self, output)
-}
-
-/* -----[ exits ]----- */
-
-/* -----[ switch ]----- */
-/* -----[ var/const ]----- */
-
 function parenthesize_for_noin (node: any, output: any, noin: boolean) {
   var parens = false
   // need to take some precautions here:
@@ -7305,14 +7155,6 @@ export function is_iife_call (node: any) {
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
   return node.expression instanceof AST_Function || is_iife_call(node.expression)
-}
-
-function can_be_extracted_from_if_block (node: any) {
-  return !(
-    node instanceof AST_Const ||
-        node instanceof AST_Let ||
-        node instanceof AST_Class
-  )
 }
 
 function opt_AST_Lambda (self, compressor) {

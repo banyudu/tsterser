@@ -3104,3 +3104,42 @@ export function is_empty (thing) {
 }
 
 /* -----[ if ]----- */
+export function blockStateMentCodeGen (self, output) {
+  print_braced(self, output)
+}
+
+export function print_braced (self: any, output: any, allow_directives?: boolean) {
+  if ((self.body as any[]).length > 0) {
+    output.with_block(function () {
+      display_body((self.body as any[]), false, output, !!allow_directives)
+    })
+  } else print_braced_empty(self, output)
+}
+
+export function display_body (body: any[], is_toplevel: boolean, output: any, allow_directives: boolean) {
+  var last = body.length - 1
+  output.in_directive = allow_directives
+  body.forEach(function (stmt, i) {
+    if (output.in_directive === true && !(stmt instanceof AST_Directive ||
+            stmt instanceof AST_EmptyStatement ||
+            (stmt instanceof AST_SimpleStatement && stmt.body instanceof AST_String)
+    )) {
+      output.in_directive = false
+    }
+    if (!(stmt instanceof AST_EmptyStatement)) {
+      output.indent()
+      stmt.print(output)
+      if (!(i == last && is_toplevel)) {
+        output.newline()
+        if (is_toplevel) output.newline()
+      }
+    }
+    if (output.in_directive === true &&
+            stmt instanceof AST_SimpleStatement &&
+            stmt.body instanceof AST_String
+    ) {
+      output.in_directive = false
+    }
+  })
+  output.in_directive = false
+}
