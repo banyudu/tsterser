@@ -7,7 +7,6 @@ export default class AST_SymbolImportForeign extends AST_Symbol {
 
   static documentation = "A symbol imported from a module, but it is defined in the other module, and its real name is irrelevant for this module's purposes"
 
-  TYPE = 'SymbolImportForeign'
   static PROPS = AST_Symbol.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

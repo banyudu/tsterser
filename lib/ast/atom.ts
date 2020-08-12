@@ -12,6 +12,5 @@ export default class AST_Atom extends AST_Constant {
 
   static documentation = 'Base class for atoms'
 
-  TYPE = 'Null'
   static PROPS = AST_Constant.PROPS
 }

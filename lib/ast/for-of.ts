@@ -16,7 +16,6 @@ export default class AST_ForOf extends AST_ForIn {
 
   static documentation = 'A `for ... of` statement'
 
-  TYPE = 'ForOf'
   static PROPS = AST_ForIn.PROPS.concat(['await'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -18,7 +18,6 @@ export default class AST_Label extends AST_Symbol {
     references: '[AST_LoopControl*] a list of nodes referring to this label'
   }
 
-  TYPE = 'Label'
   static PROPS = AST_Symbol.PROPS.concat(['references'])
   constructor (args?) { // eslint-disable-line
     super(args)

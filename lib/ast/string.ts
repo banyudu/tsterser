@@ -24,7 +24,6 @@ export default class AST_String extends AST_Constant {
     quote: '[string] the original quote character'
   }
 
-  TYPE = 'String'
   static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
 
   constructor (args) {

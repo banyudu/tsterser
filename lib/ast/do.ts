@@ -92,7 +92,6 @@ export default class AST_Do extends AST_DWLoop {
 
   static documentation = 'A `do` statement'
 
-  TYPE = 'Do'
   static PROPS = AST_DWLoop.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

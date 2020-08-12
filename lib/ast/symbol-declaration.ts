@@ -14,7 +14,6 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
 
   static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 
-  TYPE = 'SymbolDeclaration'
   static PROPS = AST_Symbol.PROPS.concat(['init'])
   constructor (args?) { // eslint-disable-line
     super(args)

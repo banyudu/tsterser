@@ -13,7 +13,6 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
     block_scope: '[AST_Scope] the block scope for this iteration statement.'
   } as any
 
-  TYPE = 'StatementWithBody'
   static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -59,7 +59,6 @@ export default class AST_Case extends AST_SwitchBranch {
     expression: '[AST_Node] the `case` expression'
   }
 
-  TYPE = 'Case'
   static PROPS = AST_Block.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -156,7 +156,6 @@ export default class AST_For extends AST_IterationStatement {
     step: '[AST_Node?] the `for` update clause, or null if empty'
   } as any
 
-  TYPE = 'For'
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
   constructor (args?) { // eslint-disable-line
     super(args)

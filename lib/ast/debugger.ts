@@ -21,7 +21,6 @@ export default class AST_Debugger extends AST_Statement {
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'Represents a debugger statement'
 
-  TYPE = 'Debugger'
   static PROPS = AST_Statement.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

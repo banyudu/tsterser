@@ -109,7 +109,6 @@ export default class AST_Array extends AST_Node {
     elements: '[AST_Node*] array of elements'
   }
 
-  TYPE = 'Array'
   static PROPS = AST_Node.PROPS.concat(['elements'])
   constructor (args?) { // eslint-disable-line
     super(args)

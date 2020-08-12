@@ -87,7 +87,6 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
 
   static documentation = 'An object getter property'
 
-  TYPE = 'ObjectGetter'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
   constructor (args?) { // eslint-disable-line
     super(args)

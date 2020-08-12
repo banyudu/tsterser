@@ -72,7 +72,6 @@ export default class AST_ForIn extends AST_IterationStatement {
     object: "[AST_Node] the object that we're looping through"
   } as any
 
-  TYPE = 'ForIn'
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
   constructor (args?) { // eslint-disable-line
     super(args)

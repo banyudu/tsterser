@@ -129,7 +129,6 @@ export default class AST_PropAccess extends AST_Node {
     property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
   } as any
 
-  TYPE = 'PropAccess'
   static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
   constructor (args?) { // eslint-disable-line
     super(args)

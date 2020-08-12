@@ -57,7 +57,6 @@ export default class AST_While extends AST_DWLoop {
 
   static documentation = 'A `while` statement'
 
-  TYPE = 'While'
   static PROPS = AST_DWLoop.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -32,7 +32,6 @@ export default class AST_LoopControl extends AST_Jump {
     label: '[AST_LabelRef?] the label, or null if none'
   }
 
-  TYPE = 'LoopControl'
   static PROPS = AST_Jump.PROPS.concat(['label'])
   constructor (args?) { // eslint-disable-line
     super(args)

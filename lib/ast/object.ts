@@ -158,7 +158,6 @@ export default class AST_Object extends AST_Node {
     properties: '[AST_ObjectProperty*] array of properties'
   }
 
-  TYPE = 'Object'
   static PROPS = AST_Node.PROPS.concat(['properties'])
   constructor (args?) { // eslint-disable-line
     super(args)

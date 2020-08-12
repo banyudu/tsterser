@@ -11,6 +11,5 @@ export default class AST_Null extends AST_Atom {
 
   static documentation: 'The `null` atom'
 
-  TYPE = 'Null'
   static PROPS = AST_Atom.PROPS
 }

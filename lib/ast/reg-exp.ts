@@ -59,7 +59,6 @@ export default class AST_RegExp extends AST_Constant {
     value: '[RegExp] the actual regexp'
   }
 
-  TYPE = 'RegExp'
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
   constructor (args) {

@@ -174,7 +174,6 @@ export default class AST_Sequence extends AST_Node {
     expressions: '[AST_Node*] array of expressions (at least two)'
   }
 
-  TYPE = 'Sequence'
   static PROPS = AST_Node.PROPS.concat(['expressions'])
   constructor (args?) { // eslint-disable-line
     super(args)

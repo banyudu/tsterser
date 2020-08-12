@@ -82,7 +82,6 @@ export default class AST_Symbol extends AST_Node {
 
   static documentation = 'Base class for all symbols'
 
-  TYPE = 'Symbol'
   static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
   constructor (args?) { // eslint-disable-line
     super(args)

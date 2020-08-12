@@ -258,7 +258,6 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: '[AST_Statement?] the `else` part, or null if not present'
   }
 
-  TYPE = 'If'
   static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
   constructor (args?) { // eslint-disable-line
     super(args)

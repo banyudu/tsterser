@@ -12,7 +12,6 @@ export default class AST_StatementWithBody extends AST_Statement {
     body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
   } as any
 
-  TYPE = 'StatementWithBody'
   static PROPS = AST_Statement.PROPS.concat(['body'])
   constructor (args?) { // eslint-disable-line
     super(args)

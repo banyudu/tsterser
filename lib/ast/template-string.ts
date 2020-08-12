@@ -154,7 +154,6 @@ export default class AST_TemplateString extends AST_Node {
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'
   }
 
-  TYPE = 'TemplateString'
   static PROPS = AST_Node.PROPS.concat(['segments'])
   constructor (args?) { // eslint-disable-line
     super(args)

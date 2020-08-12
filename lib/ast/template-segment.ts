@@ -19,7 +19,6 @@ export default class AST_TemplateSegment extends AST_Node {
     raw: 'Raw content of the segment'
   }
 
-  TYPE = 'TemplateSegment'
   static PROPS = AST_Node.PROPS.concat(['value', 'raw'])
   constructor (args?) { // eslint-disable-line
     super(args)

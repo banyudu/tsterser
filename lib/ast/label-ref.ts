@@ -5,6 +5,5 @@ export default class AST_LabelRef extends AST_Symbol {
 
   static documentation = 'Reference to a label symbol'
 
-  TYPE = 'LabelRef'
   static PROPS = AST_Symbol.PROPS
 }

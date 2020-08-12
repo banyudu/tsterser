@@ -116,7 +116,6 @@ export default class AST_Definitions extends AST_Statement {
     definitions: '[AST_VarDef*] array of variable definitions'
   }
 
-  TYPE = 'Definitions'
   static PROPS = AST_Statement.PROPS.concat(['definitions'])
   constructor (args?) { // eslint-disable-line
     super(args)

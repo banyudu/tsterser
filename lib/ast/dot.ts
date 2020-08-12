@@ -166,7 +166,6 @@ export default class AST_Dot extends AST_PropAccess {
     quote: '[string] the original quote character when transformed from AST_Sub'
   }
 
-  TYPE = 'Dot'
   static PROPS = AST_PropAccess.PROPS.concat(['quote'])
   constructor (args?) { // eslint-disable-line
     super(args)

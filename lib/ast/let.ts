@@ -20,7 +20,6 @@ export default class AST_Let extends AST_Definitions {
 
   static documentation = 'A `let` statement'
 
-  TYPE = 'Let'
   static PROPS = AST_Definitions.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

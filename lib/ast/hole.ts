@@ -10,7 +10,5 @@ export default class AST_Hole extends AST_Atom {
   _codegen = noop
   static documentation = 'A hole in an array'
 
-  TYPE = 'Hole'
-
   static PROPS = AST_Atom.PROPS
 }

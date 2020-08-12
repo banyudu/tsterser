@@ -34,7 +34,6 @@ export default class AST_BigInt extends AST_Constant {
     value: '[string] big int value'
   }
 
-  TYPE = 'BigInt'
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
   constructor (args) {

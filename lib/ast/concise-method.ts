@@ -104,7 +104,6 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
 
   static documentation = 'An ES6 concise method inside an object or class'
 
-  TYPE = 'ConciseMethod'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
   constructor (args?) { // eslint-disable-line
     super(args)

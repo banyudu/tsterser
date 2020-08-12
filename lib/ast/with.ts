@@ -45,7 +45,6 @@ export default class AST_With extends AST_StatementWithBody {
     expression: '[AST_Node] the `with` expression'
   }
 
-  TYPE = 'Scope'
   static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -33,7 +33,6 @@ export default class AST_BlockStatement extends AST_Block {
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'A block statement'
 
-  TYPE = 'BlockStatement'
   static PROPS = AST_Block.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

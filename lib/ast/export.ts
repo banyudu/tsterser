@@ -154,7 +154,6 @@ export default class AST_Export extends AST_Statement {
     is_default: '[Boolean] Whether this is the default exported value of this module'
   }
 
-  TYPE = 'Export'
   static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
   constructor (args?) { // eslint-disable-line
     super(args)

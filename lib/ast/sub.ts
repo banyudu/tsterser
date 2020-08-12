@@ -196,7 +196,6 @@ export default class AST_Sub extends AST_PropAccess {
 
   static documentation = 'Index-style property access, i.e. `a["foo"]`'
 
-  TYPE = 'Sub'
   static PROPS = AST_PropAccess.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

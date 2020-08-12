@@ -122,7 +122,6 @@ export default class AST_Destructuring extends AST_Node {
     is_array: '[Boolean] Whether the destructuring represents an object or array'
   }
 
-  TYPE = 'Destructuring'
   static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
   constructor (args?) { // eslint-disable-line
     super(args)

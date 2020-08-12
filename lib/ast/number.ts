@@ -40,7 +40,6 @@ export default class AST_Number extends AST_Constant {
     literal: '[string] numeric value as string (optional)'
   }
 
-  TYPE = 'Number'
   static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
 
   constructor (args) {

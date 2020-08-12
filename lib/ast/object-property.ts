@@ -122,7 +122,6 @@ export default class AST_ObjectProperty extends AST_Node {
     value: '[AST_Node] property value.  For getters and setters this is an AST_Accessor.'
   } as any
 
-  TYPE = 'ObjectProperty'
   static PROPS = AST_Node.PROPS.concat(['key', 'value'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -56,7 +56,6 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     prefix: '[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`.'
   }
 
-  TYPE = 'PrefixedTemplateString'
   static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
   constructor (args?) { // eslint-disable-line
     super(args)

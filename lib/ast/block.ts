@@ -70,7 +70,6 @@ export default class AST_Block extends AST_Statement {
     block_scope: '[AST_Scope] the block scope'
   } as any
 
-  TYPE = 'Block'
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -37,7 +37,6 @@ export default class AST_Exit extends AST_Jump {
     value: '[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return'
   }
 
-  TYPE = 'Exit'
   static PROPS = AST_Jump.PROPS.concat(['value'])
   constructor (args?) { // eslint-disable-line
     super(args)

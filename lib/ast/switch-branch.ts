@@ -25,7 +25,6 @@ export default class AST_SwitchBranch extends AST_Block {
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'Base class for `switch` branches'
 
-  TYPE = 'SwitchBranch'
   static PROPS = AST_Block.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

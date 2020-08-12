@@ -1377,7 +1377,6 @@ class AST_Scope extends AST_Block {
     cname: '[integer/S] current index for mangling variables (used internally by the mangler)'
   } as any
 
-  TYPE = 'Scope'
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -1723,7 +1722,6 @@ class AST_Toplevel extends AST_Scope {
     globals: '[Map/S] a map of name -> SymbolDef for all undeclared names'
   }
 
-  TYPE = 'Toplevel'
   static PROPS = AST_Scope.PROPS.concat(['globals'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -1866,7 +1864,6 @@ class AST_Lambda extends AST_Scope {
     async: '[boolean] is this method async'
   }
 
-  TYPE = 'Lambda'
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -1894,7 +1891,6 @@ class AST_Accessor extends AST_Lambda {
 
   static documentation = 'A setter/getter function.  The `name` property is always null.'
 
-  TYPE = 'Accessor'
   static PROPS = AST_Lambda.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2007,7 +2003,6 @@ class AST_Function extends AST_Lambda {
 
   static documentation = 'A function expression'
 
-  TYPE = 'Function'
   static PROPS = AST_Lambda.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2107,7 +2102,6 @@ class AST_Arrow extends AST_Lambda {
 
   static documentation = 'An ES6 Arrow function ((a) => b)'
 
-  TYPE = 'Arrow'
   static PROPS = AST_Lambda.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2133,7 +2127,6 @@ class AST_Defun extends AST_Lambda {
 
   static documentation = 'A function definition'
 
-  TYPE = 'Defun'
   static PROPS = AST_Lambda.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2196,7 +2189,6 @@ class AST_Await extends AST_Node {
     expression: '[AST_Node] the mandatory expression being awaited'
   }
 
-  TYPE = 'Await'
   static PROPS = AST_Node.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2276,7 +2268,6 @@ class AST_Yield extends AST_Node {
     is_star: '[Boolean] Whether this is a yield or yield* statement'
   }
 
-  TYPE = 'Yield'
   static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2463,7 +2454,6 @@ class AST_Switch extends AST_Block {
     expression: '[AST_Node] the `switch` “discriminant”'
   }
 
-  TYPE = 'Switch'
   static PROPS = AST_Block.PROPS.concat(['expression'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2579,7 +2569,6 @@ class AST_Try extends AST_Block {
     bfinally: '[AST_Finally?] the finally block, or null if not present'
   }
 
-  TYPE = 'Try'
   static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2648,7 +2637,6 @@ class AST_Catch extends AST_Block {
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'
   }
 
-  TYPE = 'Catch'
   static PROPS = AST_Block.PROPS.concat(['argname'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2672,7 +2660,6 @@ class AST_Finally extends AST_Block {
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
 
-  TYPE = 'Finally'
   static PROPS = AST_Block.PROPS.concat(['argname'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2769,7 +2756,6 @@ class AST_VarDef extends AST_Node {
     value: "[AST_Node?] initializer, or null of there's no initializer"
   }
 
-  TYPE = 'VarDef'
   static PROPS = AST_Node.PROPS.concat(['name', 'value'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2836,7 +2822,6 @@ class AST_NameMapping extends AST_Node {
     name: '[AST_SymbolExport|AST_SymbolImport] The name as it is visible to this module.'
   }
 
-  TYPE = 'NameMapping'
   static PROPS = AST_Node.PROPS.concat(['foreign_name', 'name'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -2977,7 +2962,6 @@ class AST_Import extends AST_Node {
     module_name: '[AST_String] String literal describing where this module came from'
   }
 
-  TYPE = 'Import'
   static PROPS = AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -3840,7 +3824,6 @@ class AST_Call extends AST_Node {
     _annotations: '[number] bitfield containing information about the call'
   }
 
-  TYPE = 'Call'
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -3892,7 +3875,6 @@ class AST_New extends AST_Call {
   add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
-  TYPE = 'New'
   static PROPS = AST_Call.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -4028,7 +4010,6 @@ class AST_Unary extends AST_Node {
     expression: '[AST_Node] expression that this unary operator applies to'
   }
 
-  TYPE = 'Unary'
   static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -4172,7 +4153,6 @@ class AST_UnaryPrefix extends AST_Unary {
 
   static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
 
-  TYPE = 'UnaryPrefix'
   static PROPS = AST_Unary.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -4192,7 +4172,6 @@ class AST_UnaryPostfix extends AST_Unary {
 
   static documentation = 'Unary postfix expression, i.e. `i++`'
 
-  TYPE = 'UnaryPostfix '
   static PROPS = AST_Unary.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5000,7 +4979,6 @@ class AST_Binary extends AST_Node {
     right: '[AST_Node] right-hand side expression'
   }
 
-  TYPE = 'Binary'
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5402,7 +5380,6 @@ class AST_Conditional extends AST_Node {
     alternative: '[AST_Node]'
   }
 
-  TYPE = 'Conditional'
   static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5566,7 +5543,6 @@ class AST_Assign extends AST_Binary {
   needs_parens = needsParens
   static documentation = 'An assignment expression — `a = b + 5`'
 
-  TYPE = 'Assign'
   static PROPS = AST_Binary.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5593,7 +5569,6 @@ class AST_DefaultAssign extends AST_Binary {
 
   static documentation = 'A default assignment expression like in `(a = 3) => a`'
 
-  TYPE = 'DefaultAssign'
   static PROPS = AST_Binary.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5764,7 +5739,6 @@ class AST_Class extends AST_Scope {
 
   static documentation = 'An ES6 class'
 
-  TYPE = 'Class'
   static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5781,7 +5755,6 @@ class AST_DefClass extends AST_Class {
 
   static documentation = 'A class definition'
 
-  TYPE = 'DefClass'
   static PROPS = AST_Class.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -5794,7 +5767,6 @@ class AST_ClassExpression extends AST_Class {
   needs_parens = first_in_statement
   static documentation: 'A class expression.'
 
-  TYPE = 'ClassExpression'
   static PROPS = AST_Class.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -6072,7 +6044,6 @@ class AST_SymbolRef extends AST_Symbol {
 
   static documentation = 'Reference to some symbol (not definition/declaration)'
 
-  TYPE = 'SymbolRef'
   static PROPS = AST_Symbol.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -6086,7 +6057,6 @@ class AST_SymbolExport extends AST_SymbolRef {
 
   static documentation = 'Symbol referring to a name to export'
 
-  TYPE = 'SymbolExport'
   static PROPS = AST_SymbolRef.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
@@ -6106,7 +6076,6 @@ class AST_Super extends AST_This {
 
   static documentation: 'The `super` symbol'
 
-  TYPE = 'Super'
   static PROPS = AST_This.PROPS
 
   constructor (args?) { // eslint-disable-line
@@ -6136,7 +6105,6 @@ class AST_NaN extends AST_Atom {
   _size = () => 3
   static documentation: 'The impossible value'
 
-  TYPE = 'NaN'
   static PROPS = AST_Atom.PROPS
 }
 
@@ -6169,7 +6137,6 @@ class AST_Undefined extends AST_Atom {
   _size = () => 6 // "void 0"
   static documentation: 'The `undefined` value'
 
-  TYPE = 'Undefined'
   static PROPS = AST_Atom.PROPS
 }
 
@@ -6198,8 +6165,6 @@ class AST_Infinity extends AST_Atom {
   value = 1 / 0
   _size = () => 8
   static documentation: 'The `Infinity` value'
-
-  TYPE = 'Infinity'
 
   static PROPS = AST_Atom.PROPS
 }
@@ -6250,8 +6215,6 @@ class AST_Boolean extends AST_Atom {
 
   static documentation = 'Base class for booleans'
 
-  TYPE = 'Boolean'
-
   static PROPS = AST_Atom.PROPS
 }
 
@@ -6261,8 +6224,6 @@ class AST_False extends AST_Boolean {
   _size = () => 5
   static documentation = 'The `false` atom'
 
-  TYPE = 'False'
-
   static PROPS = AST_Boolean.PROPS
 }
 
@@ -6271,8 +6232,6 @@ class AST_True extends AST_Boolean {
   value = true
   _size = () => 4
   static documentation = 'The `true` atom'
-
-  TYPE = 'True'
 
   static PROPS = AST_Boolean.PROPS
 }

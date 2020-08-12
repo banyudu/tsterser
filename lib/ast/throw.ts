@@ -16,7 +16,6 @@ export default class AST_Throw extends AST_Exit {
 
   static documentation = 'A `throw` statement'
 
-  TYPE = 'Throw'
   static PROPS = AST_Exit.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)

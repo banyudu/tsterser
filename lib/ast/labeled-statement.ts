@@ -84,7 +84,6 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     label: '[AST_Label] a label definition'
   } as any
 
-  TYPE = 'LabeledStatement'
   static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
   constructor (args?) { // eslint-disable-line
     super(args)

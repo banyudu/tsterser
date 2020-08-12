@@ -7,7 +7,6 @@ export default class AST_DWLoop extends AST_IterationStatement {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'
   }
 
-  TYPE = 'DWLoop'
   static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
   constructor (args?) { // eslint-disable-line
     super(args)

@@ -43,7 +43,6 @@ export default class AST_Directive extends AST_Statement {
     quote: '[string] the original quote character'
   } as any
 
-  TYPE = 'Statement'
   static PROPS = AST_Statement.PROPS.concat(['value', 'quote'])
   constructor (args?) { // eslint-disable-line
     super(args)

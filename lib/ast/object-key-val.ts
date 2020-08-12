@@ -135,7 +135,6 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     quote: '[string] the original quote character'
   }
 
-  TYPE = 'ObjectKeyVal'
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
   constructor (args?) { // eslint-disable-line
     super(args)

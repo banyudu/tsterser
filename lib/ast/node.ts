@@ -229,7 +229,7 @@ export default class AST_Node extends AST {
   }
 
   flags = 0
-  TYPE = 'Node'
+
   static PROPS = ['start', 'end']
 
   constructor (args = {} as any) { // eslint-disable-line

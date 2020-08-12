@@ -29,7 +29,6 @@ export default class AST_Constant extends AST_Node {
   add_source_map = function (output) { output.add_mapping(this.start) }
   static documentation = 'Base class for all constants'
 
-  TYPE = 'String'
   static PROPS = AST_Node.PROPS
 
   constructor (args?) { // eslint-disable-line
