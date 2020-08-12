@@ -7522,7 +7522,7 @@ class AST_ObjectProperty extends AST_Node {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent): any {
     var key = this.key instanceof AST_Node ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
@@ -7542,25 +7542,6 @@ class AST_ObjectProperty extends AST_Node {
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
     var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
-    if (this instanceof AST_ObjectKeyVal) {
-      kind = 'init'
-      computed = !string_or_num
-    } else
-    if (this instanceof AST_ObjectGetter) {
-      kind = 'get'
-    } else
-    if (this instanceof AST_ObjectSetter) {
-      kind = 'set'
-    }
-    if (this instanceof AST_ClassProperty) {
-      return {
-        type: 'FieldDefinition',
-        computed,
-        key,
-        value: to_moz(this.value),
-        static: this.static
-      }
-    }
     if (parent instanceof AST_Class) {
       return {
         type: 'MethodDefinition',
@@ -7620,6 +7601,49 @@ class AST_ObjectKeyVal extends AST_ObjectProperty {
   quote: any
   key: any
   value: any
+
+  _to_mozilla_ast (parent) {
+    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+      type: 'Identifier',
+      value: this.key
+    }
+    if (typeof this.key === 'number') {
+      key = {
+        type: 'Literal',
+        value: Number(this.key)
+      }
+    }
+    if (typeof this.key === 'string') {
+      key = {
+        type: 'Identifier',
+        name: this.key
+      }
+    }
+    var kind
+    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
+    if (this instanceof AST_ObjectKeyVal) {
+      kind = 'init'
+      computed = !string_or_num
+    }
+    if (parent instanceof AST_Class) {
+      return {
+        type: 'MethodDefinition',
+        computed: computed,
+        kind: kind,
+        static: (this as any).static,
+        key: to_moz(this.key),
+        value: to_moz(this.value)
+      }
+    }
+    return {
+      type: 'Property',
+      computed: computed,
+      kind: kind,
+      key: key,
+      value: to_moz(this.value)
+    }
+  }
 
   _optimize = function (self, compressor) {
     lift_key(self, compressor)
@@ -7716,6 +7740,64 @@ class AST_ObjectSetter extends AST_ObjectProperty {
   quote: any
   static: any
 
+  _to_mozilla_ast (parent) {
+    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+      type: 'Identifier',
+      value: this.key
+    }
+    if (typeof this.key === 'number') {
+      key = {
+        type: 'Literal',
+        value: Number(this.key)
+      }
+    }
+    if (typeof this.key === 'string') {
+      key = {
+        type: 'Identifier',
+        name: this.key
+      }
+    }
+    var kind
+    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
+    if (this instanceof AST_ObjectKeyVal) {
+      kind = 'init'
+      computed = !string_or_num
+    } else
+    if (this instanceof AST_ObjectGetter) {
+      kind = 'get'
+    } else
+    if (this instanceof AST_ObjectSetter) {
+      kind = 'set'
+    }
+    if (this instanceof AST_ClassProperty) {
+      return {
+        type: 'FieldDefinition',
+        computed,
+        key,
+        value: to_moz(this.value),
+        static: this.static
+      }
+    }
+    if (parent instanceof AST_Class) {
+      return {
+        type: 'MethodDefinition',
+        computed: computed,
+        kind: kind,
+        static: (this as any).static,
+        key: to_moz(this.key),
+        value: to_moz(this.value)
+      }
+    }
+    return {
+      type: 'Property',
+      computed: computed,
+      kind: kind,
+      key: key,
+      value: to_moz(this.value)
+    }
+  }
+
   drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
   }
@@ -7764,6 +7846,48 @@ class AST_ObjectSetter extends AST_ObjectProperty {
 class AST_ObjectGetter extends AST_ObjectProperty {
   static: any
   quote: any
+
+  _to_mozilla_ast (parent) {
+    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+      type: 'Identifier',
+      value: this.key
+    }
+    if (typeof this.key === 'number') {
+      key = {
+        type: 'Literal',
+        value: Number(this.key)
+      }
+    }
+    if (typeof this.key === 'string') {
+      key = {
+        type: 'Identifier',
+        name: this.key
+      }
+    }
+    var kind
+    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
+    if (this instanceof AST_ObjectGetter) {
+      kind = 'get'
+    }
+    if (parent instanceof AST_Class) {
+      return {
+        type: 'MethodDefinition',
+        computed: computed,
+        kind: kind,
+        static: (this as any).static,
+        key: to_moz(this.key),
+        value: to_moz(this.value)
+      }
+    }
+    return {
+      type: 'Property',
+      computed: computed,
+      kind: kind,
+      key: key,
+      value: to_moz(this.value)
+    }
+  }
 
   drop_side_effect_free = function () {
     return this.computed_key() ? this.key : null
@@ -8096,6 +8220,34 @@ class AST_Class extends AST_Scope {
 class AST_ClassProperty extends AST_ObjectProperty {
   quote: any
   static: any
+
+  _to_mozilla_ast (parent) {
+    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+      type: 'Identifier',
+      value: this.key
+    }
+    if (typeof this.key === 'number') {
+      key = {
+        type: 'Literal',
+        value: Number(this.key)
+      }
+    }
+    if (typeof this.key === 'string') {
+      key = {
+        type: 'Identifier',
+        name: this.key
+      }
+    }
+    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
+    return {
+      type: 'FieldDefinition',
+      computed,
+      key,
+      value: to_moz(this.value),
+      static: this.static
+    }
+  }
 
   drop_side_effect_free = function (compressor: any) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
