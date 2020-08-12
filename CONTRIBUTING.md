@@ -1,152 +1,48 @@
-# Contributing
+# 贡献指南
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+您可以通过如下方式为当前项目做出贡献：
 
-Please note we have a [code of conduct](#code-of-conduct), please follow it in all your interactions
-with the project. In general also try to be nice to others.
+- 优化代码结构
+- 添加类型信息
+- 同步terser仓库的代码
+- 提出或修复BUG
+- 补充文档
 
-## Pull Request Process
+## 贡献内容
 
-1. When fixing a bug, include one or more tests which prove that your changes are correct, and
-   that they fix something wrong. When adding a feature, include tests that show it in practice.
-2. Update the README.md with details of changes to the interface, this includes new environmen
-   variables, options, useful file locations and others.
+### 优化代码结构
 
-## Documentation
+本项目从terser项目fork而来，目的是提供一个类型完备、更易维护的terser版本，并为将来的Rust-Terser版本做好铺垫。
 
-Every new feature and API change should be accompanied by a README addition.
+因为原来的terser项目开发较早，代码结构与ES6标准、Typescript规范等相关较远，需要进行部分重构。
 
-## Testing
+目前重构的主要方向，是将 lib/ast/index.ts 中的每个 AST_XXX 的类，迁移到相应的 lib/ast/xxx.ts 文件，注意不要引入循环依赖问题，每次重构之后，要在`npm test`测试通过，才可以提交。
 
-All features and bugs should have tests that verify the fix. You can run all
-tests using `npm test`.
+### 添加类型信息
 
-There are two kinds of tests:
+类型信息主要集中在 AST 相关类定义中，其它工具方法也有一部分。
 
- * compress tests, located in `test/compress` and run with `npm run test:compress`, optionally with a test file name argument.
- * mocha-based tests, located in `test/mocha` and run with `npm run test:mocha`
+在添加类型定义的时候，对于不确定的类型定义，可参考原`terser.d.ts`文件中的类型定义，或AST相关类中的`props`属性。但不允许直接引入`terser.d.ts`文件中的内容，此文件后面会删除掉。
 
-To run both of these tests at once, use `npm test`.
+### 同步terser仓库的代码
 
-The most common type of test are tests that verify input and output of the
-compress step. These tests exist in `test/compress`. New tests can be added
-either to an existing file or in a new file `issue-xxx.js`.
+当前仓库从terser中fork出来之后，因代码结构变更较大，不能继续使用 git merge 的方式从`terser`中同步代码。因此当terser中有一些bug fix的时候，本项目中同步不到。
 
-Tests that cannot be expressed as a simple AST can be found in `test/mocha`.
+如果能手动同步下terser中的最新改动，并更新相应的测试用例，也是极好的。
 
-## Code style
+### 提出或修复BUG
 
-- File encoding must be `UTF-8`.
-- `LF` is always used as a line ending.
-- Statements end with semicolons.
-- Indentation uses 4 spaces, switch `case` 2 spaces.
-- Identifiers use `snake_case`.
-- Strings use double quotes (`"`).
-- Use a trailing comma for multiline array and object literals to minimize diffs.
-- Line length should be at most 80 cols, except when it is easier to read a
-  longer line.
-- Multiline conditions place `&&` and `||` first on the line.
-- Code must pass the lint (`npm run lint`, or `npm run lint-fix` for auto-fix).
+此工程目前还处于开发阶段，但是因为有terser的测试用例在，所以也可认为是稳定可靠的。如果有发现bug的话会第一时间解决。欢迎随时提问题。
 
-**Example feature**
+### 补充文档
 
-```js
-def_optimize(AST_Debugger, function(self, compressor) {
-    if (compressor.option("drop_debugger"))
-        return make_node('AST_EmptyStatement', self);
-    return self;
-});
-```
+关于如何使用本工具，如何从terser迁移，相关文档还不存在，欢迎补充。
 
-**Example test case**
+## 相关规范
 
-```js
-drop_debugger: {
-    options = {
-        drop_debugger: true,
-    }
-    input: {
-        debugger;
-        if (foo) debugger;
-    }
-    expect: {
-        if (foo);
-    }
-}
-```
+本项目中使用了如下方面的规范：
 
-## Code of Conduct
-
-### Our Pledge
-
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
-size, disability, ethnicity, gender identity and expression, level of experience,
-nationality, personal appearance, race, religion, or sexual identity and
-orientation.
-
-### Our Standards
-
-Examples of behavior that contributes to creating a positive environment
-include:
-
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
-
-Examples of unacceptable behavior by participants include:
-
-* The use of sexualized language or imagery and unwelcome sexual attention or
-advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
-  address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
-
-### Our Responsibilities
-
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
-
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
-
-### Scope
-
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
-representing a project or community include using an official project e-mail
-address, posting via an official social media account, or acting as an appointed
-representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
-
-### Enforcement
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at [INSERT EMAIL ADDRESS]. All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
-Further details of specific enforcement policies may be posted separately.
-
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
-
-### Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at [http://contributor-covenant.org/version/1/4][version]
-
-[homepage]: http://contributor-covenant.org
-[version]: http://contributor-covenant.org/version/1/4/)
+- 为保证质量可靠，在重构、添加类型阶段，不允许修改 test 目录中的文件
+- Commit Message需要符合规范。当前使用的规范是 '@commitlint/config-conventional`
+- 代码格式需要符合规范，规范参考 `.eslintrc` 文件
+- 每次提交之前，必须保证 npm test 测试通过
