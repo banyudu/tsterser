@@ -158,6 +158,7 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_PrefixedTemplateString from './prefixed-template-string'
 import AST_ObjectProperty from './object-property'
 import AST_Object from './object'
 import AST_Array from './array'
@@ -2541,69 +2542,6 @@ class AST_Destructuring extends AST_Node {
     super(args)
     this.names = args.names
     this.is_array = args.is_array
-  }
-}
-
-class AST_PrefixedTemplateString extends AST_Node {
-  template_string: any
-  prefix: any
-
-  _optimize (self) {
-    return self
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.prefix._walk(visitor)
-      this.template_string._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.template_string)
-    push(this.prefix)
-  }
-
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.prefix = self.prefix.transform(tw)
-    self.template_string = self.template_string.transform(tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'TaggedTemplateExpression',
-      tag: to_moz(this.prefix),
-      quasi: to_moz(this.template_string)
-    }
-  }
-
-  _codegen (self, output) {
-    var tag = self.prefix
-    var parenthesize_tag = tag instanceof AST_Lambda ||
-            tag instanceof AST_Binary ||
-            tag instanceof AST_Conditional ||
-            tag instanceof AST_Sequence ||
-            tag instanceof AST_Unary ||
-            tag instanceof AST_Dot && tag.expression instanceof AST_Object
-    if (parenthesize_tag) output.print('(')
-    self.prefix.print(output)
-    if (parenthesize_tag) output.print(')')
-    self.template_string.print(output)
-  }
-
-  static documentation = 'A templatestring with a prefix, such as String.raw`foobarbaz`'
-  static propdoc = {
-    template_string: '[AST_TemplateString] The template string',
-    prefix: '[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`.'
-  }
-
-  TYPE = 'PrefixedTemplateString'
-  static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.template_string = args.template_string
-    this.prefix = args.prefix
   }
 }
 
