@@ -161,3 +161,11 @@ export const directives = new Set(['use asm', 'use strict'])
 export const _PURE = 0b00000001
 export const _INLINE = 0b00000010
 export const _NOINLINE = 0b00000100
+
+export const global_objs = {
+  Array: Array,
+  Math: Math,
+  Number: Number,
+  Object: Object,
+  String: String
+}

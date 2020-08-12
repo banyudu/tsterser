@@ -108,6 +108,8 @@ import {
   print_braced_empty,
   def_size,
   lambda_modifiers,
+  is_undeclared_ref,
+  safe_to_flatten,
   keep_name
 } from '../utils'
 
@@ -139,7 +141,6 @@ import {
   binary_bool,
   unary,
   binary,
-  static_values,
   non_converting_unary,
   non_converting_binary,
   pure_prop_access_globals,
@@ -151,6 +152,7 @@ import {
   _PURE,
   _NOINLINE,
   _INLINE,
+  global_objs,
   clear_flag
 } from '../constants'
 
@@ -158,6 +160,7 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_PropAccess from './prop-access'
 import AST_ConciseMethod from './concise-method'
 import AST_ClassProperty from './class-property'
 import AST_ObjectGetter from './object-getter'
@@ -5210,139 +5213,6 @@ class AST_Sequence extends AST_Node {
   }
 }
 
-class AST_PropAccess extends AST_Node {
-  expression: any
-  property: any
-
-  _needs_parens (child: AST_Node) {
-    return this.expression === child
-  }
-
-  _eval (compressor: any, depth) {
-    if (compressor.option('unsafe')) {
-      var key = this.property
-      if (key instanceof AST_Node) {
-        key = key._eval?.(compressor, depth)
-        if (key === this.property) return this
-      }
-      var exp = this.expression
-      var val
-      if (is_undeclared_ref(exp)) {
-        var aa
-        var first_arg = exp.name === 'hasOwnProperty' &&
-                  key === 'call' &&
-                  (aa = compressor.parent() && compressor.parent().args) &&
-                  (aa && aa[0] &&
-                  aa[0].evaluate(compressor))
-
-        first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
-
-        if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
-          return this.clone()
-        }
-        var static_value = static_values.get(exp.name)
-        if (!static_value || !static_value.has(key)) return this
-        val = global_objs[exp.name]
-      } else {
-        val = exp._eval(compressor, depth + 1)
-        if (!val || val === exp || !HOP(val, key)) return this
-        if (typeof val === 'function') {
-          switch (key) {
-            case 'name':
-              return val.node.name ? val.node.name.name : ''
-            case 'length':
-              return val.node.argnames.length
-            default:
-              return this
-          }
-        }
-      }
-      return val[key]
-    }
-    return this
-  }
-
-  flatten_object (key, compressor) {
-    if (!compressor.option('properties')) return
-    var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
-    var expr = this.expression
-    if (expr instanceof AST_Object) {
-      var props = expr.properties
-      for (var i = props.length; --i >= 0;) {
-        var prop = props[i]
-        if ('' + (prop instanceof AST_ConciseMethod ? prop.key.name : prop.key) == key) {
-          if (!props.every((prop) => {
-            return prop instanceof AST_ObjectKeyVal ||
-                          arrows && prop instanceof AST_ConciseMethod && !prop.is_generator
-          })) break
-          if (!safe_to_flatten(prop.value, compressor)) break
-          return make_node('AST_Sub', this, {
-            expression: make_node('AST_Array', expr, {
-              elements: props.map(function (prop) {
-                var v = prop.value
-                if (v instanceof AST_Accessor) v = make_node('AST_Function', v, v)
-                var k = prop.key
-                if (k instanceof AST_Node && !(k instanceof AST_SymbolMethod)) {
-                  return make_sequence(prop, [k, v])
-                }
-                return v
-              })
-            }),
-            property: make_node('AST_Number', this, {
-              value: i
-            })
-          })
-        }
-      }
-    }
-  }
-
-  shallow_cmp = pass_through as any
-  _to_mozilla_ast (parent) {
-    var isComputed = this instanceof AST_Sub
-    return {
-      type: 'MemberExpression',
-      object: to_moz(this.expression),
-      computed: isComputed,
-      property: isComputed ? to_moz(this.property) : { type: 'Identifier', name: this.property }
-    }
-  }
-
-  needs_parens (output: any) {
-    var p = output.parent()
-    if (p instanceof AST_New && p.expression === this) {
-      // i.e. new (foo.bar().baz)
-      //
-      // if there's one call into this subtree, then we need
-      // parens around it too, otherwise the call will be
-      // interpreted as passing the arguments to the upper New
-      // expression.
-      return walk(this, (node: any) => {
-        if (node instanceof AST_Scope) return true
-        if (node instanceof AST_Call) {
-          return walk_abort // makes walk() return true.
-        }
-        return undefined
-      })
-    }
-    return undefined
-  }
-
-  static documentation = 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`'
-  static propdoc = {
-    expression: '[AST_Node] the “container” expression',
-    property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
-  } as any
-
-  TYPE = 'PropAccess'
-  static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
-    this.property = args.property
-  }
-}
-
 class AST_Dot extends AST_PropAccess {
   quote: any
 
@@ -5512,6 +5382,15 @@ class AST_Dot extends AST_PropAccess {
 }
 
 class AST_Sub extends AST_PropAccess {
+  _to_mozilla_ast (parent) {
+    return {
+      type: 'MemberExpression',
+      object: to_moz(this.expression),
+      computed: true,
+      property: to_moz(this.property)
+    }
+  }
+
   _optimize (self, compressor) {
     var expr = self.expression
     var prop = self.property
@@ -8369,25 +8248,11 @@ function next_mangled (scope: any, options: any) {
   }
 }
 
-export function safe_to_flatten (value, compressor) {
-  if (value instanceof AST_SymbolRef) {
-    value = value.fixed_value()
-  }
-  if (!value) return false
-  if (!(value instanceof AST_Lambda || value instanceof AST_Class)) return true
-  if (!(value instanceof AST_Lambda && value.contains_this())) return true
-  return compressor.parent() instanceof AST_New
-}
-
 export function is_empty (thing) {
   if (thing === null) return true
   if (thing instanceof AST_EmptyStatement) return true
   if (thing instanceof AST_BlockStatement) return thing.body.length == 0
   return false
-}
-
-export function is_undeclared_ref (node: any) {
-  return node instanceof AST_SymbolRef && node.definition?.().undeclared
 }
 
 export function reset_variables (tw, compressor, node) {
@@ -8628,14 +8493,6 @@ function all_refs_local (scope) {
     }
   })
   return result
-}
-
-var global_objs = {
-  Array: Array,
-  Math: Math,
-  Number: Number,
-  Object: Object,
-  String: String
 }
 
 export function is_iife_call (node: any) {

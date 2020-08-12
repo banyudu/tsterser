@@ -3081,3 +3081,17 @@ export const def_size = (size, def) => size + list_overhead(def.definitions)
 /* #__INLINE__ */
 export const lambda_modifiers = func =>
   (func.is_generator ? 1 : 0) + (func.async ? 6 : 0)
+
+export function is_undeclared_ref (node: any) {
+  return node instanceof AST_SymbolRef && node.definition?.().undeclared
+}
+
+export function safe_to_flatten (value, compressor) {
+  if (value instanceof AST_SymbolRef) {
+    value = value.fixed_value()
+  }
+  if (!value) return false
+  if (!(value instanceof AST_Lambda || value instanceof AST_Class)) return true
+  if (!(value instanceof AST_Lambda && value.contains_this())) return true
+  return compressor.parent() instanceof AST_New
+}
