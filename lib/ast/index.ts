@@ -77,8 +77,6 @@ import {
   merge_sequence,
   first_in_statement,
   is_undefined,
-  force_statement,
-  make_block,
   tighten_body,
   reset_block_variables,
   reset_def,
@@ -109,6 +107,7 @@ import {
   def_size,
   lambda_modifiers,
   is_undeclared_ref,
+  is_empty,
   keep_name
 } from '../utils'
 
@@ -159,6 +158,9 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_If from './if'
+import AST_Export from './export'
+import AST_Definitions from './definitions'
 import AST_TemplateString from './template-string'
 import AST_Destructuring from './destructuring'
 import AST_Dot from './dot'
@@ -2564,254 +2566,6 @@ class AST_Yield extends AST_Node {
 
 /* -----[ IF ]----- */
 
-class AST_If extends AST_StatementWithBody {
-  condition: any
-  alternative: any
-
-  _optimize (self, compressor) {
-    if (is_empty(self.alternative)) self.alternative = null
-
-    if (!compressor.option('conditionals')) return self
-    // if condition can be statically determined, warn and drop
-    // one of the blocks.  note, statically determined implies
-    // “has no side effects”; also it doesn't work for cases like
-    // `x && true`, though it probably should.
-    var cond = self.condition.evaluate(compressor)
-    if (!compressor.option('dead_code') && !(cond instanceof AST_Node)) {
-      var orig = self.condition
-      self.condition = make_node_from_constant(cond, orig)
-      self.condition = best_of_expression(self.condition.transform(compressor), orig)
-    }
-    if (compressor.option('dead_code')) {
-      if (cond instanceof AST_Node) cond = self.condition.tail_node().evaluate(compressor)
-      if (!cond) {
-        compressor.warn('Condition always false [{file}:{line},{col}]', self.condition.start)
-        var body: any[] = []
-        extract_declarations_from_unreachable_code(compressor, self.body, body)
-        body.push(make_node('AST_SimpleStatement', self.condition, {
-          body: self.condition
-        }))
-        if (self.alternative) body.push(self.alternative)
-        return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
-      } else if (!(cond instanceof AST_Node)) {
-        compressor.warn('Condition always true [{file}:{line},{col}]', self.condition.start)
-        var body: any[] = []
-        body.push(make_node('AST_SimpleStatement', self.condition, {
-          body: self.condition
-        }))
-        body.push(self.body)
-        if (self.alternative) {
-          extract_declarations_from_unreachable_code(compressor, self.alternative, body)
-        }
-        return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
-      }
-    }
-    var negated = self.condition.negate(compressor)
-    var self_condition_length = self.condition.size()
-    var negated_length = negated.size()
-    var negated_is_best = negated_length < self_condition_length
-    if (self.alternative && negated_is_best) {
-      negated_is_best = false // because we already do the switch here.
-      // no need to swap values of self_condition_length and negated_length
-      // here because they are only used in an equality comparison later on.
-      self.condition = negated
-      var tmp = self.body
-      self.body = self.alternative || make_node('AST_EmptyStatement', self)
-      self.alternative = tmp
-    }
-    if (is_empty(self.body) && is_empty(self.alternative)) {
-      return make_node('AST_SimpleStatement', self.condition, {
-        body: self.condition.clone()
-      }).optimize(compressor)
-    }
-    if (self.body instanceof AST_SimpleStatement &&
-          self.alternative instanceof AST_SimpleStatement) {
-      return make_node('AST_SimpleStatement', self, {
-        body: make_node('AST_Conditional', self, {
-          condition: self.condition,
-          consequent: self.body.body,
-          alternative: self.alternative.body
-        })
-      }).optimize(compressor)
-    }
-    if (is_empty(self.alternative) && self.body instanceof AST_SimpleStatement) {
-      if (self_condition_length === negated_length && !negated_is_best &&
-              self.condition instanceof AST_Binary && self.condition.operator == '||') {
-        // although the code length of self.condition and negated are the same,
-        // negated does not require additional surrounding parentheses.
-        // see https://github.com/mishoo/UglifyJS2/issues/979
-        negated_is_best = true
-      }
-      if (negated_is_best) {
-        return make_node('AST_SimpleStatement', self, {
-          body: make_node('AST_Binary', self, {
-            operator: '||',
-            left: negated,
-            right: self.body.body
-          })
-        }).optimize(compressor)
-      }
-      return make_node('AST_SimpleStatement', self, {
-        body: make_node('AST_Binary', self, {
-          operator: '&&',
-          left: self.condition,
-          right: self.body.body
-        })
-      }).optimize(compressor)
-    }
-    if (self.body instanceof AST_EmptyStatement &&
-          self.alternative instanceof AST_SimpleStatement) {
-      return make_node('AST_SimpleStatement', self, {
-        body: make_node('AST_Binary', self, {
-          operator: '||',
-          left: self.condition,
-          right: self.alternative.body
-        })
-      }).optimize(compressor)
-    }
-    if (self.body instanceof AST_Exit &&
-          self.alternative instanceof AST_Exit &&
-          self.body.TYPE == self.alternative.TYPE) {
-      return make_node(self.body.constructor?.name, self, {
-        value: make_node('AST_Conditional', self, {
-          condition: self.condition,
-          consequent: self.body.value || make_node('AST_Undefined', self.body),
-          alternative: self.alternative.value || make_node('AST_Undefined', self.alternative)
-        }).transform(compressor)
-      }).optimize(compressor)
-    }
-    if (self.body instanceof AST_If &&
-          !self.body.alternative &&
-          !self.alternative) {
-      self = make_node('AST_If', self, {
-        condition: make_node('AST_Binary', self.condition, {
-          operator: '&&',
-          left: self.condition,
-          right: self.body.condition
-        }),
-        body: self.body.body,
-        alternative: null
-      })
-    }
-    if (aborts(self.body)) {
-      if (self.alternative) {
-        var alt = self.alternative
-        self.alternative = null
-        return make_node('AST_BlockStatement', self, {
-          body: [self, alt]
-        }).optimize(compressor)
-      }
-    }
-    if (aborts(self.alternative)) {
-      const body = self.body
-      self.body = self.alternative
-      self.condition = negated_is_best ? negated : self.condition.negate(compressor)
-      self.alternative = null
-      return make_node('AST_BlockStatement', self, {
-        body: [self, body]
-      }).optimize(compressor)
-    }
-    return self
-  }
-
-  may_throw (compressor: any) {
-    return this.condition.may_throw(compressor) ||
-          this.body && this.body.may_throw(compressor) ||
-          this.alternative && this.alternative.may_throw(compressor)
-  }
-
-  has_side_effects (compressor: any) {
-    return this.condition.has_side_effects(compressor) ||
-          this.body && this.body.has_side_effects(compressor) ||
-          this.alternative && this.alternative.has_side_effects(compressor)
-  }
-
-  aborts = function () {
-    return this.alternative && aborts(this.body) && aborts(this.alternative) && this
-  }
-
-  reduce_vars (tw) {
-    this.condition.walk(tw)
-    push(tw)
-    this.body.walk(tw)
-    pop(tw)
-    if (this.alternative) {
-      push(tw)
-      this.alternative.walk(tw)
-      pop(tw)
-    }
-    return true
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.condition._walk(visitor)
-      this.body._walk(visitor)
-      if (this.alternative) this.alternative._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.alternative) {
-      push(this.alternative)
-    }
-    push(this.body)
-    push(this.condition)
-  }
-
-  _size = () => 4
-  shallow_cmp = mkshallow({
-    alternative: 'exist'
-  })
-
-  _transform (self, tw: any) {
-    self.condition = self.condition.transform(tw)
-    self.body = (self.body).transform(tw)
-    if (self.alternative) self.alternative = self.alternative.transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'IfStatement',
-      test: to_moz(this.condition),
-      consequent: to_moz(this.body),
-      alternate: to_moz(this.alternative)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('if')
-    output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
-    })
-    output.space()
-    if (self.alternative) {
-      make_then(self, output)
-      output.space()
-      output.print('else')
-      output.space()
-      if (self.alternative instanceof AST_If) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
-    } else {
-      self._do_print_body(output)
-    }
-  }
-
-  static documentation = 'A `if` statement'
-  static propdoc = {
-    condition: '[AST_Node] the `if` condition',
-    alternative: '[AST_Statement?] the `else` part, or null if not present'
-  }
-
-  TYPE = 'If'
-  static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.condition = args.condition
-    this.alternative = args.alternative
-  }
-}
-
 /* -----[ SWITCH ]----- */
 
 class AST_Switch extends AST_Block {
@@ -3207,129 +2961,6 @@ class AST_Finally extends AST_Block {
 
 /* -----[ VAR/CONST ]----- */
 
-class AST_Definitions extends AST_Statement {
-  definitions: any[]
-
-  _optimize (self) {
-    if (self.definitions.length == 0) { return make_node('AST_EmptyStatement', self) }
-    return self
-  }
-
-  may_throw (compressor: any) {
-    return anyMayThrow(this.definitions, compressor)
-  }
-
-  has_side_effects (compressor: any) {
-    return anySideEffect(this.definitions, compressor)
-  }
-
-  to_assignments (compressor: any) {
-    var reduce_vars = compressor.option('reduce_vars')
-    var assignments = this.definitions.reduce(function (a, def) {
-      if (def.value && !(def.name instanceof AST_Destructuring)) {
-        var name = make_node('AST_SymbolRef', def.name, def.name)
-        a.push(make_node('AST_Assign', def, {
-          operator: '=',
-          left: name,
-          right: def.value
-        }))
-        if (reduce_vars) name.definition().fixed = false
-      } else if (def.value) {
-        // Because it's a destructuring, do not turn into an assignment.
-        var varDef = make_node('AST_VarDef', def, {
-          name: def.name,
-          value: def.value
-        })
-        var var_ = make_node('AST_Var', def, {
-          definitions: [varDef]
-        })
-        a.push(var_)
-      }
-      def = def.name.definition?.()
-      def.eliminated++
-      def.replaced--
-      return a
-    }, [])
-    if (assignments.length == 0) return null
-    return make_sequence(this, assignments)
-  }
-
-  remove_initializers () {
-    var decls: any[] = []
-    this.definitions.forEach(function (def) {
-      if (def.name instanceof AST_SymbolDeclaration) {
-        def.value = null
-        decls.push(def)
-      } else {
-        walk(def.name, (node: any) => {
-          if (node instanceof AST_SymbolDeclaration) {
-            decls.push(make_node('AST_VarDef', def, {
-              name: node,
-              value: null
-            }))
-          }
-        })
-      }
-    })
-    this.definitions = decls
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      var definitions = this.definitions
-      for (var i = 0, len = definitions.length; i < len; i++) {
-        definitions[i]._walk(visitor)
-      }
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.definitions.length
-    while (i--) push(this.definitions[i])
-  }
-
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.definitions = do_list(self.definitions, tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'VariableDeclaration',
-      kind:
-                this instanceof AST_Const ? 'const'
-                  : this instanceof AST_Let ? 'let' : 'var',
-      declarations: this.definitions.map(to_moz)
-    }
-  }
-
-  _do_print (this: any, output: any, kind: string) {
-    output.print(kind)
-    output.space()
-    this.definitions.forEach(function (def, i) {
-      if (i) output.comma()
-      def.print(output)
-    })
-    var p = output.parent()
-    var in_for = p instanceof AST_For || p instanceof AST_ForIn
-    var output_semicolon = !in_for || p && p.init !== this
-    if (output_semicolon) { output.semicolon() }
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
-  static propdoc = {
-    definitions: '[AST_VarDef*] array of variable definitions'
-  }
-
-  TYPE = 'Definitions'
-  static PROPS = AST_Statement.PROPS.concat(['definitions'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.definitions = args.definitions
-  }
-}
-
 class AST_Var extends AST_Definitions {
   _size = function (): number {
     return def_size(4, this)
@@ -3349,6 +2980,14 @@ class AST_Var extends AST_Definitions {
 }
 
 class AST_Let extends AST_Definitions {
+  _to_mozilla_ast (parent) {
+    return {
+      type: 'VariableDeclaration',
+      kind: 'let',
+      declarations: this.definitions.map(to_moz)
+    }
+  }
+
   _size = function (): number {
     return def_size(4, this)
   }
@@ -3367,6 +3006,14 @@ class AST_Let extends AST_Definitions {
 }
 
 class AST_Const extends AST_Definitions {
+  _to_mozilla_ast (parent) {
+    return {
+      type: 'VariableDeclaration',
+      kind: 'const',
+      declarations: this.definitions.map(to_moz)
+    }
+  }
+
   _size = function (): number {
     return def_size(6, this)
   }
@@ -3685,170 +3332,6 @@ class AST_Import extends AST_Node {
     super(args)
     this.imported_name = args.imported_name
     this.imported_names = args.imported_names
-    this.module_name = args.module_name
-  }
-}
-
-class AST_Export extends AST_Statement {
-  is_default: any
-  module_name: any
-  exported_value: any
-  exported_definition: any
-  exported_names: any
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function (this: any) {
-      if (this.exported_definition) {
-        this.exported_definition._walk(visitor)
-      }
-      if (this.exported_value) {
-        this.exported_value._walk(visitor)
-      }
-      if (this.exported_names) {
-        this.exported_names.forEach(function (name_export) {
-          name_export._walk(visitor)
-        })
-      }
-      if (this.module_name) {
-        this.module_name._walk(visitor)
-      }
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.module_name) push(this.module_name)
-    if (this.exported_names) {
-      let i = this.exported_names.length
-      while (i--) push(this.exported_names[i])
-    }
-    if (this.exported_value) push(this.exported_value)
-    if (this.exported_definition) push(this.exported_definition)
-  }
-
-  _size (): number {
-    let size = 7 + (this.is_default ? 8 : 0)
-
-    if (this.exported_value) {
-      size += this.exported_value._size()
-    }
-
-    if (this.exported_names) {
-      // Braces and commas
-      size += 2 + list_overhead(this.exported_names)
-    }
-
-    if (this.module_name) {
-      // "from "
-      size += 5
-    }
-
-    return size
-  }
-
-  shallow_cmp = mkshallow({
-    exported_definition: 'exist',
-    exported_value: 'exist',
-    exported_names: 'exist',
-    module_name: 'eq',
-    is_default: 'eq'
-  })
-
-  _transform (self, tw: any) {
-    if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)
-    if (self.exported_value) self.exported_value = self.exported_value.transform(tw)
-    if (self.exported_names) do_list(self.exported_names, tw)
-    if (self.module_name) self.module_name = self.module_name.transform(tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    if (this.exported_names) {
-      if (this.exported_names[0].name.name === '*') {
-        return {
-          type: 'ExportAllDeclaration',
-          source: to_moz(this.module_name)
-        }
-      }
-      return {
-        type: 'ExportNamedDeclaration',
-        specifiers: this.exported_names.map(function (name_mapping) {
-          return {
-            type: 'ExportSpecifier',
-            exported: to_moz(name_mapping.foreign_name),
-            local: to_moz(name_mapping.name)
-          }
-        }),
-        declaration: to_moz(this.exported_definition),
-        source: to_moz(this.module_name)
-      }
-    }
-    return {
-      type: this.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
-      declaration: to_moz(this.exported_value || this.exported_definition)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('export')
-    output.space()
-    if (self.is_default) {
-      output.print('default')
-      output.space()
-    }
-    if (self.exported_names) {
-      if (self.exported_names.length === 1 && self.exported_names[0].name.name === '*') {
-        self.exported_names[0].print(output)
-      } else {
-        output.print('{')
-        self.exported_names.forEach(function (name_export, i) {
-          output.space()
-          name_export.print(output)
-          if (i < self.exported_names.length - 1) {
-            output.print(',')
-          }
-        })
-        output.space()
-        output.print('}')
-      }
-    } else if (self.exported_value) {
-      self.exported_value.print(output)
-    } else if (self.exported_definition) {
-      self.exported_definition.print(output)
-      if (self.exported_definition instanceof AST_Definitions) return
-    }
-    if (self.module_name) {
-      output.space()
-      output.print('from')
-      output.space()
-      self.module_name.print(output)
-    }
-    if (self.exported_value &&
-                !(self.exported_value instanceof AST_Defun ||
-                    self.exported_value instanceof AST_Function ||
-                    self.exported_value instanceof AST_Class) ||
-            self.module_name ||
-            self.exported_names
-    ) {
-      output.semicolon()
-    }
-  }
-
-  static documentation = 'An `export` statement'
-  static propdoc = {
-    exported_definition: '[AST_Defun|AST_Definitions|AST_DefClass?] An exported definition',
-    exported_value: '[AST_Node?] An exported value',
-    exported_names: '[AST_NameMapping*?] List of exported names',
-    module_name: '[AST_String?] Name of the file to load exports from',
-    is_default: '[Boolean] Whether this is the default exported value of this module'
-  }
-
-  TYPE = 'Export'
-  static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.exported_definition = args.exported_definition
-    this.exported_value = args.exported_value
-    this.is_default = args.is_default
-    this.exported_names = args.exported_names
     this.module_name = args.module_name
   }
 }
@@ -7524,33 +7007,6 @@ function print_braced (self: any, output: any, allow_directives?: boolean) {
 
 /* -----[ exits ]----- */
 
-/* -----[ if ]----- */
-function make_then (self: any, output: any) {
-  var b: any = self.body
-  if (output.option('braces') ||
-        output.option('ie8') && b instanceof AST_Do) { return make_block(b, output) }
-  // The squeezer replaces "block"-s that contain only a single
-  // statement with the statement itself; technically, the AST
-  // is correct, but this can create problems when we output an
-  // IF having an ELSE clause where the THEN clause ends in an
-  // IF *without* an ELSE block (then the outer ELSE would refer
-  // to the inner IF).  This function checks for this case and
-  // adds the block braces if needed.
-  if (!b) return output.force_semicolon()
-  while (true) {
-    if (b instanceof AST_If) {
-      if (!b.alternative) {
-        make_block(self.body, output)
-        return
-      }
-      b = b.alternative
-    } else if (b instanceof AST_StatementWithBody) {
-      b = b.body
-    } else break
-  }
-  force_statement(self.body, output)
-}
-
 /* -----[ switch ]----- */
 /* -----[ var/const ]----- */
 
@@ -7602,13 +7058,6 @@ function next_mangled (scope: any, options: any) {
     }
     return m
   }
-}
-
-export function is_empty (thing) {
-  if (thing === null) return true
-  if (thing instanceof AST_EmptyStatement) return true
-  if (thing instanceof AST_BlockStatement) return thing.body.length == 0
-  return false
 }
 
 export function reset_variables (tw, compressor, node) {
