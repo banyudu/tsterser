@@ -2,6 +2,7 @@ import { equivalent_to } from '../equivalent-to'
 import { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
+import AST from './_base'
 
 import {
   OPTIMIZED,
@@ -29,9 +30,21 @@ import {
   basic_negation
 } from './'
 
-export default class AST_Node {
+export default class AST_Node extends AST {
   start: any
   end: any
+
+  isAst (type: string) {
+    let proto: any = this.constructor
+    while (proto.name) {
+      if (proto.name === type) {
+        return true
+      }
+      proto = Object.getPrototypeOf(proto)
+    }
+    return false
+  }
+
   _codegen_should_output_space (child: AST_Node) { return false }
 
   _needs_parens (child: AST_Node) {
@@ -218,7 +231,9 @@ export default class AST_Node {
   flags = 0
   TYPE = 'Node'
   static PROPS = ['start', 'end']
+
   constructor (args = {} as any) { // eslint-disable-line
+    super()
     this.start = args.start
     this.end = args.end
   }

@@ -7476,7 +7476,7 @@ class AST_ObjectProperty extends AST_Node {
 
   _optimize = lift_key
   drop_side_effect_free = function (compressor: any, first_in_statement) {
-    const computed_key = this instanceof AST_ObjectKeyVal && this.key instanceof AST_Node
+    const computed_key = this.isAst('AST_ObjectKeyVal') && this.key?.isAst?.('AST_Node')
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
     if (key && value) {
@@ -7621,12 +7621,12 @@ class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
-    if (this instanceof AST_ObjectKeyVal) {
+    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
+    if (this.isAst('AST_ObjectKeyVal')) {
       kind = 'init'
       computed = !string_or_num
     }
-    if (parent instanceof AST_Class) {
+    if (parent?.isAst?.('AST_Class')) {
       return {
         type: 'MethodDefinition',
         computed: computed,
