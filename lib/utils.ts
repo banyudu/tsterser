@@ -3067,3 +3067,17 @@ export function print_property_name (key: string, quote: string, output: any) {
   }
   return output.print_name(key)
 }
+
+/* #__INLINE__ */
+export const key_size = key =>
+  typeof key === 'string' ? key.length : 0
+
+/* #__INLINE__ */
+export const static_size = is_static => is_static ? 7 : 0
+
+/* #__INLINE__ */
+export const def_size = (size, def) => size + list_overhead(def.definitions)
+
+/* #__INLINE__ */
+export const lambda_modifiers = func =>
+  (func.is_generator ? 1 : 0) + (func.async ? 6 : 0)
