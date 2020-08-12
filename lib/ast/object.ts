@@ -3,7 +3,6 @@ import AST_Expansion from './expansion'
 import AST_Constant from './constant'
 import AST_String from './string'
 import AST_Symbol from './symbol'
-import { AST_Function } from './'
 
 import {
   literals_in_boolean_context,
@@ -78,7 +77,7 @@ export default class AST_Object extends AST_Node {
         if (typeof Object.prototype[key] === 'function') {
           return this
         }
-        if (prop.value instanceof AST_Function) continue
+        if (prop.value?.isAst?.('AST_Function')) continue
         val[key] = prop.value._eval(compressor, depth)
         if (val[key] === prop.value) return this
       }

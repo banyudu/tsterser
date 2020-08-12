@@ -171,6 +171,8 @@ import {
 import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
 
+import { is_basic_identifier_string, is_identifier_string, RESERVED_WORDS } from './parse'
+
 const AST_DICT = {
   AST_Accessor,
   AST_Array,
@@ -3015,4 +3017,53 @@ export function print_braced_empty (self: any, output: any) {
     output.append_comments(self, true)
   })
   output.print('}')
+}
+
+// ["p"]:1 ---> p:1
+// [42]:1 ---> 42:1
+export function lift_key (self, compressor) {
+  if (!compressor.option('computed_props')) return self
+  // save a comparison in the typical case
+  if (!(self.key instanceof AST_Constant)) return self
+  // whitelist acceptable props as not all AST_Constants are true constants
+  if (self.key instanceof AST_String || self.key instanceof AST_Number) {
+    if (self.key.value === '__proto__') return self
+    if (self.key.value == 'constructor' &&
+            compressor.parent() instanceof AST_Class) return self
+    if (self instanceof AST_ObjectKeyVal) {
+      self.key = self.key.value
+    } else if (self instanceof AST_ClassProperty) {
+      self.key = make_node('AST_SymbolClassProperty', self.key, {
+        name: self.key.value
+      })
+    } else {
+      self.key = make_node('AST_SymbolMethod', self.key, {
+        name: self.key.value
+      })
+    }
+  }
+  return self
+}
+
+export function print_property_name (key: string, quote: string, output: any) {
+  if (output.option('quote_keys')) {
+    return output.print_string(key)
+  }
+  if ('' + +key == key && Number(key) >= 0) {
+    if (output.option('keep_numbers')) {
+      return output.print(key)
+    }
+    return output.print(make_num(Number(key)))
+  }
+  var print_string = RESERVED_WORDS.has(key)
+    ? output.option('ie8')
+    : (
+      output.option('ecma') < 2015
+        ? !is_basic_identifier_string(key)
+        : !is_identifier_string(key, true)
+    )
+  if (print_string || (quote && output.option('keep_quoted_props'))) {
+    return output.print_string(key, quote)
+  }
+  return output.print_name(key)
 }

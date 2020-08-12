@@ -71,7 +71,6 @@ import {
   to_moz,
   to_moz_in_destructuring,
   To_Moz_Literal,
-  make_num,
   best_of_expression,
   best_of,
   make_sequence,
@@ -107,6 +106,8 @@ import {
   trim,
   inline_array_like_spread,
   print_braced_empty,
+  lift_key,
+  print_property_name,
   keep_name
 } from '../utils'
 
@@ -7541,8 +7542,8 @@ class AST_ObjectProperty extends AST_Node {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key instanceof AST_SymbolRef
-    if (parent instanceof AST_Class) {
+    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef')
+    if (parent?.isAst?.('AST_Class')) {
       return {
         type: 'MethodDefinition',
         computed: computed,
@@ -9105,29 +9106,6 @@ function parenthesize_for_noin (node: any, output: any, noin: boolean) {
 
 /* -----[ literals ]----- */
 
-function print_property_name (key: string, quote: string, output: any) {
-  if (output.option('quote_keys')) {
-    return output.print_string(key)
-  }
-  if ('' + +key == key && Number(key) >= 0) {
-    if (output.option('keep_numbers')) {
-      return output.print(key)
-    }
-    return output.print(make_num(Number(key)))
-  }
-  var print_string = RESERVED_WORDS.has(key)
-    ? output.option('ie8')
-    : (
-      output.option('ecma') < 2015
-        ? !is_basic_identifier_string(key)
-        : !is_identifier_string(key, true)
-    )
-  if (print_string || (quote && output.option('keep_quoted_props'))) {
-    return output.print_string(key, quote)
-  }
-  return output.print_name(key)
-}
-
 export {
   OutputStream
 }
@@ -9701,32 +9679,6 @@ export function is_reachable (self, defs) {
       return true
     }
   })
-}
-
-// ["p"]:1 ---> p:1
-// [42]:1 ---> 42:1
-function lift_key (self, compressor) {
-  if (!compressor.option('computed_props')) return self
-  // save a comparison in the typical case
-  if (!(self.key instanceof AST_Constant)) return self
-  // whitelist acceptable props as not all AST_Constants are true constants
-  if (self.key instanceof AST_String || self.key instanceof AST_Number) {
-    if (self.key.value === '__proto__') return self
-    if (self.key.value == 'constructor' &&
-            compressor.parent() instanceof AST_Class) return self
-    if (self instanceof AST_ObjectKeyVal) {
-      self.key = self.key.value
-    } else if (self instanceof AST_ClassProperty) {
-      self.key = make_node('AST_SymbolClassProperty', self.key, {
-        name: self.key.value
-      })
-    } else {
-      self.key = make_node('AST_SymbolMethod', self.key, {
-        name: self.key.value
-      })
-    }
-  }
-  return self
 }
 
 export function print (this: any, output: any, force_parens?: boolean) {
