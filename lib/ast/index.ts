@@ -187,6 +187,8 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Await from './await'
+import AST_Yield from './yield'
 import AST_Undefined from './undefined'
 import AST_Boolean from './boolean'
 import AST_Infinity from './infinity'
@@ -2098,147 +2100,6 @@ class AST_Defun extends AST_Lambda {
 }
 
 /* -----[ JUMPS ]----- */
-
-class AST_Await extends AST_Node {
-  expression: any
-
-  _walk = function (visitor: any) {
-    return visitor._visit(this, function () {
-      this.expression._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.expression)
-  }
-
-  _size = () => 6
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.expression = self.expression.transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'AwaitExpression',
-      argument: to_moz(this.expression)
-    }
-  }
-
-  needs_parens = function (output: any) {
-    var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
-            p?.isAst?.('AST_Call') && p.expression === this ||
-            output.option('safari10') && p?.isAst?.('AST_UnaryPrefix')
-  }
-
-  _codegen = function (self, output) {
-    output.print('await')
-    output.space()
-    var e = self.expression
-    var parens = !(
-      e?.isAst?.('AST_Call') ||
-            e?.isAst?.('AST_SymbolRef') ||
-            e?.isAst?.('AST_PropAccess') ||
-            e?.isAst?.('AST_Unary') ||
-            e?.isAst?.('AST_Constant')
-    )
-    if (parens) output.print('(')
-    self.expression.print(output)
-    if (parens) output.print(')')
-  }
-
-  static documentation = 'An `await` statement'
-  static propdoc = {
-    expression: '[AST_Node] the mandatory expression being awaited'
-  }
-
-  static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
-  }
-}
-
-class AST_Yield extends AST_Node {
-  value: any
-  is_star: boolean
-  expression: any
-
-  _optimize = function (self, compressor) {
-    if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
-      self.expression = null
-    }
-    return self
-  }
-
-  _walk = function (visitor: any) {
-    return visitor._visit(this, this.expression && function () {
-      this.expression._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.expression) push(this.expression)
-  }
-
-  _size = () => 6
-  shallow_cmp = mkshallow({
-    is_star: 'eq'
-  })
-
-  _transform (self, tw: any) {
-    if (self.expression) self.expression = self.expression.transform(tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'YieldExpression',
-      argument: to_moz(this.expression),
-      delegate: this.is_star
-    }
-  }
-
-  needs_parens = function (output: any) {
-    var p = output.parent()
-    // (yield 1) + (yield 2)
-    // a = yield 3
-    if (p?.isAst?.('AST_Binary') && p.operator !== '=') { return true }
-    // (yield 1)()
-    // new (yield 1)()
-    if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
-    // (yield 1) ? yield 2 : yield 3
-    if (p?.isAst?.('AST_Conditional') && p.condition === this) { return true }
-    // -(yield 4)
-    if (p?.isAst?.('AST_Unary')) { return true }
-    // (yield x).foo
-    // (yield x)['foo']
-    if (p?._needs_parens(this)) { return true }
-    return undefined
-  }
-
-  _codegen = function (self, output) {
-    var star = self.is_star ? '*' : ''
-    output.print('yield' + star)
-    if (self.expression) {
-      output.space()
-      self.expression.print(output)
-    }
-  }
-
-  static documentation = 'A `yield` statement'
-  static propdoc = {
-    expression: '[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false',
-    is_star: '[Boolean] Whether this is a yield or yield* statement'
-  }
-
-  static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
-    this.is_star = args.is_star
-  }
-}
 
 /* -----[ IF ]----- */
 
