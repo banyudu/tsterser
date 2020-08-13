@@ -175,6 +175,9 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_False from './false'
+import AST_True from './true'
+import AST_Super from './super'
 import AST_Finally from './finally'
 import AST_Catch from './catch'
 import AST_Switch from './switch'
@@ -2096,15 +2099,6 @@ class AST_Defun extends AST_Lambda {
     super(args)
   }
 }
-
-/* -----[ JUMPS ]----- */
-
-/* -----[ IF ]----- */
-
-/* -----[ SWITCH ]----- */
-/* -----[ VAR/CONST ]----- */
-
-/* -----[ OTHER ]----- */
 
 class AST_Call extends AST_Node {
   _annotations: any
@@ -4897,44 +4891,6 @@ class AST_SymbolExport extends AST_SymbolRef {
   constructor (args?) { // eslint-disable-line
     super(args)
   }
-}
-
-class AST_Super extends AST_This {
-  _size = () => 5
-  shallow_cmp = pass_through
-  _to_mozilla_ast (): any {
-    return { type: 'Super' }
-  }
-
-  _codegen = function (_self, output) {
-    output.print('super')
-  }
-
-  static documentation: 'The `super` symbol'
-
-  static PROPS = AST_This.PROPS
-
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_False extends AST_Boolean {
-  is_boolean = return_true
-  value = false
-  _size = () => 5
-  static documentation = 'The `false` atom'
-
-  static PROPS = AST_Boolean.PROPS
-}
-
-class AST_True extends AST_Boolean {
-  is_boolean = return_true
-  value = true
-  _size = () => 4
-  static documentation = 'The `true` atom'
-
-  static PROPS = AST_Boolean.PROPS
 }
 
 export {
