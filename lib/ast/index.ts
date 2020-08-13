@@ -78,7 +78,6 @@ import {
   reset_def,
   anySideEffect,
   anyMayThrow,
-  is_identifier_atom,
   list_overhead,
   make_node_from_constant,
   can_be_evicted_from_block,
@@ -158,14 +157,10 @@ import {
   static_fns,
   global_names,
   global_pure_fns,
-  unary_side_effects,
   set_flag,
   lazy_op,
-  unary_bool,
   binary_bool,
-  unary,
   binary,
-  non_converting_unary,
   non_converting_binary,
   pure_prop_access_globals,
   ASSIGN_OPS,
@@ -186,6 +181,9 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Unary from './unary'
+import AST_UnaryPrefix from './unary-prefix'
+import AST_UnaryPostfix from './unary-postfix'
 import AST_VarDef from './var-def'
 import AST_NameMapping from './name-mapping'
 import AST_Import from './import'
@@ -3401,303 +3399,6 @@ class AST_New extends AST_Call {
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
   static PROPS = AST_Call.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Unary extends AST_Node {
-  operator: any
-  expression: any
-  drop_side_effect_free (compressor: any, first_in_statement) {
-    if (unary_side_effects.has(this.operator)) {
-      if (!this.expression.has_side_effects(compressor)) {
-        set_flag(this, WRITE_ONLY)
-      } else {
-        clear_flag(this, WRITE_ONLY)
-      }
-      return this
-    }
-    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) return null
-    var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
-    if (first_in_statement && expression && is_iife_call(expression)) {
-      if (expression === this.expression && this.operator == '!') return this
-      return expression.negate(compressor, first_in_statement)
-    }
-    return expression
-  }
-
-  may_throw (compressor: any) {
-    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) { return false }
-    return this.expression.may_throw(compressor)
-  }
-
-  has_side_effects (compressor: any) {
-    return unary_side_effects.has(this.operator) ||
-          this.expression.has_side_effects(compressor)
-  }
-
-  is_constant_expression () {
-    return this.expression.is_constant_expression()
-  }
-
-  is_number () {
-    return unary.has(this.operator)
-  }
-
-  reduce_vars (tw) {
-    var node = this
-    if (node.operator !== '++' && node.operator !== '--') return
-    var exp = node.expression
-    if (!(exp?.isAst?.('AST_SymbolRef'))) return
-    var def = exp.definition?.()
-    var safe = safe_to_assign(tw, def, exp.scope, true)
-    def.assignments++
-    if (!safe) return
-    var fixed = def.fixed
-    if (!fixed) return
-    def.references.push(exp)
-    def.chained = true
-    def.fixed = function () {
-      return make_node('AST_Binary', node, {
-        operator: node.operator.slice(0, -1),
-        left: make_node('AST_UnaryPrefix', node, {
-          operator: '+',
-          expression: fixed?.isAst?.('AST_Node') ? fixed : fixed()
-        }),
-        right: make_node('AST_Number', node, {
-          value: 1
-        })
-      })
-    }
-    mark(tw, def, true)
-    return true
-  }
-
-  lift_sequences (compressor: any) {
-    if (compressor.option('sequences')) {
-      if (this.expression?.isAst?.('AST_Sequence')) {
-        var x = this.expression.expressions.slice()
-        var e = this.clone()
-        e.expression = x.pop()
-        x.push(e)
-        return make_sequence(this, x).optimize(compressor)
-      }
-    }
-    return this
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.expression._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    push(this.expression)
-  }
-
-  _size (): number {
-    if (this.operator === 'typeof') return 7
-    if (this.operator === 'void') return 5
-    return this.operator.length
-  }
-
-  shallow_cmp = mkshallow({ operator: 'eq' })
-  _transform (self, tw: any) {
-    self.expression = self.expression.transform(tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    return {
-      type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
-      operator: this.operator,
-      prefix: this?.isAst?.('AST_UnaryPrefix'),
-      argument: to_moz(this.expression)
-    }
-  }
-
-  needs_parens (output: any) {
-    var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
-            p?.isAst?.('AST_Call') && p.expression === this ||
-            p?.isAst?.('AST_Binary') &&
-                p.operator === '**' &&
-                this?.isAst?.('AST_UnaryPrefix') &&
-                p.left === this &&
-                this.operator !== '++' &&
-                this.operator !== '--'
-  }
-
-  static documentation = 'Base class for unary expressions'
-  static propdoc = {
-    operator: '[string] the operator',
-    expression: '[AST_Node] expression that this unary operator applies to'
-  }
-
-  static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.operator = args.operator
-    this.expression = args.expression
-  }
-}
-
-class AST_UnaryPrefix extends AST_Unary {
-  _optimize (self, compressor) {
-    var e = self.expression
-    if (self.operator == 'delete' &&
-          !(e?.isAst?.('AST_SymbolRef') ||
-              e?.isAst?.('AST_PropAccess') ||
-              is_identifier_atom(e))) {
-      if (e?.isAst?.('AST_Sequence')) {
-        const exprs = e.expressions.slice()
-        exprs.push(make_node('AST_True', self))
-        return make_sequence(self, exprs).optimize(compressor)
-      }
-      return make_sequence(self, [e, make_node('AST_True', self)]).optimize(compressor)
-    }
-    var seq = self.lift_sequences(compressor)
-    if (seq !== self) {
-      return seq
-    }
-    if (compressor.option('side_effects') && self.operator == 'void') {
-      e = e.drop_side_effect_free(compressor)
-      if (e) {
-        self.expression = e
-        return self
-      } else {
-        return make_node('AST_Undefined', self).optimize(compressor)
-      }
-    }
-    if (compressor.in_boolean_context()) {
-      switch (self.operator) {
-        case '!':
-          if (e?.isAst?.('AST_UnaryPrefix') && e.operator == '!') {
-            // !!foo ==> foo, if we're in boolean context
-            return e.expression
-          }
-          if (e?.isAst?.('AST_Binary')) {
-            self = best_of(compressor, self, e.negate(compressor, first_in_statement(compressor)))
-          }
-          break
-        case 'typeof':
-          // typeof always returns a non-empty string, thus it's
-          // always true in booleans
-          compressor.warn('Boolean expression always true [{file}:{line},{col}]', self.start)
-          return (e?.isAst?.('AST_SymbolRef') ? make_node('AST_True', self) : make_sequence(self, [
-            e,
-            make_node('AST_True', self)
-          ])).optimize(compressor)
-      }
-    }
-    if (self.operator == '-' && e?.isAst?.('AST_Infinity')) {
-      e = e.transform(compressor)
-    }
-    if (e?.isAst?.('AST_Binary') &&
-          (self.operator == '+' || self.operator == '-') &&
-          (e.operator == '*' || e.operator == '/' || e.operator == '%')) {
-      return make_node('AST_Binary', self, {
-        operator: e.operator,
-        left: make_node('AST_UnaryPrefix', e.left, {
-          operator: self.operator,
-          expression: e.left
-        }),
-        right: e.right
-      })
-    }
-    // avoids infinite recursion of numerals
-    if (self.operator != '-' ||
-          !(e?.isAst?.('AST_Number') || e?.isAst?.('AST_Infinity') || e?.isAst?.('AST_BigInt'))) {
-      var ev = self.evaluate(compressor)
-      if (ev !== self) {
-        ev = make_node_from_constant(ev, self).optimize(compressor)
-        return best_of(compressor, ev, self)
-      }
-    }
-    return self
-  }
-
-  _eval (compressor: any, depth) {
-    var e = this.expression
-    // Function would be evaluated to an array and so typeof would
-    // incorrectly return 'object'. Hence making is a special case.
-    if (compressor.option('typeofs') &&
-          this.operator == 'typeof' &&
-          (e?.isAst?.('AST_Lambda') ||
-              e?.isAst?.('AST_SymbolRef') &&
-                  e.fixed_value()?.isAst?.('AST_Lambda'))) {
-      return typeof function () {}
-    }
-    if (!non_converting_unary.has(this.operator)) depth++
-    e = e._eval(compressor, depth)
-    if (e === this.expression) return this
-    switch (this.operator) {
-      case '!': return !e
-      case 'typeof':
-        // typeof <RegExp> returns "object" or "function" on different platforms
-        // so cannot evaluate reliably
-        if (e instanceof RegExp) return this
-        return typeof e
-      case 'void': return void e
-      case '~': return ~e
-      case '-': return -e
-      case '+': return +e
-    }
-    return this
-  }
-
-  negate () {
-    if (this.operator == '!') { return this.expression }
-    return basic_negation(this)
-  }
-
-  is_string () {
-    return this.operator == 'typeof'
-  }
-
-  is_boolean () {
-    return unary_bool.has(this.operator)
-  }
-
-  _dot_throw () {
-    return this.operator == 'void'
-  }
-
-  _codegen (self, output) {
-    var op = self.operator
-    output.print(op)
-    if (/^[a-z]/i.test(op) ||
-            (/[+-]$/.test(op) &&
-                self.expression?.isAst?.('AST_UnaryPrefix') &&
-                /^[+-]/.test(self.expression.operator))) {
-      output.space()
-    }
-    self.expression.print(output)
-  }
-
-  static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
-
-  static PROPS = AST_Unary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_UnaryPostfix extends AST_Unary {
-  _optimize (self, compressor) {
-    return self.lift_sequences(compressor)
-  }
-
-  _dot_throw = return_false
-  _codegen (self, output) {
-    self.expression.print(output)
-    output.print(self.operator)
-  }
-
-  static documentation = 'Unary postfix expression, i.e. `i++`'
-
-  static PROPS = AST_Unary.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
