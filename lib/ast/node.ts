@@ -19,13 +19,10 @@ import {
   set_moz_loc,
   FROM_MOZ_STACK,
   setFromMozStack,
+  print,
+  basic_negation,
   from_moz
 } from '../utils'
-
-import {
-  print,
-  basic_negation
-} from './'
 
 export default class AST_Node extends AST {
   start: any

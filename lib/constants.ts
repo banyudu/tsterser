@@ -169,3 +169,6 @@ export const global_objs = {
   Object: Object,
   String: String
 }
+
+export const MASK_EXPORT_DONT_MANGLE = 1 << 0
+export const MASK_EXPORT_WANT_MANGLE = 1 << 1
