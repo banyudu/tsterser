@@ -1,8 +1,4 @@
 import AST_Node from './node'
-import AST_Expansion from './expansion'
-import AST_Constant from './constant'
-import AST_String from './string'
-import AST_Symbol from './symbol'
 
 import {
   literals_in_boolean_context,
@@ -30,14 +26,14 @@ export default class AST_Object extends AST_Node {
     var props = self.properties
     for (var i = 0; i < props.length; i++) {
       var prop = props[i]
-      if (prop instanceof AST_Expansion) {
+      if (prop?.isAst?.('AST_Expansion')) {
         var expr = prop.expression
-        if (expr instanceof AST_Object) {
+        if (expr?.isAst?.('AST_Object')) {
           props.splice.apply(props, [i, 1].concat(prop.expression.properties))
           // Step back one, as the property at i is now new.
           i--
-        } else if (expr instanceof AST_Constant &&
-                  !(expr instanceof AST_String)) {
+        } else if (expr?.isAst?.('AST_Constant') &&
+                  !(expr?.isAst?.('AST_String'))) {
           // Unlike array-like spread, in object spread, spreading a
           // non-iterable value silently does nothing; it is thus safe
           // to remove. AST_String is the only iterable AST_Constant.
@@ -66,11 +62,11 @@ export default class AST_Object extends AST_Node {
       var val = {}
       for (var i = 0, len = this.properties.length; i < len; i++) {
         var prop = this.properties[i]
-        if (prop instanceof AST_Expansion) return this
+        if (prop?.isAst?.('AST_Expansion')) return this
         var key = prop.key
-        if (key instanceof AST_Symbol) {
+        if (key?.isAst?.('AST_Symbol')) {
           key = key.name
-        } else if (key instanceof AST_Node) {
+        } else if (key?.isAst?.('AST_Node')) {
           key = key._eval?.(compressor, depth)
           if (key === prop.key) return this
         }

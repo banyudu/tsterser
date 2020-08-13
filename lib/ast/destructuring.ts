@@ -1,9 +1,5 @@
 import AST_Node from './node'
-import AST_Symbol from './symbol'
-import AST_ObjectKeyVal from './object-key-val'
-import AST_SymbolDeclaration from './symbol-declaration'
 import TreeWalker from '../tree-walker'
-import AST_Hole from './hole'
 import { mkshallow, do_list, to_moz } from '../utils'
 
 /* -----[ DESTRUCTURING ]----- */
@@ -20,9 +16,9 @@ export default class AST_Destructuring extends AST_Node {
       var keep: any[] = []
       for (var i = 0; i < self.names.length; i++) {
         var elem = self.names[i]
-        if (!(elem instanceof AST_ObjectKeyVal &&
+        if (!(elem?.isAst?.('AST_ObjectKeyVal') &&
                   typeof elem.key === 'string' &&
-                  elem.value instanceof AST_SymbolDeclaration &&
+                  elem.value?.isAst?.('AST_SymbolDeclaration') &&
                   !should_retain(compressor, elem.value.definition?.()))) {
           keep.push(elem)
         }
@@ -76,7 +72,7 @@ export default class AST_Destructuring extends AST_Node {
   all_symbols () {
     var out: any[] = []
     this.walk(new TreeWalker(function (node: any) {
-      if (node instanceof AST_Symbol) {
+      if (node?.isAst?.('AST_Symbol')) {
         out.push(node)
       }
     }))
@@ -111,7 +107,7 @@ export default class AST_Destructuring extends AST_Node {
       // If the final element is a hole, we need to make sure it
       // doesn't look like a trailing comma, by inserting an actual
       // trailing comma.
-      if (i == len - 1 && name instanceof AST_Hole) output.comma()
+      if (i == len - 1 && name?.isAst?.('AST_Hole')) output.comma()
     })
     output.print(self.is_array ? ']' : '}')
   }

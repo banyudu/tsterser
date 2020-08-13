@@ -1,7 +1,4 @@
 import AST_PropAccess from './prop-access'
-import AST_Array from './array'
-import AST_RegExp from './reg-exp'
-import AST_Number from './number'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
@@ -21,7 +18,7 @@ export default class AST_Dot extends AST_PropAccess {
     const parent = compressor.parent()
     if (is_lhs(self, parent)) return self
     if (compressor.option('unsafe_proto') &&
-          self.expression instanceof AST_Dot &&
+          self.expression?.isAst?.('AST_Dot') &&
           self.expression.property == 'prototype') {
       var exp = self.expression.expression
       if (is_undeclared_ref(exp)) {
@@ -101,13 +98,13 @@ export default class AST_Dot extends AST_PropAccess {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
     let map
-    if (expr instanceof AST_Array) {
+    if (expr?.isAst?.('AST_Array')) {
       map = native_fns.get('Array')
     } else if (expr.is_boolean()) {
       map = native_fns.get('Boolean')
     } else if (expr.is_number(compressor)) {
       map = native_fns.get('Number')
-    } else if (expr instanceof AST_RegExp) {
+    } else if (expr?.isAst?.('AST_RegExp')) {
       map = native_fns.get('RegExp')
     } else if (expr.is_string(compressor)) {
       map = native_fns.get('String')
@@ -149,7 +146,7 @@ export default class AST_Dot extends AST_PropAccess {
       output.print_string(prop)
       output.print(']')
     } else {
-      if (expr instanceof AST_Number && expr.getValue() >= 0) {
+      if (expr?.isAst?.('AST_Number') && expr.getValue() >= 0) {
         if (!/[xa-f.)]/i.test(output.last())) {
           output.print('.')
         }

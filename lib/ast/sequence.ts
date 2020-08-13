@@ -25,7 +25,7 @@ export default class AST_Sequence extends AST_Node {
     trim_right_for_undefined()
     if (end == 0) {
       self = maintain_this_binding(compressor.parent(), compressor.self(), expressions[0])
-      if (!(self instanceof AST_Sequence)) self = self.optimize(compressor)
+      if (!(self?.isAst?.('AST_Sequence'))) self = self.optimize(compressor)
       return self
     }
     self.expressions = expressions

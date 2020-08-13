@@ -1,5 +1,4 @@
 import AST_Node from './node'
-import AST_Hole from './hole'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -97,7 +96,7 @@ export default class AST_Array extends AST_Node {
         // If the final element is a hole, we need to make sure it
         // doesn't look like a trailing comma, by inserting an actual
         // trailing comma.
-        if (i === len - 1 && exp instanceof AST_Hole) { output.comma() }
+        if (i === len - 1 && exp?.isAst?.('AST_Hole')) { output.comma() }
       })
       if (len > 0) output.space()
     })

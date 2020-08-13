@@ -51,15 +51,7 @@ import {
   return_true
 } from './utils'
 import {
-  AST_Binary,
-  AST_Conditional,
-  AST_Dot,
-  AST_Exit,
   AST_Node,
-  AST_Sequence,
-  AST_Statement,
-  AST_Sub,
-  AST_UnaryPostfix,
   TreeWalker
 } from './ast'
 import {
@@ -522,7 +514,7 @@ export function OutputStream (opt?: any): any {
     var printed_comments = self.printed_comments
 
     // There cannot be a newline between return and its value.
-    const return_with_value = node instanceof AST_Exit && node.value
+    const return_with_value = node?.isAst?.('AST_Exit') && node.value
 
     if (
       start.comments_before &&
@@ -544,14 +536,14 @@ export function OutputStream (opt?: any): any {
     if (return_with_value) {
       var tw = new TreeWalker(function (node: any) {
         var parent = tw.parent()
-        if (parent instanceof AST_Exit ||
-                    parent instanceof AST_Binary && parent.left === node ||
+        if (parent?.isAst?.('AST_Exit') ||
+                    parent?.isAst?.('AST_Binary') && parent.left === node ||
                     parent.TYPE == 'Call' && parent.expression === node ||
-                    parent instanceof AST_Conditional && parent.condition === node ||
-                    parent instanceof AST_Dot && parent.expression === node ||
-                    parent instanceof AST_Sequence && parent.expressions[0] === node ||
-                    parent instanceof AST_Sub && parent.expression === node ||
-                    parent instanceof AST_UnaryPostfix) {
+                    parent?.isAst?.('AST_Conditional') && parent.condition === node ||
+                    parent?.isAst?.('AST_Dot') && parent.expression === node ||
+                    parent?.isAst?.('AST_Sequence') && parent.expressions[0] === node ||
+                    parent?.isAst?.('AST_Sub') && parent.expression === node ||
+                    parent?.isAst?.('AST_UnaryPostfix')) {
           if (!node.start) return undefined
           var text = node.start.comments_before
           if (text && !printed_comments.has(text)) {
@@ -626,7 +618,7 @@ export function OutputStream (opt?: any): any {
     var printed_comments = self.printed_comments
     var comments = token[tail ? 'comments_before' : 'comments_after']
     if (!comments || printed_comments.has(comments)) return
-    if (!(node instanceof AST_Statement || comments.every((c) =>
+    if (!(node?.isAst?.('AST_Statement') || comments.every((c) =>
       !/comment[134]/.test(c.type)
     ))) return
     printed_comments.add(comments)

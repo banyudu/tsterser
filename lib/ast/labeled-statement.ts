@@ -1,13 +1,11 @@
 import AST_StatementWithBody from './statement-with-body'
 import { push, pop, mkshallow, to_moz, make_node, noop } from '../utils'
 import TreeWalker from '../tree-walker'
-import AST_Break from './break'
-import AST_LoopControl from './loop-control'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
   label: any
   _optimize (self, compressor) {
-    if (self.body instanceof AST_Break &&
+    if (self.body?.isAst?.('AST_Break') &&
           compressor.loopcontrol_target(self.body) === self.body) {
       return make_node('AST_EmptyStatement', self)
     }
@@ -47,7 +45,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
       var label = node.label
       var def = this.label
       node.walk(new TreeWalker(function (node: any) {
-        if (node instanceof AST_LoopControl &&
+        if (node?.isAst?.('AST_LoopControl') &&
                     node.label && node.label.thedef === def) {
           node.label.thedef = label
           label.references.push(node)

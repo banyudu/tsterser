@@ -1,14 +1,3 @@
-import {
-  AST_Lambda,
-  AST_Directive,
-  AST_Scope,
-  AST_LabeledStatement,
-  AST_IterationStatement,
-  AST_Break,
-  AST_Switch,
-  AST_Class
-} from './ast'
-
 import { noop } from './utils'
 
 export default class TreeWalker {
@@ -42,11 +31,11 @@ export default class TreeWalker {
   }
 
   push (node: any) {
-    if (node instanceof AST_Lambda) {
+    if (node?.isAst?.('AST_Lambda')) {
       this.directives = Object.create(this.directives)
-    } else if (node instanceof AST_Directive && !this.directives[node.value]) {
+    } else if (node?.isAst?.('AST_Directive') && !this.directives[node.value]) {
       this.directives[node.value] = node
-    } else if (node instanceof AST_Class) {
+    } else if (node?.isAst?.('AST_Class')) {
       this.directives = Object.create(this.directives)
       if (!this.directives['use strict']) {
         this.directives['use strict'] = node
@@ -57,7 +46,7 @@ export default class TreeWalker {
 
   pop () {
     var node = this.stack.pop()
-    if (node instanceof AST_Lambda || node instanceof AST_Class) {
+    if (node?.isAst?.('AST_Lambda') || node?.isAst?.('AST_Class')) {
       this.directives = Object.getPrototypeOf(this.directives)
     }
   }
@@ -78,10 +67,10 @@ export default class TreeWalker {
     var dir = this.directives[type]
     if (dir) return dir
     var node = this.stack[this.stack.length - 1]
-    if (node instanceof AST_Scope && node.body) {
+    if (node?.isAst?.('AST_Scope') && node.body) {
       for (var i = 0; i < node.body.length; ++i) {
         var st = node.body[i]
-        if (!(st instanceof AST_Directive)) break
+        if (!(st?.isAst?.('AST_Directive'))) break
         if (st.value == type) return st
       }
     }
@@ -92,13 +81,13 @@ export default class TreeWalker {
     if (node.label) {
       for (var i = stack.length; --i >= 0;) {
         var x = stack[i]
-        if (x instanceof AST_LabeledStatement && x.label.name == node.label.name) { return x.body } // TODO: check this type
+        if (x?.isAst?.('AST_LabeledStatement') && x.label.name == node.label.name) { return x.body } // TODO: check this type
       }
     } else {
       for (var i = stack.length; --i >= 0;) {
         var x = stack[i]
-        if (x instanceof AST_IterationStatement ||
-                node instanceof AST_Break && x instanceof AST_Switch) { return x }
+        if (x?.isAst?.('AST_IterationStatement') ||
+                node?.isAst?.('AST_Break') && x?.isAst?.('AST_Switch')) { return x }
       }
     }
   }

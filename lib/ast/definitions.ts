@@ -1,6 +1,4 @@
 import AST_Statement from './statement'
-import AST_Destructuring from './destructuring'
-import AST_SymbolDeclaration from './symbol-declaration'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through } from '../utils'
 
 export default class AST_Definitions extends AST_Statement {
@@ -22,7 +20,7 @@ export default class AST_Definitions extends AST_Statement {
   to_assignments (compressor: any) {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
-      if (def.value && !(def.name instanceof AST_Destructuring)) {
+      if (def.value && !(def.name?.isAst?.('AST_Destructuring'))) {
         var name = make_node('AST_SymbolRef', def.name, def.name)
         a.push(make_node('AST_Assign', def, {
           operator: '=',
@@ -53,12 +51,12 @@ export default class AST_Definitions extends AST_Statement {
   remove_initializers () {
     var decls: any[] = []
     this.definitions.forEach(function (def) {
-      if (def.name instanceof AST_SymbolDeclaration) {
+      if (def.name?.isAst?.('AST_SymbolDeclaration')) {
         def.value = null
         decls.push(def)
       } else {
         walk(def.name, (node: any) => {
-          if (node instanceof AST_SymbolDeclaration) {
+          if (node?.isAst?.('AST_SymbolDeclaration')) {
             decls.push(make_node('AST_VarDef', def, {
               name: node,
               value: null

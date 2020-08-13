@@ -1,6 +1,5 @@
 import AST_Statement from './statement'
 import { to_moz, mkshallow, do_list, list_overhead } from '../utils'
-import AST_Definitions from './definitions'
 
 export default class AST_Export extends AST_Statement {
   is_default: any
@@ -126,7 +125,7 @@ export default class AST_Export extends AST_Statement {
       self.exported_value.print(output)
     } else if (self.exported_definition) {
       self.exported_definition.print(output)
-      if (self.exported_definition instanceof AST_Definitions) return
+      if (self.exported_definition?.isAst?.('AST_Definitions')) return
     }
     if (self.module_name) {
       output.space()

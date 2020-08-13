@@ -246,14 +246,14 @@ let printMangleOptions
 
 // Returns whether the leftmost item in the expression is an object
 export function left_is_object (node: any): boolean {
-  if (node instanceof AST_Object) return true
-  if (node instanceof AST_Sequence) return left_is_object(node.expressions[0])
+  if (node?.isAst?.('AST_Object')) return true
+  if (node?.isAst?.('AST_Sequence')) return left_is_object(node.expressions[0])
   if (node.TYPE === 'Call') return left_is_object(node.expression)
-  if (node instanceof AST_PrefixedTemplateString) return left_is_object(node.prefix)
-  if (node instanceof AST_Dot || node instanceof AST_Sub) return left_is_object(node.expression)
-  if (node instanceof AST_Conditional) return left_is_object(node.condition)
-  if (node instanceof AST_Binary) return left_is_object(node.left)
-  if (node instanceof AST_UnaryPostfix) return left_is_object(node.expression)
+  if (node?.isAst?.('AST_PrefixedTemplateString')) return left_is_object(node.prefix)
+  if (node?.isAst?.('AST_Dot') || node?.isAst?.('AST_Sub')) return left_is_object(node.expression)
+  if (node?.isAst?.('AST_Conditional')) return left_is_object(node.condition)
+  if (node?.isAst?.('AST_Binary')) return left_is_object(node.left)
+  if (node?.isAst?.('AST_UnaryPostfix')) return left_is_object(node.expression)
   return false
 }
 
@@ -270,8 +270,8 @@ function init_scope_vars (parent_scope: any) {
 
 function callCodeGen (self, output) {
   self.expression.print(output)
-  if (self instanceof AST_New && self.args.length === 0) { return }
-  if (self.expression instanceof AST_Call || self.expression instanceof AST_Lambda) {
+  if (self?.isAst?.('AST_New') && self.args.length === 0) { return }
+  if (self.expression?.isAst?.('AST_Call') || self.expression?.isAst?.('AST_Lambda')) {
     output.add_mapping(self.start)
   }
   output.with_parens(function () {
@@ -291,7 +291,7 @@ function to_moz_block (node: any) {
 
 function to_moz_scope (type: string, node: any) {
   var body = node.body.map(to_moz)
-  if (node.body[0] instanceof AST_SimpleStatement && (node.body[0]).body instanceof AST_String) {
+  if (node.body[0]?.isAst?.('AST_SimpleStatement') && (node.body[0]).body?.isAst?.('AST_String')) {
     body.unshift(to_moz(new AST_EmptyStatement(node.body[0])))
   }
   return {
@@ -319,12 +319,12 @@ class AST_Scope extends AST_Block {
   process_expression (insert, compressor) {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
-      if (insert && node instanceof AST_SimpleStatement) {
+      if (insert && node?.isAst?.('AST_SimpleStatement')) {
         return make_node('AST_Return', node, {
           value: node.body
         })
       }
-      if (!insert && node instanceof AST_Return) {
+      if (!insert && node?.isAst?.('AST_Return')) {
         if (compressor) {
           var value = node.value && node.value.drop_side_effect_free?.(compressor, true)
           return value ? make_node('AST_SimpleStatement', node, {
@@ -340,20 +340,20 @@ class AST_Scope extends AST_Block {
           })
         })
       }
-      if (node instanceof AST_Class || node instanceof AST_Lambda && (node as any) !== self) {
+      if (node?.isAst?.('AST_Class') || node?.isAst?.('AST_Lambda') && (node) !== self) {
         return node
       }
-      if (node instanceof AST_Block) {
+      if (node?.isAst?.('AST_Block')) {
         var index = node.body.length - 1
         if (index >= 0) {
           node.body[index] = node.body[index].transform(tt)
         }
-      } else if (node instanceof AST_If) {
+      } else if (node?.isAst?.('AST_If')) {
         node.body = (node.body).transform(tt)
         if (node.alternative) {
           node.alternative = node.alternative.transform(tt)
         }
-      } else if (node instanceof AST_With) {
+      } else if (node?.isAst?.('AST_With')) {
         node.body = (node.body).transform(tt)
       }
       return node
@@ -367,21 +367,21 @@ class AST_Scope extends AST_Block {
     if (compressor.has_directive('use asm')) return
     var self = this
     if (self.pinned()) return
-    var drop_funcs = !(self instanceof AST_Toplevel) || compressor.toplevel.funcs
-    var drop_vars = !(self instanceof AST_Toplevel) || compressor.toplevel.vars
+    var drop_funcs = !(self?.isAst?.('AST_Toplevel')) || compressor.toplevel.funcs
+    var drop_vars = !(self?.isAst?.('AST_Toplevel')) || compressor.toplevel.vars
     const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: any) {
-      if (node instanceof AST_Assign &&
+      if (node?.isAst?.('AST_Assign') &&
               (has_flag(node, WRITE_ONLY) || node.operator == '=')
       ) {
         return node.left
       }
-      if (node instanceof AST_Unary && has_flag(node, WRITE_ONLY)) {
+      if (node?.isAst?.('AST_Unary') && has_flag(node, WRITE_ONLY)) {
         return node.expression
       }
     }
     var in_use_ids = new Map()
     var fixed_ids = new Map()
-    if (self instanceof AST_Toplevel && compressor.top_retain) {
+    if (self?.isAst?.('AST_Toplevel') && compressor.top_retain) {
       self.variables.forEach(function (def) {
         if (compressor.top_retain?.(def) && !in_use_ids.has(def.id)) {
           in_use_ids.set(def.id, def)
@@ -394,9 +394,9 @@ class AST_Scope extends AST_Block {
     // this scope (not in nested scopes).
     var scope: any = this
     var tw = new TreeWalker(function (node: any, descend) {
-      if (node instanceof AST_Lambda && node.uses_arguments && !tw.has_directive('use strict')) {
+      if (node?.isAst?.('AST_Lambda') && node.uses_arguments && !tw.has_directive('use strict')) {
         node.argnames.forEach(function (argname) {
-          if (!(argname instanceof AST_SymbolDeclaration)) return
+          if (!(argname?.isAst?.('AST_SymbolDeclaration'))) return
           var def = argname.definition?.()
           if (!in_use_ids.has(def.id)) {
             in_use_ids.set(def.id, def)
@@ -404,15 +404,15 @@ class AST_Scope extends AST_Block {
         })
       }
       if (node === self) return
-      if (node instanceof AST_Defun || node instanceof AST_DefClass) {
+      if (node?.isAst?.('AST_Defun') || node?.isAst?.('AST_DefClass')) {
         var node_def = node.name?.definition?.()
-        const in_export = tw.parent() instanceof AST_Export
+        const in_export = tw.parent()?.isAst?.('AST_Export')
         if (in_export || !drop_funcs && scope === self) {
           if (node_def.global && !in_use_ids.has(node_def.id)) {
             in_use_ids.set(node_def.id, node_def)
           }
         }
-        if (node instanceof AST_DefClass) {
+        if (node?.isAst?.('AST_DefClass')) {
           if (
             node.extends &&
                       (node.extends.has_side_effects(compressor) ||
@@ -432,18 +432,18 @@ class AST_Scope extends AST_Block {
         map_add(initializations, node_def.id, node)
         return true // don't go in nested scopes
       }
-      if (node instanceof AST_SymbolFunarg && scope === self) {
+      if (node?.isAst?.('AST_SymbolFunarg') && scope === self) {
         map_add(var_defs_by_id, node.definition?.().id, node)
       }
-      if (node instanceof AST_Definitions && scope === self) {
-        const in_export = tw.parent() instanceof AST_Export
+      if (node?.isAst?.('AST_Definitions') && scope === self) {
+        const in_export = tw.parent()?.isAst?.('AST_Export')
         node.definitions.forEach(function (def) {
-          if (def.name instanceof AST_SymbolVar) {
+          if (def.name?.isAst?.('AST_SymbolVar')) {
             map_add(var_defs_by_id, def.name.definition?.().id, def)
           }
           if (in_export || !drop_vars) {
             walk(def.name, (node: any) => {
-              if (node instanceof AST_SymbolDeclaration) {
+              if (node?.isAst?.('AST_SymbolDeclaration')) {
                 const def = node.definition?.()
                 if (
                   (in_export || def.global) &&
@@ -455,7 +455,7 @@ class AST_Scope extends AST_Block {
             })
           }
           if (def.value) {
-            if (def.name instanceof AST_Destructuring) {
+            if (def.name?.isAst?.('AST_Destructuring')) {
               def.walk(tw)
             } else {
               var node_def = def.name.definition?.()
@@ -492,10 +492,10 @@ class AST_Scope extends AST_Block {
         var parent = tt.parent()
         if (drop_vars) {
           const sym = assign_as_unused(node)
-          if (sym instanceof AST_SymbolRef) {
+          if (sym?.isAst?.('AST_SymbolRef')) {
             var def = sym.definition?.()
             var in_use = in_use_ids.has(def.id)
-            if (node instanceof AST_Assign) {
+            if (node?.isAst?.('AST_Assign')) {
               if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
                 return maintain_this_binding(parent, node, node.right.transform(tt))
               }
@@ -509,23 +509,23 @@ class AST_Scope extends AST_Block {
         if (scope !== self) return
         var def
         if (node.name &&
-                  (node instanceof AST_ClassExpression &&
+                  (node?.isAst?.('AST_ClassExpression') &&
                       !keep_name(compressor.option('keep_classnames'), (def = node.name?.definition?.()).name) ||
-                  node instanceof AST_Function &&
+                  node?.isAst?.('AST_Function') &&
                       !keep_name(compressor.option('keep_fnames'), (def = node.name?.definition?.()).name))) {
           // any declarations with same name will overshadow
           // name of this anonymous function and can therefore
           // never be used anywhere
           if (!in_use_ids.has(def.id) || def.orig.length > 1) node.name = null
         }
-        if (node instanceof AST_Lambda && !(node instanceof AST_Accessor)) {
+        if (node?.isAst?.('AST_Lambda') && !(node?.isAst?.('AST_Accessor'))) {
           var trim = !compressor.option('keep_fargs')
           for (var a = node.argnames, i = a.length; --i >= 0;) {
             var sym = a[i]
-            if (sym instanceof AST_Expansion) {
+            if (sym?.isAst?.('AST_Expansion')) {
               sym = sym.expression
             }
-            if (sym instanceof AST_DefaultAssign) {
+            if (sym?.isAst?.('AST_DefaultAssign')) {
               sym = sym.left
             }
             // Do not drop destructuring arguments.
@@ -533,7 +533,7 @@ class AST_Scope extends AST_Block {
             // them would stop that TypeError which would happen
             // if someone called it with an incorrectly formatted
             // parameter.
-            if (!(sym instanceof AST_Destructuring) && !in_use_ids.has(sym.definition?.().id)) {
+            if (!(sym?.isAst?.('AST_Destructuring')) && !in_use_ids.has(sym.definition?.().id)) {
               set_flag(sym, UNUSED)
               if (trim) {
                 a.pop()
@@ -544,13 +544,13 @@ class AST_Scope extends AST_Block {
             }
           }
         }
-        if ((node instanceof AST_Defun || node instanceof AST_DefClass) && (node as any) !== self) {
+        if ((node?.isAst?.('AST_Defun') || node?.isAst?.('AST_DefClass')) && (node) !== self) {
           const def = node.name?.definition?.()
           const keep = def.global && !drop_funcs || in_use_ids.has(def.id)
           if (!keep) {
             compressor[node.name?.unreferenced() ? 'warn' : 'info']('Dropping unused function {name} [{file}:{line},{col}]', template(node.name))
             def.eliminated++
-            if (node instanceof AST_DefClass) {
+            if (node?.isAst?.('AST_DefClass')) {
               // Classes might have extends with side effects
               const side_effects = node.drop_side_effect_free(compressor)
               if (side_effects) {
@@ -562,8 +562,8 @@ class AST_Scope extends AST_Block {
             return in_list ? MAP.skip : make_node('AST_EmptyStatement', node)
           }
         }
-        if (node instanceof AST_Definitions && !(parent instanceof AST_ForIn && parent.init === node)) {
-          var drop_block = !(parent instanceof AST_Toplevel) && !(node instanceof AST_Var)
+        if (node?.isAst?.('AST_Definitions') && !(parent?.isAst?.('AST_ForIn') && parent.init === node)) {
+          var drop_block = !(parent?.isAst?.('AST_Toplevel')) && !(node?.isAst?.('AST_Var'))
           // place uninitialized names at the start
           var body: any[] = []; var head: any[] = []; var tail: any[] = []
           // for unused names whose initialization has
@@ -572,7 +572,7 @@ class AST_Scope extends AST_Block {
           var side_effects: any[] = []
           node.definitions.forEach(function (def) {
             if (def.value) def.value = def.value.transform(tt)
-            var is_destructure = def.name instanceof AST_Destructuring
+            var is_destructure = def.name?.isAst?.('AST_Destructuring')
             var sym = is_destructure
               ? new SymbolDef(null, { name: '<destructure>' }) /* fake SymbolDef */
               : def.name.definition?.()
@@ -587,7 +587,7 @@ class AST_Scope extends AST_Block {
               if (def.value && fixed_ids.has(sym.id) && fixed_ids.get(sym.id) !== def) {
                 def.value = def.value.drop_side_effect_free(compressor)
               }
-              if (def.name instanceof AST_SymbolVar) {
+              if (def.name?.isAst?.('AST_SymbolVar')) {
                 var var_defs = var_defs_by_id.get(sym.id)
                 if (var_defs.length > 1 && (!def.value || sym.orig.indexOf(def.name) > sym.eliminated)) {
                   compressor.warn('Dropping duplicated definition of variable {name} [{file}:{line},{col}]', template(def.name))
@@ -625,7 +625,7 @@ class AST_Scope extends AST_Block {
               } else {
                 head.push(def)
               }
-            } else if (sym.orig[0] instanceof AST_SymbolCatch) {
+            } else if (sym.orig[0]?.isAst?.('AST_SymbolCatch')) {
               var value = def.value && def.value.drop_side_effect_free(compressor)
               if (value) side_effects.push(value)
               def.value = null
@@ -667,15 +667,15 @@ class AST_Scope extends AST_Block {
         //    https://github.com/mishoo/UglifyJS2/issues/1838
         // that's an invalid AST.
         // We fix it at this stage by moving the `var` outside the `for`.
-        if (node instanceof AST_For) {
+        if (node?.isAst?.('AST_For')) {
           descend(node, this)
           var block
-          if (node.init instanceof AST_BlockStatement) {
+          if (node.init?.isAst?.('AST_BlockStatement')) {
             block = node.init
             node.init = block.body.pop()
             block.body.push(node)
           }
-          if (node.init instanceof AST_SimpleStatement) {
+          if (node.init?.isAst?.('AST_SimpleStatement')) {
             // TODO: check type
             node.init = node.init.body
           } else if (is_empty(node.init)) {
@@ -683,11 +683,11 @@ class AST_Scope extends AST_Block {
           }
           return !block ? node : in_list ? MAP.splice(block.body) : block
         }
-        if (node instanceof AST_LabeledStatement &&
-                  node.body instanceof AST_For
+        if (node?.isAst?.('AST_LabeledStatement') &&
+                  node.body?.isAst?.('AST_For')
         ) {
           descend(node, this)
-          if (node.body instanceof AST_BlockStatement) {
+          if (node.body?.isAst?.('AST_BlockStatement')) {
             const block = node.body
             node.body = block.body.pop() // TODO: check type
             block.body.push(node)
@@ -695,14 +695,14 @@ class AST_Scope extends AST_Block {
           }
           return node
         }
-        if (node instanceof AST_BlockStatement) {
+        if (node?.isAst?.('AST_BlockStatement')) {
           descend(node, this)
           if (in_list && node.body.every(can_be_evicted_from_block)) {
             return MAP.splice(node.body)
           }
           return node
         }
-        if (node instanceof AST_Scope) {
+        if (node?.isAst?.('AST_Scope')) {
           const save_scope = scope
           scope = node
           descend(node, this)
@@ -726,11 +726,11 @@ class AST_Scope extends AST_Block {
     function scan_ref_scoped (node, descend) {
       var node_def
       const sym = assign_as_unused(node)
-      if (sym instanceof AST_SymbolRef &&
+      if (sym?.isAst?.('AST_SymbolRef') &&
               !is_ref_of(node.left, AST_SymbolBlockDeclaration) &&
               self.variables.get(sym.name) === (node_def = sym.definition?.())
       ) {
-        if (node instanceof AST_Assign) {
+        if (node?.isAst?.('AST_Assign')) {
           node.right.walk(tw)
           if (!node_def.chained && node.left.fixed_value() === node.right) {
             fixed_ids.set(node_def.id, node)
@@ -738,11 +738,11 @@ class AST_Scope extends AST_Block {
         }
         return true
       }
-      if (node instanceof AST_SymbolRef) {
+      if (node?.isAst?.('AST_SymbolRef')) {
         node_def = node.definition?.()
         if (!in_use_ids.has(node_def.id)) {
           in_use_ids.set(node_def.id, node_def)
-          if (node_def.orig[0] instanceof AST_SymbolCatch) {
+          if (node_def.orig[0]?.isAst?.('AST_SymbolCatch')) {
             const redef = node_def.scope.is_block_scope() &&
                           node_def.scope.get_defun_scope().variables.get(node_def.name)
             if (redef) in_use_ids.set(redef.id, redef)
@@ -750,7 +750,7 @@ class AST_Scope extends AST_Block {
         }
         return true
       }
-      if (node instanceof AST_Scope) {
+      if (node?.isAst?.('AST_Scope')) {
         var save_scope = scope
         scope = node
         descend()
@@ -776,8 +776,8 @@ class AST_Scope extends AST_Block {
       // let's count var_decl first, we seem to waste a lot of
       // space if we hoist `var` when there's only one.
       walk(self, (node: any) => {
-        if (node instanceof AST_Scope && node !== self) { return true }
-        if (node instanceof AST_Var) {
+        if (node?.isAst?.('AST_Scope') && node !== self) { return true }
+        if (node?.isAst?.('AST_Var')) {
           ++var_decl
           return true
         }
@@ -786,32 +786,32 @@ class AST_Scope extends AST_Block {
       var tt = new TreeTransformer(
         function before (node: any) {
           if (node !== self) {
-            if (node instanceof AST_Directive) {
+            if (node?.isAst?.('AST_Directive')) {
               dirs.push(node)
               return make_node('AST_EmptyStatement', node)
             }
-            if (hoist_funs && node instanceof AST_Defun &&
-                          !(tt.parent() instanceof AST_Export) &&
+            if (hoist_funs && node?.isAst?.('AST_Defun') &&
+                          !(tt.parent()?.isAst?.('AST_Export')) &&
                           tt.parent() === self) {
               hoisted.push(node)
               return make_node('AST_EmptyStatement', node)
             }
-            if (hoist_vars && node instanceof AST_Var) {
+            if (hoist_vars && node?.isAst?.('AST_Var')) {
               node.definitions.forEach(function (def) {
-                if (def.name instanceof AST_Destructuring) return
+                if (def.name?.isAst?.('AST_Destructuring')) return
                 vars.set(def.name.name, def)
                 ++vars_found
               })
               var seq = node.to_assignments(compressor)
               var p = tt.parent()
-              if (p instanceof AST_ForIn && p.init === node) {
+              if (p?.isAst?.('AST_ForIn') && p.init === node) {
                 if (seq == null) {
                   var def = node.definitions[0].name
                   return make_node('AST_SymbolRef', def, def)
                 }
                 return seq
               }
-              if (p instanceof AST_For && p.init === node) {
+              if (p?.isAst?.('AST_For') && p.init === node) {
                 return seq
               }
               if (!seq) return make_node('AST_EmptyStatement', node)
@@ -819,7 +819,7 @@ class AST_Scope extends AST_Block {
                 body: seq
               })
             }
-            if (node instanceof AST_Scope) { return node } // to avoid descending in nested scopes
+            if (node?.isAst?.('AST_Scope')) { return node } // to avoid descending in nested scopes
           }
         }
       )
@@ -827,7 +827,7 @@ class AST_Scope extends AST_Block {
       if (vars_found > 0) {
         // collect only vars which don't show up in self's arguments list
         var defs: any[] = []
-        const is_lambda = self instanceof AST_Lambda
+        const is_lambda = self?.isAst?.('AST_Lambda')
         const args_as_names = is_lambda ? (self as unknown as AST_Lambda).args_as_names() : null
         vars.forEach((def, name) => {
           if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
@@ -842,11 +842,11 @@ class AST_Scope extends AST_Block {
         if (defs.length > 0) {
           // try to merge in assignments
           for (var i = 0; i < self.body.length;) {
-            if (self.body[i] instanceof AST_SimpleStatement) {
+            if (self.body[i]?.isAst?.('AST_SimpleStatement')) {
               var expr = self.body[i].body; var sym; var assign
-              if (expr instanceof AST_Assign &&
+              if (expr?.isAst?.('AST_Assign') &&
                               expr.operator == '=' &&
-                              (sym = expr.left) instanceof AST_Symbol &&
+                              (sym = expr.left)?.isAst?.('AST_Symbol') &&
                               vars.has(sym.name)
               ) {
                 var def = vars.get(sym.name)
@@ -857,10 +857,10 @@ class AST_Scope extends AST_Block {
                 self.body.splice(i, 1)
                 continue
               }
-              if (expr instanceof AST_Sequence &&
-                              (assign = expr.expressions[0]) instanceof AST_Assign &&
+              if (expr?.isAst?.('AST_Sequence') &&
+                              (assign = expr.expressions[0])?.isAst?.('AST_Assign') &&
                               assign.operator == '=' &&
-                              (sym = assign.left) instanceof AST_Symbol &&
+                              (sym = assign.left)?.isAst?.('AST_Symbol') &&
                               vars.has(sym.name)
               ) {
                 var def = vars.get(sym.name)
@@ -872,11 +872,11 @@ class AST_Scope extends AST_Block {
                 continue
               }
             }
-            if (self.body[i] instanceof AST_EmptyStatement) {
+            if (self.body[i]?.isAst?.('AST_EmptyStatement')) {
               self.body.splice(i, 1)
               continue
             }
-            if (self.body[i] instanceof AST_BlockStatement) {
+            if (self.body[i]?.isAst?.('AST_BlockStatement')) {
               var tmp = [i, 1].concat(self.body[i].body)
               self.body.splice.apply(self.body, tmp)
               continue
@@ -906,12 +906,12 @@ class AST_Scope extends AST_Block {
   hoist_properties (compressor: any) {
     var self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
-    var top_retain = self instanceof AST_Toplevel && compressor.top_retain || return_false
+    var top_retain = self?.isAst?.('AST_Toplevel') && compressor.top_retain || return_false
     var defs_by_id = new Map()
     var hoister = new TreeTransformer(function (node: any, descend) {
-      if (node instanceof AST_Definitions &&
-              hoister.parent() instanceof AST_Export) return node
-      if (node instanceof AST_VarDef) {
+      if (node?.isAst?.('AST_Definitions') &&
+              hoister.parent()?.isAst?.('AST_Export')) return node
+      if (node?.isAst?.('AST_VarDef')) {
         const sym = node.name
         let def
         let value
@@ -923,7 +923,7 @@ class AST_Scope extends AST_Block {
                   !compressor.exposed(def) &&
                   !top_retain(def) &&
                   (value = sym.fixed_value()) === node.value &&
-                  value instanceof AST_Object &&
+                  value?.isAst?.('AST_Object') &&
                   value.properties.every(prop => typeof prop.key === 'string')
         ) {
           descend(node, this)
@@ -938,8 +938,8 @@ class AST_Scope extends AST_Block {
           defs_by_id.set(def.id, defs)
           return MAP.splice(assignments)
         }
-      } else if (node instanceof AST_PropAccess &&
-              node.expression instanceof AST_SymbolRef
+      } else if (node?.isAst?.('AST_PropAccess') &&
+              node.expression?.isAst?.('AST_SymbolRef')
       ) {
         const defs = defs_by_id.get(node.expression.definition?.().id)
         if (defs) {
@@ -1042,14 +1042,14 @@ class AST_Scope extends AST_Block {
   }
 
   find_variable (name: any | string) {
-    if (name instanceof AST_Symbol) name = name.name
+    if (name?.isAst?.('AST_Symbol')) name = name.name
     return this.variables.get(name) ||
           (this.parent_scope && this.parent_scope.find_variable(name))
   }
 
   def_function (this: any, symbol: any, init: boolean) {
     var def = this.def_variable(symbol, init)
-    if (!def.init || def.init instanceof AST_Defun) def.init = init
+    if (!def.init || def.init?.isAst?.('AST_Defun')) def.init = init
     this.functions.set(symbol.name, def)
     return def
   }
@@ -1058,7 +1058,7 @@ class AST_Scope extends AST_Block {
     var def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
-      if (def.init && (def.scope !== symbol.scope || def.init instanceof AST_Function)) {
+      if (def.init && (def.scope !== symbol.scope || def.init?.isAst?.('AST_Function'))) {
         def.init = init
       }
     } else {
@@ -1103,7 +1103,7 @@ class AST_Scope extends AST_Block {
 
     const { parent_scope = null, toplevel = this } = data
 
-    if (!(toplevel instanceof AST_Toplevel)) {
+    if (!(toplevel?.isAst?.('AST_Toplevel'))) {
       throw new Error('Invalid toplevel scope')
     }
 
@@ -1120,19 +1120,19 @@ class AST_Scope extends AST_Block {
         scope._block_scope = true
         // AST_Try in the AST sadly *is* (not has) a body itself,
         // and its catch and finally branches are children of the AST_Try itself
-        const parent_scope = node instanceof AST_Catch
+        const parent_scope = node?.isAst?.('AST_Catch')
           ? save_scope.parent_scope
           : save_scope
         scope.init_scope_vars(parent_scope)
         scope.uses_with = save_scope.uses_with
         scope.uses_eval = save_scope.uses_eval
         if (options.safari10) {
-          if (node instanceof AST_For || node instanceof AST_ForIn) {
+          if (node?.isAst?.('AST_For') || node?.isAst?.('AST_ForIn')) {
             for_scopes.push(scope)
           }
         }
 
-        if (node instanceof AST_Switch) {
+        if (node?.isAst?.('AST_Switch')) {
           // XXX: HACK! Ensure the switch expression gets the correct scope (the parent scope) and the body gets the contained scope
           // AST_Switch has a scope within the body, but it itself "is a block scope"
           // This means the switched expression has to belong to the outer scope
@@ -1151,14 +1151,14 @@ class AST_Scope extends AST_Block {
         scope = save_scope
         return true
       }
-      if (node instanceof AST_Destructuring) {
+      if (node?.isAst?.('AST_Destructuring')) {
         const save_destructuring = in_destructuring
         in_destructuring = node
         descend()
         in_destructuring = save_destructuring
         return true
       }
-      if (node instanceof AST_Scope) {
+      if (node?.isAst?.('AST_Scope')) {
                 node.init_scope_vars?.(scope)
                 var save_scope = scope
                 var save_defun = defun
@@ -1171,7 +1171,7 @@ class AST_Scope extends AST_Block {
                 labels = save_labels
                 return true // don't descend again in TreeWalker
       }
-      if (node instanceof AST_LabeledStatement) {
+      if (node?.isAst?.('AST_LabeledStatement')) {
         var l = node.label
         if (labels.has(l.name)) {
           throw new Error(string_template('Label {name} defined twice', l))
@@ -1181,53 +1181,53 @@ class AST_Scope extends AST_Block {
         labels.delete(l.name)
         return true // no descend again
       }
-      if (node instanceof AST_With) {
+      if (node?.isAst?.('AST_With')) {
         for (var s: any | null = scope; s; s = s.parent_scope) { s.uses_with = true }
         return
       }
-      if (node instanceof AST_Symbol) {
+      if (node?.isAst?.('AST_Symbol')) {
         node.scope = scope
       }
-      if (node instanceof AST_Label) {
+      if (node?.isAst?.('AST_Label')) {
         // TODO: check type
         node.thedef = node
         node.references = [] as any
       }
-      if (node instanceof AST_SymbolLambda) {
+      if (node?.isAst?.('AST_SymbolLambda')) {
         defun.def_function(node, node.name == 'arguments' ? undefined : defun)
-      } else if (node instanceof AST_SymbolDefun) {
+      } else if (node?.isAst?.('AST_SymbolDefun')) {
         // Careful here, the scope where this should be defined is
         // the parent scope.  The reason is that we enter a new
         // scope when we encounter the AST_Defun node (which is
-        // instanceof AST_Scope) but we get to the symbol a bit
+        // ?.isAst?.('AST_Scope')) but we get to the symbol a bit
         // later.
         mark_export((node.scope = defun.parent_scope.get_defun_scope()).def_function(node, defun), 1)
-      } else if (node instanceof AST_SymbolClass) {
+      } else if (node?.isAst?.('AST_SymbolClass')) {
         mark_export(defun.def_variable(node, defun), 1)
-      } else if (node instanceof AST_SymbolImport) {
+      } else if (node?.isAst?.('AST_SymbolImport')) {
         scope.def_variable(node)
-      } else if (node instanceof AST_SymbolDefClass) {
+      } else if (node?.isAst?.('AST_SymbolDefClass')) {
         // This deals with the name of the class being available
         // inside the class.
         mark_export((node.scope = defun.parent_scope).def_function(node, defun), 1)
       } else if (
-        node instanceof AST_SymbolVar ||
-                node instanceof AST_SymbolLet ||
-                node instanceof AST_SymbolConst ||
-                node instanceof AST_SymbolCatch
+        node?.isAst?.('AST_SymbolVar') ||
+                node?.isAst?.('AST_SymbolLet') ||
+                node?.isAst?.('AST_SymbolConst') ||
+                node?.isAst?.('AST_SymbolCatch')
       ) {
         var def: any
-        if (node instanceof AST_SymbolBlockDeclaration) {
+        if (node?.isAst?.('AST_SymbolBlockDeclaration')) {
           def = scope.def_variable(node, null)
         } else {
           def = defun.def_variable(node, node.TYPE == 'SymbolVar' ? null : undefined)
         }
         if (!def.orig.every((sym) => {
           if (sym === node) return true
-          if (node instanceof AST_SymbolBlockDeclaration) {
-            return sym instanceof AST_SymbolLambda
+          if (node?.isAst?.('AST_SymbolBlockDeclaration')) {
+            return sym?.isAst?.('AST_SymbolLambda')
           }
-          return !(sym instanceof AST_SymbolLet || sym instanceof AST_SymbolConst)
+          return !(sym?.isAst?.('AST_SymbolLet') || sym?.isAst?.('AST_SymbolConst'))
         })) {
           js_error(
                         `"${node.name}" is redeclared`,
@@ -1237,7 +1237,7 @@ class AST_Scope extends AST_Block {
                         node.start.pos
           )
         }
-        if (!(node instanceof AST_SymbolFunarg)) mark_export(def, 2)
+        if (!(node?.isAst?.('AST_SymbolFunarg'))) mark_export(def, 2)
         if (defun !== scope) {
           node.mark_enclosed()
           const def = scope.find_variable(node)
@@ -1246,7 +1246,7 @@ class AST_Scope extends AST_Block {
             node.reference()
           }
         }
-      } else if (node instanceof AST_LabelRef) {
+      } else if (node?.isAst?.('AST_LabelRef')) {
         var sym = labels.get(node.name)
         if (!sym) {
           throw new Error(string_template('Undefined label {name} [{line},{col}]', {
@@ -1257,7 +1257,7 @@ class AST_Scope extends AST_Block {
         }
         node.thedef = sym
       }
-      if (!(scope instanceof AST_Toplevel) && (node instanceof AST_Export || node instanceof AST_Import)) {
+      if (!(scope?.isAst?.('AST_Toplevel')) && (node?.isAst?.('AST_Export') || node?.isAst?.('AST_Import'))) {
         js_error(
                     `"${node.TYPE}" statement may only appear at the top level`,
                     node.start.file,
@@ -1277,51 +1277,51 @@ class AST_Scope extends AST_Block {
         } while (tw.parent(i++) !== in_destructuring)
       }
       var node = tw.parent(level)
-      if (def.export = node instanceof AST_Export ? MASK_EXPORT_DONT_MANGLE : 0) {
+      if (def.export = node?.isAst?.('AST_Export') ? MASK_EXPORT_DONT_MANGLE : 0) {
         var exported = node.exported_definition
-        if ((exported instanceof AST_Defun || exported instanceof AST_DefClass) && node.is_default) {
+        if ((exported?.isAst?.('AST_Defun') || exported?.isAst?.('AST_DefClass')) && node.is_default) {
           def.export = MASK_EXPORT_WANT_MANGLE
         }
       }
     }
 
     // pass 2: find back references and eval
-    const is_toplevel = this instanceof AST_Toplevel
+    const is_toplevel = this?.isAst?.('AST_Toplevel')
     if (is_toplevel) {
       this.globals = new Map()
     }
 
     var tw = new TreeWalker((node: any) => {
-      if (node instanceof AST_LoopControl && node.label) {
+      if (node?.isAst?.('AST_LoopControl') && node.label) {
         node.label.thedef.references.push(node) // TODO: check type
         return true
       }
-      if (node instanceof AST_SymbolRef) {
+      if (node?.isAst?.('AST_SymbolRef')) {
         var name = node.name
-        if (name == 'eval' && tw.parent() instanceof AST_Call) {
+        if (name == 'eval' && tw.parent()?.isAst?.('AST_Call')) {
           for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
             s.uses_eval = true
           }
         }
         var sym
-        if (tw.parent() instanceof AST_NameMapping && tw.parent(1).module_name ||
+        if (tw.parent()?.isAst?.('AST_NameMapping') && tw.parent(1).module_name ||
                     !(sym = node.scope.find_variable(name))) {
           sym = toplevel.def_global?.(node)
-          if (node instanceof AST_SymbolExport) sym.export = MASK_EXPORT_DONT_MANGLE
-        } else if (sym.scope instanceof AST_Lambda && name == 'arguments') {
+          if (node?.isAst?.('AST_SymbolExport')) sym.export = MASK_EXPORT_DONT_MANGLE
+        } else if (sym.scope?.isAst?.('AST_Lambda') && name == 'arguments') {
           sym.scope.uses_arguments = true
         }
         node.thedef = sym
         node.reference()
         if (node.scope.is_block_scope() &&
-                    !(sym.orig[0] instanceof AST_SymbolBlockDeclaration)) {
+                    !(sym.orig[0]?.isAst?.('AST_SymbolBlockDeclaration'))) {
           node.scope = node.scope.get_defun_scope()
         }
         return true
       }
       // ensure mangling works if catch reuses a scope variable
       var def
-      if (node instanceof AST_SymbolCatch && (def = redefined_catch_def(node.definition()))) {
+      if (node?.isAst?.('AST_SymbolCatch') && (def = redefined_catch_def(node.definition()))) {
         let s: any = node.scope
         while (s) {
           push_uniq(s.enclosed, def)
@@ -1335,7 +1335,7 @@ class AST_Scope extends AST_Block {
     // pass 3: work around IE8 and Safari catch scope bugs
     if (options.ie8 || options.safari10) {
       walk(this, (node: any) => {
-        if (node instanceof AST_SymbolCatch) {
+        if (node?.isAst?.('AST_SymbolCatch')) {
           var name = node.name
           var refs = node.thedef.references
           var scope = node.scope.get_defun_scope()
@@ -1411,7 +1411,7 @@ class AST_Toplevel extends AST_Scope {
       if (!def) return
       var level = 0; var child = node; var parent
       while (parent = this.parent(level++)) {
-        if (!(parent instanceof AST_PropAccess)) break
+        if (!(parent?.isAst?.('AST_PropAccess'))) break
         if (parent.expression !== child) break
         child = parent
       }
@@ -1431,7 +1431,7 @@ class AST_Toplevel extends AST_Scope {
       clear_flag(node, CLEAR_BETWEEN_PASSES)
       if (reduce_vars) {
         if (compressor.top_retain &&
-                  node instanceof AST_Defun && // Only functions are retained
+                  node?.isAst?.('AST_Defun') && // Only functions are retained
                   preparation.parent() === self
         ) {
           set_flag(node, TOP)
@@ -1453,7 +1453,7 @@ class AST_Toplevel extends AST_Scope {
     return this.transform(new TreeTransformer(function (self) {
       if (self.TYPE == 'Call') {
         var exp = self.expression
-        if (exp instanceof AST_PropAccess) {
+        if (exp?.isAst?.('AST_PropAccess')) {
           var name = exp.expression
           while (name.expression) {
             name = name.expression
@@ -1517,7 +1517,7 @@ class AST_Toplevel extends AST_Scope {
     var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
     var wrapped_tl = parse(_wrapped_tl)
     wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: any) {
-      if (node instanceof AST_Directive && node.value == '$ORIG') {
+      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
         return MAP.splice(body)
       }
       return undefined
@@ -1537,7 +1537,7 @@ class AST_Toplevel extends AST_Scope {
       args_values.slice(index + 1),
       ')'
     ].join('')).transform(new TreeTransformer(function (node: any) {
-      if (node instanceof AST_Directive && node.value == '$ORIG') {
+      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
         return MAP.splice(body)
       }
       return undefined
@@ -1577,8 +1577,8 @@ class AST_Toplevel extends AST_Scope {
     var cname = 0
     this.globals.forEach(rename)
     this.walk(new TreeWalker(function (node: any) {
-      if (node instanceof AST_Scope) node.variables.forEach(rename)
-      if (node instanceof AST_SymbolCatch) rename(node.definition())
+      if (node?.isAst?.('AST_Scope')) node.variables.forEach(rename)
+      if (node?.isAst?.('AST_SymbolCatch')) rename(node.definition())
     }))
 
     function next_name () {
@@ -1610,8 +1610,8 @@ class AST_Toplevel extends AST_Scope {
       options.reserved?.forEach(to_avoid)
       this.globals.forEach(add_def)
       this.walk(new TreeWalker(function (node: any) {
-        if (node instanceof AST_Scope) node.variables.forEach(add_def)
-        if (node instanceof AST_SymbolCatch) add_def(node.definition())
+        if (node?.isAst?.('AST_Scope')) node.variables.forEach(add_def)
+        if (node?.isAst?.('AST_SymbolCatch')) add_def(node.definition())
       }))
       return avoid
 
@@ -1652,14 +1652,14 @@ class AST_Toplevel extends AST_Scope {
     }
 
     var tw = new TreeWalker(function (node: any, descend) {
-      if (node instanceof AST_LabeledStatement) {
+      if (node?.isAst?.('AST_LabeledStatement')) {
         // lname is incremented when we get to the AST_Label
         var save_nesting = lname
         descend()
         lname = save_nesting
         return true // don't descend again in TreeWalker
       }
-      if (node instanceof AST_Scope) {
+      if (node?.isAst?.('AST_Scope')) {
         node.variables.forEach(collect)
         return
       }
@@ -1669,15 +1669,15 @@ class AST_Toplevel extends AST_Scope {
       }
       if (
         function_defs &&
-              node instanceof AST_VarDef &&
-              node.value instanceof AST_Lambda &&
+              node?.isAst?.('AST_VarDef') &&
+              node.value?.isAst?.('AST_Lambda') &&
               !node.value.name &&
               keep_name(options.keep_fnames, node.name.name)
       ) {
         function_defs.add(node.name.definition?.().id)
         return
       }
-      if (node instanceof AST_Label) {
+      if (node?.isAst?.('AST_Label')) {
         let name
         do {
           name = base54(++lname)
@@ -1685,7 +1685,7 @@ class AST_Toplevel extends AST_Scope {
         node.mangled_name = name
         return true
       }
-      if (!(options.ie8 || options.safari10) && node instanceof AST_SymbolCatch) {
+      if (!(options.ie8 || options.safari10) && node?.isAst?.('AST_SymbolCatch')) {
         to_mangle.push(node.definition())
       }
     })
@@ -1744,11 +1744,11 @@ class AST_Lambda extends AST_Scope {
   reduce_vars = mark_lambda
   contains_this () {
     return walk(this, (node: any) => {
-      if (node instanceof AST_This) return walk_abort
+      if (node?.isAst?.('AST_This')) return walk_abort
       if (
         node !== this &&
-              node instanceof AST_Scope &&
-              !(node instanceof AST_Arrow)
+              node?.isAst?.('AST_Scope') &&
+              !(node?.isAst?.('AST_Arrow'))
       ) {
         return true
       }
@@ -1769,7 +1769,7 @@ class AST_Lambda extends AST_Scope {
   args_as_names () {
     var out: any[] = []
     for (var i = 0; i < this.argnames.length; i++) {
-      if (this.argnames[i] instanceof AST_Destructuring) {
+      if (this.argnames[i]?.isAst?.('AST_Destructuring')) {
         out.push(...this.argnames[i].all_symbols())
       } else {
         out.push(this.argnames[i])
@@ -1807,7 +1807,7 @@ class AST_Lambda extends AST_Scope {
   _transform (self, tw: any) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
-    if (self.body instanceof AST_Node) {
+    if (self.body?.isAst?.('AST_Node')) {
       self.body = (self.body).transform(tw)
     } else {
       self.body = do_list(self.body, tw)
@@ -1833,9 +1833,9 @@ class AST_Lambda extends AST_Scope {
         output.space()
       }
     }
-    if (self.name instanceof AST_Symbol) {
+    if (self.name?.isAst?.('AST_Symbol')) {
       self.name.print(output)
-    } else if (nokeyword && self.name instanceof AST_Node) {
+    } else if (nokeyword && self.name?.isAst?.('AST_Node')) {
       output.with_square(function () {
                 self.name?.print(output) // Computed method name
       })
@@ -1922,7 +1922,7 @@ class AST_Function extends AST_Lambda {
           !self.uses_arguments &&
           !self.pinned()) {
       const has_special_symbol = walk(self, (node: any) => {
-        if (node instanceof AST_This) return walk_abort
+        if (node?.isAst?.('AST_This')) return walk_abort
       })
       if (!has_special_symbol) return make_node('AST_Arrow', self, self).optimize(compressor)
     }
@@ -1952,7 +1952,7 @@ class AST_Function extends AST_Lambda {
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
 
-    var tricky_def = def.orig[0] instanceof AST_SymbolFunarg && this.name && this.name.definition()
+    var tricky_def = def.orig[0]?.isAst?.('AST_SymbolFunarg') && this.name && this.name.definition()
 
     // the function's mangled_name is null when keep_fnames is true
     var tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
@@ -1986,14 +1986,14 @@ class AST_Function extends AST_Lambda {
 
     if (output.option('wrap_iife')) {
       var p = output.parent()
-      if (p instanceof AST_Call && p.expression === this) {
+      if (p?.isAst?.('AST_Call') && p.expression === this) {
         return true
       }
     }
 
     if (output.option('wrap_func_args')) {
       var p = output.parent()
-      if (p instanceof AST_Call && p.args.includes(this)) {
+      if (p?.isAst?.('AST_Call') && p.args.includes(this)) {
         return true
       }
     }
@@ -2028,7 +2028,7 @@ class AST_Arrow extends AST_Lambda {
     if (
       !(
         this.argnames.length === 1 &&
-                this.argnames[0] instanceof AST_Symbol
+                this.argnames[0]?.isAst?.('AST_Symbol')
       )
     ) {
       args_and_arrow += 2
@@ -2052,21 +2052,21 @@ class AST_Arrow extends AST_Lambda {
 
   needs_parens (output: any) {
     var p = output.parent()
-    return p instanceof AST_PropAccess && p.expression === this
+    return p?.isAst?.('AST_PropAccess') && p.expression === this
   }
 
   _do_print (this: any, output: any) {
     var self = this
     var parent = output.parent()
-    var needs_parens = (parent instanceof AST_Binary && !(parent instanceof AST_Assign)) ||
-            parent instanceof AST_Unary ||
-            (parent instanceof AST_Call && self === parent.expression)
+    var needs_parens = (parent?.isAst?.('AST_Binary') && !(parent?.isAst?.('AST_Assign'))) ||
+            parent?.isAst?.('AST_Unary') ||
+            (parent?.isAst?.('AST_Call') && self === parent.expression)
     if (needs_parens) { output.print('(') }
     if (self.async) {
       output.print('async')
       output.space()
     }
-    if (self.argnames.length === 1 && self.argnames[0] instanceof AST_Symbol) {
+    if (self.argnames.length === 1 && self.argnames[0]?.isAst?.('AST_Symbol')) {
       self.argnames[0].print(output)
     } else {
       output.with_parens(function () {
@@ -2082,7 +2082,7 @@ class AST_Arrow extends AST_Lambda {
     const first_statement = self.body[0]
     if (
       self.body.length === 1 &&
-            first_statement instanceof AST_Return
+            first_statement?.isAst?.('AST_Return')
     ) {
       const returned = first_statement.value
       if (!returned) {
@@ -2163,9 +2163,9 @@ class AST_Await extends AST_Node {
 
   needs_parens = function (output: any) {
     var p = output.parent()
-    return p instanceof AST_PropAccess && p.expression === this ||
-            p instanceof AST_Call && p.expression === this ||
-            output.option('safari10') && p instanceof AST_UnaryPrefix
+    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
+            p?.isAst?.('AST_Call') && p.expression === this ||
+            output.option('safari10') && p?.isAst?.('AST_UnaryPrefix')
   }
 
   _codegen = function (self, output) {
@@ -2173,11 +2173,11 @@ class AST_Await extends AST_Node {
     output.space()
     var e = self.expression
     var parens = !(
-      e instanceof AST_Call ||
-            e instanceof AST_SymbolRef ||
-            e instanceof AST_PropAccess ||
-            e instanceof AST_Unary ||
-            e instanceof AST_Constant
+      e?.isAst?.('AST_Call') ||
+            e?.isAst?.('AST_SymbolRef') ||
+            e?.isAst?.('AST_PropAccess') ||
+            e?.isAst?.('AST_Unary') ||
+            e?.isAst?.('AST_Constant')
     )
     if (parens) output.print('(')
     self.expression.print(output)
@@ -2239,14 +2239,14 @@ class AST_Yield extends AST_Node {
     var p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
-    if (p instanceof AST_Binary && p.operator !== '=') { return true }
+    if (p?.isAst?.('AST_Binary') && p.operator !== '=') { return true }
     // (yield 1)()
     // new (yield 1)()
-    if (p instanceof AST_Call && p.expression === this) { return true }
+    if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
     // (yield 1) ? yield 2 : yield 3
-    if (p instanceof AST_Conditional && p.condition === this) { return true }
+    if (p?.isAst?.('AST_Conditional') && p.condition === this) { return true }
     // -(yield 4)
-    if (p instanceof AST_Unary) { return true }
+    if (p?.isAst?.('AST_Unary')) { return true }
     // (yield x).foo
     // (yield x)['foo']
     if (p?._needs_parens(this)) { return true }
@@ -2285,13 +2285,13 @@ class AST_Switch extends AST_Block {
     if (!compressor.option('switches')) return self
     var branch
     var value = self.expression.evaluate(compressor)
-    if (!(value instanceof AST_Node)) {
+    if (!(value?.isAst?.('AST_Node'))) {
       var orig = self.expression
       self.expression = make_node_from_constant(value, orig)
       self.expression = best_of_expression(self.expression.transform(compressor), orig)
     }
     if (!compressor.option('dead_code')) return self
-    if (value instanceof AST_Node) {
+    if (value?.isAst?.('AST_Node')) {
       value = self.expression.tail_node().evaluate(compressor)
     }
     var decl: any[] = []
@@ -2300,19 +2300,19 @@ class AST_Switch extends AST_Block {
     var exact_match
     for (var i = 0, len = self.body.length; i < len && !exact_match; i++) {
       branch = self.body[i]
-      if (branch instanceof AST_Default) {
+      if (branch?.isAst?.('AST_Default')) {
         if (!default_branch) {
           default_branch = branch
         } else {
           eliminate_branch(branch, body[body.length - 1])
         }
-      } else if (!(value instanceof AST_Node)) {
+      } else if (!(value?.isAst?.('AST_Node'))) {
         var exp = branch.expression.evaluate(compressor)
-        if (!(exp instanceof AST_Node) && exp !== value) {
+        if (!(exp?.isAst?.('AST_Node')) && exp !== value) {
           eliminate_branch(branch, body[body.length - 1])
           continue
         }
-        if (exp instanceof AST_Node) exp = branch.expression.tail_node().evaluate(compressor)
+        if (exp?.isAst?.('AST_Node')) exp = branch.expression.tail_node().evaluate(compressor)
         if (exp === value) {
           exact_match = branch
           if (default_branch) {
@@ -2339,8 +2339,8 @@ class AST_Switch extends AST_Block {
     self.body = body
     while (branch = body[body.length - 1]) {
       var stat = branch.body[branch.body.length - 1]
-      if (stat instanceof AST_Break && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
-      if (branch.body.length || branch instanceof AST_Case &&
+      if (stat?.isAst?.('AST_Break') && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
+      if (branch.body.length || branch?.isAst?.('AST_Case') &&
               (default_branch || branch.expression.has_side_effects(compressor))) break
       if (body.pop() === default_branch) default_branch = null
     }
@@ -2355,9 +2355,9 @@ class AST_Switch extends AST_Block {
       var has_break = false
       var tw = new TreeWalker(function (node: any) {
         if (has_break ||
-                  node instanceof AST_Lambda ||
-                  node instanceof AST_SimpleStatement) return true
-        if (node instanceof AST_Break && tw.loopcontrol_target(node) === self) { has_break = true }
+                  node?.isAst?.('AST_Lambda') ||
+                  node?.isAst?.('AST_SimpleStatement')) return true
+        if (node?.isAst?.('AST_Break') && tw.loopcontrol_target(node) === self) { has_break = true }
       })
       self.walk(tw)
       if (!has_break) {
@@ -2684,7 +2684,7 @@ class AST_VarDef extends AST_Node {
 
   reduce_vars (tw, descend) {
     var node = this
-    if (node.name instanceof AST_Destructuring) {
+    if (node.name?.isAst?.('AST_Destructuring')) {
       suppress(node.name)
       return
     }
@@ -2745,7 +2745,7 @@ class AST_VarDef extends AST_Node {
       output.print('=')
       output.space()
       var p = output.parent(1)
-      var noin = p instanceof AST_For || p instanceof AST_ForIn
+      var noin = p?.isAst?.('AST_For') || p?.isAst?.('AST_ForIn')
       parenthesize_for_noin(self.value, output, noin)
     }
   }
@@ -2792,7 +2792,7 @@ class AST_NameMapping extends AST_Node {
   }
 
   _codegen (self, output) {
-    var is_import = output.parent() instanceof AST_Import
+    var is_import = output.parent()?.isAst?.('AST_Import')
     var definition = self.name.definition()
     var names_are_different =
             (definition && definition.mangled_name || self.name.name) !==
@@ -2983,10 +2983,10 @@ class AST_Call extends AST_Node {
     var fn = exp
     inline_array_like_spread(self, compressor, self.args)
     var simple_args = self.args.every((arg) =>
-      !(arg instanceof AST_Expansion)
+      !(arg?.isAst?.('AST_Expansion'))
     )
     if (compressor.option('reduce_vars') &&
-          fn instanceof AST_SymbolRef &&
+          fn?.isAst?.('AST_SymbolRef') &&
           !has_annotation(self, _NOINLINE)
     ) {
       const fixed = fn.fixed_value()
@@ -2994,7 +2994,7 @@ class AST_Call extends AST_Node {
         fn = fixed
       }
     }
-    var is_func = fn instanceof AST_Lambda
+    var is_func = fn?.isAst?.('AST_Lambda')
     if (compressor.option('unused') &&
           simple_args &&
           is_func &&
@@ -3002,7 +3002,7 @@ class AST_Call extends AST_Node {
           !fn.pinned()) {
       var pos = 0; var last = 0
       for (var i = 0, len = self.args.length; i < len; i++) {
-        if (fn.argnames[i] instanceof AST_Expansion) {
+        if (fn.argnames[i]?.isAst?.('AST_Expansion')) {
           if (has_flag(fn.argnames[i].expression, UNUSED)) {
             while (i < len) {
               var node = self.args[i++].drop_side_effect_free(compressor)
@@ -3044,7 +3044,7 @@ class AST_Call extends AST_Node {
               return make_node('AST_Array', self, {
                 elements: self.args
               }).optimize(compressor)
-            } else if (self.args[0] instanceof AST_Number && self.args[0].value <= 11) {
+            } else if (self.args[0]?.isAst?.('AST_Number') && self.args[0].value <= 11) {
               const elements: any[] = []
               for (let i = 0; i < self.args[0].value; i++) elements.push(new AST_Hole())
               return new AST_Array({ elements })
@@ -3085,7 +3085,7 @@ class AST_Call extends AST_Node {
             }
             break
           case 'Symbol':
-            if (self.args.length == 1 && self.args[0] instanceof AST_String && compressor.option('unsafe_symbols')) { self.args.length = 0 }
+            if (self.args.length == 1 && self.args[0]?.isAst?.('AST_String') && compressor.option('unsafe_symbols')) { self.args.length = 0 }
             break
           case 'Boolean':
             if (self.args.length == 0) return make_node('AST_False', self)
@@ -3126,7 +3126,7 @@ class AST_Call extends AST_Node {
             }
             break
         }
-      } else if (exp instanceof AST_Dot) {
+      } else if (exp?.isAst?.('AST_Dot')) {
         switch (exp.property) {
           case 'toString':
             if (self.args.length == 0 && !exp.expression.may_throw_on_access(compressor)) {
@@ -3138,7 +3138,7 @@ class AST_Call extends AST_Node {
             }
             break
           case 'join':
-            if (exp.expression instanceof AST_Array) {
+            if (exp.expression?.isAst?.('AST_Array')) {
               EXIT: {
                 var separator
                 if (self.args.length > 0) {
@@ -3149,7 +3149,7 @@ class AST_Call extends AST_Node {
                 var consts: any[] = []
                 for (let i = 0, len = exp.expression.elements.length; i < len; i++) {
                   var el = exp.expression.elements[i]
-                  if (el instanceof AST_Expansion) break EXIT
+                  if (el?.isAst?.('AST_Expansion')) break EXIT
                   var value = el.evaluate(compressor)
                   if (value !== el) {
                     consts.push(value)
@@ -3218,7 +3218,7 @@ class AST_Call extends AST_Node {
             }
             break
           case 'apply':
-            if (self.args.length == 2 && self.args[1] instanceof AST_Array) {
+            if (self.args.length == 2 && self.args[1]?.isAst?.('AST_Array')) {
               var args = self.args[1].elements.slice()
               args.unshift(self.args[0])
               return make_node('AST_Call', self, {
@@ -3232,10 +3232,10 @@ class AST_Call extends AST_Node {
             break
           case 'call':
             var func = exp.expression
-            if (func instanceof AST_SymbolRef) {
+            if (func?.isAst?.('AST_SymbolRef')) {
               func = func.fixed_value()
             }
-            if (func instanceof AST_Lambda && !func.contains_this()) {
+            if (func?.isAst?.('AST_Lambda') && !func.contains_this()) {
               return (self.args.length ? make_sequence(this, [
                 self.args[0],
                 make_node('AST_Call', self, {
@@ -3262,7 +3262,7 @@ class AST_Call extends AST_Node {
         }).optimize(compressor)
       }
       if (self.args.every((x) =>
-        x instanceof AST_String
+        x?.isAst?.('AST_String')
       )) {
         // quite a corner-case, but we can handle it:
         //   https://github.com/mishoo/UglifyJS2/issues/203
@@ -3313,7 +3313,7 @@ class AST_Call extends AST_Node {
     var stat = is_func && fn.body[0]
     var is_regular_func = is_func && !fn.is_generator && !fn.async
     var can_inline = is_regular_func && compressor.option('inline') && !self.is_expr_pure(compressor)
-    if (can_inline && stat instanceof AST_Return) {
+    if (can_inline && stat?.isAst?.('AST_Return')) {
       let returned = stat.value
       if (!returned || returned.is_constant_expression()) {
         if (returned) {
@@ -3328,15 +3328,15 @@ class AST_Call extends AST_Node {
       // optimize identity function
       if (
         fn.argnames.length === 1 &&
-              (fn.argnames[0] instanceof AST_SymbolFunarg) &&
+              (fn.argnames[0]?.isAst?.('AST_SymbolFunarg')) &&
               self.args.length < 2 &&
-              returned instanceof AST_SymbolRef &&
+              returned?.isAst?.('AST_SymbolRef') &&
               returned.name === fn.argnames[0].name
       ) {
         let parent
         if (
-          self.args[0] instanceof AST_PropAccess &&
-                  (parent = compressor.parent()) instanceof AST_Call &&
+          self.args[0]?.isAst?.('AST_PropAccess') &&
+                  (parent = compressor.parent())?.isAst?.('AST_Call') &&
                   parent.expression === self
         ) {
           // identity function was being used to remove `this`, like in
@@ -3362,8 +3362,8 @@ class AST_Call extends AST_Node {
       if (simple_args &&
               !fn.uses_arguments &&
               !fn.pinned() &&
-              !(compressor.parent() instanceof AST_Class) &&
-              !(fn.name && fn instanceof AST_Function) &&
+              !(compressor.parent()?.isAst?.('AST_Class')) &&
+              !(fn.name && fn?.isAst?.('AST_Function')) &&
               (returned_value = can_flatten_body(stat)) &&
               (exp === fn ||
                   has_annotation(self, _INLINE) ||
@@ -3383,12 +3383,12 @@ class AST_Call extends AST_Node {
                 let i = 0
                 let p
                 while ((p = compressor.parent(i++))) {
-                  if (p instanceof AST_DefaultAssign) return true
-                  if (p instanceof AST_Block) break
+                  if (p?.isAst?.('AST_DefaultAssign')) return true
+                  if (p?.isAst?.('AST_Block')) break
                 }
                 return false
               })() &&
-              !(scope instanceof AST_Class)
+              !(scope?.isAst?.('AST_Class'))
       ) {
         set_flag(fn, SQUEEZED)
         nearest_scope.add_child_scope(fn)
@@ -3401,7 +3401,7 @@ class AST_Call extends AST_Node {
       return make_sequence(self, args).optimize(compressor)
     }
     if (compressor.option('negate_iife') &&
-          compressor.parent() instanceof AST_SimpleStatement &&
+          compressor.parent()?.isAst?.('AST_SimpleStatement') &&
           is_iife_call(self)) {
       return self.negate(compressor, true)
     }
@@ -3414,11 +3414,11 @@ class AST_Call extends AST_Node {
 
     function return_value (stat) {
       if (!stat) return make_node('AST_Undefined', self)
-      if (stat instanceof AST_Return) {
+      if (stat?.isAst?.('AST_Return')) {
         if (!stat.value) return make_node('AST_Undefined', self)
         return stat.value.clone(true)
       }
-      if (stat instanceof AST_SimpleStatement) {
+      if (stat?.isAst?.('AST_SimpleStatement')) {
         return make_node('AST_UnaryPrefix', stat, {
           operator: 'void',
           expression: (stat.body).clone(true)
@@ -3435,7 +3435,7 @@ class AST_Call extends AST_Node {
       stat = null
       for (var i = 0; i < len; i++) {
         var line = body[i]
-        if (line instanceof AST_Var) {
+        if (line?.isAst?.('AST_Var')) {
           if (stat && !line.definitions.every((var_def) =>
             !var_def.value
           )) {
@@ -3443,7 +3443,7 @@ class AST_Call extends AST_Node {
           }
         } else if (stat) {
           return false
-        } else if (!(line instanceof AST_EmptyStatement)) {
+        } else if (!(line?.isAst?.('AST_EmptyStatement'))) {
           stat = line
         }
       }
@@ -3453,12 +3453,12 @@ class AST_Call extends AST_Node {
     function can_inject_args (block_scoped, safe_to_inject) {
       for (var i = 0, len = fn.argnames.length; i < len; i++) {
         var arg = fn.argnames[i]
-        if (arg instanceof AST_DefaultAssign) {
+        if (arg?.isAst?.('AST_DefaultAssign')) {
           if (has_flag(arg.left, UNUSED)) continue
           return false
         }
-        if (arg instanceof AST_Destructuring) return false
-        if (arg instanceof AST_Expansion) {
+        if (arg?.isAst?.('AST_Destructuring')) return false
+        if (arg?.isAst?.('AST_Expansion')) {
           if (has_flag(arg.expression, UNUSED)) continue
           return false
         }
@@ -3477,7 +3477,7 @@ class AST_Call extends AST_Node {
     function can_inject_args_values () {
       var arg_vals_outer_refs = new Set()
       const value_walker = (node: any) => {
-        if (node instanceof AST_Scope) {
+        if (node?.isAst?.('AST_Scope')) {
           var scope_outer_refs = new Set()
           node.enclosed.forEach(function (def) {
             scope_outer_refs.add(def.name)
@@ -3497,17 +3497,17 @@ class AST_Call extends AST_Node {
       if (arg_vals_outer_refs.size == 0) return true
       for (let i = 0, len = fn.argnames.length; i < len; i++) {
         var arg = fn.argnames[i]
-        if (arg instanceof AST_DefaultAssign && has_flag(arg.left, UNUSED)) continue
-        if (arg instanceof AST_Expansion && has_flag(arg.expression, UNUSED)) continue
+        if (arg?.isAst?.('AST_DefaultAssign') && has_flag(arg.left, UNUSED)) continue
+        if (arg?.isAst?.('AST_Expansion') && has_flag(arg.expression, UNUSED)) continue
         if (has_flag(arg, UNUSED)) continue
         if (arg_vals_outer_refs.has(arg.name)) return false
       }
       for (let i = 0, len = fn.body.length; i < len; i++) {
         var stat = fn.body[i]
-        if (!(stat instanceof AST_Var)) continue
+        if (!(stat?.isAst?.('AST_Var'))) continue
         for (var j = stat.definitions.length; --j >= 0;) {
           var name = stat.definitions[j].name
-          if (name instanceof AST_Destructuring ||
+          if (name?.isAst?.('AST_Destructuring') ||
                       arg_vals_outer_refs.has(name.name)) {
             return false
           }
@@ -3520,11 +3520,11 @@ class AST_Call extends AST_Node {
       var len = fn.body.length
       for (var i = 0; i < len; i++) {
         var stat = fn.body[i]
-        if (!(stat instanceof AST_Var)) continue
+        if (!(stat?.isAst?.('AST_Var'))) continue
         if (!safe_to_inject) return false
         for (var j = stat.definitions.length; --j >= 0;) {
           var name = stat.definitions[j].name
-          if (name instanceof AST_Destructuring ||
+          if (name?.isAst?.('AST_Destructuring') ||
                       block_scoped.has(name.name) ||
                       identifier_atom.has(name.name) ||
                       scope.var_names().has(name.name)) {
@@ -3547,19 +3547,19 @@ class AST_Call extends AST_Node {
             block_scoped.add(variable.name)
           })
         }
-        if (scope instanceof AST_Catch) {
+        if (scope?.isAst?.('AST_Catch')) {
           // TODO can we delete? AST_Catch is a block scope.
           if (scope.argname) {
             block_scoped.add(scope.argname.name)
           }
-        } else if (scope instanceof AST_IterationStatement) {
+        } else if (scope?.isAst?.('AST_IterationStatement')) {
           in_loop = []
-        } else if (scope instanceof AST_SymbolRef) {
-          if (scope.fixed_value() instanceof AST_Scope) return false
+        } else if (scope?.isAst?.('AST_SymbolRef')) {
+          if (scope.fixed_value()?.isAst?.('AST_Scope')) return false
         }
-      } while (!(scope instanceof AST_Scope))
+      } while (!(scope?.isAst?.('AST_Scope')))
 
-      var safe_to_inject = !(scope instanceof AST_Toplevel) || compressor.toplevel.vars
+      var safe_to_inject = !(scope?.isAst?.('AST_Toplevel')) || compressor.toplevel.vars
       var inline = compressor.option('inline')
       if (!can_inject_vars(block_scoped, inline >= 3 && safe_to_inject)) return false
       if (!can_inject_args(block_scoped, inline >= 2 && safe_to_inject)) return false
@@ -3614,7 +3614,7 @@ class AST_Call extends AST_Node {
       var pos = expressions.length
       for (var i = 0, lines = fn.body.length; i < lines; i++) {
         var stat = fn.body[i]
-        if (!(stat instanceof AST_Var)) continue
+        if (!(stat?.isAst?.('AST_Var'))) continue
         for (var j = 0, defs = stat.definitions.length; j < defs; j++) {
           var var_def = stat.definitions[j]
           var name = var_def.name
@@ -3678,7 +3678,7 @@ class AST_Call extends AST_Node {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
-    return !(this.expression instanceof AST_Lambda) ||
+    return !(this.expression?.isAst?.('AST_Lambda')) ||
           anyMayThrow(this.expression.body, compressor)
   }
 
@@ -3693,9 +3693,9 @@ class AST_Call extends AST_Node {
 
   _eval (compressor: any, depth) {
     var exp = this.expression
-    if (compressor.option('unsafe') && exp instanceof AST_PropAccess) {
+    if (compressor.option('unsafe') && exp?.isAst?.('AST_PropAccess')) {
       var key = exp.property
-      if (key instanceof AST_Node) {
+      if (key?.isAst?.('AST_Node')) {
         key = key._eval?.(compressor, depth)
         if (key === exp.property) return this
       }
@@ -3707,7 +3707,7 @@ class AST_Call extends AST_Node {
                   key === 'call' &&
                   (this.args[0] && this.args[0].evaluate(compressor))
 
-        first_arg = first_arg instanceof AST_Dot ? first_arg.expression : first_arg
+        first_arg = first_arg?.isAst?.('AST_Dot') ? first_arg.expression : first_arg
 
         if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
           return this.clone()
@@ -3754,7 +3754,7 @@ class AST_Call extends AST_Node {
       }
       if (is_undeclared_ref(expr) && global_pure_fns.has(expr.name)) return true
       let static_fn
-      if (expr instanceof AST_Dot &&
+      if (expr?.isAst?.('AST_Dot') &&
               is_undeclared_ref(expr.expression) &&
               (static_fn = static_fns.get(expr.expression.name)) &&
               static_fn.has(expr.property)) {
@@ -3804,15 +3804,15 @@ class AST_Call extends AST_Node {
 
   needs_parens (output: any) {
     var p = output.parent(); var p1
-    if (p instanceof AST_New && p.expression === this ||
-            p instanceof AST_Export && p.is_default && this.expression instanceof AST_Function) { return true }
+    if (p?.isAst?.('AST_New') && p.expression === this ||
+            p?.isAst?.('AST_Export') && p.is_default && this.expression?.isAst?.('AST_Function')) { return true }
 
     // workaround for Safari bug.
     // https://bugs.webkit.org/show_bug.cgi?id=123506
-    return this.expression instanceof AST_Function &&
-            p instanceof AST_PropAccess &&
+    return this.expression?.isAst?.('AST_Function') &&
+            p?.isAst?.('AST_PropAccess') &&
             p.expression === this &&
-            (p1 = output.parent(1)) instanceof AST_Assign &&
+            (p1 = output.parent(1))?.isAst?.('AST_Assign') &&
             p1.left === p
   }
 
@@ -3860,8 +3860,8 @@ class AST_New extends AST_Call {
   needs_parens (output: any) {
     var p = output.parent()
     if (this.args.length === 0 &&
-            (p instanceof AST_PropAccess || // (new Date).getTime(), (new Date)["getTime"]()
-                p instanceof AST_Call && p.expression === this)) // (new foo)(bar)
+            (p?.isAst?.('AST_PropAccess') || // (new Date).getTime(), (new Date)["getTime"]()
+                p?.isAst?.('AST_Call') && p.expression === this)) // (new foo)(bar)
     { return true }
     return undefined
   }
@@ -3893,7 +3893,7 @@ class AST_Unary extends AST_Node {
       }
       return this
     }
-    if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) return null
+    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) return null
     var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (first_in_statement && expression && is_iife_call(expression)) {
       if (expression === this.expression && this.operator == '!') return this
@@ -3903,7 +3903,7 @@ class AST_Unary extends AST_Node {
   }
 
   may_throw (compressor: any) {
-    if (this.operator == 'typeof' && this.expression instanceof AST_SymbolRef) { return false }
+    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) { return false }
     return this.expression.may_throw(compressor)
   }
 
@@ -3924,7 +3924,7 @@ class AST_Unary extends AST_Node {
     var node = this
     if (node.operator !== '++' && node.operator !== '--') return
     var exp = node.expression
-    if (!(exp instanceof AST_SymbolRef)) return
+    if (!(exp?.isAst?.('AST_SymbolRef'))) return
     var def = exp.definition?.()
     var safe = safe_to_assign(tw, def, exp.scope, true)
     def.assignments++
@@ -3938,7 +3938,7 @@ class AST_Unary extends AST_Node {
         operator: node.operator.slice(0, -1),
         left: make_node('AST_UnaryPrefix', node, {
           operator: '+',
-          expression: fixed instanceof AST_Node ? fixed : fixed()
+          expression: fixed?.isAst?.('AST_Node') ? fixed : fixed()
         }),
         right: make_node('AST_Number', node, {
           value: 1
@@ -3951,7 +3951,7 @@ class AST_Unary extends AST_Node {
 
   lift_sequences (compressor: any) {
     if (compressor.option('sequences')) {
-      if (this.expression instanceof AST_Sequence) {
+      if (this.expression?.isAst?.('AST_Sequence')) {
         var x = this.expression.expressions.slice()
         var e = this.clone()
         e.expression = x.pop()
@@ -3987,18 +3987,18 @@ class AST_Unary extends AST_Node {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,
-      prefix: this instanceof AST_UnaryPrefix,
+      prefix: this?.isAst?.('AST_UnaryPrefix'),
       argument: to_moz(this.expression)
     }
   }
 
   needs_parens (output: any) {
     var p = output.parent()
-    return p instanceof AST_PropAccess && p.expression === this ||
-            p instanceof AST_Call && p.expression === this ||
-            p instanceof AST_Binary &&
+    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
+            p?.isAst?.('AST_Call') && p.expression === this ||
+            p?.isAst?.('AST_Binary') &&
                 p.operator === '**' &&
-                this instanceof AST_UnaryPrefix &&
+                this?.isAst?.('AST_UnaryPrefix') &&
                 p.left === this &&
                 this.operator !== '++' &&
                 this.operator !== '--'
@@ -4022,10 +4022,10 @@ class AST_UnaryPrefix extends AST_Unary {
   _optimize (self, compressor) {
     var e = self.expression
     if (self.operator == 'delete' &&
-          !(e instanceof AST_SymbolRef ||
-              e instanceof AST_PropAccess ||
+          !(e?.isAst?.('AST_SymbolRef') ||
+              e?.isAst?.('AST_PropAccess') ||
               is_identifier_atom(e))) {
-      if (e instanceof AST_Sequence) {
+      if (e?.isAst?.('AST_Sequence')) {
         const exprs = e.expressions.slice()
         exprs.push(make_node('AST_True', self))
         return make_sequence(self, exprs).optimize(compressor)
@@ -4048,11 +4048,11 @@ class AST_UnaryPrefix extends AST_Unary {
     if (compressor.in_boolean_context()) {
       switch (self.operator) {
         case '!':
-          if (e instanceof AST_UnaryPrefix && e.operator == '!') {
+          if (e?.isAst?.('AST_UnaryPrefix') && e.operator == '!') {
             // !!foo ==> foo, if we're in boolean context
             return e.expression
           }
-          if (e instanceof AST_Binary) {
+          if (e?.isAst?.('AST_Binary')) {
             self = best_of(compressor, self, e.negate(compressor, first_in_statement(compressor)))
           }
           break
@@ -4060,16 +4060,16 @@ class AST_UnaryPrefix extends AST_Unary {
           // typeof always returns a non-empty string, thus it's
           // always true in booleans
           compressor.warn('Boolean expression always true [{file}:{line},{col}]', self.start)
-          return (e instanceof AST_SymbolRef ? make_node('AST_True', self) : make_sequence(self, [
+          return (e?.isAst?.('AST_SymbolRef') ? make_node('AST_True', self) : make_sequence(self, [
             e,
             make_node('AST_True', self)
           ])).optimize(compressor)
       }
     }
-    if (self.operator == '-' && e instanceof AST_Infinity) {
+    if (self.operator == '-' && e?.isAst?.('AST_Infinity')) {
       e = e.transform(compressor)
     }
-    if (e instanceof AST_Binary &&
+    if (e?.isAst?.('AST_Binary') &&
           (self.operator == '+' || self.operator == '-') &&
           (e.operator == '*' || e.operator == '/' || e.operator == '%')) {
       return make_node('AST_Binary', self, {
@@ -4083,7 +4083,7 @@ class AST_UnaryPrefix extends AST_Unary {
     }
     // avoids infinite recursion of numerals
     if (self.operator != '-' ||
-          !(e instanceof AST_Number || e instanceof AST_Infinity || e instanceof AST_BigInt)) {
+          !(e?.isAst?.('AST_Number') || e?.isAst?.('AST_Infinity') || e?.isAst?.('AST_BigInt'))) {
       var ev = self.evaluate(compressor)
       if (ev !== self) {
         ev = make_node_from_constant(ev, self).optimize(compressor)
@@ -4099,9 +4099,9 @@ class AST_UnaryPrefix extends AST_Unary {
     // incorrectly return 'object'. Hence making is a special case.
     if (compressor.option('typeofs') &&
           this.operator == 'typeof' &&
-          (e instanceof AST_Lambda ||
-              e instanceof AST_SymbolRef &&
-                  e.fixed_value() instanceof AST_Lambda)) {
+          (e?.isAst?.('AST_Lambda') ||
+              e?.isAst?.('AST_SymbolRef') &&
+                  e.fixed_value()?.isAst?.('AST_Lambda'))) {
       return typeof function () {}
     }
     if (!non_converting_unary.has(this.operator)) depth++
@@ -4144,7 +4144,7 @@ class AST_UnaryPrefix extends AST_Unary {
     output.print(op)
     if (/^[a-z]/i.test(op) ||
             (/[+-]$/.test(op) &&
-                self.expression instanceof AST_UnaryPrefix &&
+                self.expression?.isAst?.('AST_UnaryPrefix') &&
                 /^[+-]/.test(self.expression.operator))) {
       output.space()
     }
@@ -4209,7 +4209,7 @@ class AST_Binary extends AST_Node {
         // left side might have could not influence the
         // result.  hence, force switch.
 
-        if (!(self.left instanceof AST_Binary &&
+        if (!(self.left?.isAst?.('AST_Binary') &&
                     PRECEDENCE[self.left.operator] >= PRECEDENCE[self.operator])) {
           reverse()
         }
@@ -4236,20 +4236,20 @@ class AST_Binary extends AST_Node {
             self.left = make_node('AST_Null', self.left)
           } else if (compressor.option('typeofs') &&
               // "undefined" == typeof x => undefined === x
-              self.left instanceof AST_String &&
+              self.left?.isAst?.('AST_String') &&
               self.left.value == 'undefined' &&
-              self.right instanceof AST_UnaryPrefix &&
+              self.right?.isAst?.('AST_UnaryPrefix') &&
               self.right.operator == 'typeof') {
             var expr = self.right.expression
-            if (expr instanceof AST_SymbolRef ? expr.is_declared(compressor)
-              : !(expr instanceof AST_PropAccess && compressor.option('ie8'))) {
+            if (expr?.isAst?.('AST_SymbolRef') ? expr.is_declared(compressor)
+              : !(expr?.isAst?.('AST_PropAccess') && compressor.option('ie8'))) {
               self.right = expr
               self.left = make_node('AST_Undefined', self.left).optimize(compressor)
               if (self.operator.length == 2) self.operator += '='
             }
-          } else if (self.left instanceof AST_SymbolRef &&
+          } else if (self.left?.isAst?.('AST_SymbolRef') &&
               // obj !== obj => false
-              self.right instanceof AST_SymbolRef &&
+              self.right?.isAst?.('AST_SymbolRef') &&
               self.left.definition?.() === self.right.definition?.() &&
               is_object(self.left.fixed_value())) {
             return make_node(self.operator[0] == '=' ? 'AST_True' : 'AST_False', self)
@@ -4261,12 +4261,12 @@ class AST_Binary extends AST_Node {
           if (lhs.operator == self.operator) {
             lhs = lhs.right
           }
-          if (lhs instanceof AST_Binary &&
+          if (lhs?.isAst?.('AST_Binary') &&
               lhs.operator == (self.operator == '&&' ? '!==' : '===') &&
-              self.right instanceof AST_Binary &&
+              self.right?.isAst?.('AST_Binary') &&
               lhs.operator == self.right.operator &&
-              (is_undefined(lhs.left, compressor) && self.right.left instanceof AST_Null ||
-                  lhs.left instanceof AST_Null && is_undefined(self.right.left, compressor)) &&
+              (is_undefined(lhs.left, compressor) && self.right.left?.isAst?.('AST_Null') ||
+                  lhs.left?.isAst?.('AST_Null') && is_undefined(self.right.left, compressor)) &&
               !lhs.right.has_side_effects(compressor) &&
               lhs.right.equivalent_to(self.right.right)) {
             var combined = make_node('AST_Binary', self, {
@@ -4305,8 +4305,8 @@ class AST_Binary extends AST_Node {
       }
     }
     if (compressor.option('comparisons') && self.is_boolean()) {
-      if (!(compressor.parent() instanceof AST_Binary) ||
-              compressor.parent() instanceof AST_Assign) {
+      if (!(compressor.parent()?.isAst?.('AST_Binary')) ||
+              compressor.parent()?.isAst?.('AST_Assign')) {
         var negated = make_node('AST_UnaryPrefix', self, {
           operator: '!',
           expression: self.negate(compressor, first_in_statement(compressor))
@@ -4321,19 +4321,19 @@ class AST_Binary extends AST_Node {
       }
     }
     if (self.operator == '+') {
-      if (self.right instanceof AST_String &&
+      if (self.right?.isAst?.('AST_String') &&
               self.right.getValue() == '' &&
               self.left.is_string(compressor)) {
         return self.left
       }
-      if (self.left instanceof AST_String &&
+      if (self.left?.isAst?.('AST_String') &&
               self.left.getValue() == '' &&
               self.right.is_string(compressor)) {
         return self.right
       }
-      if (self.left instanceof AST_Binary &&
+      if (self.left?.isAst?.('AST_Binary') &&
               self.left.operator == '+' &&
-              self.left.left instanceof AST_String &&
+              self.left.left?.isAst?.('AST_String') &&
               self.left.left.getValue() == '' &&
               self.right.is_string(compressor)) {
         self.left = self.left.right
@@ -4351,7 +4351,7 @@ class AST_Binary extends AST_Node {
           if (!ll) {
             compressor.warn('Condition left of && always false [{file}:{line},{col}]', self.start)
             return maintain_this_binding(compressor.parent(), compressor.self(), self.left).optimize(compressor)
-          } else if (!(ll instanceof AST_Node)) {
+          } else if (!(ll?.isAst?.('AST_Node'))) {
             compressor.warn('Condition left of && always true [{file}:{line},{col}]', self.start)
             return make_sequence(self, [self.left, self.right]).optimize(compressor)
           }
@@ -4366,7 +4366,7 @@ class AST_Binary extends AST_Node {
             } else {
               set_flag(self, FALSY)
             }
-          } else if (!(rr instanceof AST_Node)) {
+          } else if (!(rr?.isAst?.('AST_Node'))) {
             var parent = compressor.parent()
             if (parent.operator == '&&' && parent.left === compressor.self() || compressor.in_boolean_context()) {
               compressor.warn('Dropping side-effect-free && [{file}:{line},{col}]', self.start)
@@ -4394,7 +4394,7 @@ class AST_Binary extends AST_Node {
           if (!ll) {
             compressor.warn('Condition left of || always false [{file}:{line},{col}]', self.start)
             return make_sequence(self, [self.left, self.right]).optimize(compressor)
-          } else if (!(ll instanceof AST_Node)) {
+          } else if (!(ll?.isAst?.('AST_Node'))) {
             compressor.warn('Condition left of || always true [{file}:{line},{col}]', self.start)
             return maintain_this_binding(compressor.parent(), compressor.self(), self.left).optimize(compressor)
           }
@@ -4405,7 +4405,7 @@ class AST_Binary extends AST_Node {
               compressor.warn('Dropping side-effect-free || [{file}:{line},{col}]', self.start)
               return self.left.optimize(compressor)
             }
-          } else if (!(rr instanceof AST_Node)) {
+          } else if (!(rr?.isAst?.('AST_Node'))) {
             if (compressor.in_boolean_context()) {
               compressor.warn('Boolean || always true [{file}:{line},{col}]', self.start)
               return make_sequence(self, [
@@ -4418,7 +4418,7 @@ class AST_Binary extends AST_Node {
           }
           if (self.left.operator == '&&') {
             var lr = self.left.right.evaluate(compressor)
-            if (lr && !(lr instanceof AST_Node)) {
+            if (lr && !(lr?.isAst?.('AST_Node'))) {
               return make_node('AST_Conditional', self, {
                 condition: self.left.left,
                 consequent: self.left.right,
@@ -4433,14 +4433,14 @@ class AST_Binary extends AST_Node {
           }
 
           var ll = self.left.evaluate(compressor)
-          if (!(ll instanceof AST_Node)) {
+          if (!(ll?.isAst?.('AST_Node'))) {
             // if we know the value for sure we can simply compute right away.
             return ll == null ? self.right : self.left
           }
 
           if (compressor.in_boolean_context()) {
             const rr = self.right.evaluate(compressor)
-            if (!(rr instanceof AST_Node) && !rr) {
+            if (!(rr?.isAst?.('AST_Node')) && !rr) {
               return self.left
             }
           }
@@ -4449,8 +4449,8 @@ class AST_Binary extends AST_Node {
       switch (self.operator) {
         case '+':
           // "foo" + ("bar" + x) => "foobar" + x
-          if (self.left instanceof AST_Constant &&
-                  self.right instanceof AST_Binary &&
+          if (self.left?.isAst?.('AST_Constant') &&
+                  self.right?.isAst?.('AST_Binary') &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -4468,8 +4468,8 @@ class AST_Binary extends AST_Node {
             }
           }
           // (x + "foo") + "bar" => x + "foobar"
-          if (self.right instanceof AST_Constant &&
-                  self.left instanceof AST_Binary &&
+          if (self.right?.isAst?.('AST_Constant') &&
+                  self.left?.isAst?.('AST_Binary') &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -4487,10 +4487,10 @@ class AST_Binary extends AST_Node {
             }
           }
           // (x + "foo") + ("bar" + y) => (x + "foobar") + y
-          if (self.left instanceof AST_Binary &&
+          if (self.left?.isAst?.('AST_Binary') &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor) &&
-                  self.right instanceof AST_Binary &&
+                  self.right?.isAst?.('AST_Binary') &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -4512,7 +4512,7 @@ class AST_Binary extends AST_Node {
             }
           }
           // a + -b => a - b
-          if (self.right instanceof AST_UnaryPrefix &&
+          if (self.right?.isAst?.('AST_UnaryPrefix') &&
                   self.right.operator == '-' &&
                   self.left.is_number(compressor)) {
             self = make_node('AST_Binary', self, {
@@ -4523,7 +4523,7 @@ class AST_Binary extends AST_Node {
             break
           }
           // -a + b => b - a
-          if (self.left instanceof AST_UnaryPrefix &&
+          if (self.left?.isAst?.('AST_UnaryPrefix') &&
                   self.left.operator == '-' &&
                   reversible() &&
                   self.right.is_number(compressor)) {
@@ -4535,7 +4535,7 @@ class AST_Binary extends AST_Node {
             break
           }
           // `foo${bar}baz` + 1 => `foo${bar}baz1`
-          if (self.left instanceof AST_TemplateString) {
+          if (self.left?.isAst?.('AST_TemplateString')) {
             var l = self.left
             var r = self.right.evaluate(compressor)
             if (r != self.right) {
@@ -4544,7 +4544,7 @@ class AST_Binary extends AST_Node {
             }
           }
           // 1 + `foo${bar}baz` => `1foo${bar}baz`
-          if (self.right instanceof AST_TemplateString) {
+          if (self.right?.isAst?.('AST_TemplateString')) {
             var r = self.right
             var l = self.left.evaluate(compressor)
             if (l != self.left) {
@@ -4553,8 +4553,8 @@ class AST_Binary extends AST_Node {
             }
           }
           // `1${bar}2` + `foo${bar}baz` => `1${bar}2foo${bar}baz`
-          if (self.left instanceof AST_TemplateString &&
-                  self.right instanceof AST_TemplateString) {
+          if (self.left?.isAst?.('AST_TemplateString') &&
+                  self.right?.isAst?.('AST_TemplateString')) {
             var l = self.left
             var segments = l.segments
             var r = self.right
@@ -4573,7 +4573,7 @@ class AST_Binary extends AST_Node {
           if (self.left.is_number(compressor) &&
                   self.right.is_number(compressor) &&
                   reversible() &&
-                  !(self.left instanceof AST_Binary &&
+                  !(self.left?.isAst?.('AST_Binary') &&
                       self.left.operator != self.operator &&
                       PRECEDENCE[self.left.operator] >= PRECEDENCE[self.operator])) {
             var reversed = make_node('AST_Binary', self, {
@@ -4581,8 +4581,8 @@ class AST_Binary extends AST_Node {
               left: self.right,
               right: self.left
             })
-            if (self.right instanceof AST_Constant &&
-                      !(self.left instanceof AST_Constant)) {
+            if (self.right?.isAst?.('AST_Constant') &&
+                      !(self.left?.isAst?.('AST_Constant'))) {
               self = best_of(compressor, reversed, self)
             } else {
               self = best_of(compressor, self, reversed)
@@ -4590,7 +4590,7 @@ class AST_Binary extends AST_Node {
           }
           if (associative && self.is_number(compressor)) {
             // a + (b + c) => (a + b) + c
-            if (self.right instanceof AST_Binary &&
+            if (self.right?.isAst?.('AST_Binary') &&
                       self.right.operator == self.operator) {
               self = make_node('AST_Binary', self, {
                 operator: self.operator,
@@ -4606,10 +4606,10 @@ class AST_Binary extends AST_Node {
             }
             // (n + 2) + 3 => 5 + n
             // (2 * n) * 3 => 6 + n
-            if (self.right instanceof AST_Constant &&
-                      self.left instanceof AST_Binary &&
+            if (self.right?.isAst?.('AST_Constant') &&
+                      self.left?.isAst?.('AST_Binary') &&
                       self.left.operator == self.operator) {
-              if (self.left.left instanceof AST_Constant) {
+              if (self.left.left?.isAst?.('AST_Constant')) {
                 self = make_node('AST_Binary', self, {
                   operator: self.operator,
                   left: make_node('AST_Binary', self.left, {
@@ -4621,7 +4621,7 @@ class AST_Binary extends AST_Node {
                   }),
                   right: self.left.right
                 })
-              } else if (self.left.right instanceof AST_Constant) {
+              } else if (self.left.right?.isAst?.('AST_Constant')) {
                 self = make_node('AST_Binary', self, {
                   operator: self.operator,
                   left: make_node('AST_Binary', self.left, {
@@ -4636,12 +4636,12 @@ class AST_Binary extends AST_Node {
               }
             }
             // (a | 1) | (2 | d) => (3 | a) | b
-            if (self.left instanceof AST_Binary &&
+            if (self.left?.isAst?.('AST_Binary') &&
                       self.left.operator == self.operator &&
-                      self.left.right instanceof AST_Constant &&
-                      self.right instanceof AST_Binary &&
+                      self.left.right?.isAst?.('AST_Constant') &&
+                      self.right?.isAst?.('AST_Binary') &&
                       self.right.operator == self.operator &&
-                      self.right.left instanceof AST_Constant) {
+                      self.right.left?.isAst?.('AST_Constant')) {
               self = make_node('AST_Binary', self, {
                 operator: self.operator,
                 left: make_node('AST_Binary', self.left, {
@@ -4665,7 +4665,7 @@ class AST_Binary extends AST_Node {
     // x || (y || z)  ==>  x || y || z
     // x + ("y" + z)  ==>  x + "y" + z
     // "x" + (y + "z")==>  "x" + y + "z"
-    if (self.right instanceof AST_Binary &&
+    if (self.right?.isAst?.('AST_Binary') &&
           self.right.operator == self.operator &&
           (lazy_op.has(self.operator) ||
               (self.operator == '+' &&
@@ -4826,15 +4826,15 @@ class AST_Binary extends AST_Node {
 
   lift_sequences (compressor: any) {
     if (compressor.option('sequences')) {
-      if (this.left instanceof AST_Sequence) {
+      if (this.left?.isAst?.('AST_Sequence')) {
         var x = this.left.expressions.slice()
         var e = this.clone()
         e.left = x.pop()
         x.push(e)
         return make_sequence(this, x).optimize(compressor)
       }
-      if (this.right instanceof AST_Sequence && !this.left.has_side_effects(compressor)) {
-        var assign = this.operator == '=' && this.left instanceof AST_SymbolRef
+      if (this.right?.isAst?.('AST_Sequence') && !this.left.has_side_effects(compressor)) {
+        var assign = this.operator == '=' && this.left?.isAst?.('AST_SymbolRef')
         var x = this.right.expressions
         var last = x.length - 1
         for (var i = 0; i < last; i++) {
@@ -4878,7 +4878,7 @@ class AST_Binary extends AST_Node {
 
     if (
       (this.operator === '+' || this.operator === '-') &&
-            this.right instanceof AST_Unary && this.right.operator === this.operator
+            this.right?.isAst?.('AST_Unary') && this.right.operator === this.operator
     ) {
       // 1+ +a > needs space between the +
       size += 1
@@ -4920,13 +4920,13 @@ class AST_Binary extends AST_Node {
   needs_parens (output: any) {
     var p = output.parent()
     // (foo && bar)()
-    if (p instanceof AST_Call && p.expression === this) { return true }
+    if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
     // typeof (foo && bar)
-    if (p instanceof AST_Unary) { return true }
+    if (p?.isAst?.('AST_Unary')) { return true }
     // (foo && bar)["prop"], (foo && bar).prop
     if (p?._needs_parens(this)) { return true }
     // this deals with precedence: 3 * (2 + 1)
-    if (p instanceof AST_Binary) {
+    if (p?.isAst?.('AST_Binary')) {
       const po = p.operator
       const so = this.operator
 
@@ -4949,7 +4949,7 @@ class AST_Binary extends AST_Node {
     var op = self.operator
     self.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */
-            self.left instanceof AST_UnaryPostfix &&
+            self.left?.isAst?.('AST_UnaryPostfix') &&
             self.left.operator == '--') {
       // space is mandatory to avoid outputting -->
       output.print(' ')
@@ -4959,9 +4959,9 @@ class AST_Binary extends AST_Node {
     }
     output.print(op)
     if ((op == '<' || op == '<<') &&
-            self.right instanceof AST_UnaryPrefix &&
+            self.right?.isAst?.('AST_UnaryPrefix') &&
             self.right.operator == '!' &&
-            self.right.expression instanceof AST_UnaryPrefix &&
+            self.right.expression?.isAst?.('AST_UnaryPrefix') &&
             self.right.expression.operator == '--') {
       // space is mandatory to avoid outputting <!--
       output.print(' ')
@@ -4996,7 +4996,7 @@ class AST_Conditional extends AST_Node {
   _optimize (self, compressor) {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
-    if (self.condition instanceof AST_Sequence) {
+    if (self.condition?.isAst?.('AST_Sequence')) {
       var expressions = self.condition.expressions.slice()
       self.condition = expressions.pop()
       expressions.push(self)
@@ -5024,8 +5024,8 @@ class AST_Conditional extends AST_Node {
     var consequent = self.consequent
     var alternative = self.alternative
     // x?x:y --> x||y
-    if (condition instanceof AST_SymbolRef &&
-          consequent instanceof AST_SymbolRef &&
+    if (condition?.isAst?.('AST_SymbolRef') &&
+          consequent?.isAst?.('AST_SymbolRef') &&
           condition.definition?.() === consequent.definition?.()) {
       return make_node('AST_Binary', self, {
         operator: '||',
@@ -5037,8 +5037,8 @@ class AST_Conditional extends AST_Node {
     //                   |
     //                   v
     // exp = foo ? something : something_else;
-    if (consequent instanceof AST_Assign &&
-          alternative instanceof AST_Assign &&
+    if (consequent?.isAst?.('AST_Assign') &&
+          alternative?.isAst?.('AST_Assign') &&
           consequent.operator == alternative.operator &&
           consequent.left.equivalent_to(alternative.left) &&
           (!self.condition.has_side_effects(compressor) ||
@@ -5056,7 +5056,7 @@ class AST_Conditional extends AST_Node {
     }
     // x ? y(a) : y(b) --> y(x ? a : b)
     var arg_index
-    if (consequent instanceof AST_Call &&
+    if (consequent?.isAst?.('AST_Call') &&
           alternative.TYPE === consequent.TYPE &&
           consequent.args.length > 0 &&
           consequent.args.length == alternative.args.length &&
@@ -5073,7 +5073,7 @@ class AST_Conditional extends AST_Node {
       return node
     }
     // a ? b : c ? b : d --> (a || c) ? b : d
-    if (alternative instanceof AST_Conditional &&
+    if (alternative?.isAst?.('AST_Conditional') &&
           consequent.equivalent_to(alternative.consequent)) {
       return make_node('AST_Conditional', self, {
         condition: make_node('AST_Binary', self, {
@@ -5099,7 +5099,7 @@ class AST_Conditional extends AST_Node {
     }
 
     // a ? b : (c, b) --> (a || c), b
-    if (alternative instanceof AST_Sequence &&
+    if (alternative?.isAst?.('AST_Sequence') &&
           consequent.equivalent_to(alternative.expressions[alternative.expressions.length - 1])) {
       return make_sequence(self, [
         make_node('AST_Binary', self, {
@@ -5111,7 +5111,7 @@ class AST_Conditional extends AST_Node {
       ]).optimize(compressor)
     }
     // a ? b : (c && b) --> (a || c) && b
-    if (alternative instanceof AST_Binary &&
+    if (alternative?.isAst?.('AST_Binary') &&
           alternative.operator == '&&' &&
           consequent.equivalent_to(alternative.right)) {
       return make_node('AST_Binary', self, {
@@ -5125,7 +5125,7 @@ class AST_Conditional extends AST_Node {
       }).optimize(compressor)
     }
     // x?y?z:a:a --> x&&y?z:a
-    if (consequent instanceof AST_Conditional &&
+    if (consequent?.isAst?.('AST_Conditional') &&
           consequent.alternative.equivalent_to(alternative)) {
       return make_node('AST_Conditional', self, {
         condition: make_node('AST_Binary', self, {
@@ -5145,7 +5145,7 @@ class AST_Conditional extends AST_Node {
       ]).optimize(compressor)
     }
     // x ? y || z : z --> x && y || z
-    if (consequent instanceof AST_Binary &&
+    if (consequent?.isAst?.('AST_Binary') &&
           consequent.operator == '||' &&
           consequent.right.equivalent_to(alternative)) {
       return make_node('AST_Binary', self, {
@@ -5213,24 +5213,24 @@ class AST_Conditional extends AST_Node {
 
     // AST_True or !0
     function is_true (node: any) {
-      return node instanceof AST_True ||
+      return node?.isAst?.('AST_True') ||
               in_bool &&
-                  node instanceof AST_Constant &&
+                  node?.isAst?.('AST_Constant') &&
                   node.getValue() ||
-              (node instanceof AST_UnaryPrefix &&
+              (node?.isAst?.('AST_UnaryPrefix') &&
                   node.operator == '!' &&
-                  node.expression instanceof AST_Constant &&
+                  node.expression?.isAst?.('AST_Constant') &&
                   !node.expression.getValue())
     }
     // AST_False or !1
     function is_false (node: any) {
-      return node instanceof AST_False ||
+      return node?.isAst?.('AST_False') ||
               in_bool &&
-                  node instanceof AST_Constant &&
+                  node?.isAst?.('AST_Constant') &&
                   !node.getValue() ||
-              (node instanceof AST_UnaryPrefix &&
+              (node?.isAst?.('AST_UnaryPrefix') &&
                   node.operator == '!' &&
-                  node.expression instanceof AST_Constant &&
+                  node.expression?.isAst?.('AST_Constant') &&
                   node.expression.getValue())
     }
 
@@ -5238,11 +5238,11 @@ class AST_Conditional extends AST_Node {
       var a = consequent.args
       var b = alternative.args
       for (var i = 0, len = a.length; i < len; i++) {
-        if (a[i] instanceof AST_Expansion) return
+        if (a[i]?.isAst?.('AST_Expansion')) return
         if (!a[i].equivalent_to(b[i])) {
-          if (b[i] instanceof AST_Expansion) return
+          if (b[i]?.isAst?.('AST_Expansion')) return
           for (var j = i + 1; j < len; j++) {
-            if (a[j] instanceof AST_Expansion) return
+            if (a[j]?.isAst?.('AST_Expansion')) return
             if (!a[j].equivalent_to(b[j])) return
           }
           return i
@@ -5393,13 +5393,13 @@ class AST_Assign extends AST_Binary {
   _optimize (self, compressor) {
     var def
     if (compressor.option('dead_code') &&
-          self.left instanceof AST_SymbolRef &&
+          self.left?.isAst?.('AST_SymbolRef') &&
           (def = self.left.definition?.()).scope === compressor.find_parent(AST_Lambda)) {
       var level = 0; var node; var parent = self
       do {
         node = parent
         parent = compressor.parent(level++)
-        if (parent instanceof AST_Exit) {
+        if (parent?.isAst?.('AST_Exit')) {
           if (in_try(level, parent)) break
           if (is_reachable(def.scope, [def])) break
           if (self.operator == '=') return self.right
@@ -5410,19 +5410,19 @@ class AST_Assign extends AST_Binary {
             right: self.right
           }).optimize(compressor)
         }
-      } while (parent instanceof AST_Binary && parent.right === node ||
-              parent instanceof AST_Sequence && parent.tail_node() === node)
+      } while (parent?.isAst?.('AST_Binary') && parent.right === node ||
+              parent?.isAst?.('AST_Sequence') && parent.tail_node() === node)
     }
     self = self.lift_sequences(compressor)
-    if (self.operator == '=' && self.left instanceof AST_SymbolRef && self.right instanceof AST_Binary) {
+    if (self.operator == '=' && self.left?.isAst?.('AST_SymbolRef') && self.right?.isAst?.('AST_Binary')) {
       // x = expr1 OP expr2
-      if (self.right.left instanceof AST_SymbolRef &&
+      if (self.right.left?.isAst?.('AST_SymbolRef') &&
               self.right.left.name == self.left.name &&
               ASSIGN_OPS.has(self.right.operator)) {
         // x = x - 2  --->  x -= 2
         self.operator = self.right.operator + '='
         self.right = self.right.right
-      } else if (self.right.right instanceof AST_SymbolRef &&
+      } else if (self.right.right?.isAst?.('AST_SymbolRef') &&
               self.right.right.name == self.left.name &&
               ASSIGN_OPS_COMMUTATIVE.has(self.right.operator) &&
               !self.right.left.has_side_effects(compressor)) {
@@ -5441,7 +5441,7 @@ class AST_Assign extends AST_Binary {
       var scope = self.left.definition?.().scope
       var parent
       while ((parent = compressor.parent(level++)) !== scope) {
-        if (parent instanceof AST_Try) {
+        if (parent?.isAst?.('AST_Try')) {
           if (parent.bfinally) return true
           if (may_throw && parent.bcatch) return true
         }
@@ -5453,12 +5453,12 @@ class AST_Assign extends AST_Binary {
     var left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&
-              left instanceof AST_PropAccess &&
+              left?.isAst?.('AST_PropAccess') &&
               left.expression.is_constant()) {
       return this
     }
     set_flag(this, WRITE_ONLY)
-    while (left instanceof AST_PropAccess) {
+    while (left?.isAst?.('AST_PropAccess')) {
       left = left.expression
     }
     if (left.is_constant_expression(compressor.find_parent(AST_Scope))) {
@@ -5471,7 +5471,7 @@ class AST_Assign extends AST_Binary {
     if (this.right.may_throw(compressor)) return true
     if (!compressor.has_directive('use strict') &&
           this.operator == '=' &&
-          this.left instanceof AST_SymbolRef) {
+          this.left?.isAst?.('AST_SymbolRef')) {
       return false
     }
     return this.left.may_throw(compressor)
@@ -5493,12 +5493,12 @@ class AST_Assign extends AST_Binary {
 
   reduce_vars (tw: TreeWalker, descend, compressor: any) {
     var node = this
-    if (node.left instanceof AST_Destructuring) {
+    if (node.left?.isAst?.('AST_Destructuring')) {
       suppress(node.left)
       return
     }
     var sym = node.left
-    if (!(sym instanceof AST_SymbolRef)) return
+    if (!(sym?.isAst?.('AST_SymbolRef'))) return
     var def = sym.definition?.()
     var safe = safe_to_assign(tw, def, sym.scope, node.right)
     def.assignments++
@@ -5515,7 +5515,7 @@ class AST_Assign extends AST_Binary {
     } : function () {
       return make_node('AST_Binary', node, {
         operator: node.operator.slice(0, -1),
-        left: fixed instanceof AST_Node ? fixed : fixed(),
+        left: fixed?.isAst?.('AST_Node') ? fixed : fixed(),
         right: node.right
       })
     }
@@ -5677,7 +5677,7 @@ class AST_Class extends AST_Scope {
   })
 
   _to_mozilla_ast (parent) {
-    var type = this instanceof AST_ClassExpression ? 'ClassExpression' : 'ClassDeclaration'
+    var type = this?.isAst?.('AST_ClassExpression') ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
       superClass: to_moz(this.extends),
@@ -5698,10 +5698,10 @@ class AST_Class extends AST_Scope {
     }
     if (self.extends) {
       var parens = (
-        !(self.extends instanceof AST_SymbolRef) &&
-                !(self.extends instanceof AST_PropAccess) &&
-                !(self.extends instanceof AST_ClassExpression) &&
-                !(self.extends instanceof AST_Function)
+        !(self.extends?.isAst?.('AST_SymbolRef')) &&
+                !(self.extends?.isAst?.('AST_PropAccess')) &&
+                !(self.extends?.isAst?.('AST_ClassExpression')) &&
+                !(self.extends?.isAst?.('AST_Function'))
       )
       output.print('extends')
       if (parens) {
@@ -5801,10 +5801,10 @@ class AST_SymbolRef extends AST_Symbol {
       }
       var fixed = self.fixed_value()
       var single_use: any = def.single_use &&
-              !(parent instanceof AST_Call &&
+              !(parent?.isAst?.('AST_Call') &&
                   (parent.is_expr_pure(compressor)) ||
                       has_annotation(parent, _NOINLINE))
-      if (single_use && (fixed instanceof AST_Lambda || fixed instanceof AST_Class)) {
+      if (single_use && (fixed?.isAst?.('AST_Lambda') || fixed?.isAst?.('AST_Class'))) {
         if (retain_top_func(fixed, compressor)) {
           single_use = false
         } else if (def.scope !== self.scope &&
@@ -5814,28 +5814,28 @@ class AST_SymbolRef extends AST_Symbol {
           single_use = false
         } else if (recursive_ref(compressor, def)) {
           single_use = false
-        } else if (def.scope !== self.scope || def.orig[0] instanceof AST_SymbolFunarg) {
+        } else if (def.scope !== self.scope || def.orig[0]?.isAst?.('AST_SymbolFunarg')) {
           single_use = fixed.is_constant_expression(self.scope)
           if (single_use == 'f') {
             var scope = self.scope
             do {
-              if (scope instanceof AST_Defun || is_func_expr(scope)) {
+              if (scope?.isAst?.('AST_Defun') || is_func_expr(scope)) {
                 set_flag(scope, INLINED)
               }
             } while (scope = scope.parent_scope)
           }
         }
       }
-      if (single_use && fixed instanceof AST_Lambda) {
+      if (single_use && fixed?.isAst?.('AST_Lambda')) {
         const block_scope = find_scope(compressor)
         single_use =
                   def.scope === self.scope &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed) ||
-                  parent instanceof AST_Call &&
+                  parent?.isAst?.('AST_Call') &&
                       parent.expression === self &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed)
       }
-      if (single_use && fixed instanceof AST_Class) {
+      if (single_use && fixed?.isAst?.('AST_Class')) {
         const extends_inert = !fixed.extends ||
                   !fixed.extends.may_throw(compressor) &&
                       !fixed.extends.has_side_effects(compressor)
@@ -5846,40 +5846,40 @@ class AST_SymbolRef extends AST_Symbol {
       }
       const can_pull_in = single_use && fixed
       if (can_pull_in) {
-        if (fixed instanceof AST_DefClass) {
+        if (fixed?.isAst?.('AST_DefClass')) {
           set_flag(fixed, SQUEEZED)
           fixed = make_node('AST_ClassExpression', fixed, fixed)
         }
-        if (fixed instanceof AST_Defun) {
+        if (fixed?.isAst?.('AST_Defun')) {
           set_flag(fixed, SQUEEZED)
           fixed = make_node('AST_Function', fixed, fixed)
         }
-        if (def.recursive_refs > 0 && fixed.name instanceof AST_SymbolDefun) {
+        if (def.recursive_refs > 0 && fixed.name?.isAst?.('AST_SymbolDefun')) {
           const defun_def = fixed.name.definition?.()
           let lambda_def = fixed.variables.get(fixed.name.name)
           let name = lambda_def && lambda_def.orig[0]
-          if (!(name instanceof AST_SymbolLambda)) {
+          if (!(name?.isAst?.('AST_SymbolLambda'))) {
             name = make_node('AST_SymbolLambda', fixed.name, fixed.name)
             name.scope = fixed
             fixed.name = name
             lambda_def = fixed.def_function(name)
           }
           walk(fixed, (node: any) => {
-            if (node instanceof AST_SymbolRef && node.definition?.() === defun_def) {
+            if (node?.isAst?.('AST_SymbolRef') && node.definition?.() === defun_def) {
               node.thedef = lambda_def
               lambda_def.references.push(node)
             }
           })
         }
-        if (fixed instanceof AST_Lambda || fixed instanceof AST_Class) {
+        if (fixed?.isAst?.('AST_Lambda') || fixed?.isAst?.('AST_Class')) {
           find_scope(compressor).add_child_scope(fixed)
         }
         return fixed.optimize(compressor)
       }
       if (fixed && def.should_replace === undefined) {
         let init
-        if (fixed instanceof AST_This) {
-          if (!(def.orig[0] instanceof AST_SymbolFunarg) &&
+        if (fixed?.isAst?.('AST_This')) {
+          if (!(def.orig[0]?.isAst?.('AST_SymbolFunarg')) &&
                       def.references.every((ref) =>
                         def.scope === ref.scope
                       )) {
@@ -5924,7 +5924,7 @@ class AST_SymbolRef extends AST_Symbol {
 
     function has_symbol_ref (value) {
       return walk(value, (node: any) => {
-        if (node instanceof AST_SymbolRef) return walk_abort
+        if (node?.isAst?.('AST_SymbolRef')) return walk_abort
       })
     }
   }
@@ -5977,7 +5977,7 @@ class AST_SymbolRef extends AST_Symbol {
     d.references.push(this)
     if (d.references.length == 1 &&
           !d.fixed &&
-          d.orig[0] instanceof AST_SymbolDefun) {
+          d.orig[0]?.isAst?.('AST_SymbolDefun')) {
           tw.loop_ids?.set(d.id, tw.in_loop)
     }
     var fixed_value
@@ -5986,7 +5986,7 @@ class AST_SymbolRef extends AST_Symbol {
     } else if (d.fixed) {
       fixed_value = this.fixed_value()
       if (
-        fixed_value instanceof AST_Lambda &&
+        fixed_value?.isAst?.('AST_Lambda') &&
               recursive_ref(tw, d)
       ) {
         d.recursive_refs++
@@ -5995,8 +5995,8 @@ class AST_SymbolRef extends AST_Symbol {
               ref_once(tw, compressor, d)
       ) {
         d.single_use =
-                  fixed_value instanceof AST_Lambda && !fixed_value.pinned?.() ||
-                  fixed_value instanceof AST_Class ||
+                  fixed_value?.isAst?.('AST_Lambda') && !fixed_value.pinned?.() ||
+                  fixed_value?.isAst?.('AST_Class') ||
                   d.scope === this.scope && fixed_value.is_constant_expression()
       } else {
         d.single_use = false
@@ -6029,7 +6029,7 @@ class AST_SymbolRef extends AST_Symbol {
 
   is_immutable () {
     var orig = this.definition?.().orig
-    return orig.length == 1 && orig[0] instanceof AST_SymbolLambda
+    return orig.length == 1 && orig[0]?.isAst?.('AST_SymbolLambda')
   }
 
   _size (): number {
@@ -6178,7 +6178,7 @@ class AST_Boolean extends AST_Atom {
     }
     var p = compressor.parent()
     if (compressor.option('booleans_as_integers')) {
-      if (p instanceof AST_Binary && (p.operator == '===' || p.operator == '!==')) {
+      if (p?.isAst?.('AST_Binary') && (p.operator == '===' || p.operator == '!==')) {
         p.operator = p.operator.replace(/=$/, '')
       }
       return make_node('AST_Number', self, {
@@ -6186,7 +6186,7 @@ class AST_Boolean extends AST_Atom {
       })
     }
     if (compressor.option('booleans')) {
-      if (p instanceof AST_Binary && (p.operator == '==' ||
+      if (p?.isAst?.('AST_Binary') && (p.operator == '==' ||
                                           p.operator == '!=')) {
         compressor.warn('Non-strict equality against boolean: {operator} {value} [{file}:{line},{col}]', {
           operator: p.operator,
@@ -6366,7 +6366,7 @@ export {
 /* -----[ tools ]----- */
 
 function redefined_catch_def (def: any) {
-  if (def.orig[0] instanceof AST_SymbolCatch &&
+  if (def.orig[0]?.isAst?.('AST_SymbolCatch') &&
         def.scope.is_block_scope()
   ) {
     return def.scope.get_defun_scope().variables.get(def.name)
@@ -6381,12 +6381,12 @@ const MASK_EXPORT_WANT_MANGLE = 1 << 1
 /* -----[ utils ]----- */
 
 function skip_string (node: any) {
-  if (node instanceof AST_String) {
+  if (node?.isAst?.('AST_String')) {
     base54.consider(node.value, -1)
-  } else if (node instanceof AST_Conditional) {
+  } else if (node?.isAst?.('AST_Conditional')) {
     skip_string(node.consequent)
     skip_string(node.alternative)
-  } else if (node instanceof AST_Sequence) {
+  } else if (node?.isAst?.('AST_Sequence')) {
     skip_string(node.tail_node?.())
   }
 }
@@ -6394,17 +6394,17 @@ function skip_string (node: any) {
 function needsParens (output: any) {
   var p = output.parent()
   // !(a = false) → true
-  if (p instanceof AST_Unary) { return true }
+  if (p?.isAst?.('AST_Unary')) { return true }
   // 1 + (a = 2) + 3 → 6, side effect setting a = 2
-  if (p instanceof AST_Binary && !(p instanceof AST_Assign)) { return true }
+  if (p?.isAst?.('AST_Binary') && !(p?.isAst?.('AST_Assign'))) { return true }
   // (a = func)() —or— new (a = Object)()
-  if (p instanceof AST_Call && p.expression === this) { return true }
+  if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
   // (a = foo) ? bar : baz
-  if (p instanceof AST_Conditional && p.condition === this) { return true }
+  if (p?.isAst?.('AST_Conditional') && p.condition === this) { return true }
   // (a = foo)["prop"] —or— (a = foo).prop
   if (p?._needs_parens(this)) { return true }
   // ({a, b} = {a: 1, b: 2}), a destructuring assignment
-  if (this instanceof AST_Assign && this.left instanceof AST_Destructuring && this.left.is_array === false) { return true }
+  if (this?.isAst?.('AST_Assign') && this.left?.isAst?.('AST_Destructuring') && this.left.is_array === false) { return true }
   return undefined
 }
 
@@ -6465,13 +6465,13 @@ function safe_to_assign (tw, def, scope, value) {
   if (!safe_to_read(tw, def)) return false
   if (def.fixed === false) return false
   if (def.fixed != null && (!value || def.references.length > def.assignments)) return false
-  if (def.fixed instanceof AST_Defun) {
-    return value instanceof AST_Node && def.fixed.parent_scope === scope
+  if (def.fixed?.isAst?.('AST_Defun')) {
+    return value?.isAst?.('AST_Node') && def.fixed.parent_scope === scope
   }
   return def.orig.every((sym) => {
-    return !(sym instanceof AST_SymbolConst ||
-            sym instanceof AST_SymbolDefun ||
-            sym instanceof AST_SymbolLambda)
+    return !(sym?.isAst?.('AST_SymbolConst') ||
+            sym?.isAst?.('AST_SymbolDefun') ||
+            sym?.isAst?.('AST_SymbolLambda'))
   })
 }
 
@@ -6480,12 +6480,12 @@ function safe_to_read (tw, def) {
   if (tw.safe_ids[def.id]) {
     if (def.fixed == null) {
       var orig = def.orig[0]
-      if (orig instanceof AST_SymbolFunarg || orig.name == 'arguments') return false
+      if (orig?.isAst?.('AST_SymbolFunarg') || orig.name == 'arguments') return false
       def.fixed = make_node('AST_Undefined', orig)
     }
     return true
   }
-  return def.fixed instanceof AST_Defun
+  return def.fixed?.isAst?.('AST_Defun')
 }
 
 function ref_once (tw, compressor, def) {
@@ -6498,42 +6498,42 @@ function ref_once (tw, compressor, def) {
 function is_immutable (value) {
   if (!value) return false
   return value.is_constant() ||
-        value instanceof AST_Lambda ||
-        value instanceof AST_This
+        value?.isAst?.('AST_Lambda') ||
+        value?.isAst?.('AST_This')
 }
 
 function mark_escaped (tw, d, scope, node, value, level, depth) {
   var parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
-    if (value instanceof AST_ClassExpression) return
+    if (value?.isAst?.('AST_ClassExpression')) return
   }
-  if (parent instanceof AST_Assign && parent.operator == '=' && node === parent.right ||
-        parent instanceof AST_Call && (node !== parent.expression || parent instanceof AST_New) ||
-        parent instanceof AST_Exit && node === parent.value && node.scope !== d.scope ||
-        parent instanceof AST_VarDef && node === parent.value ||
-        parent instanceof AST_Yield && node === parent.value && node.scope !== d.scope) {
+  if (parent?.isAst?.('AST_Assign') && parent.operator == '=' && node === parent.right ||
+        parent?.isAst?.('AST_Call') && (node !== parent.expression || parent?.isAst?.('AST_New')) ||
+        parent?.isAst?.('AST_Exit') && node === parent.value && node.scope !== d.scope ||
+        parent?.isAst?.('AST_VarDef') && node === parent.value ||
+        parent?.isAst?.('AST_Yield') && node === parent.value && node.scope !== d.scope) {
     if (depth > 1 && !(value && value.is_constant_expression(scope))) depth = 1
     if (!d.escaped || d.escaped > depth) d.escaped = depth
     return
-  } else if (parent instanceof AST_Array ||
-        parent instanceof AST_Await ||
-        parent instanceof AST_Binary && lazy_op.has(parent.operator) ||
-        parent instanceof AST_Conditional && node !== parent.condition ||
-        parent instanceof AST_Expansion ||
-        parent instanceof AST_Sequence && node === parent.tail_node?.()) {
+  } else if (parent?.isAst?.('AST_Array') ||
+        parent?.isAst?.('AST_Await') ||
+        parent?.isAst?.('AST_Binary') && lazy_op.has(parent.operator) ||
+        parent?.isAst?.('AST_Conditional') && node !== parent.condition ||
+        parent?.isAst?.('AST_Expansion') ||
+        parent?.isAst?.('AST_Sequence') && node === parent.tail_node?.()) {
     mark_escaped(tw, d, scope, parent, parent, level + 1, depth)
-  } else if (parent instanceof AST_ObjectKeyVal && node === parent.value) {
+  } else if (parent?.isAst?.('AST_ObjectKeyVal') && node === parent.value) {
     var obj = tw.parent(level + 1)
     mark_escaped(tw, d, scope, obj, obj, level + 2, depth)
-  } else if (parent instanceof AST_PropAccess && node === parent.expression) {
+  } else if (parent?.isAst?.('AST_PropAccess') && node === parent.expression) {
     value = read_property(value, parent.property)
     mark_escaped(tw, d, scope, parent, value, level + 1, depth + 1)
     if (value) return
   }
   if (level > 0) return
-  if (parent instanceof AST_Sequence && node !== parent.tail_node?.()) return
-  if (parent instanceof AST_SimpleStatement) return
+  if (parent?.isAst?.('AST_Sequence') && node !== parent.tail_node?.()) return
+  if (parent?.isAst?.('AST_SimpleStatement')) return
   d.direct_access = true
 }
 
@@ -6548,10 +6548,10 @@ function mark_lambda (tw, descend, compressor) {
   }
   var iife
   if (!this.name &&
-        (iife = tw.parent()) instanceof AST_Call &&
+        (iife = tw.parent())?.isAst?.('AST_Call') &&
         iife.expression === this &&
-        !iife.args.some(arg => arg instanceof AST_Expansion) &&
-        this.argnames.every(arg_name => arg_name instanceof AST_Symbol)
+        !iife.args.some(arg => arg?.isAst?.('AST_Expansion')) &&
+        this.argnames.every(arg_name => arg_name?.isAst?.('AST_Symbol'))
   ) {
     // Virtually turn IIFE parameters into variable definitions:
     //   (function(a,b) {...})(c,d) => (function() {var a=c,b=d; ...})()
@@ -6581,8 +6581,8 @@ export function recursive_ref (compressor, def) {
   var node
   for (var i = 0; node = compressor.parent(i); i++) {
     if (
-      node instanceof AST_Lambda ||
-            node instanceof AST_Class
+      node?.isAst?.('AST_Lambda') ||
+            node?.isAst?.('AST_Class')
     ) {
       var name = node.name
       if (name && name.definition?.() === def) break
@@ -6592,7 +6592,7 @@ export function recursive_ref (compressor, def) {
 }
 
 function to_node (value, orig) {
-  if (value instanceof AST_Node) return make_node(value.constructor.name, orig, value)
+  if (value?.isAst?.('AST_Node')) return make_node(value.constructor.name, orig, value)
   if (Array.isArray(value)) {
     return make_node('AST_Array', orig, {
       elements: value.map(function (value) {
@@ -6640,7 +6640,7 @@ function best (orig, alt, first_in_statement) {
 function all_refs_local (scope) {
   let result: any = true
   walk(this, (node: any) => {
-    if (node instanceof AST_SymbolRef) {
+    if (node?.isAst?.('AST_SymbolRef')) {
       if (has_flag(this, INLINED)) {
         result = false
         return walk_abort
@@ -6662,7 +6662,7 @@ function all_refs_local (scope) {
       }
       return true
     }
-    if (node instanceof AST_This && this instanceof AST_Arrow) {
+    if (node?.isAst?.('AST_This') && this?.isAst?.('AST_Arrow')) {
       result = false
       return walk_abort
     }
@@ -6674,7 +6674,7 @@ export function is_iife_call (node: any) {
   // Used to determine whether the node can benefit from negation.
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
-  return node.expression instanceof AST_Function || is_iife_call(node.expression)
+  return node.expression?.isAst?.('AST_Function') || is_iife_call(node.expression)
 }
 
 function opt_AST_Lambda (self, compressor) {
@@ -6688,19 +6688,19 @@ function opt_AST_Lambda (self, compressor) {
 }
 
 function is_object (node: any) {
-  return node instanceof AST_Array ||
-        node instanceof AST_Lambda ||
-        node instanceof AST_Object ||
-        node instanceof AST_Class
+  return node?.isAst?.('AST_Array') ||
+        node?.isAst?.('AST_Lambda') ||
+        node?.isAst?.('AST_Object') ||
+        node?.isAst?.('AST_Class')
 }
 
 function within_array_or_object_literal (compressor) {
   var node; var level = 0
   while (node = compressor.parent(level++)) {
-    if (node instanceof AST_Statement) return false
-    if (node instanceof AST_Array ||
-            node instanceof AST_ObjectKeyVal ||
-            node instanceof AST_Object) {
+    if (node?.isAst?.('AST_Statement')) return false
+    if (node?.isAst?.('AST_Array') ||
+            node?.isAst?.('AST_ObjectKeyVal') ||
+            node?.isAst?.('AST_Object')) {
       return true
     }
   }
@@ -6710,11 +6710,11 @@ function within_array_or_object_literal (compressor) {
 function is_nullish (node: any) {
   let fixed
   return (
-    node instanceof AST_Null ||
+    node?.isAst?.('AST_Null') ||
         is_undefined(node) ||
         (
-          node instanceof AST_SymbolRef &&
-            (fixed = node.definition?.().fixed) instanceof AST_Node &&
+          node?.isAst?.('AST_SymbolRef') &&
+            (fixed = node.definition?.().fixed)?.isAst?.('AST_Node') &&
             is_nullish(fixed)
         )
   )
@@ -6727,7 +6727,7 @@ function is_nullish_check (check, check_subject, compressor) {
 
   // foo == null
   if (
-    check instanceof AST_Binary &&
+    check?.isAst?.('AST_Binary') &&
         check.operator === '==' &&
         // which side is nullish?
         (
@@ -6745,13 +6745,13 @@ function is_nullish_check (check, check_subject, compressor) {
   }
 
   // foo === null || foo === undefined
-  if (check instanceof AST_Binary && check.operator === '||') {
+  if (check?.isAst?.('AST_Binary') && check.operator === '||') {
     let null_cmp
     let undefined_cmp
 
     const find_comparison = cmp => {
       if (!(
-        cmp instanceof AST_Binary &&
+        cmp?.isAst?.('AST_Binary') &&
                 (cmp.operator === '===' || cmp.operator === '==')
       )) {
         return false
@@ -6760,12 +6760,12 @@ function is_nullish_check (check, check_subject, compressor) {
       let found = 0
       let defined_side
 
-      if (cmp.left instanceof AST_Null) {
+      if (cmp.left?.isAst?.('AST_Null')) {
         found++
         null_cmp = cmp
         defined_side = cmp.right
       }
-      if (cmp.right instanceof AST_Null) {
+      if (cmp.right?.isAst?.('AST_Null')) {
         found++
         null_cmp = cmp
         defined_side = cmp.left
@@ -6806,7 +6806,7 @@ function is_nullish_check (check, check_subject, compressor) {
 // TODO this only works with AST_Defun, shouldn't it work for other ways of defining functions?
 export function retain_top_func (fn, compressor) {
   return compressor.top_retain &&
-        fn instanceof AST_Defun &&
+        fn?.isAst?.('AST_Defun') &&
         has_flag(fn, TOP) &&
         fn.name &&
         compressor.top_retain(fn.name)
@@ -6815,8 +6815,8 @@ export function retain_top_func (fn, compressor) {
 export function find_scope (tw) {
   for (let i = 0; ;i++) {
     const p = tw.parent(i)
-    if (p instanceof AST_Toplevel) return p
-    if (p instanceof AST_Lambda) return p
+    if (p?.isAst?.('AST_Toplevel')) return p
+    if (p?.isAst?.('AST_Lambda')) return p
     if (p.block_scope) return p.block_scope
   }
 }
@@ -6824,8 +6824,8 @@ export function find_scope (tw) {
 function find_variable (compressor, name) {
   var scope; var i = 0
   while (scope = compressor.parent(i++)) {
-    if (scope instanceof AST_Scope) break
-    if (scope instanceof AST_Catch && scope.argname) {
+    if (scope?.isAst?.('AST_Scope')) break
+    if (scope?.isAst?.('AST_Catch') && scope.argname) {
       scope = scope.argname.definition?.().scope
       break
     }
@@ -6848,20 +6848,20 @@ export function scope_encloses_variables_in_this_scope (scope, pulled_scope) {
 }
 
 function is_atomic (lhs, self) {
-  return lhs instanceof AST_SymbolRef || lhs.TYPE === self.TYPE
+  return lhs?.isAst?.('AST_SymbolRef') || lhs.TYPE === self.TYPE
 }
 
 export function is_reachable (self, defs) {
   const find_ref = (node: any) => {
-    if (node instanceof AST_SymbolRef && member(node.definition?.(), defs)) {
+    if (node?.isAst?.('AST_SymbolRef') && member(node.definition?.(), defs)) {
       return walk_abort
     }
   }
 
   return walk_parent(self, (node, info) => {
-    if (node instanceof AST_Scope && node !== self) {
+    if (node?.isAst?.('AST_Scope') && node !== self) {
       var parent = info.parent()
-      if (parent instanceof AST_Call && parent.expression === node) return
+      if (parent?.isAst?.('AST_Call') && parent.expression === node) return
       if (walk(node, find_ref)) {
         return walk_abort
       }
@@ -6872,9 +6872,9 @@ export function is_reachable (self, defs) {
 
 export function print (this: any, output: any, force_parens?: boolean) {
   var self = this; var generator = self._codegen
-  if (self instanceof AST_Scope) {
+  if (self?.isAst?.('AST_Scope')) {
     output.active_scope = self
-  } else if (!output.use_asm && self instanceof AST_Directive && self.value == 'use asm') {
+  } else if (!output.use_asm && self?.isAst?.('AST_Directive') && self.value == 'use asm') {
     output.use_asm = output.active_scope
   }
   function doit () {
@@ -6895,12 +6895,12 @@ export function print (this: any, output: any, force_parens?: boolean) {
   }
 
   if (printMangleOptions) {
-    if (this instanceof AST_Symbol && !this.unmangleable(printMangleOptions)) {
+    if (this?.isAst?.('AST_Symbol') && !this.unmangleable(printMangleOptions)) {
       base54.consider(this.name, -1)
     } else if (printMangleOptions.properties) {
-      if (this instanceof AST_Dot) {
+      if (this?.isAst?.('AST_Dot')) {
         base54.consider(this.property as string, -1)
-      } else if (this instanceof AST_Sub) {
+      } else if (this?.isAst?.('AST_Sub')) {
         skip_string(this.property)
       }
     }

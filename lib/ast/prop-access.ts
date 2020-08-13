@@ -1,10 +1,6 @@
 import AST_Node from './node'
 import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten } from '../utils'
 import { static_values, global_objs, walk_abort } from '../constants'
-import AST_Object from './object'
-import AST_ConciseMethod from './concise-method'
-import AST_ObjectKeyVal from './object-key-val'
-import AST_SymbolMethod from './symbol-method'
 
 export default class AST_PropAccess extends AST_Node {
   expression: any
@@ -17,7 +13,7 @@ export default class AST_PropAccess extends AST_Node {
   _eval (compressor: any, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
-      if (key instanceof AST_Node) {
+      if (key?.isAst?.('AST_Node')) {
         key = key._eval?.(compressor, depth)
         if (key === this.property) return this
       }
@@ -62,14 +58,14 @@ export default class AST_PropAccess extends AST_Node {
     if (!compressor.option('properties')) return
     var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     var expr = this.expression
-    if (expr instanceof AST_Object) {
+    if (expr?.isAst?.('AST_Object')) {
       var props = expr.properties
       for (var i = props.length; --i >= 0;) {
         var prop = props[i]
-        if ('' + (prop instanceof AST_ConciseMethod ? prop.key.name : prop.key) == key) {
+        if ('' + (prop?.isAst?.('AST_ConciseMethod') ? prop.key.name : prop.key) == key) {
           if (!props.every((prop) => {
-            return prop instanceof AST_ObjectKeyVal ||
-                          arrows && prop instanceof AST_ConciseMethod && !prop.is_generator
+            return prop?.isAst?.('AST_ObjectKeyVal') ||
+                          arrows && prop?.isAst?.('AST_ConciseMethod') && !prop.is_generator
           })) break
           if (!safe_to_flatten(prop.value, compressor)) break
           return make_node('AST_Sub', this, {
@@ -78,7 +74,7 @@ export default class AST_PropAccess extends AST_Node {
                 var v = prop.value
                 if (v?.isAst?.('AST_Accessor')) v = make_node('AST_Function', v, v)
                 var k = prop.key
-                if (k instanceof AST_Node && !(k instanceof AST_SymbolMethod)) {
+                if (k?.isAst?.('AST_Node') && !(k?.isAst?.('AST_SymbolMethod'))) {
                   return make_sequence(prop, [k, v])
                 }
                 return v

@@ -1,9 +1,4 @@
 import AST_PropAccess from './prop-access'
-import AST_Hole from './hole'
-import AST_Expansion from './expansion'
-import AST_SymbolFunarg from './symbol-funarg'
-import AST_Array from './array'
-import AST_Number from './number'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
@@ -55,12 +50,12 @@ export default class AST_Sub extends AST_PropAccess {
           (fn = expr.scope)?.isAst?.('AST_Lambda') &&
           fn.uses_arguments &&
           !(fn?.isAst?.('AST_Arrow')) &&
-          prop instanceof AST_Number) {
+          prop?.isAst?.('AST_Number')) {
       var index = prop.getValue()
       var params = new Set()
       var argnames = fn.argnames
       for (var n = 0; n < argnames.length; n++) {
-        if (!(argnames[n] instanceof AST_SymbolFunarg)) {
+        if (!(argnames[n]?.isAst?.('AST_SymbolFunarg'))) {
           break OPT_ARGUMENTS // destructuring parameter - bail
         }
         var param = argnames[n].name
@@ -101,7 +96,7 @@ export default class AST_Sub extends AST_PropAccess {
       }
     }
     if (compressor.option('properties') && compressor.option('side_effects') &&
-          prop instanceof AST_Number && expr instanceof AST_Array) {
+          prop?.isAst?.('AST_Number') && expr?.isAst?.('AST_Array')) {
       var index = prop.getValue()
       var elements = expr.elements
       var retValue = elements[index]
@@ -115,12 +110,12 @@ export default class AST_Sub extends AST_PropAccess {
             if (flatten && value.has_side_effects(compressor)) flatten = false
           }
         }
-        if (retValue instanceof AST_Expansion) break FLATTEN
-        retValue = retValue instanceof AST_Hole ? make_node('AST_Undefined', retValue) : retValue
+        if (retValue?.isAst?.('AST_Expansion')) break FLATTEN
+        retValue = retValue?.isAst?.('AST_Hole') ? make_node('AST_Undefined', retValue) : retValue
         if (!flatten) values.unshift(retValue)
         while (--i >= 0) {
           let value = elements[i]
-          if (value instanceof AST_Expansion) break FLATTEN
+          if (value?.isAst?.('AST_Expansion')) break FLATTEN
           value = value.drop_side_effect_free(compressor)
           if (value) values.unshift(value)
           else index--

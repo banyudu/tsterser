@@ -23,9 +23,6 @@ import {
 } from '../utils'
 
 import {
-  AST_Constant,
-  AST_RegExp,
-  AST_UnaryPrefix,
   print,
   basic_negation
 } from './'
@@ -90,12 +87,12 @@ export default class AST_Node extends AST {
   is_constant () {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
-    if (this instanceof AST_Constant) {
-      return !(this instanceof AST_RegExp)
+    if (this?.isAst?.('AST_Constant')) {
+      return !(this?.isAst?.('AST_RegExp'))
     } else {
-      return this instanceof AST_UnaryPrefix &&
-              this.expression instanceof AST_Constant &&
-              unaryPrefix.has(this.operator)
+      return this?.isAst?.('AST_UnaryPrefix') &&
+              (this as any).expression?.isAst?.('AST_Constant') &&
+              unaryPrefix.has((this as any).operator)
     }
   }
 

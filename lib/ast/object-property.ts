@@ -1,6 +1,4 @@
 import AST_Node from './node'
-import AST_Symbol from './symbol'
-import AST_SymbolMethod from './symbol-method'
 import { lift_key, make_sequence, return_false, to_moz, pass_through, print_property_name } from '../utils'
 
 export default class AST_ObjectProperty extends AST_Node {
@@ -32,32 +30,32 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   is_constant_expression = function () {
-    return !(this.key instanceof AST_Node) && this.value.is_constant_expression()
+    return !(this.key?.isAst?.('AST_Node')) && this.value.is_constant_expression()
   }
 
   _dot_throw = return_false
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
-      if (this.key instanceof AST_Node) { this.key._walk(visitor) }
+      if (this.key?.isAst?.('AST_Node')) { this.key._walk(visitor) }
       this.value._walk(visitor)
     })
   }
 
   _children_backwards (push: Function) {
     push(this.value)
-    if (this.key instanceof AST_Node) push(this.key)
+    if (this.key?.isAst?.('AST_Node')) push(this.key)
   }
 
   shallow_cmp = pass_through as any
   _transform (self, tw: any) {
-    if (self.key instanceof AST_Node) {
+    if (self.key?.isAst?.('AST_Node')) {
       self.key = self.key.transform(tw)
     }
     if (self.value) self.value = self.value.transform(tw)
   }
 
   _to_mozilla_ast (parent): any {
-    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -75,7 +73,7 @@ export default class AST_ObjectProperty extends AST_Node {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef')
+    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
     if (parent?.isAst?.('AST_Class')) {
       return {
         type: 'MethodDefinition',
@@ -105,7 +103,7 @@ export default class AST_ObjectProperty extends AST_Node {
       output.print(type)
       output.space()
     }
-    if (self.key instanceof AST_SymbolMethod) {
+    if (self.key?.isAst?.('AST_SymbolMethod')) {
       print_property_name(self.key.name, self.quote, output)
     } else {
       output.with_square(function () {

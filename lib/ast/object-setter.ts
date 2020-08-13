@@ -1,7 +1,4 @@
 import AST_ObjectProperty from './object-property'
-import AST_SymbolMethod from './symbol-method'
-import AST_Node from './node'
-import AST_Symbol from './symbol'
 import { to_moz, key_size, static_size, mkshallow } from '../utils'
 
 export default class AST_ObjectSetter extends AST_ObjectProperty {
@@ -9,7 +6,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   static: any
 
   _to_mozilla_ast (parent) {
-    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -27,7 +24,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef')
+    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
     kind = 'set'
     if (parent?.isAst?.('AST_Class')) {
       return {
@@ -61,7 +58,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   }
 
   computed_key () {
-    return !(this.key instanceof AST_SymbolMethod)
+    return !(this.key?.isAst?.('AST_SymbolMethod'))
   }
 
   _size = function (): number {

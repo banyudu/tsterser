@@ -1,9 +1,4 @@
 import AST_StatementWithBody from './statement-with-body'
-import AST_SimpleStatement from './simple-statement'
-import AST_Exit from './exit'
-import AST_EmptyStatement from './empty-statement'
-import AST_Do from './do'
-import AST_Node from './node'
 import {
   make_node_from_constant,
   best_of_expression,
@@ -32,13 +27,13 @@ export default class AST_If extends AST_StatementWithBody {
     // “has no side effects”; also it doesn't work for cases like
     // `x && true`, though it probably should.
     var cond = self.condition.evaluate(compressor)
-    if (!compressor.option('dead_code') && !(cond instanceof AST_Node)) {
+    if (!compressor.option('dead_code') && !(cond?.isAst?.('AST_Node'))) {
       var orig = self.condition
       self.condition = make_node_from_constant(cond, orig)
       self.condition = best_of_expression(self.condition.transform(compressor), orig)
     }
     if (compressor.option('dead_code')) {
-      if (cond instanceof AST_Node) cond = self.condition.tail_node().evaluate(compressor)
+      if (cond?.isAst?.('AST_Node')) cond = self.condition.tail_node().evaluate(compressor)
       if (!cond) {
         compressor.warn('Condition always false [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
@@ -48,7 +43,7 @@ export default class AST_If extends AST_StatementWithBody {
         }))
         if (self.alternative) body.push(self.alternative)
         return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
-      } else if (!(cond instanceof AST_Node)) {
+      } else if (!(cond?.isAst?.('AST_Node'))) {
         compressor.warn('Condition always true [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
         body.push(make_node('AST_SimpleStatement', self.condition, {
@@ -79,8 +74,8 @@ export default class AST_If extends AST_StatementWithBody {
         body: self.condition.clone()
       }).optimize(compressor)
     }
-    if (self.body instanceof AST_SimpleStatement &&
-          self.alternative instanceof AST_SimpleStatement) {
+    if (self.body?.isAst?.('AST_SimpleStatement') &&
+          self.alternative?.isAst?.('AST_SimpleStatement')) {
       return make_node('AST_SimpleStatement', self, {
         body: make_node('AST_Conditional', self, {
           condition: self.condition,
@@ -89,7 +84,7 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (is_empty(self.alternative) && self.body instanceof AST_SimpleStatement) {
+    if (is_empty(self.alternative) && self.body?.isAst?.('AST_SimpleStatement')) {
       if (self_condition_length === negated_length && !negated_is_best &&
               self.condition?.isAst?.('AST_Binary') && self.condition.operator == '||') {
         // although the code length of self.condition and negated are the same,
@@ -114,8 +109,8 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (self.body instanceof AST_EmptyStatement &&
-          self.alternative instanceof AST_SimpleStatement) {
+    if (self.body?.isAst?.('AST_EmptyStatement') &&
+          self.alternative?.isAst?.('AST_SimpleStatement')) {
       return make_node('AST_SimpleStatement', self, {
         body: make_node('AST_Binary', self, {
           operator: '||',
@@ -124,8 +119,8 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (self.body instanceof AST_Exit &&
-          self.alternative instanceof AST_Exit &&
+    if (self.body?.isAst?.('AST_Exit') &&
+          self.alternative?.isAst?.('AST_Exit') &&
           self.body.TYPE == self.alternative.TYPE) {
       return make_node(self.body.constructor?.name, self, {
         value: make_node('AST_Conditional', self, {
@@ -135,7 +130,7 @@ export default class AST_If extends AST_StatementWithBody {
         }).transform(compressor)
       }).optimize(compressor)
     }
-    if (self.body instanceof AST_If &&
+    if (self.body?.isAst?.('AST_If') &&
           !self.body.alternative &&
           !self.alternative) {
       self = make_node('AST_If', self, {
@@ -246,7 +241,7 @@ export default class AST_If extends AST_StatementWithBody {
       output.space()
       output.print('else')
       output.space()
-      if (self.alternative instanceof AST_If) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
+      if (self.alternative?.isAst?.('AST_If')) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
     } else {
       self._do_print_body(output)
     }
@@ -269,7 +264,7 @@ export default class AST_If extends AST_StatementWithBody {
 function make_then (self: any, output: any) {
   var b: any = self.body
   if (output.option('braces') ||
-        output.option('ie8') && b instanceof AST_Do) { return make_block(b, output) }
+        output.option('ie8') && b?.isAst?.('AST_Do')) { return make_block(b, output) }
   // The squeezer replaces "block"-s that contain only a single
   // statement with the statement itself; technically, the AST
   // is correct, but this can create problems when we output an
@@ -279,13 +274,13 @@ function make_then (self: any, output: any) {
   // adds the block braces if needed.
   if (!b) return output.force_semicolon()
   while (true) {
-    if (b instanceof AST_If) {
+    if (b?.isAst?.('AST_If')) {
       if (!b.alternative) {
         make_block(self.body, output)
         return
       }
       b = b.alternative
-    } else if (b instanceof AST_StatementWithBody) {
+    } else if (b?.isAst?.('AST_StatementWithBody')) {
       b = b.body
     } else break
   }

@@ -1,7 +1,4 @@
 import AST_Block from './block'
-import AST_If from './if'
-import AST_Const from './const'
-import AST_Let from './let'
 import { tighten_body, can_be_evicted_from_block, block_aborts, to_moz, make_node, blockStateMentCodeGen } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
@@ -10,7 +7,7 @@ export default class AST_BlockStatement extends AST_Block {
     switch (self.body.length) {
       case 1:
         if (!compressor.has_directive('use strict') &&
-              compressor.parent() instanceof AST_If &&
+              compressor.parent()?.isAst?.('AST_If') &&
               can_be_extracted_from_if_block(self.body[0]) ||
               can_be_evicted_from_block(self.body[0])) {
           return self.body[0]
@@ -41,8 +38,8 @@ export default class AST_BlockStatement extends AST_Block {
 
 function can_be_extracted_from_if_block (node: any) {
   return !(
-    node instanceof AST_Const ||
-        node instanceof AST_Let ||
+    node?.isAst?.('AST_Const') ||
+        node?.isAst?.('AST_Let') ||
         node?.isAst?.('AST_Class')
   )
 }

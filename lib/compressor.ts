@@ -47,21 +47,10 @@ import {
   defaults,
   HOP,
   return_true,
+  walk,
   string_template
 } from './utils'
-import {
-  AST_Binary,
-  AST_Conditional,
-  AST_DWLoop,
-  AST_For,
-  AST_If,
-  AST_Node,
-  AST_Scope,
-  AST_SimpleStatement,
-  AST_SymbolDefun,
-  AST_UnaryPrefix,
-  walk
-} from './ast'
+import AST_Node from './ast/node'
 import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
@@ -195,7 +184,7 @@ export default class Compressor extends TreeWalker {
     if (def.export) return true
     if (def.global) {
       for (var i = 0, len = def.orig.length; i < len; i++) {
-        if (!this.toplevel[def.orig[i] instanceof AST_SymbolDefun ? 'funcs' : 'vars']) { return true }
+        if (!this.toplevel[def.orig[i]?.isAst?.('AST_SymbolDefun') ? 'funcs' : 'vars']) { return true }
       }
     }
     return false
@@ -205,22 +194,22 @@ export default class Compressor extends TreeWalker {
     if (!this.option('booleans')) return false
     var self = this.self()
     for (var i = 0, p; p = this.parent(i); i++) {
-      if (p instanceof AST_SimpleStatement ||
-                p instanceof AST_Conditional && p.condition === self ||
-                p instanceof AST_DWLoop && p.condition === self ||
-                p instanceof AST_For && p.condition === self ||
-                p instanceof AST_If && p.condition === self ||
-                p instanceof AST_UnaryPrefix && p.operator == '!' && p.expression === self) {
+      if (p?.isAst?.('AST_SimpleStatement') ||
+                p?.isAst?.('AST_Conditional') && p.condition === self ||
+                p?.isAst?.('AST_DWLoop') && p.condition === self ||
+                p?.isAst?.('AST_For') && p.condition === self ||
+                p?.isAst?.('AST_If') && p.condition === self ||
+                p?.isAst?.('AST_UnaryPrefix') && p.operator == '!' && p.expression === self) {
         return true
       }
       if (
-        p instanceof AST_Binary &&
+        p?.isAst?.('AST_Binary') &&
                     (
                       p.operator == '&&' ||
                         p.operator == '||' ||
                         p.operator == '??'
                     ) ||
-                p instanceof AST_Conditional ||
+                p?.isAst?.('AST_Conditional') ||
                 p.tail_node() === self
       ) {
         self = p
@@ -293,7 +282,7 @@ export default class Compressor extends TreeWalker {
   before (node: any, descend: Function) {
     if (has_flag(node, SQUEEZED)) return node
     var was_scope = false
-    if (node instanceof AST_Scope) {
+    if (node?.isAst?.('AST_Scope')) {
       node = node.hoist_properties?.(this)
       node = (node).hoist_declarations(this)
       was_scope = true
@@ -311,7 +300,7 @@ export default class Compressor extends TreeWalker {
     // output and performance.
     descend(node, this)
     var opt = node.optimize(this)
-    if (was_scope && opt instanceof AST_Scope) {
+    if (was_scope && opt?.isAst?.('AST_Scope')) {
             opt.drop_unused?.(this)
             descend(opt, this)
     }

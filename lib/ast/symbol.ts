@@ -10,7 +10,7 @@ export default class AST_Symbol extends AST_Node {
 
   fixed_value = function () {
     var fixed = this.thedef.fixed
-    if (!fixed || fixed instanceof AST_Node) return fixed
+    if (!fixed || fixed?.isAst?.('AST_Node')) return fixed
     return fixed()
   }
 

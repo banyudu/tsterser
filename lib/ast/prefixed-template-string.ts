@@ -1,6 +1,5 @@
 import AST_Node from './node'
 import { pass_through, to_moz } from '../utils'
-import AST_Object from './object'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: any
@@ -43,7 +42,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
             tag?.isAst?.('AST_Conditional') ||
             tag?.isAst?.('AST_Sequence') ||
             tag?.isAst?.('AST_Unary') ||
-            tag?.isAst?.('AST_Dot') && tag.expression instanceof AST_Object
+            tag?.isAst?.('AST_Dot') && tag.expression?.isAst?.('AST_Object')
     if (parenthesize_tag) output.print('(')
     self.prefix.print(output)
     if (parenthesize_tag) output.print(')')

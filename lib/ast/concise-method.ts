@@ -1,8 +1,4 @@
 import AST_ObjectProperty from './object-property'
-import AST_SymbolMethod from './symbol-method'
-import AST_Return from './return'
-import AST_Object from './object'
-import AST_Symbol from './symbol'
 import { to_moz, key_size, static_size, mkshallow, make_node, lift_key, lambda_modifiers } from '../utils'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
@@ -15,19 +11,19 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     lift_key(self, compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
-          compressor.parent() instanceof AST_Object &&
+          compressor.parent()?.isAst?.('AST_Object') &&
           !self.is_generator &&
           !self.value.uses_arguments &&
           !self.value.pinned() &&
           self.value.body.length == 1 &&
-          self.value.body[0] instanceof AST_Return &&
+          self.value.body[0]?.isAst?.('AST_Return') &&
           self.value.body[0].value &&
           !self.value.contains_this()) {
       var arrow = make_node('AST_Arrow', self.value, self.value)
       arrow.async = self.async
       arrow.is_generator = self.is_generator
       return make_node('AST_ObjectKeyVal', self, {
-        key: self.key instanceof AST_SymbolMethod ? self.key.name : self.key,
+        key: self.key?.isAst?.('AST_SymbolMethod') ? self.key.name : self.key,
         value: arrow,
         quote: self.quote
       })
@@ -48,7 +44,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   }
 
   computed_key () {
-    return !(this.key instanceof AST_SymbolMethod)
+    return !(this.key?.isAst?.('AST_SymbolMethod'))
   }
 
   _size = function (): number {
@@ -62,10 +58,10 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   })
 
   _to_mozilla_ast (parent) {
-    if (parent instanceof AST_Object) {
+    if (parent?.isAst?.('AST_Object')) {
       return {
         type: 'Property',
-        computed: !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef'),
+        computed: !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef'),
         kind: 'init',
         method: true,
         shorthand: false,
@@ -75,7 +71,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     }
     return {
       type: 'MethodDefinition',
-      computed: !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef'),
+      computed: !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef'),
       kind: this.key === 'constructor' ? 'constructor' : 'method',
       static: this.static,
       key: to_moz(this.key),

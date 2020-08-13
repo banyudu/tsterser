@@ -1,5 +1,4 @@
 import AST_DWLoop from './dw-loop'
-import AST_Node from './node'
 import { make_node, pass_through, to_moz, push, pop, make_block, reset_block_variables, has_break_or_continue } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -7,7 +6,7 @@ export default class AST_Do extends AST_DWLoop {
   _optimize (self, compressor) {
     if (!compressor.option('loops')) return self
     var cond = self.condition.tail_node().evaluate(compressor)
-    if (!(cond instanceof AST_Node)) {
+    if (!(cond?.isAst?.('AST_Node'))) {
       if (cond) {
         return make_node('AST_For', self, {
           body: make_node('AST_BlockStatement', self.body, {

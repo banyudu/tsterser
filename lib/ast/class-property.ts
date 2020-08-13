@@ -1,7 +1,4 @@
 import AST_ObjectProperty from './object-property'
-import AST_SymbolClassProperty from './symbol-class-property'
-import AST_Node from './node'
-import AST_Symbol from './symbol'
 import { to_moz, print_property_name, static_size, mkshallow, make_sequence } from '../utils'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
@@ -9,7 +6,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   static: any
 
   _to_mozilla_ast (parent) {
-    var key = this.key instanceof AST_Node ? to_moz(this.key) : {
+    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -26,7 +23,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
       }
     }
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key instanceof AST_Symbol) || this.key?.isAst?.('AST_SymbolRef')
+    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
     return {
       type: 'FieldDefinition',
       computed,
@@ -62,18 +59,18 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
 
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
-      if (this.key instanceof AST_Node) { this.key._walk(visitor) }
-      if (this.value instanceof AST_Node) { this.value._walk(visitor) }
+      if (this.key?.isAst?.('AST_Node')) { this.key._walk(visitor) }
+      if (this.value?.isAst?.('AST_Node')) { this.value._walk(visitor) }
     })
   }
 
   _children_backwards (push: Function) {
-    if (this.value instanceof AST_Node) push(this.value)
-    if (this.key instanceof AST_Node) push(this.key)
+    if (this.value?.isAst?.('AST_Node')) push(this.value)
+    if (this.key?.isAst?.('AST_Node')) push(this.key)
   }
 
   computed_key () {
-    return !(this.key instanceof AST_SymbolClassProperty)
+    return !(this.key?.isAst?.('AST_SymbolClassProperty'))
   }
 
   _size = function (): number {
@@ -94,7 +91,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
       output.space()
     }
 
-    if (self.key instanceof AST_SymbolClassProperty) {
+    if (self.key?.isAst?.('AST_SymbolClassProperty')) {
       print_property_name(self.key.name, self.quote, output)
     } else {
       output.print('[')

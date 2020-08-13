@@ -47,15 +47,6 @@ import {
   keep_name,
   mergeSort
 } from './utils'
-import {
-  AST_Node,
-  AST_SymbolCatch,
-  AST_SymbolClass,
-  AST_SymbolDefClass,
-  AST_SymbolDefun,
-  AST_SymbolLambda,
-  AST_SymbolMethod
-} from './ast'
 
 const MASK_EXPORT_DONT_MANGLE = 1 << 0
 
@@ -111,7 +102,7 @@ class SymbolDef {
   }
 
   fixed_value () {
-    if (!this.fixed || this.fixed instanceof AST_Node) return this.fixed
+    if (!this.fixed || this.fixed?.isAst?.('AST_Node')) return this.fixed
     return this.fixed()
   }
 
@@ -128,11 +119,11 @@ class SymbolDef {
             (this.export & MASK_EXPORT_DONT_MANGLE) ||
             this.undeclared ||
             !options.eval && this.scope.pinned() ||
-            (this.orig[0] instanceof AST_SymbolLambda ||
-                  this.orig[0] instanceof AST_SymbolDefun) && keep_name(options.keep_fnames, this.orig[0].name) ||
-            this.orig[0] instanceof AST_SymbolMethod ||
-            (this.orig[0] instanceof AST_SymbolClass ||
-                  this.orig[0] instanceof AST_SymbolDefClass) && keep_name(options.keep_classnames, this.orig[0].name)
+            (this.orig[0]?.isAst?.('AST_SymbolLambda') ||
+                  this.orig[0]?.isAst?.('AST_SymbolDefun')) && keep_name(options.keep_fnames, this.orig[0].name) ||
+            this.orig[0]?.isAst?.('AST_SymbolMethod') ||
+            (this.orig[0]?.isAst?.('AST_SymbolClass') ||
+                  this.orig[0]?.isAst?.('AST_SymbolDefClass')) && keep_name(options.keep_classnames, this.orig[0].name)
   }
 
   mangle (options: any) {
@@ -142,7 +133,7 @@ class SymbolDef {
     } else if (!this.mangled_name && !this.unmangleable(options)) {
       var s = this.scope
       var sym = this.orig[0]
-      if (options.ie8 && sym instanceof AST_SymbolLambda) { s = s.parent_scope }
+      if (options.ie8 && sym?.isAst?.('AST_SymbolLambda')) { s = s.parent_scope }
       const redefinition = redefined_catch_def(this)
       this.mangled_name = redefinition
         ? redefinition.mangled_name || redefinition.name
@@ -157,7 +148,7 @@ class SymbolDef {
 SymbolDef.next_id = 1
 
 function redefined_catch_def (def: any) {
-  if (def.orig[0] instanceof AST_SymbolCatch &&
+  if (def.orig[0]?.isAst?.('AST_SymbolCatch') &&
         def.scope.is_block_scope()
   ) {
     return def.scope.get_defun_scope().variables.get(def.name)
