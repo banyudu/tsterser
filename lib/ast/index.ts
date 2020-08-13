@@ -73,8 +73,6 @@ import {
   make_sequence,
   first_in_statement,
   is_undefined,
-  tighten_body,
-  reset_block_variables,
   reset_def,
   anySideEffect,
   anyMayThrow,
@@ -85,16 +83,13 @@ import {
   do_list,
   maintain_this_binding,
   walk_body,
-  extract_declarations_from_unreachable_code,
   get_value,
-  aborts,
   is_func_expr,
   is_lhs,
   is_modified,
   is_ref_of,
   trim,
   inline_array_like_spread,
-  print_braced_empty,
   lambda_modifiers,
   is_undeclared_ref,
   is_empty,
@@ -132,7 +127,6 @@ import {
   To_Moz_FunctionExpression,
   left_is_object,
   callCodeGen,
-  to_moz_block,
   keep_name
 } from '../utils'
 
@@ -181,6 +175,10 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Finally from './finally'
+import AST_Catch from './catch'
+import AST_Switch from './switch'
+import AST_Try from './try'
 import AST_Unary from './unary'
 import AST_UnaryPrefix from './unary-prefix'
 import AST_UnaryPostfix from './unary-postfix'
@@ -2104,394 +2102,6 @@ class AST_Defun extends AST_Lambda {
 /* -----[ IF ]----- */
 
 /* -----[ SWITCH ]----- */
-
-class AST_Switch extends AST_Block {
-  _optimize (self, compressor) {
-    if (!compressor.option('switches')) return self
-    var branch
-    var value = self.expression.evaluate(compressor)
-    if (!(value?.isAst?.('AST_Node'))) {
-      var orig = self.expression
-      self.expression = make_node_from_constant(value, orig)
-      self.expression = best_of_expression(self.expression.transform(compressor), orig)
-    }
-    if (!compressor.option('dead_code')) return self
-    if (value?.isAst?.('AST_Node')) {
-      value = self.expression.tail_node().evaluate(compressor)
-    }
-    var decl: any[] = []
-    var body: any[] = []
-    var default_branch
-    var exact_match
-    for (var i = 0, len = self.body.length; i < len && !exact_match; i++) {
-      branch = self.body[i]
-      if (branch?.isAst?.('AST_Default')) {
-        if (!default_branch) {
-          default_branch = branch
-        } else {
-          eliminate_branch(branch, body[body.length - 1])
-        }
-      } else if (!(value?.isAst?.('AST_Node'))) {
-        var exp = branch.expression.evaluate(compressor)
-        if (!(exp?.isAst?.('AST_Node')) && exp !== value) {
-          eliminate_branch(branch, body[body.length - 1])
-          continue
-        }
-        if (exp?.isAst?.('AST_Node')) exp = branch.expression.tail_node().evaluate(compressor)
-        if (exp === value) {
-          exact_match = branch
-          if (default_branch) {
-            var default_index = body.indexOf(default_branch)
-            body.splice(default_index, 1)
-            eliminate_branch(default_branch, body[default_index - 1])
-            default_branch = null
-          }
-        }
-      }
-      if (aborts(branch)) {
-        var prev = body[body.length - 1]
-        if (aborts(prev) && prev.body.length == branch.body.length &&
-                  make_node('AST_BlockStatement', prev, prev).equivalent_to(make_node('AST_BlockStatement', branch, branch))) {
-          prev.body = []
-        }
-      }
-      body.push(branch)
-    }
-    while (i < len) eliminate_branch(self.body[i++], body[body.length - 1])
-    if (body.length > 0) {
-      body[0].body = decl.concat(body[0].body)
-    }
-    self.body = body
-    while (branch = body[body.length - 1]) {
-      var stat = branch.body[branch.body.length - 1]
-      if (stat?.isAst?.('AST_Break') && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
-      if (branch.body.length || branch?.isAst?.('AST_Case') &&
-              (default_branch || branch.expression.has_side_effects(compressor))) break
-      if (body.pop() === default_branch) default_branch = null
-    }
-    if (body.length == 0) {
-      return make_node('AST_BlockStatement', self, {
-        body: decl.concat(make_node('AST_SimpleStatement', self.expression, {
-          body: self.expression
-        }))
-      }).optimize(compressor)
-    }
-    if (body.length == 1 && (body[0] === exact_match || body[0] === default_branch)) {
-      var has_break = false
-      var tw = new TreeWalker(function (node: any) {
-        if (has_break ||
-                  node?.isAst?.('AST_Lambda') ||
-                  node?.isAst?.('AST_SimpleStatement')) return true
-        if (node?.isAst?.('AST_Break') && tw.loopcontrol_target(node) === self) { has_break = true }
-      })
-      self.walk(tw)
-      if (!has_break) {
-        var statements = body[0].body.slice()
-        var exp = body[0].expression
-        if (exp) {
-          statements.unshift(make_node('AST_SimpleStatement', exp, {
-            body: exp
-          }))
-        }
-        statements.unshift(make_node('AST_SimpleStatement', self.expression, {
-          body: self.expression
-        }))
-        return make_node('AST_BlockStatement', self, {
-          body: statements
-        }).optimize(compressor)
-      }
-    }
-    return self
-
-    function eliminate_branch (branch, prev) {
-      if (prev && !aborts(prev)) {
-        prev.body = prev.body.concat(branch.body)
-      } else {
-        extract_declarations_from_unreachable_code(compressor, branch, decl)
-      }
-    }
-  }
-
-  may_throw (compressor: any) {
-    return this.expression.may_throw(compressor) ||
-          anyMayThrow(this.body, compressor)
-  }
-
-  has_side_effects (compressor: any) {
-    return this.expression.has_side_effects(compressor) ||
-          anySideEffect(this.body, compressor)
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      this.expression._walk(visitor)
-      walk_body(this, visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.body.length
-    while (i--) push(this.body[i])
-    push(this.expression)
-  }
-
-  _size (): number {
-    return 8 + list_overhead(this.body)
-  }
-
-  shallow_cmp = pass_through
-  _transform (self, tw: any) {
-    self.expression = self.expression.transform(tw)
-    self.body = do_list(self.body, tw)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'SwitchStatement',
-      discriminant: to_moz(this.expression),
-      cases: this.body.map(to_moz)
-    }
-  }
-
-  _codegen (self, output) {
-    output.print('switch')
-    output.space()
-    output.with_parens(function () {
-      self.expression.print(output)
-    })
-    output.space()
-    var last = self.body.length - 1
-    if (last < 0) print_braced_empty(self, output)
-    else {
-      output.with_block(function () {
-        (self.body as any[]).forEach(function (branch, i) {
-          output.indent(true)
-          branch.print(output)
-          if (i < last && branch.body.length > 0) { output.newline() }
-        })
-      })
-    }
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'A `switch` statement'
-  static propdoc = {
-    expression: '[AST_Node] the `switch` “discriminant”'
-  }
-
-  static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.expression = args.expression
-  }
-}
-
-/* -----[ EXCEPTIONS ]----- */
-
-class AST_Try extends AST_Block {
-  bfinally: any
-  bcatch: any
-
-  _optimize = function (self, compressor) {
-    tighten_body(self.body, compressor)
-    if (self.bcatch && self.bfinally && self.bfinally.body.every(is_empty)) self.bfinally = null
-    if (compressor.option('dead_code') && self.body.every(is_empty)) {
-      var body: any[] = []
-      if (self.bcatch) {
-        extract_declarations_from_unreachable_code(compressor, self.bcatch, body)
-      }
-      if (self.bfinally) body.push(...self.bfinally.body)
-      return make_node('AST_BlockStatement', self, {
-        body: body
-      }).optimize(compressor)
-    }
-    return self
-  }
-
-  may_throw = function (compressor: any) {
-    return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
-          this.bfinally && this.bfinally.may_throw(compressor)
-  }
-
-  has_side_effects = function (compressor: any) {
-    return anySideEffect(this.body, compressor) ||
-          this.bcatch && this.bcatch.has_side_effects(compressor) ||
-          this.bfinally && this.bfinally.has_side_effects(compressor)
-  }
-
-  reduce_vars = function (tw: TreeWalker, descend, compressor: any) {
-    reset_block_variables(compressor, this)
-    push(tw)
-    walk_body(this, tw)
-    pop(tw)
-    if (this.bcatch) {
-      push(tw)
-      this.bcatch.walk(tw)
-      pop(tw)
-    }
-    if (this.bfinally) this.bfinally.walk(tw)
-    return true
-  }
-
-  _walk = function (visitor: any) {
-    return visitor._visit(this, function () {
-      walk_body(this, visitor)
-      if (this.bcatch) this.bcatch._walk(visitor)
-      if (this.bfinally) this.bfinally._walk(visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    if (this.bfinally) push(this.bfinally)
-    if (this.bcatch) push(this.bcatch)
-    let i = this.body.length
-    while (i--) push(this.body[i])
-  }
-
-  _size = function (): number {
-    return 3 + list_overhead(this.body)
-  }
-
-  shallow_cmp = mkshallow({
-    bcatch: 'exist',
-    bfinally: 'exist'
-  })
-
-  _transform (self, tw: any) {
-    self.body = do_list(self.body, tw)
-    if (self.bcatch) self.bcatch = self.bcatch.transform(tw)
-    if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'TryStatement',
-      block: to_moz_block(this),
-      handler: to_moz(this.bcatch),
-      guardedHandlers: [],
-      finalizer: to_moz(this.bfinally)
-    }
-  }
-
-  _codegen = function (self, output) {
-    output.print('try')
-    output.space()
-    print_braced(self, output)
-    if (self.bcatch) {
-      output.space()
-      self.bcatch.print(output)
-    }
-    if (self.bfinally) {
-      output.space()
-      self.bfinally.print(output)
-    }
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'A `try` statement'
-  static propdoc = {
-    bcatch: '[AST_Catch?] the catch block, or null if not present',
-    bfinally: '[AST_Finally?] the finally block, or null if not present'
-  }
-
-  static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.bcatch = args.bcatch
-    this.bfinally = args.bfinally
-  }
-}
-
-class AST_Catch extends AST_Block {
-  argname: any
-
-  _walk = function (visitor: any) {
-    return visitor._visit(this, function () {
-      if (this.argname) this.argname._walk(visitor)
-      walk_body(this, visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.body.length
-    while (i--) push(this.body[i])
-    if (this.argname) push(this.argname)
-  }
-
-  _size = function (): number {
-    let size = 7 + list_overhead(this.body)
-    if (this.argname) {
-      size += 2
-    }
-    return size
-  }
-
-  shallow_cmp = mkshallow({
-    argname: 'exist'
-  })
-
-  _transform (self, tw: any) {
-    if (self.argname) self.argname = self.argname.transform(tw)
-    self.body = do_list(self.body, tw)
-  }
-
-  _to_mozilla_ast (parent) {
-    return {
-      type: 'CatchClause',
-      param: to_moz(this.argname),
-      guard: null,
-      body: to_moz_block(this)
-    }
-  }
-
-  _codegen = function (self, output) {
-    output.print('catch')
-    if (self.argname) {
-      output.space()
-      output.with_parens(function () {
-        self.argname.print(output)
-      })
-    }
-    output.space()
-    print_braced(self, output)
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
-  static propdoc = {
-    argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'
-  }
-
-  static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.argname = args.argname
-  }
-}
-
-class AST_Finally extends AST_Block {
-  argname: any
-  shallow_cmp = pass_through
-  _size = function (): number {
-    return 7 + list_overhead(this.body)
-  }
-
-  _codegen = function (self, output) {
-    output.print('finally')
-    output.space()
-    print_braced(self, output)
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
-
-  static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.argname = args.argname
-  }
-}
-
 /* -----[ VAR/CONST ]----- */
 
 /* -----[ OTHER ]----- */
