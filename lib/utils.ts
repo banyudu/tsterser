@@ -3694,3 +3694,72 @@ export function print (this: any, output: any, force_parens?: boolean) {
     }
   }
 }
+
+// Returns whether the leftmost item in the expression is an object
+export function left_is_object (node: any): boolean {
+  if (node?.isAst?.('AST_Object')) return true
+  if (node?.isAst?.('AST_Sequence')) return left_is_object(node.expressions[0])
+  if (node.TYPE === 'Call') return left_is_object(node.expression)
+  if (node?.isAst?.('AST_PrefixedTemplateString')) return left_is_object(node.prefix)
+  if (node?.isAst?.('AST_Dot') || node?.isAst?.('AST_Sub')) return left_is_object(node.expression)
+  if (node?.isAst?.('AST_Conditional')) return left_is_object(node.condition)
+  if (node?.isAst?.('AST_Binary')) return left_is_object(node.left)
+  if (node?.isAst?.('AST_UnaryPostfix')) return left_is_object(node.expression)
+  return false
+}
+
+export function init_scope_vars (parent_scope: any) {
+  this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
+  this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
+  this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
+  this.uses_eval = false // will be set to true if this or nested scope uses the global `eval`
+  this.parent_scope = parent_scope // the parent scope
+  this.enclosed = [] // a list of variables from this or outer scope(s) that are referenced from this or inner scopes
+  this.cname = -1 // the current index for mangling functions/variables
+  this._var_name_cache = null
+}
+
+export function callCodeGen (self, output) {
+  self.expression.print(output)
+  if (self?.isAst?.('AST_New') && self.args.length === 0) { return }
+  if (self.expression?.isAst?.('AST_Call') || self.expression?.isAst?.('AST_Lambda')) {
+    output.add_mapping(self.start)
+  }
+  output.with_parens(function () {
+    self.args.forEach(function (expr, i) {
+      if (i) output.comma()
+      expr.print(output)
+    })
+  })
+}
+
+export function to_moz_block (node: any) {
+  return {
+    type: 'BlockStatement',
+    body: node.body.map(to_moz)
+  }
+}
+
+export function to_moz_scope (type: string, node: any) {
+  var body = node.body.map(to_moz)
+  if (node.body[0]?.isAst?.('AST_SimpleStatement') && (node.body[0]).body?.isAst?.('AST_String')) {
+    body.unshift(to_moz(new AST_EmptyStatement(node.body[0])))
+  }
+  return {
+    type: type,
+    body: body
+  }
+}
+
+export function To_Moz_FunctionExpression (M, parent) {
+  var is_generator = parent.is_generator !== undefined
+    ? parent.is_generator : M.is_generator
+  return {
+    type: 'FunctionExpression',
+    id: to_moz(M.name),
+    params: M.argnames.map(to_moz),
+    generator: is_generator,
+    async: M.async,
+    body: to_moz_scope('BlockStatement', M)
+  }
+}
