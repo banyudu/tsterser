@@ -1,4 +1,5 @@
 import AST_Scope from './scope'
+import SymbolDef from '../symbol-def'
 import TreeWalker from '../tree-walker'
 import {
   reset_def,
@@ -17,19 +18,14 @@ import {
   display_body,
   redefined_catch_def,
   keep_name,
+  base54,
   reset_variables
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
-import {
-  clear_flag,
-  set_flag,
-  CLEAR_BETWEEN_PASSES,
-  MASK_EXPORT_DONT_MANGLE,
-  TOP
-} from '../constants'
-import { SymbolDef, base54, function_defs, setFunctionDefs } from '../scope'
+import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP } from '../constants'
 import { parse, RESERVED_WORDS } from '../parse'
 
+export let function_defs: Set<any> | null = null
 export let printMangleOptions
 export let unmangleable_names: Set<any> | null = null
 
@@ -280,7 +276,7 @@ export default class AST_Toplevel extends AST_Scope {
     var to_mangle: any[] = []
 
     if (options.keep_fnames) {
-      setFunctionDefs(new Set())
+      function_defs = new Set()
     }
 
     const mangled_names = this.mangled_names = new Set()
@@ -347,7 +343,7 @@ export default class AST_Toplevel extends AST_Scope {
 
     to_mangle.forEach(def => { def.mangle(options) })
 
-    setFunctionDefs(null)
+    function_defs = null
     unmangleable_names = null
 
     function collect (symbol: any) {

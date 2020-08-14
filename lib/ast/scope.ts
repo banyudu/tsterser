@@ -1,7 +1,7 @@
 import AST_Block from './block'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
-import { SymbolDef } from '../scope'
+import SymbolDef from '../symbol-def'
 import AST_SymbolBlockDeclaration from './symbol-block-declaration'
 import { js_error } from '../parse'
 

@@ -26,6 +26,7 @@ import {
   callCodeGen,
   regexp_source_fix,
   make_node_from_constant,
+  base54,
   make_sequence,
   walk,
   has_annotation,
@@ -51,8 +52,6 @@ import {
 import { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
-
-import { base54 } from '../scope'
 
 export default class AST_Call extends AST_Node {
   _annotations: any

@@ -44,11 +44,7 @@
 'use strict'
 /* global global, self */
 
-import {
-  defaults,
-  push_uniq
-} from './utils'
-import { base54 } from './scope'
+import { defaults, base54, push_uniq } from './utils'
 import TreeWalker from './tree-walker'
 import { domprops } from '../tools/domprops'
 import TreeTransformer from './tree-transformer'

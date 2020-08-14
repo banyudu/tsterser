@@ -41,8 +41,6 @@
 
  ***********************************************************************/
 
-'use strict'
-
 import {
   walk_abort,
   UNDEFINED,
@@ -56,6 +54,7 @@ import {
   TOP,
   lazy_op
 } from './constants'
+
 import {
   AST_Accessor,
   AST_Array,
@@ -156,14 +155,12 @@ import {
   AST_Yield
 } from './ast'
 
-import { printMangleOptions, unmangleable_names } from './ast/toplevel'
+import { printMangleOptions, unmangleable_names, function_defs } from './ast/toplevel'
 
 import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
 
 import { is_basic_identifier_string, is_identifier_string, RESERVED_WORDS } from './parse'
-
-import { base54 } from './scope'
 
 const AST_DICT = {
   AST_Accessor,
@@ -3762,4 +3759,49 @@ export function To_Moz_FunctionExpression (M, parent) {
     async: M.async,
     body: to_moz_scope('BlockStatement', M)
   }
+}
+
+export const base54 = (() => {
+  const leading = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_'.split('')
+  const digits = '0123456789'.split('')
+  let chars: string[]
+  let frequency: Map<string, number>
+  function reset () {
+    frequency = new Map()
+    leading.forEach(function (ch) {
+      frequency.set(ch, 0)
+    })
+    digits.forEach(function (ch) {
+      frequency.set(ch, 0)
+    })
+  }
+  base54.consider = function (str: string, delta: number) {
+    for (var i = str.length; --i >= 0;) {
+      frequency.set(str[i], (frequency.get(str[i])) + delta) // TODO: check type
+    }
+  }
+  function compare (a: string, b: string) {
+    return (frequency.get(b)) - (frequency.get(a))
+  }
+  base54.sort = function () {
+    chars = mergeSort(leading, compare).concat(mergeSort(digits, compare))
+  }
+  base54.reset = reset
+  reset()
+  function base54 (num: number) {
+    var ret = ''; var base = 54
+    num++
+    do {
+      num--
+      ret += chars[num % base]
+      num = Math.floor(num / base)
+      base = 64
+    } while (num > 0)
+    return ret
+  }
+  return base54
+})()
+
+export function in_function_defs (id) {
+  return function_defs?.has(id)
 }

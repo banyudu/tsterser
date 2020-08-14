@@ -1,17 +1,10 @@
-'use strict'
 /* eslint-env browser, es6, node */
 
-import {
-  defaults,
-  map_from_object,
-  map_to_object,
-  HOP
-} from './utils'
+import { defaults, map_from_object, map_to_object, base54, HOP } from './utils'
 import AST_Node from './ast/node'
 import { parse } from './parse'
 import { OutputStream } from './output'
 import Compressor from './compressor'
-import { base54 } from './scope'
 import { SourceMap } from './sourcemap'
 import {
   mangle_properties,

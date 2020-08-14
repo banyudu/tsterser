@@ -125,10 +125,10 @@ export { default as TreeWalker } from './lib/tree-walker'
 export {
   defaults,
   push_uniq,
+  base54,
   string_template,
   has_annotation as _has_annotation
 } from './lib/utils'
-export { base54 } from './lib/scope'
 export { default as Compressor } from './lib/compressor'
 export { to_ascii } from './lib/minify'
 export { OutputStream } from './lib/output'
