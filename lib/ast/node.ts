@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import AST from './_base'
+import AST_Token from './token'
 
 import {
   OPTIMIZED,
@@ -24,9 +25,14 @@ import {
   from_moz
 } from '../utils'
 
+export interface AST_Node_Props {
+  start?: AST_Token
+  end?: AST_Token
+}
+
 export default class AST_Node extends AST {
-  start: any
-  end: any
+  start: AST_Token
+  end: AST_Token
 
   isAst (type: string) {
     let proto: any = this.constructor
@@ -226,9 +232,9 @@ export default class AST_Node extends AST {
 
   static PROPS = ['start', 'end']
 
-  constructor (args = {} as any) { // eslint-disable-line
+  constructor (args?: AST_Node_Props) { // eslint-disable-line
     super()
-    this.start = args.start
-    this.end = args.end
+    this.start = args?.start
+    this.end = args?.end
   }
 }
