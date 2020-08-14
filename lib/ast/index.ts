@@ -46,14 +46,12 @@
 import {
   make_node,
   regexp_source_fix,
-  return_false,
   return_true,
   return_this,
   has_annotation,
   push,
   pop,
   mark,
-  return_null,
   pass_through,
   mkshallow,
   to_moz,
@@ -75,15 +73,10 @@ import {
   is_modified,
   trim,
   inline_array_like_spread,
-  lambda_modifiers,
   is_undeclared_ref,
   is_empty,
-  print_braced,
   blockStateMentCodeGen,
   suppress,
-  next_mangled,
-  reset_variables,
-  opt_AST_Lambda,
   basic_negation,
   find_scope,
   is_iife_call,
@@ -97,10 +90,6 @@ import {
   needsParens,
   retain_top_func,
   scope_encloses_variables_in_this_scope,
-  init_scope_vars,
-  to_moz_scope,
-  To_Moz_FunctionExpression,
-  left_is_object,
   callCodeGen
 } from '../utils'
 
@@ -139,6 +128,12 @@ import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Accessor from './accessor'
+import AST_Arrow from './arrow'
+import AST_Defun from './defun'
+import AST_Function from './function'
+import AST_ClassExpression from './class-expression'
+import AST_DefClass from './def-class'
 import AST_Toplevel from './toplevel'
 import AST_Lambda from './lambda'
 import AST_Class from './class'
@@ -246,251 +241,6 @@ import AST_Continue from './continue'
 import AST_While from './while'
 import AST_Do from './do'
 import AST_SwitchBranch from './switch-branch'
-
-class AST_Accessor extends AST_Lambda {
-  drop_side_effect_free = return_null
-  reduce_vars = function (tw: TreeWalker, descend, compressor: any) {
-    push(tw)
-    reset_variables(tw, compressor, this)
-    descend()
-    pop(tw)
-    return true
-  }
-
-  _size = function () {
-    return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body)
-  }
-
-  static documentation = 'A setter/getter function.  The `name` property is always null.'
-
-  static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Function extends AST_Lambda {
-  name: any
-
-  _optimize = function (self, compressor) {
-    self = opt_AST_Lambda(self, compressor)
-    if (compressor.option('unsafe_arrows') &&
-          compressor.option('ecma') >= 2015 &&
-          !self.name &&
-          !self.is_generator &&
-          !self.uses_arguments &&
-          !self.pinned()) {
-      const has_special_symbol = walk(self, (node: any) => {
-        if (node?.isAst?.('AST_This')) return walk_abort
-      })
-      if (!has_special_symbol) return make_node('AST_Arrow', self, self).optimize(compressor)
-    }
-    return self
-  }
-
-  drop_side_effect_free = return_null
-  _eval = function (compressor: any) {
-    if (compressor.option('unsafe')) {
-      var fn: any = function () {}
-      fn.node = this
-      fn.toString = function () {
-        return this.node.print_to_string()
-      }
-      return fn
-    }
-    return this
-  }
-
-  negate () {
-    return basic_negation(this)
-  }
-
-  _dot_throw = return_false
-  next_mangled (options: any, def: any) {
-    // #179, #326
-    // in Safari strict mode, something like (function x(x){...}) is a syntax error;
-    // a function expression's argument cannot shadow the function expression's name
-
-    var tricky_def = def.orig[0]?.isAst?.('AST_SymbolFunarg') && this.name && this.name.definition()
-
-    // the function's mangled_name is null when keep_fnames is true
-    var tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
-
-    while (true) {
-      var name = next_mangled(this, options)
-      if (!tricky_name || tricky_name != name) { return name }
-    }
-  }
-
-  _size = function (info: any) {
-    const first: any = !!first_in_statement(info)
-    return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
-  } as any
-
-  _to_mozilla_ast (parent) {
-    return To_Moz_FunctionExpression(this, parent)
-  }
-
-  // a function expression needs parens around it when it's provably
-  // the first token to appear in a statement.
-  needs_parens (output: any) {
-    if (!output.has_parens() && first_in_statement(output)) {
-      return true
-    }
-
-    if (output.option('webkit')) {
-      var p = output.parent()
-      if (p?._needs_parens(this)) { return true }
-    }
-
-    if (output.option('wrap_iife')) {
-      var p = output.parent()
-      if (p?.isAst?.('AST_Call') && p.expression === this) {
-        return true
-      }
-    }
-
-    if (output.option('wrap_func_args')) {
-      var p = output.parent()
-      if (p?.isAst?.('AST_Call') && p.args.includes(this)) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  static documentation = 'A function expression'
-
-  static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Arrow extends AST_Lambda {
-  _optimize = opt_AST_Lambda
-  drop_side_effect_free = return_null
-  negate () {
-    return basic_negation(this)
-  }
-
-  _dot_throw = return_false
-  init_scope_vars = function () {
-    init_scope_vars.apply(this, arguments)
-    this.uses_arguments = false
-  }
-
-  _size = function (info?: any): number {
-    let args_and_arrow = 2 + list_overhead(this.argnames)
-
-    if (
-      !(
-        this.argnames.length === 1 &&
-                this.argnames[0]?.isAst?.('AST_Symbol')
-      )
-    ) {
-      args_and_arrow += 2
-    }
-
-    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size())
-  }
-
-  _to_mozilla_ast (parent): any {
-    var body = {
-      type: 'BlockStatement',
-      body: this.body.map(to_moz)
-    }
-    return {
-      type: 'ArrowFunctionExpression',
-      params: this.argnames.map(to_moz),
-      async: this.async,
-      body: body
-    }
-  }
-
-  needs_parens (output: any) {
-    var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this
-  }
-
-  _do_print (this: any, output: any) {
-    var self = this
-    var parent = output.parent()
-    var needs_parens = (parent?.isAst?.('AST_Binary') && !(parent?.isAst?.('AST_Assign'))) ||
-            parent?.isAst?.('AST_Unary') ||
-            (parent?.isAst?.('AST_Call') && self === parent.expression)
-    if (needs_parens) { output.print('(') }
-    if (self.async) {
-      output.print('async')
-      output.space()
-    }
-    if (self.argnames.length === 1 && self.argnames[0]?.isAst?.('AST_Symbol')) {
-      self.argnames[0].print(output)
-    } else {
-      output.with_parens(function () {
-        self.argnames.forEach(function (arg, i) {
-          if (i) output.comma()
-          arg.print(output)
-        })
-      })
-    }
-    output.space()
-    output.print('=>')
-    output.space()
-    const first_statement = self.body[0]
-    if (
-      self.body.length === 1 &&
-            first_statement?.isAst?.('AST_Return')
-    ) {
-      const returned = first_statement.value
-      if (!returned) {
-        output.print('{}')
-      } else if (left_is_object(returned)) {
-        output.print('(')
-                returned.print?.(output)
-                output.print(')')
-      } else {
-                returned.print?.(output)
-      }
-    } else {
-      print_braced(self, output)
-    }
-    if (needs_parens) { output.print(')') }
-  }
-
-  static documentation = 'An ES6 Arrow function ((a) => b)'
-
-  static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_Defun extends AST_Lambda {
-  name: any
-  _size = function () {
-    return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
-  }
-
-  _to_mozilla_ast (parent): any {
-    return {
-      type: 'FunctionDeclaration',
-      id: to_moz(this.name),
-      params: this.argnames.map(to_moz),
-      generator: this.is_generator,
-      async: this.async,
-      body: to_moz_scope('BlockStatement', this)
-    }
-  }
-
-  static documentation = 'A function definition'
-
-  static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
 
 class AST_Call extends AST_Node {
   _annotations: any
@@ -2391,33 +2141,6 @@ class AST_DefaultAssign extends AST_Binary {
   static documentation = 'A default assignment expression like in `(a = 3) => a`'
 
   static PROPS = AST_Binary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-/* -----[ LITERALS ]----- */
-
-class AST_DefClass extends AST_Class {
-  name: any
-  extends: any
-  properties: any[]
-
-  static documentation = 'A class definition'
-
-  static PROPS = AST_Class.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
-}
-
-class AST_ClassExpression extends AST_Class {
-  name: any
-
-  needs_parens = first_in_statement
-  static documentation: 'A class expression.'
-
-  static PROPS = AST_Class.PROPS
   constructor (args?) { // eslint-disable-line
     super(args)
   }
