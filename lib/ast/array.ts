@@ -1,4 +1,4 @@
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -13,8 +13,12 @@ import {
   anySideEffect
 } from '../utils'
 
+interface AST_Array_Props extends AST_Node_Props {
+  elements: AST_Node[]
+}
+
 export default class AST_Array extends AST_Node {
-  elements: any
+  elements: AST_Node[]
 
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
@@ -109,7 +113,7 @@ export default class AST_Array extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args: AST_Array_Props) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }

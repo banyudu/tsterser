@@ -4,12 +4,7 @@ import TreeWalker from '../tree-walker'
 import AST from './_base'
 import AST_Token from './token'
 
-import {
-  OPTIMIZED,
-  has_flag,
-  set_flag,
-  unaryPrefix
-} from '../constants'
+import { OPTIMIZED, has_flag, set_flag, unaryPrefix } from '../constants'
 
 import {
   string_template,
@@ -62,7 +57,7 @@ export default class AST_Node extends AST {
   may_throw (compressor: any) { return true }
   has_side_effects (compressor: any) { return true }
   _eval (compressor?: any, depth?: number): any { return this }
-  is_constant_expression (scope: any) { return false }
+  is_constant_expression (scope?: any) { return false }
   negate (compressor: any, first_in_statement?: any) {
     return basic_negation(this)
   }
