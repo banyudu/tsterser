@@ -142,11 +142,10 @@ import {
   AST_VarDef,
   AST_While,
   AST_With,
-  AST_Yield,
-  _INLINE,
-  _NOINLINE,
-  _PURE
+  AST_Yield
 } from './ast'
+
+import { _INLINE, _NOINLINE, _PURE } from './constants'
 
 var _KEYWORDS = 'break case catch class const continue debugger default delete do else export extends finally for function if in instanceof let new return switch throw try typeof var void while with'
 var _KEYWORDS_ATOM = 'false null true'

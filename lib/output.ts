@@ -50,10 +50,8 @@ import {
   return_false,
   return_true
 } from './utils'
-import {
-  AST_Node,
-  TreeWalker
-} from './ast'
+import AST_Node from './ast/node'
+import TreeWalker from './tree-walker'
 import {
   get_full_char_code,
   get_full_char,

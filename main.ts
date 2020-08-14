@@ -117,11 +117,9 @@ export {
   AST_VarDef,
   AST_While,
   AST_With,
-  AST_Yield,
-  _INLINE,
-  _NOINLINE,
-  _PURE
+  AST_Yield
 } from './lib/ast'
+export { _INLINE, _NOINLINE, _PURE } from './lib/constants'
 export { default as TreeTransformer } from './lib/tree-transformer'
 export { default as TreeWalker } from './lib/tree-walker'
 export {
