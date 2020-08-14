@@ -44,16 +44,12 @@
 'use strict'
 
 import {
-  MAP,
-  noop,
   make_node,
-  defaults,
   regexp_source_fix,
   return_false,
   return_true,
   return_this,
   has_annotation,
-  warn,
   push,
   pop,
   mark,
@@ -67,7 +63,6 @@ import {
   make_sequence,
   first_in_statement,
   is_undefined,
-  reset_def,
   anySideEffect,
   anyMayThrow,
   list_overhead,
@@ -77,14 +72,12 @@ import {
   maintain_this_binding,
   walk_body,
   is_func_expr,
-  is_lhs,
   is_modified,
   trim,
   inline_array_like_spread,
   lambda_modifiers,
   is_undeclared_ref,
   is_empty,
-  display_body,
   print_braced,
   blockStateMentCodeGen,
   suppress,
@@ -93,15 +86,12 @@ import {
   opt_AST_Lambda,
   basic_negation,
   find_scope,
-  all_refs_local,
   is_iife_call,
   safe_to_assign,
   is_reachable,
   is_object,
   is_nullish,
-  redefined_catch_def,
   recursive_ref,
-  mark_lambda,
   best,
   mark_escaped,
   needsParens,
@@ -111,25 +101,20 @@ import {
   to_moz_scope,
   To_Moz_FunctionExpression,
   left_is_object,
-  callCodeGen,
-  keep_name
+  callCodeGen
 } from '../utils'
 
-import { parse, PRECEDENCE, RESERVED_WORDS, JS_Parse_Error } from '../parse'
+import { parse, PRECEDENCE, JS_Parse_Error } from '../parse'
 import { OutputStream } from '../output'
 
-import { base54, function_defs, SymbolDef, setFunctionDefs } from '../scope'
-import TreeTransformer from '../tree-transformer'
+import { base54 } from '../scope'
 
 import {
   UNUSED,
   TRUTHY,
   FALSY,
-  INLINED,
   WRITE_ONLY,
   SQUEEZED,
-  TOP,
-  CLEAR_BETWEEN_PASSES,
   native_fns,
   has_flag,
   static_fns,
@@ -147,15 +132,16 @@ import {
   _PURE,
   _NOINLINE,
   _INLINE,
-  global_objs,
-  MASK_EXPORT_DONT_MANGLE,
-  clear_flag
+  global_objs
 } from '../constants'
 
 import Compressor from '../compressor'
 
 import TreeWalker from '../tree-walker'
 
+import AST_Toplevel from './toplevel'
+import AST_Lambda from './lambda'
+import AST_Class from './class'
 import AST_Scope from './scope'
 import AST_Conditional from './conditional'
 import AST_SymbolExport from './symbol-export'
@@ -260,494 +246,6 @@ import AST_Continue from './continue'
 import AST_While from './while'
 import AST_Do from './do'
 import AST_SwitchBranch from './switch-branch'
-
-export let unmangleable_names: Set<any> | null = null
-
-export let printMangleOptions
-
-class AST_Toplevel extends AST_Scope {
-  variables: any
-  globals: any
-  mangled_names: any
-
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
-    this.globals.forEach(function (def) {
-      reset_def(compressor, def)
-    })
-    reset_variables(tw, compressor, this)
-  }
-
-  resolve_defines (compressor: any) {
-    if (!compressor.option('global_defs')) return this
-    this.figure_out_scope({ ie8: compressor.option('ie8') })
-    return this.transform(new TreeTransformer(function (node: any) {
-      var def = node._find_defs(compressor, '')
-      if (!def) return
-      var level = 0; var child = node; var parent
-      while (parent = this.parent(level++)) {
-        if (!(parent?.isAst?.('AST_PropAccess'))) break
-        if (parent.expression !== child) break
-        child = parent
-      }
-      if (is_lhs(child, parent)) {
-        warn(compressor, node)
-        return
-      }
-      return def
-    }))
-  }
-
-  reset_opt_flags (compressor: any) {
-    const self = this
-    const reduce_vars = compressor.option('reduce_vars')
-
-    const preparation = new TreeWalker(function (node: any, descend) {
-      clear_flag(node, CLEAR_BETWEEN_PASSES)
-      if (reduce_vars) {
-        if (compressor.top_retain &&
-                  node?.isAst?.('AST_Defun') && // Only functions are retained
-                  preparation.parent() === self
-        ) {
-          set_flag(node, TOP)
-        }
-        return node.reduce_vars(preparation, descend, compressor)
-      }
-    })
-    // Stack of look-up tables to keep track of whether a `SymbolDef` has been
-    // properly assigned before use:
-    // - `push()` & `pop()` when visiting conditional branches
-    preparation.safe_ids = Object.create(null)
-    preparation.in_loop = null
-    preparation.loop_ids = new Map()
-    preparation.defs_to_safe_ids = new Map()
-    self.walk(preparation)
-  }
-
-  drop_console () {
-    return this.transform(new TreeTransformer(function (self) {
-      if (self.TYPE == 'Call') {
-        var exp = self.expression
-        if (exp?.isAst?.('AST_PropAccess')) {
-          var name = exp.expression
-          while (name.expression) {
-            name = name.expression
-          }
-          if (is_undeclared_ref(name) && name.name == 'console') {
-            return make_node('AST_Undefined', self)
-          }
-        }
-      }
-    }))
-  }
-
-  def_global (node: any) {
-    var globals = this.globals; var name = node.name
-    if (globals.has(name)) {
-      return globals.get(name)
-    } else {
-      var g = new SymbolDef(this, node)
-      g.undeclared = true
-      g.global = true
-      globals.set(name, g)
-      return g
-    }
-  }
-
-  is_block_scope = return_false
-  next_mangled (options: any) {
-    let name
-    const mangled_names = this.mangled_names
-    do {
-      name = next_mangled(this, options)
-    } while (mangled_names.has(name))
-    return name
-  }
-
-  _default_mangler_options (options: any) {
-    options = defaults(options, {
-      eval: false,
-      ie8: false,
-      keep_classnames: false,
-      keep_fnames: false,
-      module: false,
-      reserved: [],
-      toplevel: false
-    })
-    if (options.module) options.toplevel = true
-    let reserved: string[] | Set<string> | undefined = options.reserved
-    if (!Array.isArray(options.reserved) &&
-          !(options.reserved instanceof Set)
-    ) {
-      reserved = []
-    }
-    options.reserved = new Set(reserved)
-    // Never mangle arguments
-    options.reserved.add('arguments')
-    return options
-  }
-
-  wrap_commonjs (name: string) {
-    var body = this.body
-    var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
-    var wrapped_tl = parse(_wrapped_tl)
-    wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: any) {
-      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
-        return MAP.splice(body)
-      }
-      return undefined
-    }))
-    return wrapped_tl
-  }
-
-  wrap_enclose (args_values: string) {
-    if (typeof args_values !== 'string') args_values = ''
-    var index = args_values.indexOf(':')
-    if (index < 0) index = args_values.length
-    var body = this.body
-    return parse([
-      '(function(',
-      args_values.slice(0, index),
-      '){"$ORIG"})(',
-      args_values.slice(index + 1),
-      ')'
-    ].join('')).transform(new TreeTransformer(function (node: any) {
-      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
-        return MAP.splice(body)
-      }
-      return undefined
-    }))
-  }
-
-  shallow_cmp = pass_through
-  _size = function () {
-    return list_overhead(this.body)
-  }
-
-  _to_mozilla_ast (parent) {
-    return to_moz_scope('Program', this)
-  }
-
-  _codegen (self, output) {
-    display_body(self.body as any[], true, output, true)
-    output.print('')
-  }
-
-  add_source_map = noop
-  compute_char_frequency (options: any) {
-    printMangleOptions = this._default_mangler_options(options)
-    try {
-      base54.consider(this.print_to_string(), 1)
-    } finally {
-      printMangleOptions = undefined
-    }
-    base54.sort()
-  }
-
-  expand_names (options: any) {
-    base54.reset()
-    base54.sort()
-    options = this._default_mangler_options(options)
-    var avoid = this.find_colliding_names(options)
-    var cname = 0
-    this.globals.forEach(rename)
-    this.walk(new TreeWalker(function (node: any) {
-      if (node?.isAst?.('AST_Scope')) node.variables.forEach(rename)
-      if (node?.isAst?.('AST_SymbolCatch')) rename(node.definition())
-    }))
-
-    function next_name () {
-      var name
-      do {
-        name = base54(cname++)
-      } while (avoid.has(name) || RESERVED_WORDS.has(name))
-      return name
-    }
-
-    function rename (def: any) {
-      if (def.global && options.cache) return
-      if (def.unmangleable(options)) return
-      if (options.reserved?.has(def.name)) return
-      const redefinition = redefined_catch_def(def)
-      const name = def.name = redefinition ? redefinition.name : next_name()
-      def.orig.forEach(function (sym) {
-        sym.name = name
-      })
-      def.references.forEach(function (sym) {
-        sym.name = name
-      })
-    }
-  }
-
-  find_colliding_names (options: any) {
-    const cache = options.cache && options.cache.props
-    const avoid = new Set()
-      options.reserved?.forEach(to_avoid)
-      this.globals.forEach(add_def)
-      this.walk(new TreeWalker(function (node: any) {
-        if (node?.isAst?.('AST_Scope')) node.variables.forEach(add_def)
-        if (node?.isAst?.('AST_SymbolCatch')) add_def(node.definition())
-      }))
-      return avoid
-
-      function to_avoid (name: string) {
-        avoid.add(name)
-      }
-
-      function add_def (def: any) {
-        var name = def.name
-        if (def.global && cache && cache.has(name)) name = cache.get(name) as string
-        else if (!def.unmangleable(options)) return
-        to_avoid(name)
-      }
-  }
-
-  mangle_names (options: any) {
-    options = this._default_mangler_options(options)
-
-    // We only need to mangle declaration nodes.  Special logic wired
-    // into the code generator will display the mangled name if it's
-    // present (and for AST_SymbolRef-s it'll use the mangled name of
-    // the AST_SymbolDeclaration that it points to).
-    var lname = -1
-    var to_mangle: any[] = []
-
-    if (options.keep_fnames) {
-      setFunctionDefs(new Set())
-    }
-
-    const mangled_names = this.mangled_names = new Set()
-    if (options.cache) {
-      this.globals.forEach(collect)
-      if (options.cache.props) {
-        options.cache.props.forEach(function (mangled_name) {
-          mangled_names.add(mangled_name)
-        })
-      }
-    }
-
-    var tw = new TreeWalker(function (node: any, descend) {
-      if (node?.isAst?.('AST_LabeledStatement')) {
-        // lname is incremented when we get to the AST_Label
-        var save_nesting = lname
-        descend()
-        lname = save_nesting
-        return true // don't descend again in TreeWalker
-      }
-      if (node?.isAst?.('AST_Scope')) {
-        node.variables.forEach(collect)
-        return
-      }
-      if (node.is_block_scope()) {
-              node.block_scope?.variables.forEach(collect)
-              return
-      }
-      if (
-        function_defs &&
-              node?.isAst?.('AST_VarDef') &&
-              node.value?.isAst?.('AST_Lambda') &&
-              !node.value.name &&
-              keep_name(options.keep_fnames, node.name.name)
-      ) {
-        function_defs.add(node.name.definition?.().id)
-        return
-      }
-      if (node?.isAst?.('AST_Label')) {
-        let name
-        do {
-          name = base54(++lname)
-        } while (RESERVED_WORDS.has(name))
-        node.mangled_name = name
-        return true
-      }
-      if (!(options.ie8 || options.safari10) && node?.isAst?.('AST_SymbolCatch')) {
-        to_mangle.push(node.definition())
-      }
-    })
-
-    this.walk(tw)
-
-    if (options.keep_fnames || options.keep_classnames) {
-      unmangleable_names = new Set()
-      // Collect a set of short names which are unmangleable,
-      // for use in avoiding collisions in next_mangled.
-      to_mangle.forEach(def => {
-        if (def.name.length < 6 && def.unmangleable(options)) {
-                  unmangleable_names?.add(def.name)
-        }
-      })
-    }
-
-    to_mangle.forEach(def => { def.mangle(options) })
-
-    setFunctionDefs(null)
-    unmangleable_names = null
-
-    function collect (symbol: any) {
-      const should_mangle = !options.reserved?.has(symbol.name) &&
-              !(symbol.export & MASK_EXPORT_DONT_MANGLE)
-      if (should_mangle) {
-        to_mangle.push(symbol)
-      }
-    }
-  }
-
-  static documentation = 'The toplevel scope'
-  static propdoc = {
-    globals: '[Map/S] a map of name -> SymbolDef for all undeclared names'
-  }
-
-  static PROPS = AST_Scope.PROPS.concat(['globals'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.globals = args.globals
-  }
-}
-
-class AST_Lambda extends AST_Scope {
-  argnames: any
-  uses_arguments: any
-  name: any
-  is_generator: any
-  async: any
-
-  _optimize = opt_AST_Lambda
-  may_throw = return_false
-  has_side_effects = return_false
-  _eval = return_this as any
-  is_constant_expression = all_refs_local
-  reduce_vars = mark_lambda
-  contains_this () {
-    return walk(this, (node: any) => {
-      if (node?.isAst?.('AST_This')) return walk_abort
-      if (
-        node !== this &&
-              node?.isAst?.('AST_Scope') &&
-              !(node?.isAst?.('AST_Arrow'))
-      ) {
-        return true
-      }
-    })
-  }
-
-  is_block_scope = return_false
-  init_scope_vars = function () {
-    init_scope_vars.apply(this, arguments)
-    this.uses_arguments = false
-    this.def_variable(new AST_SymbolFunarg({
-      name: 'arguments',
-      start: this.start,
-      end: this.end
-    }))
-  }
-
-  args_as_names () {
-    var out: any[] = []
-    for (var i = 0; i < this.argnames.length; i++) {
-      if (this.argnames[i]?.isAst?.('AST_Destructuring')) {
-        out.push(...this.argnames[i].all_symbols())
-      } else {
-        out.push(this.argnames[i])
-      }
-    }
-    return out
-  }
-
-  _walk (visitor: any) {
-    return visitor._visit(this, function () {
-      if (this.name) this.name._walk(visitor)
-      var argnames = this.argnames
-      for (var i = 0, len = argnames.length; i < len; i++) {
-        argnames[i]._walk(visitor)
-      }
-      walk_body(this, visitor)
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.body.length
-    while (i--) push(this.body[i])
-
-    i = this.argnames.length
-    while (i--) push(this.argnames[i])
-
-    if (this.name) push(this.name)
-  }
-
-  shallow_cmp = mkshallow({
-    is_generator: 'eq',
-    async: 'eq'
-  })
-
-  _transform (self, tw: any) {
-    if (self.name) self.name = self.name.transform(tw)
-    self.argnames = do_list(self.argnames, tw)
-    if (self.body?.isAst?.('AST_Node')) {
-      self.body = (self.body).transform(tw)
-    } else {
-      self.body = do_list(self.body, tw)
-    }
-  }
-
-  _to_mozilla_ast (parent) {
-    return To_Moz_FunctionExpression(this, parent)
-  }
-
-  _do_print (this: any, output: any, nokeyword: boolean) {
-    var self = this
-    if (!nokeyword) {
-      if (self.async) {
-        output.print('async')
-        output.space()
-      }
-      output.print('function')
-      if (self.is_generator) {
-        output.star()
-      }
-      if (self.name) {
-        output.space()
-      }
-    }
-    if (self.name?.isAst?.('AST_Symbol')) {
-      self.name.print(output)
-    } else if (nokeyword && self.name?.isAst?.('AST_Node')) {
-      output.with_square(function () {
-                self.name?.print(output) // Computed method name
-      })
-    }
-    output.with_parens(function () {
-      self.argnames.forEach(function (arg, i) {
-        if (i) output.comma()
-        arg.print(output)
-      })
-    })
-    output.space()
-    print_braced(self, output, true)
-  }
-
-  _codegen (self, output) {
-    self._do_print(output)
-  }
-
-  add_source_map (output) { output.add_mapping(this.start) }
-  static documentation = 'Base class for functions'
-  static propdoc = {
-    name: '[AST_SymbolDeclaration?] the name of this function',
-    argnames: '[AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign*] array of function arguments, destructurings, or expanding arguments',
-    uses_arguments: '[boolean/S] tells whether this function accesses the arguments array',
-    is_generator: '[boolean] is this a generator method',
-    async: '[boolean] is this method async'
-  }
-
-  static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.name = args.name
-    this.argnames = args.argnames
-    this.uses_arguments = args.uses_arguments
-    this.is_generator = args.is_generator
-    this.async = args.async
-  }
-}
 
 class AST_Accessor extends AST_Lambda {
   drop_side_effect_free = return_null
@@ -2899,177 +2397,6 @@ class AST_DefaultAssign extends AST_Binary {
 }
 
 /* -----[ LITERALS ]----- */
-
-class AST_Class extends AST_Scope {
-  extends: any
-  properties: any
-  name: any
-
-  _optimize = function (self) {
-    // HACK to avoid compress failure.
-    // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
-    return self
-  }
-
-  drop_side_effect_free = function (compressor: any) {
-    const with_effects: any[] = []
-    const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
-    if (trimmed_extends) with_effects.push(trimmed_extends)
-    for (const prop of this.properties) {
-      const trimmed_prop = prop.drop_side_effect_free(compressor)
-      if (trimmed_prop) with_effects.push(trimmed_prop)
-    }
-    if (!with_effects.length) return null
-    return make_sequence(this, with_effects)
-  }
-
-  may_throw = function (compressor: any) {
-    if (this.extends && this.extends.may_throw(compressor)) return true
-    return anyMayThrow(this.properties, compressor)
-  }
-
-  has_side_effects = function (compressor) {
-    if (this.extends && this.extends.has_side_effects(compressor)) {
-      return true
-    }
-    return anySideEffect(this.properties, compressor)
-  }
-
-  _eval = return_this
-  is_constant_expression = function (scope) {
-    if (this.extends && !this.extends.is_constant_expression(scope)) {
-      return false
-    }
-
-    for (const prop of this.properties) {
-      if (prop.computed_key() && !prop.key.is_constant_expression(scope)) {
-        return false
-      }
-      if (prop.static && prop.value && !prop.value.is_constant_expression(scope)) {
-        return false
-      }
-    }
-
-    return all_refs_local.call(this, scope)
-  }
-
-  reduce_vars = function (tw, descend) {
-    clear_flag(this, INLINED)
-    push(tw)
-    descend()
-    pop(tw)
-    return true
-  }
-
-  is_block_scope = return_false
-  _walk = function (visitor: any) {
-    return visitor._visit(this, function (this: any) {
-      if (this.name) {
-        this.name._walk(visitor)
-      }
-      if (this.extends) {
-        this.extends._walk(visitor)
-      }
-      this.properties.forEach((prop) => prop._walk(visitor))
-    })
-  }
-
-  _children_backwards (push: Function) {
-    let i = this.properties.length
-    while (i--) push(this.properties[i])
-    if (this.extends) push(this.extends)
-    if (this.name) push(this.name)
-  }
-
-  _size = function (): number {
-    return (
-      (this.name ? 8 : 7) +
-            (this.extends ? 8 : 0)
-    )
-  }
-
-  _transform (self, tw: any) {
-    if (self.name) self.name = self.name.transform(tw)
-    if (self.extends) self.extends = self.extends.transform(tw)
-    self.properties = do_list(self.properties, tw)
-  }
-
-  shallow_cmp = mkshallow({
-    name: 'exist',
-    extends: 'exist'
-  })
-
-  _to_mozilla_ast (parent) {
-    var type = this?.isAst?.('AST_ClassExpression') ? 'ClassExpression' : 'ClassDeclaration'
-    return {
-      type: type,
-      superClass: to_moz(this.extends),
-      id: this.name ? to_moz(this.name) : null,
-      body: {
-        type: 'ClassBody',
-        body: this.properties.map(to_moz)
-      }
-    }
-  }
-
-  _codegen = function (self, output) {
-    output.print('class')
-    output.space()
-    if (self.name) {
-      self.name.print(output)
-      output.space()
-    }
-    if (self.extends) {
-      var parens = (
-        !(self.extends?.isAst?.('AST_SymbolRef')) &&
-                !(self.extends?.isAst?.('AST_PropAccess')) &&
-                !(self.extends?.isAst?.('AST_ClassExpression')) &&
-                !(self.extends?.isAst?.('AST_Function'))
-      )
-      output.print('extends')
-      if (parens) {
-        output.print('(')
-      } else {
-        output.space()
-      }
-      self.extends.print(output)
-      if (parens) {
-        output.print(')')
-      } else {
-        output.space()
-      }
-    }
-    if (self.properties.length > 0) {
-      output.with_block(function () {
-        self.properties.forEach(function (prop, i) {
-          if (i) {
-            output.newline()
-          }
-          output.indent()
-          prop.print(output)
-        })
-        output.newline()
-      })
-    } else output.print('{}')
-  }
-
-  add_source_map = function (output) { output.add_mapping(this.start) }
-  static propdoc = {
-    name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
-    extends: '[AST_Node]? optional parent class',
-    properties: '[AST_ObjectProperty*] array of properties'
-  }
-
-  static documentation = 'An ES6 class'
-
-  static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
-  constructor (args?) { // eslint-disable-line
-    super(args)
-    this.name = args.name
-    this.extends = args.extends
-    this.properties = args.properties
-  }
-}
 
 class AST_DefClass extends AST_Class {
   name: any

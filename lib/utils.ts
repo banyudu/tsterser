@@ -57,8 +57,6 @@ import {
   lazy_op
 } from './constants'
 import {
-  printMangleOptions,
-  unmangleable_names,
   AST_Accessor,
   AST_Array,
   AST_Arrow,
@@ -157,6 +155,8 @@ import {
   AST_With,
   AST_Yield
 } from './ast'
+
+import { printMangleOptions, unmangleable_names } from './ast/toplevel'
 
 import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
