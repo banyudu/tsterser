@@ -1,4 +1,3 @@
-import { equivalent_to } from '../equivalent-to'
 import { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
@@ -14,6 +13,7 @@ import {
 import {
   string_template,
   return_false,
+  equivalent_to,
   is_strict,
   walk_parent,
   set_moz_loc,
