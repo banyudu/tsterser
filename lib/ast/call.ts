@@ -53,10 +53,19 @@ import { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
 
-export default class AST_Call extends AST_Node {
-  _annotations: any
-  expression: any
-  args: any[]
+import {
+  AST_Call_Interface,
+  AST_Call_Props,
+  AST_Node_Interface,
+  AST_Dot_Interface,
+  AST_Lambda_Interface,
+  AST_PropAccess_Interface
+} from '../../types/ast'
+
+export default class AST_Call extends AST_Node implements AST_Call_Interface {
+  expression: AST_Node_Interface
+  args: AST_Node_Interface[]
+  _annotations: number
 
   _optimize (self, compressor) {
     var exp = self.expression
@@ -758,7 +767,7 @@ export default class AST_Call extends AST_Node {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
-    return !(this.expression?.isAst?.('AST_Lambda')) ||
+    return !(this.expression?.isAst?.<AST_Lambda_Interface>('AST_Lambda')) ||
           anyMayThrow(this.expression.body, compressor)
   }
 
@@ -773,9 +782,9 @@ export default class AST_Call extends AST_Node {
 
   _eval (compressor: any, depth) {
     var exp = this.expression
-    if (compressor.option('unsafe') && exp?.isAst?.('AST_PropAccess')) {
+    if (compressor.option('unsafe') && exp?.isAst?.<AST_PropAccess_Interface>('AST_PropAccess')) {
       var key = exp.property
-      if (key?.isAst?.('AST_Node')) {
+      if (key instanceof AST_Node && key.isAst('AST_Node')) {
         key = key._eval?.(compressor, depth)
         if (key === exp.property) return this
       }
@@ -834,7 +843,7 @@ export default class AST_Call extends AST_Node {
       }
       if (is_undeclared_ref(expr) && global_pure_fns.has(expr.name)) return true
       let static_fn
-      if (expr?.isAst?.('AST_Dot') &&
+      if (expr?.isAst?.<AST_Dot_Interface>('AST_Dot') &&
               is_undeclared_ref(expr.expression) &&
               (static_fn = static_fns.get(expr.expression.name)) &&
               static_fn.has(expr.property)) {
@@ -842,10 +851,6 @@ export default class AST_Call extends AST_Node {
       }
     }
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
-  }
-
-  initialize () {
-    if (this._annotations == null) this._annotations = 0
   }
 
   _walk (visitor: any) {
@@ -905,11 +910,10 @@ export default class AST_Call extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args: AST_Call_Props) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args
-    this._annotations = args._annotations
-    this.initialize()
+    this._annotations = args._annotations || 0
   }
 }

@@ -36,6 +36,10 @@ export interface AST_Node_Interface extends AST_Node_Props {
   is_boolean: Function
   walk: Function
   is_constant: Function
+  is_call_pure: Function
+  expression: AST_Node_Interface
+  name?: any
+  evaluate: Function
 }
 
 export interface AST_Array_Props extends AST_Node_Props {
@@ -77,11 +81,11 @@ export interface AST_PropAccess_Props extends AST_Node_Props {
   expression: AST_Node_Interface
   property: AST_Node_Interface | string
 }
-export interface AST_PropAccess_Interface extends AST_Node_Interface, AST_Unary_Props {}
+export interface AST_PropAccess_Interface extends AST_Node_Interface, AST_PropAccess_Props {}
 
 export interface AST_Symbol_Props extends AST_Node_Props {
   scope: AST_Scope_Interface
-  name: string
+  name?: any
   thedef: SymbolDef_Interface
   unmangleable: Function
 }
@@ -145,3 +149,38 @@ export interface AST_SymbolRef_Props extends AST_Symbol_Props {
 export interface AST_SymbolRef_Interface extends AST_Symbol_Props, AST_Symbol_Interface {
   definition: Function
 }
+
+export interface AST_Call_Props extends AST_Node_Props {
+  expression: AST_Node_Interface
+  args: AST_Node_Interface[]
+  _annotations?: number
+}
+export interface AST_Call_Interface extends AST_Call_Props, AST_Node_Interface {
+  is_expr_pure: Function
+}
+
+export interface AST_Dot_Props extends AST_PropAccess_Props {
+  quote: string
+}
+export interface AST_Dot_Interface extends AST_Dot_Props, AST_PropAccess_Interface { }
+
+export interface AST_Lambda_Props extends AST_Scope_Props {
+  name: AST_SymbolDeclaration_Interface | AST_Node_Interface | null
+  // argnames: ArgType[]
+  argnames: any[]
+  uses_arguments: boolean
+  is_generator: boolean
+  async: boolean
+  pinned?: Function
+  make_var_name: Function
+}
+export interface AST_Lambda_Interface extends AST_Lambda_Props, Omit<AST_Scope_Interface, 'name'> {}
+
+export interface AST_SymbolDeclaration_Props extends AST_Symbol_Props {
+  init: AST_Node_Interface | null
+  names: AST_Node_Interface[]
+  is_array: AST_Node_Interface[]
+  mark_enclosed: Function
+  reference: Function
+}
+export interface AST_SymbolDeclaration_Interface extends AST_SymbolDeclaration_Props, AST_Symbol_Interface {}

@@ -24,6 +24,7 @@ import { AST_Node_Props, AST_Node_Interface, AST_Token_Interface } from '../../t
 export default class AST_Node extends AST implements AST_Node_Interface {
   start: AST_Token_Interface
   end: AST_Token_Interface
+  expression: AST_Node_Interface
 
   isAst (type: string) {
     let proto: any = this.constructor
