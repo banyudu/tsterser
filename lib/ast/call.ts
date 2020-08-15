@@ -54,17 +54,17 @@ import { OutputStream } from '../output'
 import { parse, JS_Parse_Error } from '../parse'
 
 import {
-  AST_Call_Interface,
-  AST_Call_Props,
-  AST_Node_Interface,
-  AST_Dot_Interface,
-  AST_Lambda_Interface,
-  AST_PropAccess_Interface
+  ICall,
+  ICall_Props,
+  INode,
+  IDot,
+  ILambda,
+  IPropAccess
 } from '../../types/ast'
 
-export default class AST_Call extends AST_Node implements AST_Call_Interface {
-  expression: AST_Node_Interface
-  args: AST_Node_Interface[]
+export default class AST_Call extends AST_Node implements ICall {
+  expression: INode
+  args: INode[]
   _annotations: number
 
   _optimize (self, compressor) {
@@ -767,7 +767,7 @@ export default class AST_Call extends AST_Node implements AST_Call_Interface {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
-    return !(this.expression?.isAst?.<AST_Lambda_Interface>('AST_Lambda')) ||
+    return !(this.expression?.isAst?.<ILambda>('AST_Lambda')) ||
           anyMayThrow(this.expression.body, compressor)
   }
 
@@ -782,7 +782,7 @@ export default class AST_Call extends AST_Node implements AST_Call_Interface {
 
   _eval (compressor: any, depth) {
     var exp = this.expression
-    if (compressor.option('unsafe') && exp?.isAst?.<AST_PropAccess_Interface>('AST_PropAccess')) {
+    if (compressor.option('unsafe') && exp?.isAst?.<IPropAccess>('AST_PropAccess')) {
       var key = exp.property
       if (key instanceof AST_Node && key.isAst('AST_Node')) {
         key = key._eval?.(compressor, depth)
@@ -843,7 +843,7 @@ export default class AST_Call extends AST_Node implements AST_Call_Interface {
       }
       if (is_undeclared_ref(expr) && global_pure_fns.has(expr.name)) return true
       let static_fn
-      if (expr?.isAst?.<AST_Dot_Interface>('AST_Dot') &&
+      if (expr?.isAst?.<IDot>('AST_Dot') &&
               is_undeclared_ref(expr.expression) &&
               (static_fn = static_fns.get(expr.expression.name)) &&
               static_fn.has(expr.property)) {
@@ -910,7 +910,7 @@ export default class AST_Call extends AST_Node implements AST_Call_Interface {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args: AST_Call_Props) { // eslint-disable-line
+  constructor (args: ICall_Props) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args

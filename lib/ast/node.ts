@@ -19,12 +19,12 @@ import {
   from_moz
 } from '../utils'
 
-import { AST_Node_Props, AST_Node_Interface, AST_Token_Interface } from '../../types/ast'
+import { INode_Props, INode, IToken } from '../../types/ast'
 
-export default class AST_Node extends AST implements AST_Node_Interface {
-  start: AST_Token_Interface
-  end: AST_Token_Interface
-  expression: AST_Node_Interface
+export default class AST_Node extends AST implements INode {
+  start: IToken
+  end: IToken
+  expression: INode
 
   isAst (type: string) {
     let proto: any = this.constructor
@@ -224,7 +224,7 @@ export default class AST_Node extends AST implements AST_Node_Interface {
 
   static PROPS = ['start', 'end']
 
-  constructor (args?: AST_Node_Props) { // eslint-disable-line
+  constructor (args?: INode_Props) { // eslint-disable-line
     super()
     this.start = args?.start
     this.end = args?.end

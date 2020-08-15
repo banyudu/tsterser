@@ -13,10 +13,10 @@ import {
   anySideEffect
 } from '../utils'
 
-import { AST_Array_Props, AST_Node_Interface, AST_Array_Interface } from '../../types/ast'
+import { IArray_Props, INode, IArray } from '../../types/ast'
 
-export default class AST_Array extends AST_Node implements AST_Array_Interface {
-  elements: AST_Node_Interface[]
+export default class AST_Array extends AST_Node implements IArray {
+  elements: INode[]
 
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
@@ -111,7 +111,7 @@ export default class AST_Array extends AST_Node implements AST_Array_Interface {
   }
 
   static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args: AST_Array_Props) { // eslint-disable-line
+  constructor (args: IArray_Props) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }

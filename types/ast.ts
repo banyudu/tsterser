@@ -1,4 +1,4 @@
-export interface AST_Token_Props {
+export interface IToken_Props {
   value?: string
   type?: string
   pos: number
@@ -16,14 +16,14 @@ export interface AST_Token_Props {
   end?: any
 }
 
-export interface AST_Token_Interface extends AST_Token_Props { }
+export interface IToken extends IToken_Props { }
 
-export interface AST_Node_Props {
-  start?: AST_Token_Interface
-  end?: AST_Token_Interface
+export interface INode_Props {
+  start?: IToken
+  end?: IToken
 }
 
-export interface AST_Node_Interface extends AST_Node_Props {
+export interface INode extends INode_Props {
   is_constant_expression: Function
   _eval: Function
   drop_side_effect_free: Function
@@ -32,82 +32,82 @@ export interface AST_Node_Interface extends AST_Node_Props {
   is_string: Function
   _dot_throw: Function
   is_number: Function
-  isAst: <T extends AST_Node_Interface>(type: string) => this is T
+  isAst: <T extends INode>(type: string) => this is T
   is_boolean: Function
   walk: Function
   is_constant: Function
   is_call_pure: Function
-  expression: AST_Node_Interface
+  expression: INode
   name?: any
   evaluate: Function
 }
 
-export interface AST_Array_Props extends AST_Node_Props {
-  elements: AST_Node_Interface[]
+export interface IArray_Props extends INode_Props {
+  elements: INode[]
 }
 
-export interface AST_Array_Interface extends AST_Node_Interface {
-  elements: AST_Node_Interface[]
+export interface IArray extends INode {
+  elements: INode[]
 }
 
-export interface AST_Await_Props extends AST_Node_Props {
-  expression: AST_Node_Interface
+export interface IAwait_Props extends INode_Props {
+  expression: INode
 }
 
-export interface AST_Await_Interface extends AST_Node_Interface, AST_Node_Props { }
+export interface IAwait extends INode, INode_Props { }
 
-export interface AST_Binary_Props extends AST_Node_Props {
+export interface IBinary_Props extends INode_Props {
   operator: string
-  left: AST_Node_Interface
-  right: AST_Node_Interface
+  left: INode
+  right: INode
 }
 
-export interface AST_Binary_Interface extends AST_Node_Interface, AST_Binary_Props {}
+export interface IBinary extends INode, IBinary_Props {}
 
-export interface AST_Sequence_Props extends AST_Node_Props {
-  expressions: AST_Node_Interface[]
+export interface ISequence_Props extends INode_Props {
+  expressions: INode[]
   tail_node: Function
 }
 
-export interface AST_Sequence_Interface extends AST_Node_Interface, AST_Sequence_Props {}
+export interface ISequence extends INode, ISequence_Props {}
 
-export interface AST_Unary_Props extends AST_Node_Props {
+export interface IUnary_Props extends INode_Props {
   operator: string
-  expression: AST_Node_Interface
+  expression: INode
 }
-export interface AST_Unary_Interface extends AST_Node_Interface, AST_Unary_Props {}
+export interface IUnary extends INode, IUnary_Props {}
 
-export interface AST_PropAccess_Props extends AST_Node_Props {
-  expression: AST_Node_Interface
-  property: AST_Node_Interface | string
+export interface IPropAccess_Props extends INode_Props {
+  expression: INode
+  property: INode | string
 }
-export interface AST_PropAccess_Interface extends AST_Node_Interface, AST_PropAccess_Props {}
+export interface IPropAccess extends INode, IPropAccess_Props {}
 
-export interface AST_Symbol_Props extends AST_Node_Props {
-  scope: AST_Scope_Interface
+export interface ISymbol_Props extends INode_Props {
+  scope: IScope
   name?: any
   thedef: SymbolDef_Interface
   unmangleable: Function
 }
-export interface AST_Symbol_Interface extends AST_Symbol_Props, AST_Node_Interface {}
+export interface ISymbol extends ISymbol_Props, INode {}
 
-export interface AST_Statement_Props extends AST_Node_Props{
-  body: AST_Node_Interface[] | AST_Node_Interface
+export interface IStatement_Props extends INode_Props{
+  body: INode[] | INode
 }
-export interface AST_Statement_Interface extends AST_Statement_Props, AST_Node_Interface {}
+export interface IStatement extends IStatement_Props, INode {}
 
-export interface AST_Block_Props extends AST_Statement_Props{
-  body: AST_Node_Interface[]
-  block_scope: AST_Scope_Interface | null
+export interface IBlock_Props extends IStatement_Props{
+  body: INode[]
+  block_scope: IScope | null
 }
-export interface AST_Block_Interface extends AST_Block_Props, Omit<AST_Statement_Interface, 'body'> {}
+export interface IBlock extends IBlock_Props, Omit<IStatement, 'body'> {}
 
-export interface AST_Scope_Props extends AST_Block_Props{
+export interface IScope_Props extends IBlock_Props{
   variables: Map<string, SymbolDef_Interface>
   functions: any
   uses_with: boolean
   uses_eval: boolean
-  parent_scope: AST_Scope_Interface | null
+  parent_scope: IScope | null
   enclosed: any
   cname: any
   init_scope_vars: Function
@@ -123,15 +123,15 @@ export interface AST_Scope_Props extends AST_Block_Props{
   _var_name_cache: Set<string> | null
   _added_var_names: Set<string> | null
 }
-export interface AST_Scope_Interface extends AST_Scope_Props, AST_Block_Interface { }
+export interface IScope extends IScope_Props, IBlock { }
 
 export interface SymbolDef_Interface {
   name: string
-  orig: AST_SymbolRef_Interface[]
-  init: AST_SymbolRef_Interface
+  orig: ISymbolRef[]
+  init: ISymbolRef
   eliminated: number
-  scope: AST_Scope_Interface
-  references: AST_SymbolRef_Interface[]
+  scope: IScope
+  references: ISymbolRef[]
   replaced: number
   global: boolean
   export: number
@@ -141,31 +141,31 @@ export interface SymbolDef_Interface {
   unmangleable: Function
 }
 
-export interface AST_SymbolRef_Props extends AST_Symbol_Props {
+export interface ISymbolRef_Props extends ISymbol_Props {
   reference: Function
   is_immutable: Function
   is_declared: Function
 }
-export interface AST_SymbolRef_Interface extends AST_Symbol_Props, AST_Symbol_Interface {
+export interface ISymbolRef extends ISymbol_Props, ISymbol {
   definition: Function
 }
 
-export interface AST_Call_Props extends AST_Node_Props {
-  expression: AST_Node_Interface
-  args: AST_Node_Interface[]
+export interface ICall_Props extends INode_Props {
+  expression: INode
+  args: INode[]
   _annotations?: number
 }
-export interface AST_Call_Interface extends AST_Call_Props, AST_Node_Interface {
+export interface ICall extends ICall_Props, INode {
   is_expr_pure: Function
 }
 
-export interface AST_Dot_Props extends AST_PropAccess_Props {
+export interface IDot_Props extends IPropAccess_Props {
   quote: string
 }
-export interface AST_Dot_Interface extends AST_Dot_Props, AST_PropAccess_Interface { }
+export interface IDot extends IDot_Props, IPropAccess { }
 
-export interface AST_Lambda_Props extends AST_Scope_Props {
-  name: AST_SymbolDeclaration_Interface | AST_Node_Interface | null
+export interface ILambda_Props extends IScope_Props {
+  name: ISymbolDeclaration | INode | null
   // argnames: ArgType[]
   argnames: any[]
   uses_arguments: boolean
@@ -174,13 +174,13 @@ export interface AST_Lambda_Props extends AST_Scope_Props {
   pinned?: Function
   make_var_name: Function
 }
-export interface AST_Lambda_Interface extends AST_Lambda_Props, Omit<AST_Scope_Interface, 'name'> {}
+export interface ILambda extends ILambda_Props, Omit<IScope, 'name'> {}
 
-export interface AST_SymbolDeclaration_Props extends AST_Symbol_Props {
-  init: AST_Node_Interface | null
-  names: AST_Node_Interface[]
-  is_array: AST_Node_Interface[]
+export interface ISymbolDeclaration_Props extends ISymbol_Props {
+  init: INode | null
+  names: INode[]
+  is_array: INode[]
   mark_enclosed: Function
   reference: Function
 }
-export interface AST_SymbolDeclaration_Interface extends AST_SymbolDeclaration_Props, AST_Symbol_Interface {}
+export interface ISymbolDeclaration extends ISymbolDeclaration_Props, ISymbol {}

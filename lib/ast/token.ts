@@ -1,7 +1,7 @@
 import AST from './_base'
-import { AST_Token_Props, AST_Token_Interface } from '../../types/ast'
+import { IToken_Props, IToken } from '../../types/ast'
 
-export default class AST_Token extends AST implements AST_Token_Interface {
+export default class AST_Token extends AST implements IToken {
   value?: string
   type?: string
   pos: number
@@ -24,7 +24,7 @@ export default class AST_Token extends AST implements AST_Token_Interface {
     return type === 'AST_Token'
   }
 
-  constructor (args?: AST_Token_Props) {
+  constructor (args?: IToken_Props) {
     super()
 
     if (args) {
