@@ -1,4 +1,4 @@
-import AST_Node, { AST_Node_Props } from './node'
+import AST_Node from './node'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -13,12 +13,10 @@ import {
   anySideEffect
 } from '../utils'
 
-interface AST_Array_Props extends AST_Node_Props {
-  elements: AST_Node[]
-}
+import { AST_Array_Props, AST_Node_Interface, AST_Array_Interface } from '../../types/ast'
 
-export default class AST_Array extends AST_Node {
-  elements: AST_Node[]
+export default class AST_Array extends AST_Node implements AST_Array_Interface {
+  elements: AST_Node_Interface[]
 
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)

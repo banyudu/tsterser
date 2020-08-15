@@ -1,22 +1,7 @@
 import AST from './_base'
-interface AST_Token_Props {
-  value?: string
-  type?: string
-  pos: number
-  line: number
-  col: number
-  nlb?: boolean
-  file: string
-  raw: string
-  quote?: string
-  endpos: number | null
-  endline: number | null
-  endcol: number | null
-  comments_before?: Comment[]
-  comments_after?: Comment[]
-  end?: any
-}
-export default class AST_Token extends AST {
+import { AST_Token_Props, AST_Token_Interface } from '../../types/ast'
+
+export default class AST_Token extends AST implements AST_Token_Interface {
   value?: string
   type?: string
   pos: number

@@ -2,7 +2,6 @@ import { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import AST from './_base'
-import AST_Token from './token'
 
 import { OPTIMIZED, has_flag, set_flag, unaryPrefix } from '../constants'
 
@@ -20,14 +19,11 @@ import {
   from_moz
 } from '../utils'
 
-export interface AST_Node_Props {
-  start?: AST_Token
-  end?: AST_Token
-}
+import { AST_Node_Props, AST_Node_Interface, AST_Token_Interface } from '../../types/ast'
 
-export default class AST_Node extends AST {
-  start: AST_Token
-  end: AST_Token
+export default class AST_Node extends AST implements AST_Node_Interface {
+  start: AST_Token_Interface
+  end: AST_Token_Interface
 
   isAst (type: string) {
     let proto: any = this.constructor
