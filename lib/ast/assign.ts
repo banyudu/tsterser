@@ -17,6 +17,11 @@ import {
 
 import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from '../constants'
 
+import {
+  AST_PropAccess_Interface,
+  AST_SymbolRef_Interface
+} from '../../types/ast'
+
 export default class AST_Assign extends AST_Binary {
   _optimize (self, compressor) {
     var def
@@ -81,12 +86,12 @@ export default class AST_Assign extends AST_Binary {
     var left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&
-              left?.isAst?.('AST_PropAccess') &&
+              left?.isAst?.<AST_PropAccess_Interface>('AST_PropAccess') &&
               left.expression.is_constant()) {
       return this
     }
     set_flag(this, WRITE_ONLY)
-    while (left?.isAst?.('AST_PropAccess')) {
+    while (left?.isAst?.<AST_PropAccess_Interface>('AST_PropAccess')) {
       left = left.expression
     }
     if (left.is_constant_expression(compressor.find_parent(AST_Scope))) {
@@ -126,7 +131,7 @@ export default class AST_Assign extends AST_Binary {
       return
     }
     var sym = node.left
-    if (!(sym?.isAst?.('AST_SymbolRef'))) return
+    if (!(sym?.isAst?.<AST_SymbolRef_Interface>('AST_SymbolRef'))) return
     var def = sym.definition?.()
     var safe = safe_to_assign(tw, def, sym.scope, node.right)
     def.assignments++

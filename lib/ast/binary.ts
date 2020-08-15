@@ -33,10 +33,18 @@ import {
   lazy_op
 } from '../constants'
 
-export default class AST_Binary extends AST_Node {
-  left: any
-  operator: any
-  right: any
+import {
+  AST_Binary_Interface,
+  AST_Binary_Props,
+  AST_Node_Interface,
+  AST_Sequence_Interface,
+  AST_Unary_Interface
+} from '../../types/ast'
+
+export default class AST_Binary extends AST_Node implements AST_Binary_Interface {
+  left: AST_Node_Interface
+  operator: string
+  right: AST_Node_Interface
 
   _codegen_should_output_space (child: AST_Node) {
     return /^\w/.test(this.operator) && this.left === child
@@ -681,14 +689,14 @@ export default class AST_Binary extends AST_Node {
 
   lift_sequences (compressor: any) {
     if (compressor.option('sequences')) {
-      if (this.left?.isAst?.('AST_Sequence')) {
+      if (this.left?.isAst?.<AST_Sequence_Interface>('AST_Sequence')) {
         var x = this.left.expressions.slice()
         var e = this.clone()
         e.left = x.pop()
         x.push(e)
         return make_sequence(this, x).optimize(compressor)
       }
-      if (this.right?.isAst?.('AST_Sequence') && !this.left.has_side_effects(compressor)) {
+      if (this.right?.isAst?.<AST_Sequence_Interface>('AST_Sequence') && !this.left.has_side_effects(compressor)) {
         var assign = this.operator == '=' && this.left?.isAst?.('AST_SymbolRef')
         var x = this.right.expressions
         var last = x.length - 1
@@ -733,7 +741,7 @@ export default class AST_Binary extends AST_Node {
 
     if (
       (this.operator === '+' || this.operator === '-') &&
-            this.right?.isAst?.('AST_Unary') && this.right.operator === this.operator
+            this.right?.isAst?.<AST_Unary_Interface>('AST_Unary') && this.right.operator === this.operator
     ) {
       // 1+ +a > needs space between the +
       size += 1
@@ -835,7 +843,7 @@ export default class AST_Binary extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args: AST_Binary_Props) { // eslint-disable-line
     super(args)
     this.operator = args.operator
     this.left = args.left
