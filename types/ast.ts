@@ -184,3 +184,29 @@ export interface ISymbolDeclaration_Props extends ISymbol_Props {
   reference: Function
 }
 export interface ISymbolDeclaration extends ISymbolDeclaration_Props, ISymbol {}
+
+export interface IConstant_Props extends INode_Props {}
+export interface IConstant extends IConstant_Props, INode {}
+
+export interface IString_Props extends IConstant_Props {
+  value: string
+  quote: string
+}
+export interface IString extends IConstant, IString_Props {}
+
+export interface INumber_Props extends IConstant_Props {
+  value: number
+  literal: string
+}
+export interface INumber extends IConstant, INumber_Props {}
+
+export interface IRegExp_Props extends IConstant_Props {
+  value: {
+    source: string
+    flags: string
+  }
+}
+export interface IRegExo extends IConstant, IRegExp_Props {}
+
+export interface IAtom_Props extends IConstant_Props {}
+export interface IAtom extends IConstant, IAtom_Props {}
