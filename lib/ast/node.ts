@@ -27,6 +27,14 @@ export default class AST_Node extends AST implements INode {
   expression: INode
   label?: any
 
+  _in_boolean_context (context) {
+    return false
+  }
+
+  _in_boolean_context_next (context) {
+    return this.tail_node() === context
+  }
+
   get_loopcontrol_target (node: any) {
     return undefined
   }

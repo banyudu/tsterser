@@ -18,6 +18,10 @@ export default class AST_If extends AST_StatementWithBody {
   condition: any
   alternative: any
 
+  _in_boolean_context (context) {
+    return this.condition === context
+  }
+
   _optimize (self, compressor) {
     if (is_empty(self.alternative)) self.alternative = null
 

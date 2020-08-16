@@ -2,6 +2,10 @@ import AST_Statement from './statement'
 import { make_node, pass_through, to_moz } from '../utils'
 
 export default class AST_SimpleStatement extends AST_Statement {
+  _in_boolean_context (context) {
+    return true
+  }
+
   _optimize (self, compressor: any) {
     if (compressor.option('side_effects')) {
       var body = self.body

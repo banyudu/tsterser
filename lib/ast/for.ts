@@ -17,6 +17,10 @@ import {
 import TreeWalker from '../tree-walker'
 
 export default class AST_For extends AST_IterationStatement {
+  _in_boolean_context (context) {
+    return this.condition === context
+  }
+
   _optimize (self, compressor) {
     if (!compressor.option('loops')) return self
     if (compressor.option('side_effects') && self.init) {

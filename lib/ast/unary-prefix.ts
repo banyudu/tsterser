@@ -3,6 +3,10 @@ import { unary_bool, non_converting_unary } from '../constants'
 import { is_identifier_atom, make_node, make_sequence, best_of, first_in_statement, basic_negation, make_node_from_constant } from '../utils'
 
 export default class AST_UnaryPrefix extends AST_Unary {
+  _in_boolean_context (context) {
+    return this.operator == '!' && this.expression === context
+  }
+
   _optimize (self, compressor) {
     var e = self.expression
     if (self.operator == 'delete' &&

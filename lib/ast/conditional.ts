@@ -19,6 +19,16 @@ export default class AST_Conditional extends AST_Node {
   consequent: any
   condition: any
 
+  _in_boolean_context (context) {
+    if (this.condition === context) {
+      return true
+    }
+  }
+
+  _in_boolean_context_next (context) {
+    return true
+  }
+
   _optimize (self, compressor) {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"

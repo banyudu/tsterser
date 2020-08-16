@@ -28,7 +28,7 @@ export default class TreeWalker {
     return ret
   }
 
-  parent (n = 0) {
+  parent (n = 0): any {
     return this.stack[this.stack.length - 2 - (n || 0)]
   }
 

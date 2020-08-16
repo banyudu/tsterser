@@ -46,6 +46,12 @@ export default class AST_Binary extends AST_Node implements IBinary {
   operator: string
   right: INode
 
+  _in_boolean_context_next (context) {
+    if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
+      return true
+    }
+  }
+
   _codegen_should_output_space (child: AST_Node) {
     return /^\w/.test(this.operator) && this.left === child
   }

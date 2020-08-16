@@ -8,6 +8,11 @@ export default class AST_DWLoop extends AST_IterationStatement {
   }
 
   static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
+
+  _in_boolean_context (context) {
+    return this.condition === context
+  }
+
   constructor (args?) { // eslint-disable-line
     super(args)
     this.condition = args.condition

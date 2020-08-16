@@ -194,24 +194,11 @@ export default class Compressor extends TreeWalker {
     if (!this.option('booleans')) return false
     var self = this.self()
     for (var i = 0, p; p = this.parent(i); i++) {
-      if (p?.isAst?.('AST_SimpleStatement') ||
-                p?.isAst?.('AST_Conditional') && p.condition === self ||
-                p?.isAst?.('AST_DWLoop') && p.condition === self ||
-                p?.isAst?.('AST_For') && p.condition === self ||
-                p?.isAst?.('AST_If') && p.condition === self ||
-                p?.isAst?.('AST_UnaryPrefix') && p.operator == '!' && p.expression === self) {
+      const result = p?._in_boolean_context(self)
+      if (result) {
         return true
       }
-      if (
-        p?.isAst?.('AST_Binary') &&
-                    (
-                      p.operator == '&&' ||
-                        p.operator == '||' ||
-                        p.operator == '??'
-                    ) ||
-                p?.isAst?.('AST_Conditional') ||
-                p.tail_node() === self
-      ) {
+      if (p?._in_boolean_context_next(self)) {
         self = p
       } else {
         return false
