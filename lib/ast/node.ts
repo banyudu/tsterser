@@ -27,6 +27,10 @@ export default class AST_Node extends AST implements INode {
   expression: INode
   label?: any
 
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    croak('Invalid function parameter', this.start.line, this.start.col)
+  }
+
   _in_boolean_context (context) {
     return false
   }

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import AST_Binary from './binary'
 import AST_Lambda from './lambda'
 import AST_Scope from './scope'
@@ -23,6 +24,10 @@ import {
 } from '../../types/ast'
 
 export default class AST_Assign extends AST_Binary {
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    return insert_default(to_fun_args(this.left, undefined, undefined, this.right))
+  }
+
   _optimize (self, compressor) {
     var def
     if (compressor.option('dead_code') &&

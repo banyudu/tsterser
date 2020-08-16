@@ -4,6 +4,11 @@ import { pass_through, to_moz_in_destructuring, to_moz } from '../utils'
 export default class AST_Expansion extends AST_Node {
   expression: any
 
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    this.expression = to_fun_args(this.expression)
+    return insert_default(this)
+  }
+
   drop_side_effect_free (compressor: any, first_in_statement) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }

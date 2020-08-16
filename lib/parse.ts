@@ -142,7 +142,8 @@ import {
   AST_VarDef,
   AST_While,
   AST_With,
-  AST_Yield
+  AST_Yield,
+  AST_Node
 } from './ast'
 
 import { _INLINE, _NOINLINE, _PURE } from './constants'
@@ -2127,58 +2128,20 @@ function parse ($TEXT: string, opt?: any) {
     return ret
   }
 
-  function to_fun_args (ex, _?, __?, default_seen_above?) {
-    var insert_default = function (ex, default_value) {
-      if (default_value) {
+  function to_fun_args (ex: AST_Node, _?, __?, default_seen_above?: AST_Node) {
+    var insert_default = function (ex) {
+      if (default_seen_above) {
         return new AST_DefaultAssign({
           start: ex.start,
           left: ex,
           operator: '=',
-          right: default_value,
-          end: default_value.end
+          right: default_seen_above,
+          end: default_seen_above.end
         })
       }
       return ex
     }
-    if (ex?.isAst?.('AST_Object')) {
-      return insert_default(new AST_Destructuring({
-        start: ex.start,
-        end: ex.end,
-        is_array: false,
-        names: ex.properties.map(to_fun_args)
-      }), default_seen_above)
-    } else if (ex?.isAst?.('AST_ObjectKeyVal')) {
-      ex.value = to_fun_args(ex.value, 0, [ex.key])
-      return insert_default(ex, default_seen_above)
-    } else if (ex?.isAst?.('AST_Hole')) {
-      return ex
-    } else if (ex?.isAst?.('AST_Destructuring')) {
-      ex.names = ex.names.map(to_fun_args)
-      return insert_default(ex, default_seen_above)
-    } else if (ex?.isAst?.('AST_SymbolRef')) {
-      return insert_default(new AST_SymbolFunarg({
-        name: ex.name,
-        start: ex.start,
-        end: ex.end
-      }), default_seen_above)
-    } else if (ex?.isAst?.('AST_Expansion')) {
-      ex.expression = to_fun_args(ex.expression)
-      return insert_default(ex, default_seen_above)
-    } else if (ex?.isAst?.('AST_Array')) {
-      return insert_default(new AST_Destructuring({
-        start: ex.start,
-        end: ex.end,
-        is_array: true,
-        names: ex.elements.map(to_fun_args)
-      }), default_seen_above)
-    } else if (ex?.isAst?.('AST_Assign')) {
-      return insert_default(to_fun_args(ex.left, undefined, undefined, ex.right), default_seen_above)
-    } else if (ex?.isAst?.('AST_DefaultAssign')) {
-      ex.left = to_fun_args(ex.left, 0, [ex.left])
-      return ex
-    } else {
-      croak('Invalid function parameter', ex.start.line, ex.start.col)
-    }
+    return ex.to_fun_args(to_fun_args, insert_default, croak, default_seen_above)
   }
 
   var expr_atom = function (allow_calls, allow_arrows?) {

@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import AST_Destructuring from './destructuring'
 
 import {
   literals_in_boolean_context,
@@ -17,6 +18,15 @@ import {
 
 export default class AST_Object extends AST_Node {
   properties: any
+
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    return insert_default(new AST_Destructuring({
+      start: this.start,
+      end: this.end,
+      is_array: false,
+      names: this.properties.map(to_fun_args)
+    }))
+  }
 
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)

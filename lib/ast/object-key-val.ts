@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import AST_ObjectProperty from './object-property'
 import { to_moz, lift_key, make_node, mkshallow, print_property_name, key_size } from '../utils'
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
@@ -6,6 +7,11 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   quote: any
   key: any
   value: any
+
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    this.value = to_fun_args(this.value, 0, [this.key])
+    return insert_default(this)
+  }
 
   _to_mozilla_ast (parent) {
     var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {

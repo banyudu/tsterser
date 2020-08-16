@@ -1,5 +1,7 @@
+import AST_Node from './node'
 import AST_Symbol from './symbol'
 import TreeWalker from '../tree-walker'
+import AST_SymbolFunarg from './symbol-funarg'
 import AST_With from './with'
 import {
   is_undeclared_ref,
@@ -30,6 +32,14 @@ import { has_flag, set_flag, SQUEEZED, INLINED, walk_abort, pure_prop_access_glo
 export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
+
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    return insert_default(new AST_SymbolFunarg({
+      name: this.name,
+      start: this.start,
+      end: this.end
+    }))
+  }
 
   _optimize (self, compressor) {
     if (!compressor.option('ie8') &&

@@ -7,6 +7,11 @@ export default class AST_Destructuring extends AST_Node {
   is_array: any
   names: any[]
 
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    this.names = this.names.map(to_fun_args)
+    return insert_default(this)
+  }
+
   _optimize (self, compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&

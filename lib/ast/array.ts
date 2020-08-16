@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import AST_Destructuring from './destructuring'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -17,6 +18,15 @@ import { IArray_Props, INode, IArray } from '../../types/ast'
 
 export default class AST_Array extends AST_Node implements IArray {
   elements: INode[]
+
+  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+    return insert_default(new AST_Destructuring({
+      start: this.start,
+      end: this.end,
+      is_array: true,
+      names: this.elements.map(to_fun_args)
+    }))
+  }
 
   _optimize (self, compressor) {
     var optimized = literals_in_boolean_context(self, compressor)
