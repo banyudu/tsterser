@@ -25,6 +25,11 @@ export default class AST_Node extends AST implements INode {
   start: IToken
   end: IToken
   expression: INode
+  label?: any
+
+  get_loopcontrol_target (node: any) {
+    return undefined
+  }
 
   isAst (type: string) {
     let proto: any = this.constructor

@@ -6,6 +6,13 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
   init?: any
   condition: any
   step: any
+
+  get_loopcontrol_target (node: any) {
+    if (!node.label) {
+      return this
+    }
+  }
+
   is_block_scope = return_true
   clone = clone_block_scope
   static documentation = 'Internal class.  All loops inherit from it.'

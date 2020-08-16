@@ -1,4 +1,5 @@
 import AST_Block from './block'
+import AST_Node from './node'
 import TreeWalker from '../tree-walker'
 
 import {
@@ -18,6 +19,12 @@ import {
 } from '../utils'
 
 export default class AST_Switch extends AST_Block {
+  get_loopcontrol_target (node: AST_Node) {
+    if (node?.isAst?.('AST_Break') && !node.label) {
+      return this
+    }
+  }
+
   _optimize (self, compressor) {
     if (!compressor.option('switches')) return self
     var branch

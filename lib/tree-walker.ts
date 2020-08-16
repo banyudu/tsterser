@@ -1,8 +1,10 @@
 import { noop } from './utils'
+import AST_Node from './ast/node'
+import AST_Scope from './ast/scope'
 
 export default class TreeWalker {
   visit: any
-  stack: any[]
+  stack: AST_Node[]
   directives: AnyObject
   safe_ids: any
   in_loop: any
@@ -67,7 +69,7 @@ export default class TreeWalker {
     var dir = this.directives[type]
     if (dir) return dir
     var node = this.stack[this.stack.length - 1]
-    if (node?.isAst?.('AST_Scope') && node.body) {
+    if (node instanceof AST_Scope && node.body) {
       for (var i = 0; i < node.body.length; ++i) {
         var st = node.body[i]
         if (!(st?.isAst?.('AST_Directive'))) break
@@ -78,16 +80,11 @@ export default class TreeWalker {
 
   loopcontrol_target (node: any): any | undefined {
     var stack = this.stack
-    if (node.label) {
-      for (var i = stack.length; --i >= 0;) {
-        var x = stack[i]
-        if (x?.isAst?.('AST_LabeledStatement') && x.label.name == node.label.name) { return x.body } // TODO: check this type
-      }
-    } else {
-      for (var i = stack.length; --i >= 0;) {
-        var x = stack[i]
-        if (x?.isAst?.('AST_IterationStatement') ||
-                node?.isAst?.('AST_Break') && x?.isAst?.('AST_Switch')) { return x }
+    for (var i = stack.length; --i >= 0;) {
+      var x = stack[i]
+      const target = x.get_loopcontrol_target(node)
+      if (target) {
+        return target
       }
     }
   }

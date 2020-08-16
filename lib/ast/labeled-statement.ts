@@ -4,6 +4,13 @@ import TreeWalker from '../tree-walker'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
   label: any
+
+  get_loopcontrol_target (node: any) {
+    if (node.label && this.label.name == node.label.name) {
+      return this.body
+    }
+  }
+
   _optimize (self, compressor) {
     if (self.body?.isAst?.('AST_Break') &&
           compressor.loopcontrol_target(self.body) === self.body) {
