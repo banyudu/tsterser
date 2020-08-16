@@ -19,6 +19,10 @@ export default class AST_Conditional extends AST_Node {
   consequent: any
   condition: any
 
+  _prepend_comments_check (node) {
+    return this.condition === node
+  }
+
   _in_boolean_context (context) {
     if (this.condition === context) {
       return true

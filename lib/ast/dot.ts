@@ -6,6 +6,10 @@ import { RESERVED_WORDS, is_identifier_string } from '../parse'
 export default class AST_Dot extends AST_PropAccess {
   quote: any
 
+  _prepend_comments_check (node) {
+    return this.expression === node
+  }
+
   _optimize (self, compressor) {
     if (self.property == 'arguments' || self.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {

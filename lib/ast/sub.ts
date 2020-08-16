@@ -4,6 +4,10 @@ import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
 
 export default class AST_Sub extends AST_PropAccess {
+  _prepend_comments_check (node) {
+    return this.expression === node
+  }
+
   _to_mozilla_ast (parent) {
     return {
       type: 'MemberExpression',

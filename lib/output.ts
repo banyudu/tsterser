@@ -533,15 +533,8 @@ export function OutputStream (opt?: any): any {
 
     if (return_with_value) {
       var tw = new TreeWalker(function (node: any) {
-        var parent = tw.parent()
-        if (parent?.isAst?.('AST_Exit') ||
-                    parent?.isAst?.('AST_Binary') && parent.left === node ||
-                    parent.TYPE == 'Call' && parent.expression === node ||
-                    parent?.isAst?.('AST_Conditional') && parent.condition === node ||
-                    parent?.isAst?.('AST_Dot') && parent.expression === node ||
-                    parent?.isAst?.('AST_Sequence') && parent.expressions[0] === node ||
-                    parent?.isAst?.('AST_Sub') && parent.expression === node ||
-                    parent?.isAst?.('AST_UnaryPostfix')) {
+        var parent: AST_Node = tw.parent()
+        if (parent?._prepend_comments_check(node)) {
           if (!node.start) return undefined
           var text = node.start.comments_before
           if (text && !printed_comments.has(text)) {

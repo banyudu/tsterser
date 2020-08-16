@@ -27,6 +27,10 @@ export default class AST_Node extends AST implements INode {
   expression: INode
   label?: any
 
+  _prepend_comments_check (node) {
+    return false
+  }
+
   to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
     croak('Invalid function parameter', this.start.line, this.start.col)
   }
@@ -99,10 +103,10 @@ export default class AST_Node extends AST implements INode {
   is_constant () {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
-    if (this?.isAst?.('AST_Constant')) {
-      return !(this?.isAst?.('AST_RegExp'))
+    if (this.isAst('AST_Constant')) {
+      return !(this.isAst('AST_RegExp'))
     } else {
-      return this?.isAst?.('AST_UnaryPrefix') &&
+      return this.isAst('AST_UnaryPrefix') &&
               (this as any).expression?.isAst?.('AST_Constant') &&
               unaryPrefix.has((this as any).operator)
     }

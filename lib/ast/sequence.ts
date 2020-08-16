@@ -17,6 +17,11 @@ import {
 
 export default class AST_Sequence extends AST_Node {
   expressions: any
+
+  _prepend_comments_check (node) {
+    return this.expressions[0] === node
+  }
+
   _optimize (self, compressor) {
     if (!compressor.option('side_effects')) return self
     var expressions: any[] = []

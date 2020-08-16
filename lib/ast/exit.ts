@@ -2,6 +2,11 @@ import AST_Jump from './jump'
 
 export default class AST_Exit extends AST_Jump {
   value: any
+
+  _prepend_comments_check (node) {
+    return true
+  }
+
   _walk (visitor: any) {
     return visitor._visit(this, this.value && function () {
       this.value._walk(visitor)

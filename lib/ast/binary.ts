@@ -46,6 +46,10 @@ export default class AST_Binary extends AST_Node implements IBinary {
   operator: string
   right: INode
 
+  _prepend_comments_check (node) {
+    return this.left === node
+  }
+
   _in_boolean_context_next (context) {
     if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
       return true

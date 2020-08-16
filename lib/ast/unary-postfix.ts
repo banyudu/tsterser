@@ -2,6 +2,10 @@ import AST_Unary from './unary'
 import { return_false } from '../utils'
 
 export default class AST_UnaryPostfix extends AST_Unary {
+  _prepend_comments_check (node) {
+    return true
+  }
+
   _optimize (self, compressor) {
     return self.lift_sequences(compressor)
   }

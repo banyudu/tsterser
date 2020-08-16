@@ -67,6 +67,10 @@ export default class AST_Call extends AST_Node implements ICall {
   args: INode[]
   _annotations: number
 
+  _prepend_comments_check (node) {
+    return this.TYPE == 'Call' && this.expression === node
+  }
+
   _optimize (self, compressor) {
     var exp = self.expression
     var fn = exp
