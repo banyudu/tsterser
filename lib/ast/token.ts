@@ -1,5 +1,5 @@
 import AST from './_base'
-import { IToken_Props, IToken } from '../../types/ast'
+import { IToken_Props, IToken, Comment } from '../../types/ast'
 
 export default class AST_Token extends AST implements IToken {
   value?: string

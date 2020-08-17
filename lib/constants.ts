@@ -1,4 +1,5 @@
 import { convert_to_predicate, makePredicate } from './utils'
+import { AST_Node } from './ast'
 export const UNUSED = 0b00000001
 export const TRUTHY = 0b00000010
 export const FALSY = 0b00000100
@@ -12,11 +13,11 @@ export const OPTIMIZED = 0b0000001000000000
 export const TOP = 0b0000010000000000
 export const CLEAR_BETWEEN_PASSES = SQUEEZED | OPTIMIZED | TOP
 /* @__INLINE__ */
-export const has_flag = (node: any, flag: number) => node.flags & flag
+export const has_flag = (node: AST_Node, flag: number) => node.flags & flag
 /* @__INLINE__ */
-export const set_flag = (node: any, flag: number) => { node.flags |= flag }
+export const set_flag = (node: AST_Node, flag: number) => { node.flags |= flag }
 /* @__INLINE__ */
-export const clear_flag = (node: any, flag: number) => { node.flags &= ~flag }
+export const clear_flag = (node: AST_Node, flag: number) => { node.flags &= ~flag }
 
 export const object_fns = [
   'constructor',

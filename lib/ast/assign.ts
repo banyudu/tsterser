@@ -2,6 +2,7 @@ import AST_Node from './node'
 import AST_Binary from './binary'
 import AST_Lambda from './lambda'
 import AST_Scope from './scope'
+import TreeWalker from '../tree-walker'
 
 import {
   is_reachable,

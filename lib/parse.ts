@@ -2812,7 +2812,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   // Annotate AST_Call, AST_Lambda or AST_New with the special comments
-  function annotate (node: any) {
+  function annotate (node: AST_Node) {
     var start = node.start
     var comments = start.comments_before
     const comments_outside_parens = outer_comments_before_counts.get(start)
