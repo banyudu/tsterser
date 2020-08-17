@@ -73,6 +73,47 @@ function is_some_comments (comment: any) {
 }
 
 class OutputStreamInner {
+  get: any
+  toString: any
+  indent: any
+  in_directive: boolean
+  use_asm: any
+  active_scope: any
+  indentation: Function
+  current_width: Function
+  should_break: Function
+  has_parens: Function
+  newline: any
+  print: any
+  star: any
+  space: any
+  comma: any
+  colon: any
+  last: Function
+  semicolon: any
+  force_semicolon: any
+  to_utf8: any
+  print_name: Function
+  print_string: Function
+  print_template_string_chars: Function
+  encode_string: any
+  next_indent: any
+  with_indent: any
+  with_block: any
+  with_parens: any
+  with_square: any
+  add_mapping: Function
+  option: Function
+  printed_comments: any
+  prepend_comments: any
+  append_comments: Function
+  line: Function
+  col: Function
+  pos: Function
+  push_node: Function
+  pop_node: Function
+  parent: Function
+
   constructor (opt?: any) {
     var readonly = !opt
     const options: any = defaults(opt, {
@@ -647,62 +688,60 @@ class OutputStreamInner {
     }
 
     var stack: any[] = []
-    return {
-      get: get,
-      toString: get,
-      indent: indent,
-      in_directive: false,
-      use_asm: null,
-      active_scope: null,
-      indentation: function () { return indentation },
-      current_width: function () { return current_col - indentation },
-      should_break: function () { return !!(options.width && this.current_width() >= options.width) },
-      has_parens: function () { return has_parens },
-      newline: newline,
-      print: print,
-      star: star,
-      space: space,
-      comma: comma,
-      colon: colon,
-      last: function () { return last },
-      semicolon: semicolon,
-      force_semicolon: force_semicolon,
-      to_utf8: to_utf8,
-      print_name: function (name: string) { print(make_name(name)) },
-      print_string: function (str: string, quote: string, escape_directive: boolean) {
-        var encoded = encode_string(str, quote)
-        if (escape_directive && !encoded.includes('\\')) {
-        // Insert semicolons to break directive prologue
-          if (!EXPECT_DIRECTIVE.test(OUTPUT)) {
-            force_semicolon()
-          }
+    this.get = get
+    this.toString = get
+    this.indent = indent
+    this.in_directive = false
+    this.use_asm = null
+    this.active_scope = null
+    this.indentation = function () { return indentation }
+    this.current_width = function () { return current_col - indentation }
+    this.should_break = function () { return !!(options.width && this.current_width() >= options.width) }
+    this.has_parens = function () { return has_parens }
+    this.newline = newline
+    this.print = print
+    this.star = star
+    this.space = space
+    this.comma = comma
+    this.colon = colon
+    this.last = function () { return last }
+    this.semicolon = semicolon
+    this.force_semicolon = force_semicolon
+    this.to_utf8 = to_utf8
+    this.print_name = function (name: string) { print(make_name(name)) }
+    this.print_string = function (str: string, quote: string, escape_directive: boolean) {
+      var encoded = encode_string(str, quote)
+      if (escape_directive && !encoded.includes('\\')) {
+      // Insert semicolons to break directive prologue
+        if (!EXPECT_DIRECTIVE.test(OUTPUT)) {
           force_semicolon()
         }
-        print(encoded)
-      },
-      print_template_string_chars: function (str: string) {
-        var encoded = encode_string(str, '`').replace(/\${/g, '\\${')
-        return print(encoded.substr(1, encoded.length - 2))
-      },
-      encode_string: encode_string,
-      next_indent: next_indent,
-      with_indent: with_indent,
-      with_block: with_block,
-      with_parens: with_parens,
-      with_square: with_square,
-      add_mapping: add_mapping,
-      option: function (opt: keyof any) { return options[opt] },
-      printed_comments: printed_comments,
-      prepend_comments: readonly ? noop : prepend_comments,
-      append_comments: readonly || comment_filter === return_false ? noop : append_comments,
-      line: function () { return current_line },
-      col: function () { return current_col },
-      pos: function () { return current_pos },
-      push_node: function (node: any) { stack.push(node) },
-      pop_node: function () { return stack.pop() },
-      parent: function (n?: number) {
-        return stack[stack.length - 2 - (n || 0)]
+        force_semicolon()
       }
+      print(encoded)
+    }
+    this.print_template_string_chars = function (str: string) {
+      var encoded = encode_string(str, '`').replace(/\${/g, '\\${')
+      return print(encoded.substr(1, encoded.length - 2))
+    }
+    this.encode_string = encode_string
+    this.next_indent = next_indent
+    this.with_indent = with_indent
+    this.with_block = with_block
+    this.with_parens = with_parens
+    this.with_square = with_square
+    this.add_mapping = add_mapping
+    this.option = function (opt: keyof any) { return options[opt] }
+    this.printed_comments = printed_comments
+    this.prepend_comments = readonly ? noop : prepend_comments
+    this.append_comments = readonly || comment_filter === return_false ? noop : append_comments
+    this.line = function () { return current_line }
+    this.col = function () { return current_col }
+    this.pos = function () { return current_pos }
+    this.push_node = function (node: any) { stack.push(node) }
+    this.pop_node = function () { return stack.pop() }
+    this.parent = function (n?: number) {
+      return stack[stack.length - 2 - (n || 0)]
     }
   }
 }
