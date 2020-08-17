@@ -104,10 +104,14 @@ export default class AST_Sequence extends AST_Node {
 
   _walk (visitor: any) {
     return visitor._visit(this, function () {
-      this.expressions.forEach(function (node: any) {
+      this.expressions.forEach(function (node: AST_Node) {
         node._walk(visitor)
       })
     })
+  }
+
+  addStrings (add: Function) {
+    this.tail_node()?.addStrings(add)
   }
 
   _children_backwards (push: Function) {

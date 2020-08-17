@@ -48,6 +48,7 @@ import { defaults, base54, push_uniq } from './utils'
 import TreeWalker from './tree-walker'
 import { domprops } from '../tools/domprops'
 import TreeTransformer from './tree-transformer'
+import { AST_Node } from './ast'
 
 function find_builtins (reserved: Set<string | undefined>) {
   domprops.forEach(add)
@@ -108,16 +109,9 @@ function reserve_quoted_keys (ast: any, reserved: string[]) {
   }))
 }
 
-function addStrings (node: any, add: Function) {
+function addStrings (node: AST_Node, add: Function) {
   node.walk(new TreeWalker(function (node: any) {
-    if (node?.isAst?.('AST_Sequence')) {
-      addStrings(node.tail_node?.(), add)
-    } else if (node?.isAst?.('AST_String')) {
-      add(node.value)
-    } else if (node?.isAst?.('AST_Conditional')) {
-      addStrings(node.consequent, add)
-      addStrings(node.alternative, add)
-    }
+    node.addStrings(add)
     return true
   }))
 }

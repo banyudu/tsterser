@@ -14,6 +14,10 @@ export default class AST_String extends AST_Constant {
     value: 'eq'
   })
 
+  addStrings (add: Function) {
+    add(this.value)
+  }
+
   _codegen = function (self, output) {
     output.print_string(self.getValue(), self.quote, output.in_directive)
   }

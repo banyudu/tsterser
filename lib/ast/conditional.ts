@@ -23,6 +23,11 @@ export default class AST_Conditional extends AST_Node {
     return this.condition === node
   }
 
+  addStrings (add: Function) {
+    this.consequent?.addStrings(add)
+    this.alternative?.addStrings(add)
+  }
+
   _in_boolean_context (context) {
     if (this.condition === context) {
       return true

@@ -146,6 +146,10 @@ export default class AST_Node extends AST implements INode {
     return visitor._visit(this)
   }
 
+  addStrings (add: Function) {
+
+  }
+
   walk (visitor: any) {
     return this._walk(visitor) // not sure the indirection will be any help
   }
