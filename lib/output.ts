@@ -189,30 +189,32 @@ class OutputStreamInner {
       }
     }
 
-    var _to_utf8 = _options.ascii_only ? (str: string, identifier?: boolean) => {
-      if (_options.ecma as number >= 2015) {
-        str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, (ch) => {
-          var code = get_full_char_code(ch, 0).toString(16)
-          return '\\u{' + code + '}'
+    var _to_utf8 = (str: string, identifier?: boolean) => {
+      if (_options.ascii_only) {
+        if (_options.ecma as number >= 2015) {
+          str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, (ch) => {
+            var code = get_full_char_code(ch, 0).toString(16)
+            return '\\u{' + code + '}'
+          })
+        }
+        return str.replace(/[\u0000-\u001f\u007f-\uffff]/g, (ch) => {
+          var code = ch.charCodeAt(0).toString(16)
+          if (code.length <= 2 && !identifier) {
+            while (code.length < 2) code = '0' + code
+            return '\\x' + code
+          } else {
+            while (code.length < 4) code = '0' + code
+            return '\\u' + code
+          }
+        })
+      } else {
+        return str.replace(/[\ud800-\udbff][\udc00-\udfff]|([\ud800-\udbff]|[\udc00-\udfff])/g, (match, lone) => {
+          if (lone) {
+            return '\\u' + lone.charCodeAt(0).toString(16)
+          }
+          return match
         })
       }
-      return str.replace(/[\u0000-\u001f\u007f-\uffff]/g, (ch) => {
-        var code = ch.charCodeAt(0).toString(16)
-        if (code.length <= 2 && !identifier) {
-          while (code.length < 2) code = '0' + code
-          return '\\x' + code
-        } else {
-          while (code.length < 4) code = '0' + code
-          return '\\u' + code
-        }
-      })
-    } : (str: string) => {
-      return str.replace(/[\ud800-\udbff][\udc00-\udfff]|([\ud800-\udbff]|[\udc00-\udfff])/g, (match, lone) => {
-        if (lone) {
-          return '\\u' + lone.charCodeAt(0).toString(16)
-        }
-        return match
-      })
     }
 
     const make_string = (str: string, quote: string) => {
@@ -284,55 +286,59 @@ class OutputStreamInner {
 
     var _mappings: any[] = _options.source_map && []
 
-    var _do_add_mapping = _mappings ? () => {
-      _mappings.forEach((mapping) => {
-        try {
-          _options.source_map.add(
-            mapping.token.file,
-            mapping.line, mapping.col,
-            mapping.token.line, mapping.token.col,
-            !mapping.name && mapping.token.type == 'name' ? mapping.token.value : mapping.name
-          )
-        } catch (ex) {
-          mapping.token.file != null && AST_Node.warn?.("Couldn't figure out mapping for {file}:{line},{col} → {cline},{ccol} [{name}]", {
-            file: mapping.token.file,
-            line: mapping.token.line,
-            col: mapping.token.col,
-            cline: mapping.line,
-            ccol: mapping.col,
-            name: mapping.name || ''
-          })
-        }
-      })
-      _mappings = []
-    } : noop
-
-    var _ensure_line_len = _options.max_line_len ? () => {
-      if (this._current_col > (_options.max_line_len as number)) {
-        if (this._might_add_newline) {
-          var left = this._OUTPUT.slice(0, this._might_add_newline)
-          var right = this._OUTPUT.slice(this._might_add_newline)
-          if (_mappings) {
-            var delta = right.length - this._current_col
-            _mappings.forEach((mapping) => {
-              mapping.line++
-              mapping.col += delta
+    var _do_add_mapping = () => {
+      if (_mappings) {
+        _mappings.forEach((mapping) => {
+          try {
+            _options.source_map.add(
+              mapping.token.file,
+              mapping.line, mapping.col,
+              mapping.token.line, mapping.token.col,
+              !mapping.name && mapping.token.type == 'name' ? mapping.token.value : mapping.name
+            )
+          } catch (ex) {
+            mapping.token.file != null && AST_Node.warn?.("Couldn't figure out mapping for {file}:{line},{col} → {cline},{ccol} [{name}]", {
+              file: mapping.token.file,
+              line: mapping.token.line,
+              col: mapping.token.col,
+              cline: mapping.line,
+              ccol: mapping.col,
+              name: mapping.name || ''
             })
           }
-          this._OUTPUT = left + '\n' + right
-          this._current_line++
-          this._current_pos++
-          this._current_col = right.length
-        }
+        })
+        _mappings = []
+      }
+    }
+
+    var _ensure_line_len = () => {
+      if (_options.max_line_len) {
         if (this._current_col > (_options.max_line_len as number)) {
-                AST_Node.warn?.('Output exceeds {max_line_len} characters', _options)
+          if (this._might_add_newline) {
+            var left = this._OUTPUT.slice(0, this._might_add_newline)
+            var right = this._OUTPUT.slice(this._might_add_newline)
+            if (_mappings) {
+              var delta = right.length - this._current_col
+              _mappings.forEach((mapping) => {
+                mapping.line++
+                mapping.col += delta
+              })
+            }
+            this._OUTPUT = left + '\n' + right
+            this._current_line++
+            this._current_pos++
+            this._current_col = right.length
+          }
+          if (this._current_col > (_options.max_line_len as number)) {
+                  AST_Node.warn?.('Output exceeds {max_line_len} characters', _options)
+          }
+        }
+        if (this._might_add_newline) {
+          this._might_add_newline = 0
+          _do_add_mapping()
         }
       }
-      if (this._might_add_newline) {
-        this._might_add_newline = 0
-        _do_add_mapping()
-      }
-    } : noop
+    }
 
     const _print = (str: string) => {
       str = String(str)
@@ -421,44 +427,53 @@ class OutputStreamInner {
       _print('*')
     }
 
-    var _space = _options.beautify ? () => {
-      _print(' ')
-    } : () => {
-      this._might_need_space = true
+    var _space = () => {
+      if (_options.beautify) {
+        _print(' ')
+      } else {
+        this._might_need_space = true
+      }
     }
 
-    var _indent = _options.beautify ? (half?: boolean) => {
+    var _indent = (half?: boolean) => {
       if (_options.beautify) {
         _print(_make_indent(half ? 0.5 : 0))
       }
-    } : noop
+    }
 
-    var _with_indent = _options.beautify ? (col: boolean | number, cont: Function) => {
-      if (col === true) col = _next_indent()
-      var save_indentation = this._indentation
-      this._indentation = col as number
-      var ret = cont()
-      this._indentation = save_indentation
-      return ret
-    } : (_col: boolean | number, cont: Function) => { return cont() }
-
-    var _newline = _options.beautify ? () => {
-      if (this._newline_insert < 0) return _print('\n')
-      if (this._OUTPUT[this._newline_insert] != '\n') {
-        this._OUTPUT = this._OUTPUT.slice(0, this._newline_insert) + '\n' + this._OUTPUT.slice(this._newline_insert)
-        this._current_pos++
-        this._current_line++
+    var _with_indent = (col: boolean | number, cont: Function) => {
+      if (_options.beautify) {
+        if (col === true) col = _next_indent()
+        var save_indentation = this._indentation
+        this._indentation = col as number
+        var ret = cont()
+        this._indentation = save_indentation
+        return ret
       }
-      this._newline_insert++
-    } : _options.max_line_len ? () => {
-      _ensure_line_len()
-      this._might_add_newline = this._OUTPUT.length
-    } : noop
+      return cont()
+    }
 
-    var _semicolon = _options.beautify ? () => {
-      _print(';')
-    } : () => {
-      this._might_need_semicolon = true
+    var _newline = () => {
+      if (_options.beautify) {
+        if (this._newline_insert < 0) return _print('\n')
+        if (this._OUTPUT[this._newline_insert] != '\n') {
+          this._OUTPUT = this._OUTPUT.slice(0, this._newline_insert) + '\n' + this._OUTPUT.slice(this._newline_insert)
+          this._current_pos++
+          this._current_line++
+        }
+        this._newline_insert++
+      } else if (_options.max_line_len) {
+        _ensure_line_len()
+        this._might_add_newline = this._OUTPUT.length
+      }
+    }
+
+    var _semicolon = () => {
+      if (_options.beautify) {
+        _print(';')
+      } else {
+        this._might_need_semicolon = true
+      }
     }
 
     const _force_semicolon = () => {
@@ -509,10 +524,12 @@ class OutputStreamInner {
       _space()
     }
 
-    var _add_mapping = _mappings ? (token: string, name: string) => {
-      this._mapping_token = token
-      this._mapping_name = name
-    } : noop
+    var _add_mapping = (token: string, name: string) => {
+      if (_mappings) {
+        this._mapping_token = token
+        this._mapping_name = name
+      }
+    }
 
     const _get = () => {
       if (this._might_add_newline) {
