@@ -43,11 +43,11 @@ export default class AST_Node extends AST implements INode {
     return this.tail_node() === context
   }
 
-  get_loopcontrol_target (node: any) {
+  get_loopcontrol_target (node: AST_Node) {
     return undefined
   }
 
-  isAst (type: string) {
+  isAst<T extends INode> (type: string): this is T {
     let proto: any = this.constructor
     while (proto.name) {
       if (proto.name === type) {
@@ -121,7 +121,7 @@ export default class AST_Node extends AST implements INode {
           this._dot_throw(compressor)
   }
 
-  equivalent_to (node: any) {
+  equivalent_to (node: AST_Node) {
     return equivalent_to(this, node)
   }
 
@@ -129,7 +129,7 @@ export default class AST_Node extends AST implements INode {
   _clone (deep?: boolean) {
     if (deep) {
       var self = this.clone()
-      return self.transform(new TreeTransformer(function (node: any) {
+      return self.transform(new TreeTransformer(function (node: AST_Node) {
         if (node !== self) {
           return node.clone(true)
         }
@@ -229,7 +229,7 @@ export default class AST_Node extends AST implements INode {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }
 
-  static from_mozilla_ast (node: any) {
+  static from_mozilla_ast (node: AST_Node) {
     var save_stack = FROM_MOZ_STACK
     setFromMozStack([])
     var ast = from_moz(node)

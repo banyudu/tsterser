@@ -55,6 +55,7 @@ import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
 import TreeWalker from './tree-walker'
+import { IScope } from '../types/ast'
 
 export default class Compressor extends TreeWalker {
   options: any
@@ -139,7 +140,7 @@ export default class Compressor extends TreeWalker {
     if (typeof pure_funcs === 'function') {
       this.pure_funcs = pure_funcs
     } else {
-      this.pure_funcs = pure_funcs ? function (node: any) {
+      this.pure_funcs = pure_funcs ? function (node: AST_Node) {
         return !pure_funcs?.includes(node.expression.print_to_string())
       } : return_true
     }
@@ -266,12 +267,14 @@ export default class Compressor extends TreeWalker {
     this.warnings_produced = {}
   }
 
-  before (node: any, descend: Function) {
+  before (node: AST_Node, descend: Function) {
     if (has_flag(node, SQUEEZED)) return node
     var was_scope = false
-    if (node?.isAst?.('AST_Scope')) {
-      node = node.hoist_properties?.(this)
-      node = (node).hoist_declarations(this)
+    if (node?.isAst?.<IScope>('AST_Scope')) {
+      node = node.hoist_properties(this)
+      if (node?.isAst?.<IScope>('AST_Scope')) {
+        node = node.hoist_declarations(this)
+      }
       was_scope = true
     }
     // Before https://github.com/mishoo/UglifyJS2/pull/1602 AST_Node.optimize()

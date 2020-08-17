@@ -375,8 +375,8 @@ declare class AST_Scope extends AST_Block {
   enclosed: any
   cname: any
   init_scope_vars: Function
-  hoist_properties: Function
-  hoist_declarations: Function
+  hoist_properties: () => AST_Scope
+  hoist_declarations: () => AST_Scope
   drop_unused: Function
   find_variable: Function
   is_block_scope: Function

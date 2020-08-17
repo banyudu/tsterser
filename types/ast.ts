@@ -40,6 +40,7 @@ export interface INode extends INode_Props {
   expression: INode
   name?: any
   evaluate: Function
+  print_to_string: Function
 }
 
 export interface IArray_Props extends INode_Props {
