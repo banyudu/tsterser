@@ -63,6 +63,7 @@ const CODE_LINE_BREAK = 10
 const CODE_SPACE = 32
 
 const r_annotation = /[@#]__(PURE|INLINE|NOINLINE)__/g
+const requireSemicolonChars = makePredicate('( [ + * / - , . `')
 
 function is_some_comments (comment: any) {
   // multiline comment
@@ -115,8 +116,8 @@ class OutputStreamInner {
   parent: Function
 
   constructor (opt?: any) {
-    var readonly = !opt
-    const options: any = defaults(opt, {
+    var _readonly = !opt
+    const _options: any = defaults(opt, {
       ascii_only: false,
       beautify: false,
       braces: false,
@@ -144,43 +145,43 @@ class OutputStreamInner {
       wrap_func_args: true
     }, true)
 
-    if (options.shorthand === undefined) { options.shorthand = options.ecma as number > 5 }
+    if (_options.shorthand === undefined) { _options.shorthand = _options.ecma as number > 5 }
 
     // Convert comment option to RegExp if neccessary and set up comments filter
-    var comment_filter: any = return_false // Default case, throw all comments away
-    if (options.comments) {
-      let comments = options.comments
-      if (typeof options.comments === 'string' && /^\/.*\/[a-zA-Z]*$/.test(options.comments)) {
-        var regex_pos = options.comments.lastIndexOf('/')
+    var _comment_filter: any = return_false // Default case, throw all comments away
+    if (_options.comments) {
+      let comments = _options.comments
+      if (typeof _options.comments === 'string' && /^\/.*\/[a-zA-Z]*$/.test(_options.comments)) {
+        var regex_pos = _options.comments.lastIndexOf('/')
         comments = new RegExp(
-          options.comments.substr(1, regex_pos - 1),
-          options.comments.substr(regex_pos + 1)
+          _options.comments.substr(1, regex_pos - 1),
+          _options.comments.substr(regex_pos + 1)
         )
       }
       if (comments instanceof RegExp) {
-        comment_filter = function (comment: any) {
+        _comment_filter = function (comment: any) {
           return comment.type != 'comment5' && (comments as RegExp).test(comment.value)
         }
       } else if (typeof comments === 'function') {
-        comment_filter = function (comment: any) {
+        _comment_filter = function (comment: any) {
           return comment.type != 'comment5' && (comments as Function)(this, comment)
         }
       } else if (comments === 'some') {
-        comment_filter = is_some_comments
+        _comment_filter = is_some_comments
       } else { // NOTE includes "all" option
-        comment_filter = return_true
+        _comment_filter = return_true
       }
     }
 
-    var indentation = 0
-    var current_col = 0
-    var current_line = 1
-    var current_pos = 0
-    var OUTPUT = ''
-    const printed_comments: Set<any[]> = new Set()
+    var _indentation = 0
+    var _current_col = 0
+    var _current_line = 1
+    var _current_pos = 0
+    var _OUTPUT = ''
+    const _printed_comments: Set<any[]> = new Set()
 
-    var to_utf8 = options.ascii_only ? function (str: string, identifier?: boolean) {
-      if (options.ecma as number >= 2015) {
+    var _to_utf8 = _options.ascii_only ? function (str: string, identifier?: boolean) {
+      if (_options.ecma as number >= 2015) {
         str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, function (ch) {
           var code = get_full_char_code(ch, 0).toString(16)
           return '\\u{' + code + '}'
@@ -218,7 +219,7 @@ class OutputStreamInner {
             case '\t': return '\\t'
             case '\b': return '\\b'
             case '\f': return '\\f'
-            case '\x0B': return options.ie8 ? '\\x0B' : '\\v'
+            case '\x0B': return _options.ie8 ? '\\x0B' : '\\v'
             case '\u2028': return '\\u2028'
             case '\u2029': return '\\u2029'
             case '\ufeff': return '\\ufeff'
@@ -236,9 +237,9 @@ class OutputStreamInner {
       function quote_template () {
         return '`' + str.replace(/`/g, '\\`') + '`'
       }
-      str = to_utf8(str)
+      str = _to_utf8(str)
       if (quote === '`') return quote_template()
-      switch (options.quote_style) {
+      switch (_options.quote_style) {
         case 1:
           return quote_single()
         case 2:
@@ -250,9 +251,9 @@ class OutputStreamInner {
       }
     }
 
-    function encode_string (str: string, quote: string) {
+    function _encode_string (str: string, quote: string) {
       var ret = make_string(str, quote)
-      if (options.inline_script) {
+      if (_options.inline_script) {
         ret = ret.replace(/<\x2f(script)([>\/\t\n\f\r ])/gi, '<\\/$1$2')
         ret = ret.replace(/\x3c!--/g, '\\x3c!--')
         ret = ret.replace(/--\x3e/g, '--\\x3e')
@@ -260,32 +261,34 @@ class OutputStreamInner {
       return ret
     }
 
-    function make_name (name: string) {
+    function _make_name (name: string) {
       name = name.toString()
-      name = to_utf8(name, true)
+      name = _to_utf8(name, true)
       return name
     }
 
-    function make_indent (back: number) {
-      return ' '.repeat((options.indent_start as number) + indentation - back * (options.indent_level as number))
+    function _make_indent (back: number) {
+      return ' '.repeat((_options.indent_start as number) + _indentation - back * (_options.indent_level as number))
     }
 
     /* -----[ beautification/minification ]----- */
 
-    var has_parens = false
-    var might_need_space = false
-    var might_need_semicolon = false
-    var might_add_newline = 0
-    var need_newline_indented = false
-    var need_space = false
-    var newline_insert = -1
-    var last = ''
-    var mapping_token: false | string; var mapping_name: string; var mappings: any[] = options.source_map && []
+    var _has_parens = false
+    var _might_need_space = false
+    var _might_need_semicolon = false
+    var _might_add_newline = 0
+    var _need_newline_indented = false
+    var _need_space = false
+    var _newline_insert = -1
+    var _last = ''
+    var _mapping_token: false | string
+    var _mapping_name: string
+    var _mappings: any[] = _options.source_map && []
 
-    var do_add_mapping = mappings ? function () {
-      mappings.forEach(function (mapping) {
+    var _do_add_mapping = _mappings ? function () {
+      _mappings.forEach(function (mapping) {
         try {
-          options.source_map.add(
+          _options.source_map.add(
             mapping.token.file,
             mapping.line, mapping.col,
             mapping.token.line, mapping.token.col,
@@ -302,229 +305,227 @@ class OutputStreamInner {
           })
         }
       })
-      mappings = []
+      _mappings = []
     } : noop
 
-    var ensure_line_len = options.max_line_len ? function () {
-      if (current_col > (options.max_line_len as number)) {
-        if (might_add_newline) {
-          var left = OUTPUT.slice(0, might_add_newline)
-          var right = OUTPUT.slice(might_add_newline)
-          if (mappings) {
-            var delta = right.length - current_col
-            mappings.forEach(function (mapping) {
+    var _ensure_line_len = _options.max_line_len ? function () {
+      if (_current_col > (_options.max_line_len as number)) {
+        if (_might_add_newline) {
+          var left = _OUTPUT.slice(0, _might_add_newline)
+          var right = _OUTPUT.slice(_might_add_newline)
+          if (_mappings) {
+            var delta = right.length - _current_col
+            _mappings.forEach(function (mapping) {
               mapping.line++
               mapping.col += delta
             })
           }
-          OUTPUT = left + '\n' + right
-          current_line++
-          current_pos++
-          current_col = right.length
+          _OUTPUT = left + '\n' + right
+          _current_line++
+          _current_pos++
+          _current_col = right.length
         }
-        if (current_col > (options.max_line_len as number)) {
-                AST_Node.warn?.('Output exceeds {max_line_len} characters', options)
+        if (_current_col > (_options.max_line_len as number)) {
+                AST_Node.warn?.('Output exceeds {max_line_len} characters', _options)
         }
       }
-      if (might_add_newline) {
-        might_add_newline = 0
-        do_add_mapping()
+      if (_might_add_newline) {
+        _might_add_newline = 0
+        _do_add_mapping()
       }
     } : noop
 
-    var requireSemicolonChars = makePredicate('( [ + * / - , . `')
-
-    function print (str: string) {
+    function _print (str: string) {
       str = String(str)
       var ch = get_full_char(str, 0)
-      if (need_newline_indented && ch) {
-        need_newline_indented = false
+      if (_need_newline_indented && ch) {
+        _need_newline_indented = false
         if (ch !== '\n') {
-          print('\n')
-          indent()
+          _print('\n')
+          _indent()
         }
       }
-      if (need_space && ch) {
-        need_space = false
+      if (_need_space && ch) {
+        _need_space = false
         if (!/[\s;})]/.test(ch)) {
-          space()
+          _space()
         }
       }
-      newline_insert = -1
-      var prev = last.charAt(last.length - 1)
-      if (might_need_semicolon) {
-        might_need_semicolon = false
+      _newline_insert = -1
+      var prev = _last.charAt(_last.length - 1)
+      if (_might_need_semicolon) {
+        _might_need_semicolon = false
 
         if (prev === ':' && ch === '}' || (!ch || !';}'.includes(ch)) && prev !== ';') {
-          if (options.semicolons || requireSemicolonChars.has(ch)) {
-            OUTPUT += ';'
-            current_col++
-            current_pos++
+          if (_options.semicolons || requireSemicolonChars.has(ch)) {
+            _OUTPUT += ';'
+            _current_col++
+            _current_pos++
           } else {
-            ensure_line_len()
-            if (current_col > 0) {
-              OUTPUT += '\n'
-              current_pos++
-              current_line++
-              current_col = 0
+            _ensure_line_len()
+            if (_current_col > 0) {
+              _OUTPUT += '\n'
+              _current_pos++
+              _current_line++
+              _current_col = 0
             }
 
             if (/^\s+$/.test(str)) {
             // reset the semicolon flag, since we didn't print one
             // now and might still have to later
-              might_need_semicolon = true
+              _might_need_semicolon = true
             }
           }
 
-          if (!options.beautify) { might_need_space = false }
+          if (!_options.beautify) { _might_need_space = false }
         }
       }
 
-      if (might_need_space) {
+      if (_might_need_space) {
         if ((is_identifier_char(prev) &&
                     (is_identifier_char(ch) || ch == '\\')) ||
                 (ch == '/' && ch == prev) ||
-                ((ch == '+' || ch == '-') && ch == last)
+                ((ch == '+' || ch == '-') && ch == _last)
         ) {
-          OUTPUT += ' '
-          current_col++
-          current_pos++
+          _OUTPUT += ' '
+          _current_col++
+          _current_pos++
         }
-        might_need_space = false
+        _might_need_space = false
       }
 
-      if (mapping_token) {
-        mappings.push({
-          token: mapping_token,
-          name: mapping_name,
-          line: current_line,
-          col: current_col
+      if (_mapping_token) {
+        _mappings.push({
+          token: _mapping_token,
+          name: _mapping_name,
+          line: _current_line,
+          col: _current_col
         })
-        mapping_token = false
-        if (!might_add_newline) do_add_mapping()
+        _mapping_token = false
+        if (!_might_add_newline) _do_add_mapping()
       }
 
-      OUTPUT += str
-      has_parens = str[str.length - 1] == '('
-      current_pos += str.length
+      _OUTPUT += str
+      _has_parens = str[str.length - 1] == '('
+      _current_pos += str.length
       var a = str.split(/\r?\n/); var n = a.length - 1
-      current_line += n
-      current_col += a[0].length
+      _current_line += n
+      _current_col += a[0].length
       if (n > 0) {
-        ensure_line_len()
-        current_col = a[n].length
+        _ensure_line_len()
+        _current_col = a[n].length
       }
-      last = str
+      _last = str
     }
 
-    var star = function () {
-      print('*')
+    var _star = function () {
+      _print('*')
     }
 
-    var space = options.beautify ? function () {
-      print(' ')
+    var _space = _options.beautify ? function () {
+      _print(' ')
     } : function () {
-      might_need_space = true
+      _might_need_space = true
     }
 
-    var indent = options.beautify ? function (half?: boolean) {
-      if (options.beautify) {
-        print(make_indent(half ? 0.5 : 0))
+    var _indent = _options.beautify ? function (half?: boolean) {
+      if (_options.beautify) {
+        _print(_make_indent(half ? 0.5 : 0))
       }
     } : noop
 
-    var with_indent = options.beautify ? function (col: boolean | number, cont: Function) {
-      if (col === true) col = next_indent()
-      var save_indentation = indentation
-      indentation = col as number
+    var _with_indent = _options.beautify ? function (col: boolean | number, cont: Function) {
+      if (col === true) col = _next_indent()
+      var save_indentation = _indentation
+      _indentation = col as number
       var ret = cont()
-      indentation = save_indentation
+      _indentation = save_indentation
       return ret
     } : function (_col: boolean | number, cont: Function) { return cont() }
 
-    var newline = options.beautify ? function () {
-      if (newline_insert < 0) return print('\n')
-      if (OUTPUT[newline_insert] != '\n') {
-        OUTPUT = OUTPUT.slice(0, newline_insert) + '\n' + OUTPUT.slice(newline_insert)
-        current_pos++
-        current_line++
+    var _newline = _options.beautify ? function () {
+      if (_newline_insert < 0) return _print('\n')
+      if (_OUTPUT[_newline_insert] != '\n') {
+        _OUTPUT = _OUTPUT.slice(0, _newline_insert) + '\n' + _OUTPUT.slice(_newline_insert)
+        _current_pos++
+        _current_line++
       }
-      newline_insert++
-    } : options.max_line_len ? function () {
-      ensure_line_len()
-      might_add_newline = OUTPUT.length
+      _newline_insert++
+    } : _options.max_line_len ? function () {
+      _ensure_line_len()
+      _might_add_newline = _OUTPUT.length
     } : noop
 
-    var semicolon = options.beautify ? function () {
-      print(';')
+    var _semicolon = _options.beautify ? function () {
+      _print(';')
     } : function () {
-      might_need_semicolon = true
+      _might_need_semicolon = true
     }
 
-    function force_semicolon () {
-      might_need_semicolon = false
-      print(';')
+    function _force_semicolon () {
+      _might_need_semicolon = false
+      _print(';')
     }
 
-    function next_indent () {
-      return indentation + (options.indent_level as number)
+    function _next_indent () {
+      return _indentation + (_options.indent_level as number)
     }
 
-    function with_block (cont: Function) {
+    function _with_block (cont: Function) {
       var ret
-      print('{')
-      newline()
-      with_indent(next_indent(), function () {
+      _print('{')
+      _newline()
+      _with_indent(_next_indent(), function () {
         ret = cont()
       })
-      indent()
-      print('}')
+      _indent()
+      _print('}')
       return ret
     }
 
-    function with_parens (cont: () => any) {
-      print('(')
+    function _with_parens (cont: () => any) {
+      _print('(')
       // XXX: still nice to have that for argument lists
       // var ret = with_indent(current_col, cont);
       var ret = cont()
-      print(')')
+      _print(')')
       return ret
     }
 
-    function with_square (cont: Function) {
-      print('[')
+    function _with_square (cont: Function) {
+      _print('[')
       // var ret = with_indent(current_col, cont);
       var ret = cont()
-      print(']')
+      _print(']')
       return ret
     }
 
-    function comma () {
-      print(',')
-      space()
+    function _comma () {
+      _print(',')
+      _space()
     }
 
-    function colon () {
-      print(':')
-      space()
+    function _colon () {
+      _print(':')
+      _space()
     }
 
-    var add_mapping = mappings ? function (token: string, name: string) {
-      mapping_token = token
-      mapping_name = name
+    var _add_mapping = _mappings ? function (token: string, name: string) {
+      _mapping_token = token
+      _mapping_name = name
     } : noop
 
-    function get () {
-      if (might_add_newline) {
-        ensure_line_len()
+    function _get () {
+      if (_might_add_newline) {
+        _ensure_line_len()
       }
-      return OUTPUT
+      return _OUTPUT
     }
 
     function has_nlb () {
-      let n = OUTPUT.length - 1
+      let n = _OUTPUT.length - 1
       while (n >= 0) {
-        const code = OUTPUT.charCodeAt(n)
+        const code = _OUTPUT.charCodeAt(n)
         if (code === CODE_LINE_BREAK) {
           return true
         }
@@ -538,7 +539,7 @@ class OutputStreamInner {
     }
 
     function filter_comment (comment: string) {
-      if (!options.preserve_annotations) {
+      if (!_options.preserve_annotations) {
         comment = comment.replace(r_annotation, ' ')
       }
       if (/^\s*$/.test(comment)) {
@@ -592,54 +593,54 @@ class OutputStreamInner {
         node.value.walk(tw)
       }
 
-      if (current_pos == 0) {
-        if (comments.length > 0 && options.shebang && comments[0].type === 'comment5' &&
+      if (_current_pos == 0) {
+        if (comments.length > 0 && _options.shebang && comments[0].type === 'comment5' &&
                 !printed_comments.has(comments[0])) {
-          print('#!' + comments.shift()?.value + '\n')
-          indent()
+          _print('#!' + comments.shift()?.value + '\n')
+          _indent()
         }
-        var preamble = options.preamble
+        var preamble = _options.preamble
         if (preamble) {
-          print(preamble.replace(/\r\n?|[\n\u2028\u2029]|\s*$/g, '\n'))
+          _print(preamble.replace(/\r\n?|[\n\u2028\u2029]|\s*$/g, '\n'))
         }
       }
 
-      comments = comments.filter(comment_filter, node).filter(c => !printed_comments.has(c))
+      comments = comments.filter(_comment_filter, node).filter(c => !printed_comments.has(c))
       if (comments.length == 0) return
       var last_nlb = has_nlb()
       comments.forEach(function (c, i) {
         printed_comments.add(c)
         if (!last_nlb) {
           if (c.nlb) {
-            print('\n')
-            indent()
+            _print('\n')
+            _indent()
             last_nlb = true
           } else if (i > 0) {
-            space()
+            _space()
           }
         }
 
         if (/comment[134]/.test(c.type)) {
           var value = filter_comment(c.value)
           if (value) {
-            print('//' + value + '\n')
-            indent()
+            _print('//' + value + '\n')
+            _indent()
           }
           last_nlb = true
         } else if (c.type == 'comment2') {
           var value = filter_comment(c.value)
           if (value) {
-            print('/*' + value + '*/')
+            _print('/*' + value + '*/')
           }
           last_nlb = false
         }
       })
       if (!last_nlb) {
         if (start.nlb) {
-          print('\n')
-          indent()
+          _print('\n')
+          _indent()
         } else {
-          space()
+          _space()
         }
       }
     }
@@ -655,93 +656,93 @@ class OutputStreamInner {
         !/comment[134]/.test(c.type)
       ))) return
       printed_comments.add(comments)
-      var insert = OUTPUT.length
-      comments.filter(comment_filter, node).forEach(function (c, i) {
+      var insert = _OUTPUT.length
+      comments.filter(_comment_filter, node).forEach(function (c, i) {
         if (printed_comments.has(c)) return
         printed_comments.add(c)
-        need_space = false
-        if (need_newline_indented) {
-          print('\n')
-          indent()
-          need_newline_indented = false
+        _need_space = false
+        if (_need_newline_indented) {
+          _print('\n')
+          _indent()
+          _need_newline_indented = false
         } else if (c.nlb && (i > 0 || !has_nlb())) {
-          print('\n')
-          indent()
+          _print('\n')
+          _indent()
         } else if (i > 0 || !tail) {
-          space()
+          _space()
         }
         if (/comment[134]/.test(c.type)) {
           const value = filter_comment(c.value)
           if (value) {
-            print('//' + value)
+            _print('//' + value)
           }
-          need_newline_indented = true
+          _need_newline_indented = true
         } else if (c.type == 'comment2') {
           const value = filter_comment(c.value)
           if (value) {
-            print('/*' + value + '*/')
+            _print('/*' + value + '*/')
           }
-          need_space = true
+          _need_space = true
         }
       })
-      if (OUTPUT.length > insert) newline_insert = insert
+      if (_OUTPUT.length > insert) _newline_insert = insert
     }
 
-    var stack: any[] = []
-    this.get = get
-    this.toString = get
-    this.indent = indent
+    var _stack: any[] = []
+    this.get = _get
+    this.toString = _get
+    this.indent = _indent
     this.in_directive = false
     this.use_asm = null
     this.active_scope = null
-    this.indentation = function () { return indentation }
-    this.current_width = function () { return current_col - indentation }
-    this.should_break = function () { return !!(options.width && this.current_width() >= options.width) }
-    this.has_parens = function () { return has_parens }
-    this.newline = newline
-    this.print = print
-    this.star = star
-    this.space = space
-    this.comma = comma
-    this.colon = colon
-    this.last = function () { return last }
-    this.semicolon = semicolon
-    this.force_semicolon = force_semicolon
-    this.to_utf8 = to_utf8
-    this.print_name = function (name: string) { print(make_name(name)) }
+    this.indentation = function () { return _indentation }
+    this.current_width = function () { return _current_col - _indentation }
+    this.should_break = function () { return !!(_options.width && this.current_width() >= _options.width) }
+    this.has_parens = function () { return _has_parens }
+    this.newline = _newline
+    this.print = _print
+    this.star = _star
+    this.space = _space
+    this.comma = _comma
+    this.colon = _colon
+    this.last = function () { return _last }
+    this.semicolon = _semicolon
+    this.force_semicolon = _force_semicolon
+    this.to_utf8 = _to_utf8
+    this.print_name = function (name: string) { _print(_make_name(name)) }
     this.print_string = function (str: string, quote: string, escape_directive: boolean) {
-      var encoded = encode_string(str, quote)
+      var encoded = _encode_string(str, quote)
       if (escape_directive && !encoded.includes('\\')) {
       // Insert semicolons to break directive prologue
-        if (!EXPECT_DIRECTIVE.test(OUTPUT)) {
-          force_semicolon()
+        if (!EXPECT_DIRECTIVE.test(_OUTPUT)) {
+          _force_semicolon()
         }
-        force_semicolon()
+        _force_semicolon()
       }
-      print(encoded)
+      _print(encoded)
     }
     this.print_template_string_chars = function (str: string) {
-      var encoded = encode_string(str, '`').replace(/\${/g, '\\${')
-      return print(encoded.substr(1, encoded.length - 2))
+      var encoded = _encode_string(str, '`').replace(/\${/g, '\\${')
+      return _print(encoded.substr(1, encoded.length - 2))
     }
-    this.encode_string = encode_string
-    this.next_indent = next_indent
-    this.with_indent = with_indent
-    this.with_block = with_block
-    this.with_parens = with_parens
-    this.with_square = with_square
-    this.add_mapping = add_mapping
-    this.option = function (opt: keyof any) { return options[opt] }
-    this.printed_comments = printed_comments
-    this.prepend_comments = readonly ? noop : prepend_comments
-    this.append_comments = readonly || comment_filter === return_false ? noop : append_comments
-    this.line = function () { return current_line }
-    this.col = function () { return current_col }
-    this.pos = function () { return current_pos }
-    this.push_node = function (node: any) { stack.push(node) }
-    this.pop_node = function () { return stack.pop() }
+    this.encode_string = _encode_string
+    this.next_indent = _next_indent
+    this.with_indent = _with_indent
+    this.with_block = _with_block
+    this.with_parens = _with_parens
+    this.with_square = _with_square
+    this.add_mapping = _add_mapping
+    this.option = function (opt: keyof any) { return _options[opt] }
+    this.printed_comments = _printed_comments
+    this.prepend_comments = _readonly ? noop : prepend_comments
+    this.append_comments = _readonly || _comment_filter === return_false ? noop : append_comments
+    this.line = function () { return _current_line }
+    this.col = function () { return _current_col }
+    this.pos = function () { return _current_pos }
+    this.push_node = function (node: any) { _stack.push(node) }
+    this.pop_node = function () { return _stack.pop() }
     this.parent = function (n?: number) {
-      return stack[stack.length - 2 - (n || 0)]
+      return _stack[_stack.length - 2 - (n || 0)]
     }
   }
 }
