@@ -72,30 +72,40 @@ function is_some_comments (comment: any) {
   )
 }
 
+const quote_single = (str: string) => {
+  return "'" + str.replace(/\x27/g, "\\'") + "'"
+}
+const quote_double = (str: string) => {
+  return '"' + str.replace(/\x22/g, '\\"') + '"'
+}
+const quote_template = (str: string) => {
+  return '`' + str.replace(/`/g, '\\`') + '`'
+}
+
 class OutputStreamInner {
   options: any
 
   in_directive = false
   use_asm = null
   active_scope = null
-  _has_parens = false
-  _might_need_space = false
-  _might_need_semicolon = false
-  _might_add_newline = 0
-  _need_newline_indented = false
-  _need_space = false
-  _newline_insert = -1
-  _last = ''
-  _mapping_token: false | string
-  _mapping_name: string
-  _indentation = 0
-  _current_col = 0
-  _current_line = 1
-  _current_pos = 0
-  _OUTPUT = ''
-  printed_comments: Set<any[]> = new Set()
+  private _has_parens = false
+  private _might_need_space = false
+  private _might_need_semicolon = false
+  private _might_add_newline = 0
+  private _need_newline_indented = false
+  private _need_space = false
+  private _newline_insert = -1
+  private _last = ''
+  private _mapping_token: false | string
+  private _mapping_name: string
+  private _indentation = 0
+  private _current_col = 0
+  private _current_line = 1
+  private _current_pos = 0
+  private _OUTPUT = ''
+  private readonly printed_comments: Set<any[]> = new Set()
 
-  with_parens = (cont: () => any) => {
+  with_parens (cont: () => any) {
     this.print('(')
     // XXX: still nice to have that for argument lists
     // var ret = with_indent(current_col, cont);
@@ -104,11 +114,11 @@ class OutputStreamInner {
     return ret
   }
 
-  _make_indent = (back: number) => {
+  _make_indent (back: number) {
     return ' '.repeat((this.options.indent_start as number) + this._indentation - back * (this.options.indent_level as number))
   }
 
-  semicolon = () => {
+  semicolon () {
     if (this.options.beautify) {
       this.print(';')
     } else {
@@ -116,13 +126,13 @@ class OutputStreamInner {
     }
   }
 
-  indent = (half?: boolean) => {
+  indent (half?: boolean) {
     if (this.options.beautify) {
       this.print(this._make_indent(half ? 0.5 : 0))
     }
   }
 
-  space = () => {
+  space () {
     if (this.options.beautify) {
       this.print(' ')
     } else {
@@ -132,7 +142,7 @@ class OutputStreamInner {
 
   _mappings: any[] | null
 
-  _ensure_line_len = () => {
+  _ensure_line_len () {
     if (this.options.max_line_len) {
       if (this._current_col > (this.options.max_line_len as number)) {
         if (this._might_add_newline) {
@@ -161,7 +171,7 @@ class OutputStreamInner {
     }
   }
 
-  with_block = (cont: Function) => {
+  with_block (cont: Function) {
     var ret
     this.print('{')
     this.newline()
@@ -173,7 +183,7 @@ class OutputStreamInner {
     return ret
   }
 
-  _do_add_mapping = () => {
+  _do_add_mapping () {
     if (this._mappings) {
       this._mappings.forEach((mapping) => {
         try {
@@ -198,7 +208,7 @@ class OutputStreamInner {
     }
   }
 
-  to_utf8 = (str: string, identifier?: boolean) => {
+  to_utf8 (str: string, identifier?: boolean) {
     if (this.options.ascii_only) {
       if (this.options.ecma as number >= 2015) {
         str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, (ch) => {
@@ -226,7 +236,7 @@ class OutputStreamInner {
     }
   }
 
-  append_comments = (node: any, tail?: boolean) => {
+  append_comments (node: any, tail?: boolean) {
     if (!this.readonly && this._comment_filter !== return_false) {
       var self = this
       var token = node.end
@@ -271,25 +281,25 @@ class OutputStreamInner {
     }
   }
 
-  indentation = () => { return this._indentation }
+  indentation () { return this._indentation }
 
-  current_width = () => { return this._current_col - this._indentation }
+  current_width () { return this._current_col - this._indentation }
 
-  should_break = () => { return !!(this.options.width && this.current_width() >= this.options.width) }
+  should_break () { return !!(this.options.width && this.current_width() >= this.options.width) }
 
-  has_parens = () => { return this._has_parens }
+  has_parens () { return this._has_parens }
 
-  last = () => { return this._last }
+  last () { return this._last }
 
-  _make_name = (name: string) => {
+  _make_name (name: string) {
     name = name.toString()
     name = this.to_utf8(name, true)
     return name
   }
 
-  print_name = (name: string) => { this.print(this._make_name(name)) }
+  print_name (name: string) { this.print(this._make_name(name)) }
 
-  encode_string = (str: string, quote: string) => {
+  encode_string (str: string, quote: string) {
     var ret = this.make_string(str, quote)
     if (this.options.inline_script) {
       ret = ret.replace(/<\x2f(script)([>\/\t\n\f\r ])/gi, '<\\/$1$2')
@@ -299,12 +309,12 @@ class OutputStreamInner {
     return ret
   }
 
-  force_semicolon = () => {
+  force_semicolon () {
     this._might_need_semicolon = false
     this.print(';')
   }
 
-  print_string = (str: string, quote: string, escape_directive: boolean) => {
+  print_string (str: string, quote: string, escape_directive: boolean) {
     var encoded = this.encode_string(str, quote)
     if (escape_directive && !encoded.includes('\\')) {
     // Insert semicolons to break directive prologue
@@ -316,12 +326,12 @@ class OutputStreamInner {
     this.print(encoded)
   }
 
-  print_template_string_chars = (str: string) => {
+  print_template_string_chars (str: string) {
     var encoded = this.encode_string(str, '`').replace(/\${/g, '\\${')
     return this.print(encoded.substr(1, encoded.length - 2))
   }
 
-  filter_comment = (comment: string) => {
+  filter_comment (comment: string) {
     if (!this.options.preserve_annotations) {
       comment = comment.replace(r_annotation, ' ')
     }
@@ -331,7 +341,7 @@ class OutputStreamInner {
     return comment.replace(/(<\s*\/\s*)(script)/i, '<\\/$2')
   }
 
-  newline = () => {
+  newline () {
     if (this.options.beautify) {
       if (this._newline_insert < 0) return this.print('\n')
       if (this._OUTPUT[this._newline_insert] != '\n') {
@@ -346,11 +356,11 @@ class OutputStreamInner {
     }
   }
 
-  next_indent = () => {
+  next_indent () {
     return this._indentation + (this.options.indent_level as number)
   }
 
-  with_indent = (col: boolean | number, cont: Function) => {
+  with_indent (col: boolean | number, cont: Function) {
     if (this.options.beautify) {
       if (col === true) col = this.next_indent()
       var save_indentation = this._indentation
@@ -362,7 +372,7 @@ class OutputStreamInner {
     return cont()
   }
 
-  make_string = (str: string, quote: string) => {
+  make_string (str: string, quote: string) {
     var dq = 0; var sq = 0
     str = str.replace(/[\\\b\f\n\r\v\t\x22\x27\u2028\u2029\0\ufeff]/g,
       (s, i) => {
@@ -384,30 +394,22 @@ class OutputStreamInner {
         }
         return s
       })
-    const quote_single = () => {
-      return "'" + str.replace(/\x27/g, "\\'") + "'"
-    }
-    const quote_double = () => {
-      return '"' + str.replace(/\x22/g, '\\"') + '"'
-    }
-    const quote_template = () => {
-      return '`' + str.replace(/`/g, '\\`') + '`'
-    }
+
     str = this.to_utf8(str)
-    if (quote === '`') return quote_template()
+    if (quote === '`') return quote_template(str)
     switch (this.options.quote_style) {
       case 1:
-        return quote_single()
+        return quote_single(str)
       case 2:
-        return quote_double()
+        return quote_double(str)
       case 3:
-        return quote == "'" ? quote_single() : quote_double()
+        return quote == "'" ? quote_single(str) : quote_double(str)
       default:
-        return dq > sq ? quote_single() : quote_double()
+        return dq > sq ? quote_single(str) : quote_double(str)
     }
   }
 
-  print = (str: string) => {
+  print (str: string) {
     str = String(str)
     var ch = get_full_char(str, 0)
     if (this._need_newline_indented && ch) {
@@ -493,35 +495,35 @@ class OutputStreamInner {
   readonly: boolean
   _comment_filter: any = return_false // Default case, throw all comments away
 
-  colon = () => {
+  colon () {
     this.print(':')
     this.space()
   }
 
-  comma = () => {
+  comma () {
     this.print(',')
     this.space()
   }
 
-  option = (opt: keyof any) => { return this.options[opt] }
+  option (opt: keyof any) { return this.options[opt] }
 
-  line = () => { return this._current_line }
+  line () { return this._current_line }
 
-  col = () => { return this._current_col }
+  col () { return this._current_col }
 
-  pos = () => { return this._current_pos }
+  pos () { return this._current_pos }
 
   private readonly stack: any[] = []
 
-  push_node = (node: any) => { this.stack.push(node) }
+  push_node (node: any) { this.stack.push(node) }
 
-  pop_node = () => { return this.stack.pop() }
+  pop_node () { return this.stack.pop() }
 
-  parent = (n?: number) => {
+  parent (n?: number) {
     return this.stack[this.stack.length - 2 - (n || 0)]
   }
 
-  prepend_comments = (node: any) => {
+  prepend_comments (node: any) {
     if (!this.readonly) {
       var self = this
       var start = node.start
@@ -620,7 +622,7 @@ class OutputStreamInner {
     }
   }
 
-  has_nlb = () => {
+  has_nlb () {
     let n = this._OUTPUT.length - 1
     while (n >= 0) {
       const code = this._OUTPUT.charCodeAt(n)
@@ -636,7 +638,7 @@ class OutputStreamInner {
     return true
   }
 
-  with_square = (cont: Function) => {
+  with_square (cont: Function) {
     this.print('[')
     // var ret = with_indent(current_col, cont);
     var ret = cont()
@@ -644,18 +646,18 @@ class OutputStreamInner {
     return ret
   }
 
-  add_mapping = (token: string, name: string) => {
+  add_mapping (token: string, name: string) {
     if (this._mappings) {
       this._mapping_token = token
       this._mapping_name = name
     }
   }
 
-  star = () => {
+  star () {
     this.print('*')
   }
 
-  get = () => {
+  get () {
     if (this._might_add_newline) {
       this._ensure_line_len()
     }
