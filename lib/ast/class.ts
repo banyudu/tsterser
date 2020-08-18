@@ -19,7 +19,7 @@ export default class AST_Class extends AST_Scope {
   properties: any
   name: any
 
-  _optimize = function (self) {
+  _optimize (self) {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return self

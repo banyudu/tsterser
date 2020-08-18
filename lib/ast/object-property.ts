@@ -6,7 +6,10 @@ export default class AST_ObjectProperty extends AST_Node {
   value: any
   quote: any
 
-  _optimize = lift_key
+  _optimize (self, compressor) {
+    return lift_key(self, compressor)
+  }
+
   drop_side_effect_free = function (compressor: any, first_in_statement) {
     const computed_key = this.isAst('AST_ObjectKeyVal') && this.key?.isAst?.('AST_Node')
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)

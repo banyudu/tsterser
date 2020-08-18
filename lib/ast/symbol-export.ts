@@ -1,7 +1,7 @@
 import AST_SymbolRef from './symbol-ref'
 
 export default class AST_SymbolExport extends AST_SymbolRef {
-  _optimize = function (self) {
+  _optimize (self) {
     return self
   }
 

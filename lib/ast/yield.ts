@@ -6,7 +6,7 @@ export default class AST_Yield extends AST_Node {
   is_star: boolean
   expression: any
 
-  _optimize = function (self, compressor) {
+  _optimize (self, compressor) {
     if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
       self.expression = null
     }

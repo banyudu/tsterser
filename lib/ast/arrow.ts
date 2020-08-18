@@ -13,7 +13,10 @@ import {
 } from '../utils'
 
 export default class AST_Arrow extends AST_Lambda {
-  _optimize = opt_AST_Lambda
+  _optimize (self, compressor) {
+    return opt_AST_Lambda(self, compressor)
+  }
+
   drop_side_effect_free = return_null
   negate () {
     return basic_negation(this)

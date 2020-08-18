@@ -3,7 +3,7 @@ import { find_variable, make_node, return_true, is_lhs, is_atomic } from '../uti
 import { set_flag, UNDEFINED } from '../constants'
 
 export default class AST_Undefined extends AST_Atom {
-  _optimize = function (self, compressor) {
+  _optimize (self, compressor) {
     if (compressor.option('unsafe_undefined')) {
       var undef = find_variable(compressor, 'undefined')
       if (undef) {

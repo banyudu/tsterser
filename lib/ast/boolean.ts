@@ -2,7 +2,7 @@ import AST_Atom from './atom'
 import { make_node, To_Moz_Literal } from '../utils'
 
 export default class AST_Boolean extends AST_Atom {
-  _optimize = function (self, compressor) {
+  _optimize (self, compressor) {
     if (compressor.in_boolean_context()) {
       return make_node('AST_Number', self, {
         value: +self.value

@@ -27,7 +27,10 @@ export default class AST_Lambda extends AST_Scope {
   is_generator: any
   async: any
 
-  _optimize = opt_AST_Lambda
+  _optimize (self, compressor) {
+    return opt_AST_Lambda(self, compressor)
+  }
+
   may_throw = return_false
   has_side_effects = return_false
   _eval = return_this as any

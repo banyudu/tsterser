@@ -2,7 +2,7 @@ import AST_Atom from './atom'
 import { is_lhs, is_atomic, find_variable, make_node } from '../utils'
 
 export default class AST_NaN extends AST_Atom {
-  _optimize = function (self, compressor) {
+  _optimize (self, compressor) {
     var lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && !is_atomic(lhs, self) ||
           find_variable(compressor, 'NaN')) {
