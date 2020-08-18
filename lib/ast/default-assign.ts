@@ -8,7 +8,7 @@ export default class AST_DefaultAssign extends AST_Binary {
     return this
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     let self: any = this
     if (!compressor.option('evaluate')) {
       return self

@@ -4,7 +4,7 @@ import { make_node, trim, first_in_statement, make_sequence, anySideEffect, retu
 export default class AST_TemplateString extends AST_Node {
   segments: any
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (!compressor.option('evaluate') ||
       compressor.parent()?.isAst?.('AST_PrefixedTemplateString')) { return this }
 

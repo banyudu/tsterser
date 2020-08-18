@@ -289,7 +289,7 @@ export default class Compressor extends TreeWalker {
     // following replacement call would result in degraded efficiency of both
     // output and performance.
     descend(node, this)
-    var opt = node.optimize(this)
+    var opt: any = node.optimize(this)
     if (was_scope && opt?.isAst?.('AST_Scope')) {
             opt.drop_unused?.(this)
             descend(opt, this)

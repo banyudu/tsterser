@@ -10,7 +10,7 @@ export default class AST_Dot extends AST_PropAccess {
     return this.expression === node
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (this.property == 'arguments' || this.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
         prop: this.property,

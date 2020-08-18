@@ -2,7 +2,7 @@ import AST_Exit from './exit'
 import { is_undefined, to_moz } from '../utils'
 
 export default class AST_Return extends AST_Exit {
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (this.value && is_undefined(this.value, compressor)) {
       this.value = null
     }

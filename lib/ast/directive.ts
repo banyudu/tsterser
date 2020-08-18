@@ -5,7 +5,7 @@ import { make_node, mkshallow } from '../utils'
 export default class AST_Directive extends AST_Statement {
   value: any
   quote: any
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (compressor.option('directives') &&
           (!directives.has(this.value) || compressor.has_directive(this.value) !== this)) {
       return make_node('AST_EmptyStatement', this)

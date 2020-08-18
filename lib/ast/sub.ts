@@ -17,7 +17,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     var expr = this.expression
     var prop = this.property
     var property: any

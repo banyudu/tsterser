@@ -64,7 +64,7 @@ export default class AST_Node extends AST implements INode {
     return false
   }
 
-  _optimize (_self, compressor?: any) {
+  _optimize (compressor?: any) {
     return this
   }
 
@@ -208,7 +208,7 @@ export default class AST_Node extends AST implements INode {
     var self = this
     if (has_flag(self, OPTIMIZED)) return self
     if (compressor.has_directive('use asm')) return self
-    var opt = this._optimize(self, compressor)
+    var opt = this._optimize(compressor)
     set_flag(opt, OPTIMIZED)
     return opt
   }

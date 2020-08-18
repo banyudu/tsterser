@@ -21,7 +21,7 @@ export default class AST_For extends AST_IterationStatement {
     return this.condition === context
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (!compressor.option('loops')) return this
     if (compressor.option('side_effects') && this.init) {
       this.init = this.init.drop_side_effect_free(compressor)

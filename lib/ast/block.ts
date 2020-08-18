@@ -18,7 +18,7 @@ export default class AST_Block extends AST_Statement {
   block_scope: any
   expression: any
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     tighten_body(this.body, compressor)
     return this
   }

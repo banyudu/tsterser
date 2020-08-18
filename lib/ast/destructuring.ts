@@ -12,7 +12,7 @@ export default class AST_Destructuring extends AST_Node {
     return insert_default(this)
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
           !this.is_array &&

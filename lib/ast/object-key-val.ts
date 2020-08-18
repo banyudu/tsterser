@@ -56,7 +56,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     lift_key(this, compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}

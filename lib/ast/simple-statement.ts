@@ -6,7 +6,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return true
   }
 
-  _optimize (_self, compressor: any) {
+  _optimize (compressor: any) {
     if (compressor.option('side_effects')) {
       var body = this.body
       var node = body.drop_side_effect_free(compressor, true)

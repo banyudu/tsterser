@@ -4,9 +4,9 @@ import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to
 export default class AST_Definitions extends AST_Statement {
   definitions: any[]
 
-  _optimize (self) {
-    if (self.definitions.length == 0) { return make_node('AST_EmptyStatement', self) }
-    return self
+  _optimize (compressor) {
+    if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
+    return this
   }
 
   may_throw (compressor: any) {

@@ -6,8 +6,8 @@ export default class AST_Import extends AST_Node {
   module_name: any
   imported_names: any
 
-  _optimize (self) {
-    return self
+  _optimize (compressor) {
+    return this
   }
 
   aborts () { return null }

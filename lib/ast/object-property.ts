@@ -6,7 +6,7 @@ export default class AST_ObjectProperty extends AST_Node {
   value: any
   quote: any
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     return lift_key(this, compressor)
   }
 

@@ -11,7 +11,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (this.body?.isAst?.('AST_Break') &&
           compressor.loopcontrol_target(this.body) === this.body) {
       return make_node('AST_EmptyStatement', this)

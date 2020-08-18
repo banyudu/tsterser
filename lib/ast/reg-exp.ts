@@ -6,7 +6,7 @@ const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
   value: any
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     return literals_in_boolean_context(this, compressor)
   }
 

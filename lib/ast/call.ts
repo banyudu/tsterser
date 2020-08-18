@@ -71,7 +71,8 @@ export default class AST_Call extends AST_Node implements ICall {
     return this.TYPE == 'Call' && this.expression === node
   }
 
-  _optimize (self, compressor) {
+  _optimize (compressor) {
+    const self: any = this
     var exp = self.expression
     var fn = exp
     inline_array_like_spread(self, compressor, self.args)

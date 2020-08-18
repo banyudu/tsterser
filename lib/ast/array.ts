@@ -28,7 +28,7 @@ export default class AST_Array extends AST_Node implements IArray {
     }))
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     var optimized = literals_in_boolean_context(this, compressor)
     if (optimized !== this) {
       return optimized

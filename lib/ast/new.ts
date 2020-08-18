@@ -2,7 +2,7 @@ import AST_Call from './call'
 import { is_undeclared_ref, callCodeGen, return_this, list_overhead, to_moz, make_node } from '../utils'
 
 export default class AST_New extends AST_Call {
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (
       compressor.option('unsafe') &&
           is_undeclared_ref(this.expression) &&

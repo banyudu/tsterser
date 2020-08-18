@@ -13,7 +13,7 @@ import {
 } from '../utils'
 
 export default class AST_Arrow extends AST_Lambda {
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     return opt_AST_Lambda(this, compressor)
   }
 

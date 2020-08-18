@@ -41,7 +41,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     }))
   }
 
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     if (!compressor.option('ie8') &&
           is_undeclared_ref(this) &&
           (!this.scope.uses_with || !compressor.find_parent(AST_With))) {

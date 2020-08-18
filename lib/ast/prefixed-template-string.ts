@@ -5,8 +5,8 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: any
   prefix: any
 
-  _optimize (self) {
-    return self
+  _optimize (compressor) {
+    return this
   }
 
   _walk (visitor: any) {

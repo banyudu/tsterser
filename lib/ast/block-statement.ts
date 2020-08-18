@@ -2,7 +2,7 @@ import AST_Block from './block'
 import { tighten_body, can_be_evicted_from_block, block_aborts, to_moz, make_node, blockStateMentCodeGen } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
-  _optimize (_self, compressor) {
+  _optimize (compressor) {
     tighten_body(this.body, compressor)
     switch (this.body.length) {
       case 1:
