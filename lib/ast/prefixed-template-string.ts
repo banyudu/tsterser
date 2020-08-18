@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { pass_through, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: any
@@ -22,7 +23,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.prefix = self.prefix.transform(tw)
     self.template_string = self.template_string.transform(tw)
   }

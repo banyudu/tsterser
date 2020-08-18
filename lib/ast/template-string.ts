@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, return_true, pass_through, do_list, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_TemplateString extends AST_Node {
   segments: any
@@ -100,7 +101,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.segments = do_list(self.segments, tw)
   }
 

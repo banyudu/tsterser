@@ -42,7 +42,7 @@ export default class AST_Case extends AST_SwitchBranch {
     return 5 + list_overhead(this.body)
   }
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
   }

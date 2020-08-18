@@ -13,6 +13,7 @@ import {
   to_moz
 } from '../utils'
 import { clear_flag, INLINED } from '../constants'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Class extends AST_Scope {
   extends: any
@@ -102,7 +103,7 @@ export default class AST_Class extends AST_Scope {
     )
   }
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.name) self.name = self.name.transform(tw)
     if (self.extends) self.extends = self.extends.transform(tw)
     self.properties = do_list(self.properties, tw)

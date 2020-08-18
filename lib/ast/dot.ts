@@ -2,6 +2,7 @@ import AST_PropAccess from './prop-access'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Dot extends AST_PropAccess {
   quote: any
@@ -133,7 +134,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   shallow_cmp = mkshallow({ property: 'eq' })
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 

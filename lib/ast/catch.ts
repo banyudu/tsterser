@@ -1,5 +1,6 @@
 import AST_Block from './block'
 import { walk_body, list_overhead, mkshallow, do_list, to_moz, to_moz_block, print_braced } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Catch extends AST_Block {
   argname: any
@@ -29,7 +30,7 @@ export default class AST_Catch extends AST_Block {
     argname: 'exist'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.argname) self.argname = self.argname.transform(tw)
     self.body = do_list(self.body, tw)
   }

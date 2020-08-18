@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { pass_through } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_NameMapping extends AST_Node {
   name: any
@@ -23,7 +24,7 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.foreign_name = self.foreign_name.transform(tw)
     self.name = self.name.transform(tw)
   }

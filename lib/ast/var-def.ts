@@ -58,7 +58,7 @@ export default class AST_VarDef extends AST_Node {
     value: 'exist'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.name = self.name.transform(tw)
     if (self.value) self.value = self.value.transform(tw)
   }

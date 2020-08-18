@@ -1,5 +1,6 @@
 import AST_Scope from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
+import TreeWalker from '../tree-walker'
 
 import {
   opt_AST_Lambda,
@@ -98,7 +99,7 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
     if (self.body?.isAst?.('AST_Node')) {

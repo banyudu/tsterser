@@ -64,7 +64,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp = mkshallow({ 'label.name': 'eq' })
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.label = self.label.transform(tw)
     self.body = (self.body).transform(tw)
   }

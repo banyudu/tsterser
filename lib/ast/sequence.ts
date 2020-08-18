@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import AST_Number from './number'
+import TreeWalker from '../tree-walker'
 import {
   maintain_this_binding,
   first_in_statement,
@@ -125,7 +126,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     const result = do_list(self.expressions, tw)
     self.expressions = result.length
       ? result

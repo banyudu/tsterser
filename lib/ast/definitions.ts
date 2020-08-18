@@ -1,5 +1,6 @@
 import AST_Statement from './statement'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Definitions extends AST_Statement {
   definitions: any[]
@@ -83,7 +84,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.definitions = do_list(self.definitions, tw)
   }
 

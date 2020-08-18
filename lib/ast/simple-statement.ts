@@ -1,5 +1,6 @@
 import AST_Statement from './statement'
 import { make_node, pass_through, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_SimpleStatement extends AST_Statement {
   _in_boolean_context (context) {
@@ -40,7 +41,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.body = (self.body).transform(tw)
   }
 

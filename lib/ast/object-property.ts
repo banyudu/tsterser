@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { lift_key, make_sequence, return_false, to_moz, pass_through, print_property_name } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_ObjectProperty extends AST_Node {
   key: any
@@ -50,7 +51,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   shallow_cmp = pass_through as any
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.key?.isAst?.('AST_Node')) {
       self.key = self.key.transform(tw)
     }

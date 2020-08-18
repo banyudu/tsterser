@@ -2,6 +2,7 @@ import AST_PropAccess from './prop-access'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Sub extends AST_PropAccess {
   _prepend_comments_check (node) {
@@ -181,7 +182,7 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   _size = () => 2
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.property = (self.property).transform(tw)
   }

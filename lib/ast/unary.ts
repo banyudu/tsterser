@@ -101,7 +101,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   shallow_cmp = mkshallow({ operator: 'eq' })
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 

@@ -160,7 +160,7 @@ export default class AST_Switch extends AST_Block {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
   }

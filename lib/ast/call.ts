@@ -2,6 +2,7 @@ import AST_Node from './node'
 import AST_Hole from './hole'
 import AST_Array from './array'
 import Compressor from '../compressor'
+import TreeWalker from '../tree-walker'
 
 import {
   blockStateMentCodeGen,
@@ -879,7 +880,7 @@ export default class AST_Call extends AST_Node implements ICall {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.args = do_list(self.args, tw)
   }

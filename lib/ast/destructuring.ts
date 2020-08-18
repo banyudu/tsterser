@@ -86,7 +86,7 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp = mkshallow({ is_array: 'eq' })
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.names = do_list(self.names, tw)
   }
 

@@ -220,7 +220,7 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
     if (self.alternative) self.alternative = self.alternative.transform(tw)

@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { list_overhead, do_list, to_moz, mkshallow } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Import extends AST_Node {
   imported_name: any
@@ -56,7 +57,7 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.imported_name) self.imported_name = self.imported_name.transform(tw)
     if (self.imported_names) do_list(self.imported_names, tw)
     self.module_name = self.module_name.transform(tw)

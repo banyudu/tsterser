@@ -1,5 +1,6 @@
 import AST_StatementWithBody from './statement-with-body'
 import { pass_through, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_With extends AST_StatementWithBody {
   expression: any
@@ -17,7 +18,7 @@ export default class AST_With extends AST_StatementWithBody {
 
   _size = () => 6
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = (self.body).transform(tw)
   }

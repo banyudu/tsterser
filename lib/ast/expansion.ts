@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { pass_through, to_moz_in_destructuring, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Expansion extends AST_Node {
   expression: any
@@ -29,7 +30,7 @@ export default class AST_Expansion extends AST_Node {
 
   _size = () => 3
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 

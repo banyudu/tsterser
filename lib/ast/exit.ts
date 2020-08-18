@@ -1,4 +1,5 @@
 import AST_Jump from './jump'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Exit extends AST_Jump {
   value: any
@@ -17,7 +18,7 @@ export default class AST_Exit extends AST_Jump {
     if (this.value) push(this.value)
   }
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.value) self.value = self.value.transform(tw)
   }
 

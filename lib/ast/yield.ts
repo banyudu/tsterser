@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { is_undefined, mkshallow, to_moz } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Yield extends AST_Node {
   value: any
@@ -28,7 +29,7 @@ export default class AST_Yield extends AST_Node {
     is_star: 'eq'
   })
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.expression) self.expression = self.expression.transform(tw)
   }
 

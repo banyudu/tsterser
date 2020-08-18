@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import AST_Destructuring from './destructuring'
+import TreeWalker from '../tree-walker'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -87,7 +88,7 @@ export default class AST_Array extends AST_Node implements IArray {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.elements = do_list(self.elements, tw)
   }
 

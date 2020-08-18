@@ -33,7 +33,7 @@ export default class AST_ForIn extends AST_IterationStatement {
 
   _size = () => 8
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.init = self.init?.transform(tw) || null
     self.object = self.object.transform(tw)
     self.body = (self.body).transform(tw)

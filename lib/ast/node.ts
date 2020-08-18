@@ -183,7 +183,7 @@ export default class AST_Node extends AST implements INode {
     return transformed
   }
 
-  _transform (self, tw: any) {}
+  _transform (self, tw: TreeWalker) {}
 
   shallow_cmp (other?: any): any {
     throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)

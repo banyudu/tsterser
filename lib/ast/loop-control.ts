@@ -1,5 +1,6 @@
 import AST_Jump from './jump'
 import { pass_through } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_LoopControl extends AST_Jump {
   label: any
@@ -14,7 +15,7 @@ export default class AST_LoopControl extends AST_Jump {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     if (self.label) self.label = self.label.transform(tw)
   }
 

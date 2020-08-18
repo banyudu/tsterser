@@ -394,7 +394,7 @@ export default class AST_Conditional extends AST_Node {
 
   _size = () => 3
   shallow_cmp = pass_through
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.consequent = self.consequent.transform(tw)
     self.alternative = self.alternative.transform(tw)

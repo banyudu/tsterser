@@ -766,7 +766,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
     return size
   }
 
-  _transform (self, tw: any) {
+  _transform (self, tw: TreeWalker) {
     self.left = self.left.transform(tw)
     self.right = self.right.transform(tw)
   }
