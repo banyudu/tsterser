@@ -12,15 +12,15 @@ export default class AST_Destructuring extends AST_Node {
     return insert_default(this)
   }
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
-          !self.is_array &&
-          Array.isArray(self.names) &&
+          !this.is_array &&
+          Array.isArray(this.names) &&
           !is_destructuring_export_decl(compressor)) {
       var keep: any[] = []
-      for (var i = 0; i < self.names.length; i++) {
-        var elem = self.names[i]
+      for (var i = 0; i < this.names.length; i++) {
+        var elem = this.names[i]
         if (!(elem?.isAst?.('AST_ObjectKeyVal') &&
                   typeof elem.key === 'string' &&
                   elem.value?.isAst?.('AST_SymbolDeclaration') &&
@@ -28,11 +28,11 @@ export default class AST_Destructuring extends AST_Node {
           keep.push(elem)
         }
       }
-      if (keep.length != self.names.length) {
-        self.names = keep
+      if (keep.length != this.names.length) {
+        this.names = keep
       }
     }
-    return self
+    return this
 
     function is_destructuring_export_decl (compressor) {
       var ancestors = [/^VarDef$/, /^(Const|Let|Var)$/, /^Export$/]

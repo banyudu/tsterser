@@ -2,20 +2,20 @@ import AST_Block from './block'
 import { tighten_body, can_be_evicted_from_block, block_aborts, to_moz, make_node, blockStateMentCodeGen } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
-  _optimize (self, compressor) {
-    tighten_body(self.body, compressor)
-    switch (self.body.length) {
+  _optimize (_self, compressor) {
+    tighten_body(this.body, compressor)
+    switch (this.body.length) {
       case 1:
         if (!compressor.has_directive('use strict') &&
               compressor.parent()?.isAst?.('AST_If') &&
-              can_be_extracted_from_if_block(self.body[0]) ||
-              can_be_evicted_from_block(self.body[0])) {
-          return self.body[0]
+              can_be_extracted_from_if_block(this.body[0]) ||
+              can_be_evicted_from_block(this.body[0])) {
+          return this.body[0]
         }
         break
-      case 0: return make_node('AST_EmptyStatement', self)
+      case 0: return make_node('AST_EmptyStatement', this)
     }
-    return self
+    return this
   }
 
   aborts = block_aborts

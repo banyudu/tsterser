@@ -28,12 +28,12 @@ export default class AST_Array extends AST_Node implements IArray {
     }))
   }
 
-  _optimize (self, compressor) {
-    var optimized = literals_in_boolean_context(self, compressor)
-    if (optimized !== self) {
+  _optimize (_self, compressor) {
+    var optimized = literals_in_boolean_context(this, compressor)
+    if (optimized !== this) {
       return optimized
     }
-    return inline_array_like_spread(self, compressor, self.elements)
+    return inline_array_like_spread(this, compressor, this.elements)
   }
 
   drop_side_effect_free (compressor: any, first_in_statement) {

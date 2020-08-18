@@ -7,28 +7,28 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   static: any
   quote: any
 
-  _optimize (self, compressor) {
-    lift_key(self, compressor)
+  _optimize (_self, compressor) {
+    lift_key(this, compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
           compressor.parent()?.isAst?.('AST_Object') &&
-          !self.is_generator &&
-          !self.value.uses_arguments &&
-          !self.value.pinned() &&
-          self.value.body.length == 1 &&
-          self.value.body[0]?.isAst?.('AST_Return') &&
-          self.value.body[0].value &&
-          !self.value.contains_this()) {
-      var arrow = make_node('AST_Arrow', self.value, self.value)
-      arrow.async = self.async
-      arrow.is_generator = self.is_generator
-      return make_node('AST_ObjectKeyVal', self, {
-        key: self.key?.isAst?.('AST_SymbolMethod') ? self.key.name : self.key,
+          !this.is_generator &&
+          !this.value.uses_arguments &&
+          !this.value.pinned() &&
+          this.value.body.length == 1 &&
+          this.value.body[0]?.isAst?.('AST_Return') &&
+          this.value.body[0].value &&
+          !this.value.contains_this()) {
+      var arrow = make_node('AST_Arrow', this.value, this.value)
+      arrow.async = this.async
+      arrow.is_generator = this.is_generator
+      return make_node('AST_ObjectKeyVal', this, {
+        key: this.key?.isAst?.('AST_SymbolMethod') ? this.key.name : this.key,
         value: arrow,
-        quote: self.quote
+        quote: this.quote
       })
     }
-    return self
+    return this
   }
 
   drop_side_effect_free = function () {

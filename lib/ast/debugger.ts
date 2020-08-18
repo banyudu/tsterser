@@ -2,9 +2,9 @@ import AST_Statement from './statement'
 import { make_node, pass_through } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
-  _optimize (self, compressor) {
-    if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', self) }
-    return self
+  _optimize (_self, compressor) {
+    if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', this) }
+    return this
   }
 
   shallow_cmp = pass_through

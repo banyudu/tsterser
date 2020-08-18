@@ -60,7 +60,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
     return /^\w/.test(this.operator) && this.left === child
   }
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
+    let self: any = this
     function reversible () {
       return self.left.is_constant() ||
               self.right.is_constant() ||

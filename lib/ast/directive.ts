@@ -5,12 +5,12 @@ import { make_node, mkshallow } from '../utils'
 export default class AST_Directive extends AST_Statement {
   value: any
   quote: any
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (compressor.option('directives') &&
-          (!directives.has(self.value) || compressor.has_directive(self.value) !== self)) {
-      return make_node('AST_EmptyStatement', self)
+          (!directives.has(this.value) || compressor.has_directive(this.value) !== this)) {
+      return make_node('AST_EmptyStatement', this)
     }
-    return self
+    return this
   }
 
   shallow_cmp = mkshallow({ value: 'eq' })

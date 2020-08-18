@@ -29,7 +29,8 @@ export default class AST_Assign extends AST_Binary {
     return insert_default(to_fun_args(this.left, undefined, undefined, this.right))
   }
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
+    let self: any = this
     var def
     if (compressor.option('dead_code') &&
           self.left?.isAst?.('AST_SymbolRef') &&
