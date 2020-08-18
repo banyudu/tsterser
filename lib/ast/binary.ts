@@ -1,6 +1,7 @@
 import AST_Node from './node'
 import AST_With from './with'
 import { PRECEDENCE } from '../parse'
+import TreeWalker from '../tree-walker'
 
 import {
   is_undefined,
@@ -684,7 +685,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
               this.right.is_boolean()
   }
 
-  reduce_vars (tw, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: any) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)

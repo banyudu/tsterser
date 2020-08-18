@@ -13,6 +13,7 @@ import {
   pop,
   extract_declarations_from_unreachable_code
 } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_If extends AST_StatementWithBody {
   condition: any
@@ -185,7 +186,7 @@ export default class AST_If extends AST_StatementWithBody {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
   }
 
-  reduce_vars (tw) {
+  reduce_vars (tw: TreeWalker) {
     this.condition.walk(tw)
     push(tw)
     this.body.walk(tw)

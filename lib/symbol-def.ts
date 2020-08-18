@@ -54,18 +54,18 @@ export default class SymbolDef {
 
   unmangleable (options: any) {
     if (!options) options = {}
-
-    if (in_function_defs(this.id) && keep_name(options.keep_fnames, this.orig[0].name)) return true
+    const firstOrig = this.orig[0]
+    if (in_function_defs(this.id) && keep_name(options.keep_fnames, firstOrig.name)) return true
 
     return this.global && !options.toplevel ||
             (this.export & MASK_EXPORT_DONT_MANGLE) ||
             this.undeclared ||
             !options.eval && this.scope.pinned() ||
-            (this.orig[0]?.isAst?.('AST_SymbolLambda') ||
-                  this.orig[0]?.isAst?.('AST_SymbolDefun')) && keep_name(options.keep_fnames, this.orig[0].name) ||
-            this.orig[0]?.isAst?.('AST_SymbolMethod') ||
-            (this.orig[0]?.isAst?.('AST_SymbolClass') ||
-                  this.orig[0]?.isAst?.('AST_SymbolDefClass')) && keep_name(options.keep_classnames, this.orig[0].name)
+            (firstOrig.isAst?.('AST_SymbolLambda') ||
+            firstOrig.isAst?.('AST_SymbolDefun')) && keep_name(options.keep_fnames, firstOrig.name) ||
+            firstOrig.isAst?.('AST_SymbolMethod') ||
+            (firstOrig.isAst?.('AST_SymbolClass') ||
+              firstOrig.isAst?.('AST_SymbolDefClass')) && keep_name(options.keep_classnames, firstOrig.name)
   }
 
   mangle (options: any) {

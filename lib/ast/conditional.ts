@@ -14,6 +14,8 @@ import {
   maintain_this_binding
 } from '../utils'
 
+import TreeWalker from '../tree-walker'
+
 export default class AST_Conditional extends AST_Node {
   alternative: any
   consequent: any
@@ -360,7 +362,7 @@ export default class AST_Conditional extends AST_Node {
     return this.consequent.is_boolean() && this.alternative.is_boolean()
   }
 
-  reduce_vars (tw) {
+  reduce_vars (tw: TreeWalker) {
     this.condition.walk(tw)
     push(tw)
     this.consequent.walk(tw)

@@ -1,8 +1,9 @@
 import AST_SwitchBranch from './switch-branch'
 import { push, pop, list_overhead } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Default extends AST_SwitchBranch {
-  reduce_vars = function (tw, descend) {
+  reduce_vars = function (tw: TreeWalker, descend) {
     push(tw)
     descend()
     pop(tw)

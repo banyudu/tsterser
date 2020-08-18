@@ -152,7 +152,8 @@ import {
   AST_VarDef,
   AST_While,
   AST_With,
-  AST_Yield
+  AST_Yield,
+  AST_Node
 } from './ast'
 
 import { printMangleOptions, unmangleable_names, function_defs } from './ast/toplevel'
@@ -537,7 +538,7 @@ export function has_annotation (node: any, annotation: number) {
   return node._annotations & annotation
 }
 
-export function warn (compressor, node) {
+export function warn (compressor, node: AST_Node) {
   compressor.warn('global_defs ' + node.print_to_string() + ' redefined [{file}:{line},{col}]', node.start)
 }
 
@@ -546,19 +547,19 @@ export function is_strict (compressor) {
   return typeof optPureGettters === 'string' && optPureGettters.includes('strict')
 }
 
-export function push (tw) {
+export function push (tw: TreeWalker) {
   tw.safe_ids = Object.create(tw.safe_ids)
 }
 
-export function pop (tw) {
+export function pop (tw: TreeWalker) {
   tw.safe_ids = Object.getPrototypeOf(tw.safe_ids)
 }
 
-export function mark (tw, def, safe) {
+export function mark (tw: TreeWalker, def, safe) {
   tw.safe_ids[def.id] = safe
 }
 
-export function walk_parent (node: any, cb: Function, initial_stack?: any[]) {
+export function walk_parent (node: AST_Node, cb: Function, initial_stack?: any[]) {
   const to_visit = [node]
   const push = to_visit.push.bind(to_visit)
   const stack = initial_stack ? initial_stack.slice() : []
@@ -616,7 +617,7 @@ export function walk_parent (node: any, cb: Function, initial_stack?: any[]) {
   return false
 }
 
-export function set_moz_loc (mynode: any, moznode) {
+export function set_moz_loc (mynode: AST_Node, moznode) {
   var start = mynode.start
   var end = mynode.end
   if (!(start && end)) {
@@ -1454,7 +1455,7 @@ export function first_in_statement (stack: any) {
   return undefined
 }
 
-function best_of_statement (ast1, ast2) {
+function best_of_statement (ast1: AST_Node, ast2: AST_Node) {
   return best_of_expression(
     make_node('AST_SimpleStatement', ast1, {
       body: ast1
@@ -3222,7 +3223,7 @@ export function next_mangled (scope: any, options: any) {
   }
 }
 
-export function reset_variables (tw, compressor, node) {
+export function reset_variables (tw: TreeWalker, compressor, node) {
   node.variables.forEach(function (def) {
     reset_def(compressor, def)
     if (def.fixed === null) {
@@ -3235,7 +3236,7 @@ export function reset_variables (tw, compressor, node) {
   })
 }
 
-export function safe_to_assign (tw, def, scope, value) {
+export function safe_to_assign (tw: TreeWalker, def, scope, value) {
   if (def.fixed === undefined) return true
   let def_safe_ids
   if (def.fixed === null &&
@@ -3259,7 +3260,7 @@ export function safe_to_assign (tw, def, scope, value) {
   })
 }
 
-export function safe_to_read (tw, def) {
+export function safe_to_read (tw: TreeWalker, def) {
   if (def.single_use == 'm') return false
   if (tw.safe_ids[def.id]) {
     if (def.fixed == null) {
@@ -3272,7 +3273,7 @@ export function safe_to_read (tw, def) {
   return def.fixed?.isAst?.('AST_Defun')
 }
 
-export function ref_once (tw, compressor, def) {
+export function ref_once (tw: TreeWalker, compressor, def) {
   return compressor.option('unused') &&
         !def.scope.pinned() &&
         def.references.length - def.recursive_refs == 1 &&
@@ -3286,7 +3287,7 @@ export function is_immutable (value) {
         value?.isAst?.('AST_This')
 }
 
-export function mark_escaped (tw, d, scope, node, value, level, depth) {
+export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, depth) {
   var parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
@@ -3321,7 +3322,7 @@ export function mark_escaped (tw, d, scope, node, value, level, depth) {
   d.direct_access = true
 }
 
-export function mark_lambda (tw, descend, compressor) {
+export function mark_lambda (tw: TreeWalker, descend, compressor) {
   clear_flag(this, INLINED)
   push(tw)
   reset_variables(tw, compressor, this)
@@ -3597,7 +3598,7 @@ export function retain_top_func (fn, compressor) {
         compressor.top_retain(fn.name)
 }
 
-export function find_scope (tw) {
+export function find_scope (tw: TreeWalker) {
   for (let i = 0; ;i++) {
     const p = tw.parent(i)
     if (p?.isAst?.('AST_Toplevel')) return p

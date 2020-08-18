@@ -1,5 +1,6 @@
 import AST_Lambda from './lambda'
 import { return_null, push, reset_variables, pop, lambda_modifiers, list_overhead } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_Accessor extends AST_Lambda {
   drop_side_effect_free = return_null

@@ -27,7 +27,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return this.body.has_side_effects(compressor)
   }
 
-  reduce_vars (tw) {
+  reduce_vars (tw: TreeWalker) {
     push(tw)
     this.body.walk(tw)
     pop(tw)

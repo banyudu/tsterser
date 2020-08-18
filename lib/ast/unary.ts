@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
 import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence, to_moz } from '../utils'
 
@@ -41,7 +42,7 @@ export default class AST_Unary extends AST_Node {
     return unary.has(this.operator)
   }
 
-  reduce_vars (tw) {
+  reduce_vars (tw: TreeWalker) {
     var node = this
     if (node.operator !== '++' && node.operator !== '--') return
     var exp = node.expression

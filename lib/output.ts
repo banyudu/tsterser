@@ -515,7 +515,7 @@ class OutputStreamInner {
 
   private readonly stack: any[] = []
 
-  push_node (node: any) { this.stack.push(node) }
+  push_node (node: AST_Node) { this.stack.push(node) }
 
   pop_node () { return this.stack.pop() }
 

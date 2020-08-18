@@ -1,5 +1,6 @@
 import AST_SwitchBranch from './switch-branch'
 import AST_Block from './block'
+import TreeWalker from '../tree-walker'
 
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
 
@@ -14,7 +15,7 @@ export default class AST_Case extends AST_SwitchBranch {
           anySideEffect(this.body, compressor)
   }
 
-  reduce_vars = function (tw) {
+  reduce_vars = function (tw: TreeWalker) {
     push(tw)
     this.expression.walk(tw)
     pop(tw)

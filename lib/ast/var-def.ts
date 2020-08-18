@@ -1,5 +1,6 @@
 import AST_Node from './node'
 import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin } from '../utils'
+import TreeWalker from '../tree-walker'
 
 export default class AST_VarDef extends AST_Node {
   name: any
@@ -14,7 +15,7 @@ export default class AST_VarDef extends AST_Node {
     return this.value
   }
 
-  reduce_vars (tw, descend) {
+  reduce_vars (tw: TreeWalker, descend) {
     var node = this
     if (node.name?.isAst?.('AST_Destructuring')) {
       suppress(node.name)
