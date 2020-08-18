@@ -4,20 +4,20 @@ import { make_node, trim, first_in_statement, make_sequence, anySideEffect, retu
 export default class AST_TemplateString extends AST_Node {
   segments: any
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (!compressor.option('evaluate') ||
-      compressor.parent()?.isAst?.('AST_PrefixedTemplateString')) { return self }
+      compressor.parent()?.isAst?.('AST_PrefixedTemplateString')) { return this }
 
     var segments: any[] = []
-    for (var i = 0; i < self.segments.length; i++) {
-      var segment = self.segments[i]
+    for (var i = 0; i < this.segments.length; i++) {
+      var segment = this.segments[i]
       if (segment?.isAst?.('AST_Node')) {
         var result = segment.evaluate?.(compressor)
         // Evaluate to constant value
         // Constant value shorter than ${segment}
         if (result !== segment && (result + '').length <= segment.size?.(undefined, undefined) + '${}'.length) {
           // There should always be a previous and next segment if segment is a node
-          segments[segments.length - 1].value = segments[segments.length - 1].value + result + self.segments[++i].value
+          segments[segments.length - 1].value = segments[segments.length - 1].value + result + this.segments[++i].value
           continue
         }
         // `before ${`innerBefore ${any} innerAfter`} after` => `before innerBefore ${any} innerAfter after`
@@ -36,18 +36,18 @@ export default class AST_TemplateString extends AST_Node {
       }
       segments.push(segment)
     }
-    self.segments = segments
+    this.segments = segments
 
     // `foo` => "foo"
     if (segments.length == 1) {
-      return make_node('AST_String', self, segments[0])
+      return make_node('AST_String', this, segments[0])
     }
     if (segments.length === 3 && segments[1]?.isAst?.('AST_Node')) {
       // `foo${bar}` => "foo" + bar
       if (segments[2].value === '') {
-        return make_node('AST_Binary', self, {
+        return make_node('AST_Binary', this, {
           operator: '+',
-          left: make_node('AST_String', self, {
+          left: make_node('AST_String', this, {
             value: segments[0].value
           }),
           right: segments[1]
@@ -55,16 +55,16 @@ export default class AST_TemplateString extends AST_Node {
       }
       // `{bar}baz` => bar + "baz"
       if (segments[0].value === '') {
-        return make_node('AST_Binary', self, {
+        return make_node('AST_Binary', this, {
           operator: '+',
           left: segments[1],
-          right: make_node('AST_String', self, {
+          right: make_node('AST_String', this, {
             value: segments[2].value
           })
         })
       }
     }
-    return self
+    return this
   }
 
   drop_side_effect_free (compressor: any) {

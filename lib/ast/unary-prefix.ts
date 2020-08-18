@@ -7,7 +7,8 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == '!' && this.expression === context
   }
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
+    let self = this
     var e = self.expression
     if (self.operator == 'delete' &&
           !(e?.isAst?.('AST_SymbolRef') ||

@@ -6,8 +6,8 @@ export default class AST_ObjectProperty extends AST_Node {
   value: any
   quote: any
 
-  _optimize (self, compressor) {
-    return lift_key(self, compressor)
+  _optimize (_self, compressor) {
+    return lift_key(this, compressor)
   }
 
   drop_side_effect_free = function (compressor: any, first_in_statement) {

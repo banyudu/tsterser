@@ -25,20 +25,20 @@ export default class AST_Try extends AST_Block {
   bfinally: any
   bcatch: any
 
-  _optimize (self, compressor) {
-    tighten_body(self.body, compressor)
-    if (self.bcatch && self.bfinally && self.bfinally.body.every(is_empty)) self.bfinally = null
-    if (compressor.option('dead_code') && self.body.every(is_empty)) {
+  _optimize (_self, compressor) {
+    tighten_body(this.body, compressor)
+    if (this.bcatch && this.bfinally && this.bfinally.body.every(is_empty)) this.bfinally = null
+    if (compressor.option('dead_code') && this.body.every(is_empty)) {
       var body: any[] = []
-      if (self.bcatch) {
-        extract_declarations_from_unreachable_code(compressor, self.bcatch, body)
+      if (this.bcatch) {
+        extract_declarations_from_unreachable_code(compressor, this.bcatch, body)
       }
-      if (self.bfinally) body.push(...self.bfinally.body)
-      return make_node('AST_BlockStatement', self, {
+      if (this.bfinally) body.push(...this.bfinally.body)
+      return make_node('AST_BlockStatement', this, {
         body: body
       }).optimize(compressor)
     }
-    return self
+    return this
   }
 
   may_throw = function (compressor: any) {

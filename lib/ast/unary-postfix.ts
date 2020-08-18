@@ -6,8 +6,8 @@ export default class AST_UnaryPostfix extends AST_Unary {
     return true
   }
 
-  _optimize (self, compressor) {
-    return self.lift_sequences(compressor)
+  _optimize (_self, compressor) {
+    return this.lift_sequences(compressor)
   }
 
   _dot_throw = return_false

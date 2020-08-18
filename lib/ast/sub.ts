@@ -17,9 +17,9 @@ export default class AST_Sub extends AST_PropAccess {
     }
   }
 
-  _optimize (self, compressor) {
-    var expr = self.expression
-    var prop = self.property
+  _optimize (_self, compressor) {
+    var expr = this.expression
+    var prop = this.property
     var property: any
     if (compressor.option('properties')) {
       var key = prop.evaluate(compressor)
@@ -34,11 +34,11 @@ export default class AST_Sub extends AST_PropAccess {
             }
           }
         }
-        prop = self.property = best_of_expression(prop, make_node_from_constant(key, prop).transform(compressor))
+        prop = this.property = best_of_expression(prop, make_node_from_constant(key, prop).transform(compressor))
         property = '' + key
         if (is_basic_identifier_string(property) &&
                   property.length <= prop.size() + 1) {
-          return make_node('AST_Dot', self, {
+          return make_node('AST_Dot', this, {
             expression: expr,
             property: property,
             quote: prop.quote
@@ -85,18 +85,18 @@ export default class AST_Sub extends AST_PropAccess {
         }
       }
       if (argname) {
-        var sym = make_node('AST_SymbolRef', self, argname)
+        var sym = make_node('AST_SymbolRef', this, argname)
         sym.reference({})
         clear_flag(argname, UNUSED)
         return sym
       }
     }
-    if (is_lhs(self, compressor.parent())) return self
+    if (is_lhs(this, compressor.parent())) return this
     if (key !== prop) {
-      var sub = self.flatten_object(property, compressor)
+      var sub = this.flatten_object(property, compressor)
       if (sub) {
-        expr = self.expression = sub.expression
-        prop = self.property = sub.property
+        expr = this.expression = sub.expression
+        prop = this.property = sub.property
       }
     }
     if (compressor.option('properties') && compressor.option('side_effects') &&
@@ -126,9 +126,9 @@ export default class AST_Sub extends AST_PropAccess {
         }
         if (flatten) {
           values.push(retValue)
-          return make_sequence(self, values).optimize(compressor)
+          return make_sequence(this, values).optimize(compressor)
         } else {
-          return make_node('AST_Sub', self, {
+          return make_node('AST_Sub', this, {
             expression: make_node('AST_Array', expr, {
               elements: values
             }),
@@ -139,12 +139,12 @@ export default class AST_Sub extends AST_PropAccess {
         }
       }
     }
-    var ev = self.evaluate(compressor)
-    if (ev !== self) {
-      ev = make_node_from_constant(ev, self).optimize(compressor)
-      return best_of(compressor, ev, self)
+    var ev = this.evaluate(compressor)
+    if (ev !== this) {
+      ev = make_node_from_constant(ev, this).optimize(compressor)
+      return best_of(compressor, ev, this)
     }
-    return self
+    return this
   }
 
   drop_side_effect_free (compressor: any, first_in_statement) {

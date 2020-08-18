@@ -21,41 +21,41 @@ export default class AST_For extends AST_IterationStatement {
     return this.condition === context
   }
 
-  _optimize (self, compressor) {
-    if (!compressor.option('loops')) return self
-    if (compressor.option('side_effects') && self.init) {
-      self.init = self.init.drop_side_effect_free(compressor)
+  _optimize (_self, compressor) {
+    if (!compressor.option('loops')) return this
+    if (compressor.option('side_effects') && this.init) {
+      this.init = this.init.drop_side_effect_free(compressor)
     }
-    if (self.condition) {
-      var cond = self.condition.evaluate(compressor)
+    if (this.condition) {
+      var cond = this.condition.evaluate(compressor)
       if (!(cond?.isAst?.('AST_Node'))) {
-        if (cond) self.condition = null
+        if (cond) this.condition = null
         else if (!compressor.option('dead_code')) {
-          var orig = self.condition
-          self.condition = make_node_from_constant(cond, self.condition)
-          self.condition = best_of_expression(self.condition.transform(compressor), orig)
+          var orig = this.condition
+          this.condition = make_node_from_constant(cond, this.condition)
+          this.condition = best_of_expression(this.condition.transform(compressor), orig)
         }
       }
       if (compressor.option('dead_code')) {
-        if (cond?.isAst?.('AST_Node')) cond = self.condition.tail_node().evaluate(compressor)
+        if (cond?.isAst?.('AST_Node')) cond = this.condition.tail_node().evaluate(compressor)
         if (!cond) {
           var body: any[] = []
-          extract_declarations_from_unreachable_code(compressor, self.body, body)
-          if (self.init?.isAst?.('AST_Statement')) {
-            body.push(self.init)
-          } else if (self.init) {
-            body.push(make_node('AST_SimpleStatement', self.init, {
-              body: self.init
+          extract_declarations_from_unreachable_code(compressor, this.body, body)
+          if (this.init?.isAst?.('AST_Statement')) {
+            body.push(this.init)
+          } else if (this.init) {
+            body.push(make_node('AST_SimpleStatement', this.init, {
+              body: this.init
             }))
           }
-          body.push(make_node('AST_SimpleStatement', self.condition, {
-            body: self.condition
+          body.push(make_node('AST_SimpleStatement', this.condition, {
+            body: this.condition
           }))
-          return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
+          return make_node('AST_BlockStatement', this, { body: body }).optimize(compressor)
         }
       }
     }
-    return if_break_in_loop(self, compressor)
+    return if_break_in_loop(this, compressor)
   }
 
   reduce_vars (tw: TreeWalker, descend, compressor: any) {

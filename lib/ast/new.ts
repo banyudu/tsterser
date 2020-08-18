@@ -2,13 +2,13 @@ import AST_Call from './call'
 import { is_undeclared_ref, callCodeGen, return_this, list_overhead, to_moz, make_node } from '../utils'
 
 export default class AST_New extends AST_Call {
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (
       compressor.option('unsafe') &&
-          is_undeclared_ref(self.expression) &&
-          ['Object', 'RegExp', 'Function', 'Error', 'Array'].includes(self.expression.name)
-    ) return make_node('AST_Call', self, self).transform(compressor)
-    return self
+          is_undeclared_ref(this.expression) &&
+          ['Object', 'RegExp', 'Function', 'Error', 'Array'].includes(this.expression.name)
+    ) return make_node('AST_Call', this, this).transform(compressor)
+    return this
   }
 
   _eval = return_this

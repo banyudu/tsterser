@@ -6,11 +6,11 @@ export default class AST_Yield extends AST_Node {
   is_star: boolean
   expression: any
 
-  _optimize (self, compressor) {
-    if (self.expression && !self.is_star && is_undefined(self.expression, compressor)) {
-      self.expression = null
+  _optimize (_self, compressor) {
+    if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
+      this.expression = null
     }
-    return self
+    return this
   }
 
   _walk = function (visitor: any) {

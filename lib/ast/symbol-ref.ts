@@ -41,29 +41,29 @@ export default class AST_SymbolRef extends AST_Symbol {
     }))
   }
 
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (!compressor.option('ie8') &&
-          is_undeclared_ref(self) &&
-          (!self.scope.uses_with || !compressor.find_parent(AST_With))) {
-      switch (self.name) {
+          is_undeclared_ref(this) &&
+          (!this.scope.uses_with || !compressor.find_parent(AST_With))) {
+      switch (this.name) {
         case 'undefined':
-          return make_node('AST_Undefined', self).optimize(compressor)
+          return make_node('AST_Undefined', this).optimize(compressor)
         case 'NaN':
-          return make_node('AST_NaN', self).optimize(compressor)
+          return make_node('AST_NaN', this).optimize(compressor)
         case 'Infinity':
-          return make_node('AST_Infinity', self).optimize(compressor)
+          return make_node('AST_Infinity', this).optimize(compressor)
       }
     }
     var parent = compressor.parent()
-    if (compressor.option('reduce_vars') && is_lhs(self, parent) !== self) {
-      const def = self.definition?.()
+    if (compressor.option('reduce_vars') && is_lhs(this, parent) !== this) {
+      const def = this.definition?.()
       if (compressor.top_retain && def.global && compressor.top_retain(def)) {
         def.fixed = false
         def.should_replace = false
         def.single_use = false
-        return self
+        return this
       }
-      var fixed = self.fixed_value()
+      var fixed = this.fixed_value()
       var single_use: any = def.single_use &&
               !(parent?.isAst?.('AST_Call') &&
                   (parent.is_expr_pure(compressor)) ||
@@ -71,17 +71,17 @@ export default class AST_SymbolRef extends AST_Symbol {
       if (single_use && (fixed?.isAst?.('AST_Lambda') || fixed?.isAst?.('AST_Class'))) {
         if (retain_top_func(fixed, compressor)) {
           single_use = false
-        } else if (def.scope !== self.scope &&
+        } else if (def.scope !== this.scope &&
                   (def.escaped == 1 ||
                       has_flag(fixed, INLINED) ||
                       within_array_or_object_literal(compressor))) {
           single_use = false
         } else if (recursive_ref(compressor, def)) {
           single_use = false
-        } else if (def.scope !== self.scope || def.orig[0]?.isAst?.('AST_SymbolFunarg')) {
-          single_use = fixed.is_constant_expression(self.scope)
+        } else if (def.scope !== this.scope || def.orig[0]?.isAst?.('AST_SymbolFunarg')) {
+          single_use = fixed.is_constant_expression(this.scope)
           if (single_use == 'f') {
-            var scope = self.scope
+            var scope = this.scope
             do {
               if (scope?.isAst?.('AST_Defun') || is_func_expr(scope)) {
                 set_flag(scope, INLINED)
@@ -93,10 +93,10 @@ export default class AST_SymbolRef extends AST_Symbol {
       if (single_use && fixed?.isAst?.('AST_Lambda')) {
         const block_scope = find_scope(compressor)
         single_use =
-                  def.scope === self.scope &&
+                  def.scope === this.scope &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed) ||
                   parent?.isAst?.('AST_Call') &&
-                      parent.expression === self &&
+                      parent.expression === this &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed)
       }
       if (single_use && fixed?.isAst?.('AST_Class')) {
@@ -184,7 +184,7 @@ export default class AST_SymbolRef extends AST_Symbol {
         return def.should_replace()
       }
     }
-    return self
+    return this
 
     function has_symbol_ref (value) {
       return walk(value, (node: any) => {

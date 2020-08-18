@@ -2,11 +2,11 @@ import AST_Exit from './exit'
 import { is_undefined, to_moz } from '../utils'
 
 export default class AST_Return extends AST_Exit {
-  _optimize (self, compressor) {
-    if (self.value && is_undefined(self.value, compressor)) {
-      self.value = null
+  _optimize (_self, compressor) {
+    if (this.value && is_undefined(this.value, compressor)) {
+      this.value = null
     }
-    return self
+    return this
   }
 
   may_throw (compressor: any) {

@@ -11,12 +11,12 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _optimize (self, compressor) {
-    if (self.body?.isAst?.('AST_Break') &&
-          compressor.loopcontrol_target(self.body) === self.body) {
-      return make_node('AST_EmptyStatement', self)
+  _optimize (_self, compressor) {
+    if (this.body?.isAst?.('AST_Break') &&
+          compressor.loopcontrol_target(this.body) === this.body) {
+      return make_node('AST_EmptyStatement', this)
     }
-    return self.label.references.length == 0 ? self.body : self
+    return this.label.references.length == 0 ? this.body : this
   }
 
   may_throw (compressor: any) {

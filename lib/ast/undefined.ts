@@ -3,11 +3,11 @@ import { find_variable, make_node, return_true, is_lhs, is_atomic } from '../uti
 import { set_flag, UNDEFINED } from '../constants'
 
 export default class AST_Undefined extends AST_Atom {
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     if (compressor.option('unsafe_undefined')) {
       var undef = find_variable(compressor, 'undefined')
       if (undef) {
-        var ref = make_node('AST_SymbolRef', self, {
+        var ref = make_node('AST_SymbolRef', this, {
           name: 'undefined',
           scope: undef.scope,
           thedef: undef
@@ -17,10 +17,10 @@ export default class AST_Undefined extends AST_Atom {
       }
     }
     var lhs = is_lhs(compressor.self(), compressor.parent())
-    if (lhs && is_atomic(lhs, self)) return self
-    return make_node('AST_UnaryPrefix', self, {
+    if (lhs && is_atomic(lhs, this)) return this
+    return make_node('AST_UnaryPrefix', this, {
       operator: 'void',
-      expression: make_node('AST_Number', self, {
+      expression: make_node('AST_Number', this, {
         value: 0
       })
     })

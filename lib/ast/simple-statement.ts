@@ -6,19 +6,19 @@ export default class AST_SimpleStatement extends AST_Statement {
     return true
   }
 
-  _optimize (self, compressor: any) {
+  _optimize (_self, compressor: any) {
     if (compressor.option('side_effects')) {
-      var body = self.body
+      var body = this.body
       var node = body.drop_side_effect_free(compressor, true)
       if (!node) {
-        compressor.warn('Dropping side-effect-free statement [{file}:{line},{col}]', self.start)
-        return make_node('AST_EmptyStatement', self)
+        compressor.warn('Dropping side-effect-free statement [{file}:{line},{col}]', this.start)
+        return make_node('AST_EmptyStatement', this)
       }
       if (node !== body) {
-        return make_node('AST_SimpleStatement', self, { body: node })
+        return make_node('AST_SimpleStatement', this, { body: node })
       }
     }
-    return self
+    return this
   }
 
   may_throw (compressor: any) {

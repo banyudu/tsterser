@@ -64,8 +64,8 @@ export default class AST_Node extends AST implements INode {
     return false
   }
 
-  _optimize (self, compressor?: any) {
-    return self
+  _optimize (_self, compressor?: any) {
+    return this
   }
 
   drop_side_effect_free (compressor: any, first_in_statement) {

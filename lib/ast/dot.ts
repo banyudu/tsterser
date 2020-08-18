@@ -10,51 +10,51 @@ export default class AST_Dot extends AST_PropAccess {
     return this.expression === node
   }
 
-  _optimize (self, compressor) {
-    if (self.property == 'arguments' || self.property == 'caller') {
+  _optimize (_self, compressor) {
+    if (this.property == 'arguments' || this.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
-        prop: self.property,
-        file: self.start.file,
-        line: self.start.line,
-        col: self.start.col
+        prop: this.property,
+        file: this.start.file,
+        line: this.start.line,
+        col: this.start.col
       })
     }
     const parent = compressor.parent()
-    if (is_lhs(self, parent)) return self
+    if (is_lhs(this, parent)) return this
     if (compressor.option('unsafe_proto') &&
-          self.expression?.isAst?.('AST_Dot') &&
-          self.expression.property == 'prototype') {
-      var exp = self.expression.expression
+          this.expression?.isAst?.('AST_Dot') &&
+          this.expression.property == 'prototype') {
+      var exp = this.expression.expression
       if (is_undeclared_ref(exp)) {
         switch (exp.name) {
           case 'Array':
-            self.expression = make_node('AST_Array', self.expression, {
+            this.expression = make_node('AST_Array', this.expression, {
               elements: []
             })
             break
           case 'Function':
-            self.expression = make_node('AST_Function', self.expression, {
+            this.expression = make_node('AST_Function', this.expression, {
               argnames: [],
               body: []
             })
             break
           case 'Number':
-            self.expression = make_node('AST_Number', self.expression, {
+            this.expression = make_node('AST_Number', this.expression, {
               value: 0
             })
             break
           case 'Object':
-            self.expression = make_node('AST_Object', self.expression, {
+            this.expression = make_node('AST_Object', this.expression, {
               properties: []
             })
             break
           case 'RegExp':
-            self.expression = make_node('AST_RegExp', self.expression, {
+            this.expression = make_node('AST_RegExp', this.expression, {
               value: { source: 't', flags: '' }
             })
             break
           case 'String':
-            self.expression = make_node('AST_String', self.expression, {
+            this.expression = make_node('AST_String', this.expression, {
               value: ''
             })
             break
@@ -62,15 +62,15 @@ export default class AST_Dot extends AST_PropAccess {
       }
     }
     if (!(parent?.isAst?.('AST_Call')) || !has_annotation(parent, _NOINLINE)) {
-      const sub = self.flatten_object(self.property, compressor)
+      const sub = this.flatten_object(this.property, compressor)
       if (sub) return sub.optimize(compressor)
     }
-    let ev = self.evaluate(compressor)
-    if (ev !== self) {
-      ev = make_node_from_constant(ev, self).optimize(compressor)
-      return best_of(compressor, ev, self)
+    let ev = this.evaluate(compressor)
+    if (ev !== this) {
+      ev = make_node_from_constant(ev, this).optimize(compressor)
+      return best_of(compressor, ev, this)
     }
-    return self
+    return this
   }
 
   drop_side_effect_free (compressor: any, first_in_statement) {

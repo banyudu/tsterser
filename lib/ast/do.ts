@@ -3,34 +3,34 @@ import { make_node, pass_through, to_moz, push, pop, make_block, reset_block_var
 import TreeWalker from '../tree-walker'
 
 export default class AST_Do extends AST_DWLoop {
-  _optimize (self, compressor) {
-    if (!compressor.option('loops')) return self
-    var cond = self.condition.tail_node().evaluate(compressor)
+  _optimize (_self, compressor) {
+    if (!compressor.option('loops')) return this
+    var cond = this.condition.tail_node().evaluate(compressor)
     if (!(cond?.isAst?.('AST_Node'))) {
       if (cond) {
-        return make_node('AST_For', self, {
-          body: make_node('AST_BlockStatement', self.body, {
+        return make_node('AST_For', this, {
+          body: make_node('AST_BlockStatement', this.body, {
             body: [
-              self.body,
-              make_node('AST_SimpleStatement', self.condition, {
-                body: self.condition
+              this.body,
+              make_node('AST_SimpleStatement', this.condition, {
+                body: this.condition
               })
             ]
           })
         }).optimize(compressor)
       }
-      if (!has_break_or_continue(self, compressor.parent())) {
-        return make_node('AST_BlockStatement', self.body, {
+      if (!has_break_or_continue(this, compressor.parent())) {
+        return make_node('AST_BlockStatement', this.body, {
           body: [
-            self.body,
-            make_node('AST_SimpleStatement', self.condition, {
-              body: self.condition
+            this.body,
+            make_node('AST_SimpleStatement', this.condition, {
+              body: this.condition
             })
           ]
         }).optimize(compressor)
       }
     }
-    return self
+    return this
   }
 
   reduce_vars (tw: TreeWalker, descend, compressor: any) {

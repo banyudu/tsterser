@@ -2,22 +2,22 @@ import AST_Atom from './atom'
 import { is_lhs, is_atomic, make_node, find_variable } from '../utils'
 
 export default class AST_Infinity extends AST_Atom {
-  _optimize (self, compressor) {
+  _optimize (_self, compressor) {
     var lhs = is_lhs(compressor.self(), compressor.parent())
-    if (lhs && is_atomic(lhs, self)) return self
+    if (lhs && is_atomic(lhs, this)) return this
     if (
       compressor.option('keep_infinity') &&
-          !(lhs && !is_atomic(lhs, self)) &&
+          !(lhs && !is_atomic(lhs, this)) &&
           !find_variable(compressor, 'Infinity')
     ) {
-      return self
+      return this
     }
-    return make_node('AST_Binary', self, {
+    return make_node('AST_Binary', this, {
       operator: '/',
-      left: make_node('AST_Number', self, {
+      left: make_node('AST_Number', this, {
         value: 1
       }),
-      right: make_node('AST_Number', self, {
+      right: make_node('AST_Number', this, {
         value: 0
       })
     })

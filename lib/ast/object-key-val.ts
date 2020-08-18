@@ -56,8 +56,8 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
   }
 
-  _optimize (self, compressor) {
-    lift_key(self, compressor)
+  _optimize (_self, compressor) {
+    lift_key(this, compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}
     // p:async function(){} ---> async p(){}
@@ -66,25 +66,25 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     var unsafe_methods = compressor.option('unsafe_methods')
     if (unsafe_methods &&
           compressor.option('ecma') >= 2015 &&
-          (!(unsafe_methods instanceof RegExp) || unsafe_methods.test(self.key + ''))) {
-      var key = self.key
-      var value = self.value
+          (!(unsafe_methods instanceof RegExp) || unsafe_methods.test(this.key + ''))) {
+      var key = this.key
+      var value = this.value
       var is_arrow_with_block = value?.isAst?.('AST_Arrow') &&
               Array.isArray(value.body) &&
               !value.contains_this()
       if ((is_arrow_with_block || value?.isAst?.('AST_Function')) && !value.name) {
-        return make_node('AST_ConciseMethod', self, {
+        return make_node('AST_ConciseMethod', this, {
           async: value.async,
           is_generator: value.is_generator,
-          key: key?.isAst?.('AST_Node') ? key : make_node('AST_SymbolMethod', self, {
+          key: key?.isAst?.('AST_Node') ? key : make_node('AST_SymbolMethod', this, {
             name: key
           }),
           value: make_node('AST_Accessor', value, value),
-          quote: self.quote
+          quote: this.quote
         })
       }
     }
-    return self
+    return this
   }
 
   computed_key () {
