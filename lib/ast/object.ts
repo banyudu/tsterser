@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
 import TreeWalker from '../tree-walker'
 
@@ -55,20 +56,20 @@ export default class AST_Object extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     var values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.properties, compressor)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
       var val = {}
       for (var i = 0, len = this.properties.length; i < len; i++) {
@@ -97,7 +98,7 @@ export default class AST_Object extends AST_Node {
     return this.properties.every((l) => l.is_constant_expression())
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
     for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
     return false

@@ -1,4 +1,5 @@
 import AST_StatementWithBody from './statement-with-body'
+import Compressor from '../compressor'
 import { push, pop, mkshallow, to_moz, make_node, noop } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -19,11 +20,11 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return this.label.references.length == 0 ? this.body : this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 

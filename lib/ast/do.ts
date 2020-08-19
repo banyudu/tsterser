@@ -1,4 +1,5 @@
 import AST_DWLoop from './dw-loop'
+import Compressor from '../compressor'
 import { make_node, pass_through, to_moz, push, pop, make_block, reset_block_variables, has_break_or_continue } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -33,7 +34,7 @@ export default class AST_Do extends AST_DWLoop {
     return this
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this

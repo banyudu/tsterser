@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import {
   make_sequence,
   first_in_statement,
@@ -299,7 +300,7 @@ export default class AST_Conditional extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: any) {
+  drop_side_effect_free (compressor: Compressor) {
     var consequent = this.consequent.drop_side_effect_free(compressor)
     var alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
@@ -323,19 +324,19 @@ export default class AST_Conditional extends AST_Node {
     return node
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.condition.may_throw(compressor) ||
           this.consequent.may_throw(compressor) ||
           this.alternative.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.consequent.has_side_effects(compressor) ||
           this.alternative.has_side_effects(compressor)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     var condition = this.condition._eval(compressor, depth)
     if (condition === this.condition) return this
     var node = condition ? this.consequent : this.alternative
@@ -343,18 +344,18 @@ export default class AST_Conditional extends AST_Node {
     return value === node ? this : value
   }
 
-  negate (compressor: any, first_in_statement) {
+  negate (compressor: Compressor, first_in_statement) {
     var self = this.clone()
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
     return best(this, self, first_in_statement)
   }
 
-  is_string (compressor: any) {
+  is_string (compressor: Compressor) {
     return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
   }
 
-  is_number (compressor: any) {
+  is_number (compressor: Compressor) {
     return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
   }
 
@@ -373,7 +374,7 @@ export default class AST_Conditional extends AST_Node {
     return true
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     return this.consequent._dot_throw(compressor) ||
           this.alternative._dot_throw(compressor)
   }

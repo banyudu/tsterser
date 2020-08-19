@@ -1,4 +1,5 @@
 import AST_Block from './block'
+import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import {
   tighten_body,
@@ -41,18 +42,18 @@ export default class AST_Try extends AST_Block {
     return this
   }
 
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
           this.bfinally && this.bfinally.may_throw(compressor)
   }
 
-  has_side_effects = function (compressor: any) {
+  has_side_effects = function (compressor: Compressor) {
     return anySideEffect(this.body, compressor) ||
           this.bcatch && this.bcatch.has_side_effects(compressor) ||
           this.bfinally && this.bfinally.has_side_effects(compressor)
   }
 
-  reduce_vars = function (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars = function (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     push(tw)
     walk_body(this, tw)

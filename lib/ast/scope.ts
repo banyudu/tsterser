@@ -1,4 +1,5 @@
 import AST_Block from './block'
+import Compressor from '../compressor'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import SymbolDef from '../symbol-def'
@@ -93,7 +94,7 @@ export default class AST_Scope extends AST_Block {
     self.transform(tt)
   }
 
-  drop_unused (compressor: any) {
+  drop_unused (compressor: Compressor) {
     const optUnused = compressor.option('unused')
     if (!optUnused) return
     if (compressor.has_directive('use asm')) return
@@ -492,7 +493,7 @@ export default class AST_Scope extends AST_Block {
     }
   }
 
-  hoist_declarations (compressor: any) {
+  hoist_declarations (compressor: Compressor) {
     var self = this
     if (compressor.has_directive('use asm')) return self
     // Hoisting makes no sense in an arrow func
@@ -635,7 +636,7 @@ export default class AST_Scope extends AST_Block {
     return name
   }
 
-  hoist_properties (compressor: any) {
+  hoist_properties (compressor: Compressor) {
     var self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     var top_retain = self?.isAst?.('AST_Toplevel') && compressor.top_retain || return_false

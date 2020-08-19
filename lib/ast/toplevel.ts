@@ -1,4 +1,5 @@
 import AST_Scope from './scope'
+import Compressor from '../compressor'
 import SymbolDef from '../symbol-def'
 import TreeWalker from '../tree-walker'
 import {
@@ -34,14 +35,14 @@ export default class AST_Toplevel extends AST_Scope {
   globals: any
   mangled_names: any
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     this.globals.forEach(function (def) {
       reset_def(compressor, def)
     })
     reset_variables(tw, compressor, this)
   }
 
-  resolve_defines (compressor: any) {
+  resolve_defines (compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
     return this.transform(new TreeTransformer(function (node: any) {
@@ -61,7 +62,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  reset_opt_flags (compressor: any) {
+  reset_opt_flags (compressor: Compressor) {
     const self = this
     const reduce_vars = compressor.option('reduce_vars')
 

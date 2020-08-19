@@ -1,4 +1,5 @@
 import AST_StatementWithBody from './statement-with-body'
+import Compressor from '../compressor'
 import {
   make_node_from_constant,
   best_of_expression,
@@ -170,13 +171,13 @@ export default class AST_If extends AST_StatementWithBody {
     return self
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.condition.may_throw(compressor) ||
           this.body && this.body.may_throw(compressor) ||
           this.alternative && this.alternative.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.body && this.body.has_side_effects(compressor) ||
           this.alternative && this.alternative.has_side_effects(compressor)

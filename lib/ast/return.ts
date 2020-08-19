@@ -1,4 +1,5 @@
 import AST_Exit from './exit'
+import Compressor from '../compressor'
 import { is_undefined, to_moz } from '../utils'
 
 export default class AST_Return extends AST_Exit {
@@ -9,7 +10,7 @@ export default class AST_Return extends AST_Exit {
     return this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.value && this.value.may_throw(compressor)
   }
 

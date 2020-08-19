@@ -1,4 +1,5 @@
 import AST_Scope from './scope'
+import Compressor from '../compressor'
 import {
   make_sequence,
   anyMayThrow,
@@ -26,7 +27,7 @@ export default class AST_Class extends AST_Scope {
     return this
   }
 
-  drop_side_effect_free = function (compressor: any) {
+  drop_side_effect_free = function (compressor: Compressor) {
     const with_effects: any[] = []
     const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
@@ -38,7 +39,7 @@ export default class AST_Class extends AST_Scope {
     return make_sequence(this, with_effects)
   }
 
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     if (this.extends && this.extends.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
   }

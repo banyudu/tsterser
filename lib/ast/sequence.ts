@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_Number from './number'
 import TreeWalker from '../tree-walker'
 import {
@@ -62,7 +63,7 @@ export default class AST_Sequence extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: any) {
+  drop_side_effect_free (compressor: Compressor) {
     var last = this.tail_node()
     var expr = last.drop_side_effect_free(compressor)
     if (expr === last) return this
@@ -74,25 +75,25 @@ export default class AST_Sequence extends AST_Node {
     return make_sequence(this, expressions)
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return anyMayThrow(this.expressions, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.expressions, compressor)
   }
 
-  negate (compressor: any) {
+  negate (compressor: Compressor) {
     var expressions = this.expressions.slice()
     expressions.push(expressions.pop().negate(compressor))
     return make_sequence(this, expressions)
   }
 
-  is_string (compressor: any) {
+  is_string (compressor: Compressor) {
     return this.tail_node().is_string(compressor)
   }
 
-  is_number (compressor: any) {
+  is_number (compressor: Compressor) {
     return this.tail_node().is_number(compressor)
   }
 
@@ -100,7 +101,7 @@ export default class AST_Sequence extends AST_Node {
     return this.tail_node().is_boolean()
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     return this.tail_node()._dot_throw(compressor)
   }
 

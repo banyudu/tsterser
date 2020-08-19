@@ -1,4 +1,5 @@
 import AST_Unary from './unary'
+import Compressor from '../compressor'
 import { unary_bool, non_converting_unary } from '../constants'
 import { is_identifier_atom, make_node, make_sequence, best_of, first_in_statement, basic_negation, make_node_from_constant } from '../utils'
 
@@ -82,7 +83,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return self
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     var e = this.expression
     // Function would be evaluated to an array and so typeof would
     // incorrectly return 'object'. Hence making is a special case.

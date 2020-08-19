@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, return_true, pass_through, do_list, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -68,12 +69,12 @@ export default class AST_TemplateString extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: any) {
+  drop_side_effect_free (compressor: Compressor) {
     var values = trim(this.segments, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.segments, compressor)
   }
 

@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -6,7 +7,7 @@ export default class AST_VarDef extends AST_Node {
   name: any
   value: any
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
   }

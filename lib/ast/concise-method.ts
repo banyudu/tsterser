@@ -1,4 +1,5 @@
 import AST_ObjectProperty from './object-property'
+import Compressor from '../compressor'
 import { to_moz, key_size, static_size, mkshallow, make_node, lift_key, lambda_modifiers } from '../utils'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
@@ -35,11 +36,11 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return this.computed_key() ? this.key : null
   }
 
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     return this.computed_key() && this.key.may_throw(compressor)
   }
 
-  has_side_effects = function (compressor: any) {
+  has_side_effects = function (compressor: Compressor) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   }
 

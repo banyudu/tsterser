@@ -1,4 +1,5 @@
 import AST_IterationStatement from './iteration-statement'
+import Compressor from '../compressor'
 
 import {
   make_node_from_constant,
@@ -58,7 +59,7 @@ export default class AST_For extends AST_IterationStatement {
     return if_break_in_loop(this, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     if (this.init) this.init.walk(tw)
     const saved_loop = tw.in_loop

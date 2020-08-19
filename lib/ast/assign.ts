@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_Binary from './binary'
 import AST_Lambda from './lambda'
 import AST_Scope from './scope'
@@ -89,7 +90,7 @@ export default class AST_Assign extends AST_Binary {
     }
   }
 
-  drop_side_effect_free (compressor: any) {
+  drop_side_effect_free (compressor: Compressor) {
     var left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&
@@ -107,7 +108,7 @@ export default class AST_Assign extends AST_Binary {
     return this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     if (this.right.may_throw(compressor)) return true
     if (!compressor.has_directive('use strict') &&
           this.operator == '=' &&
@@ -118,11 +119,11 @@ export default class AST_Assign extends AST_Binary {
   }
 
   has_side_effects = return_true
-  is_string (compressor: any) {
+  is_string (compressor: Compressor) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   }
 
-  is_number (compressor: any) {
+  is_number (compressor: Compressor) {
     return binary.has(this.operator.slice(0, -1)) ||
           this.operator == '=' && this.right.is_number(compressor)
   }
@@ -131,7 +132,7 @@ export default class AST_Assign extends AST_Binary {
     return this.operator == '=' && this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     var node = this
     if (node.left?.isAst?.('AST_Destructuring')) {
       suppress(node.left)
@@ -166,7 +167,7 @@ export default class AST_Assign extends AST_Binary {
     return true
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     return this.operator == '=' &&
           this.right._dot_throw(compressor)
   }

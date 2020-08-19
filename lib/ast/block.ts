@@ -1,4 +1,5 @@
 import AST_Statement from './statement'
+import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import {
   tighten_body,
@@ -23,15 +24,15 @@ export default class AST_Block extends AST_Statement {
     return this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.body, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
   }
 

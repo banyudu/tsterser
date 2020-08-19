@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_Symbol from './symbol'
 import TreeWalker from '../tree-walker'
 import AST_SymbolFunarg from './symbol-funarg'
@@ -193,21 +194,21 @@ export default class AST_SymbolRef extends AST_Symbol {
     }
   }
 
-  drop_side_effect_free (compressor: any) {
+  drop_side_effect_free (compressor: Compressor) {
     const safe_access = this.is_declared(compressor) ||
           pure_prop_access_globals.has(this.name)
     return safe_access ? null : this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     var fixed = this.fixed_value()
     if (!fixed) return this
     var value
@@ -229,14 +230,14 @@ export default class AST_SymbolRef extends AST_Symbol {
     return value
   }
 
-  _find_defs (compressor: any, suffix) {
+  _find_defs (compressor: Compressor, suffix) {
     if (!this.global()) return
     var defines = compressor.option('global_defs') as AnyObject
     var name = this.name + suffix
     if (HOP(defines, name)) return to_node(defines[name], this)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     var d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&
@@ -276,7 +277,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1)
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     if (this.name === 'arguments') return false
     if (has_flag(this, UNDEFINED)) return true
     if (!is_strict(compressor)) return false
@@ -286,7 +287,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return !fixed || fixed._dot_throw(compressor)
   }
 
-  is_declared (compressor: any) {
+  is_declared (compressor: Compressor) {
     return !this.definition?.().undeclared ||
           compressor.option('unsafe') && global_names.has(this.name)
   }

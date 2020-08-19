@@ -1,4 +1,5 @@
 import AST_PropAccess from './prop-access'
+import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
@@ -148,7 +149,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (this.expression.may_throw_on_access(compressor)) return this
     var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
@@ -157,13 +158,13 @@ export default class AST_Sub extends AST_PropAccess {
     return make_sequence(this, [expression, property])
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
           this.property.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
           this.property.has_side_effects(compressor)

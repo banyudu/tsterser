@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_With from './with'
 import { PRECEDENCE } from '../parse'
 import TreeWalker from '../tree-walker'
@@ -564,7 +565,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
     return self
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     var right = this.right.drop_side_effect_free(compressor)
     if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
     if (lazy_op.has(this.operator)) {
@@ -579,17 +580,17 @@ export default class AST_Binary extends AST_Node implements IBinary {
     }
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.left.may_throw(compressor) ||
           this.right.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.left.has_side_effects(compressor) ||
           this.right.has_side_effects(compressor)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     if (!non_converting_binary.has(this.operator)) depth++
     var left = this.left._eval(compressor, depth)
     if (left === this.left) return this
@@ -635,7 +636,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           this.right.is_constant_expression()
   }
 
-  negate (compressor: any, first_in_statement) {
+  negate (compressor: Compressor, first_in_statement) {
     var self = this.clone(); var op = this.operator
     if (compressor.option('unsafe_comps')) {
       switch (op) {
@@ -667,12 +668,12 @@ export default class AST_Binary extends AST_Node implements IBinary {
     return basic_negation(this)
   }
 
-  is_string (compressor: any) {
+  is_string (compressor: Compressor) {
     return this.operator == '+' &&
           (this.left.is_string(compressor) || this.right.is_string(compressor))
   }
 
-  is_number (compressor: any) {
+  is_number (compressor: Compressor) {
     return binary.has(this.operator) || this.operator == '+' &&
           this.left.is_number(compressor) &&
           this.right.is_number(compressor)
@@ -685,7 +686,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
               this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)
@@ -694,12 +695,12 @@ export default class AST_Binary extends AST_Node implements IBinary {
     return true
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
           (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
   }
 
-  lift_sequences (compressor: any) {
+  lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
       if (this.left?.isAst?.<ISequence>('AST_Sequence')) {
         var x = this.left.expressions.slice()

@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import { pass_through, to_moz_in_destructuring, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -10,11 +11,11 @@ export default class AST_Expansion extends AST_Node {
     return insert_default(this)
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     return this.expression._dot_throw(compressor)
   }
 

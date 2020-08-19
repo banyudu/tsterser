@@ -1,4 +1,5 @@
 import AST_Symbol from './symbol'
+import Compressor from '../compressor'
 import { return_false, HOP, warn } from '../utils'
 
 export default class AST_SymbolDeclaration extends AST_Symbol {
@@ -7,7 +8,7 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
 
   may_throw = return_false
   has_side_effects = return_false
-  _find_defs = function (compressor: any) {
+  _find_defs = function (compressor: Compressor) {
     if (!this.global()) return
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
   }

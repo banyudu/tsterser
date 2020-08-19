@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
 import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence, to_moz } from '../utils'
@@ -6,7 +7,7 @@ import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence
 export default class AST_Unary extends AST_Node {
   operator: any
   expression: any
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
         set_flag(this, WRITE_ONLY)
@@ -24,12 +25,12 @@ export default class AST_Unary extends AST_Node {
     return expression
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) { return false }
     return this.expression.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return unary_side_effects.has(this.operator) ||
           this.expression.has_side_effects(compressor)
   }
@@ -71,7 +72,7 @@ export default class AST_Unary extends AST_Node {
     return true
   }
 
-  lift_sequences (compressor: any) {
+  lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
       if (this.expression?.isAst?.('AST_Sequence')) {
         var x = this.expression.expressions.slice()

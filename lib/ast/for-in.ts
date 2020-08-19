@@ -1,10 +1,11 @@
 import AST_IterationStatement from './iteration-statement'
+import Compressor from '../compressor'
 import { suppress, reset_block_variables, push, pop, to_moz, pass_through } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ForIn extends AST_IterationStatement {
   object: any
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     suppress(this.init)
     this.object.walk(tw)

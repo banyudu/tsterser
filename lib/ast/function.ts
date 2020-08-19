@@ -1,4 +1,5 @@
 import AST_Lambda from './lambda'
+import Compressor from '../compressor'
 import {
   opt_AST_Lambda,
   walk,
@@ -34,7 +35,7 @@ export default class AST_Function extends AST_Lambda {
   }
 
   drop_side_effect_free = return_null
-  _eval = function (compressor: any) {
+  _eval = function (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       var fn: any = function () {}
       fn.node = this

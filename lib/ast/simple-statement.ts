@@ -1,4 +1,5 @@
 import AST_Statement from './statement'
+import Compressor from '../compressor'
 import { make_node, pass_through, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -7,7 +8,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return true
   }
 
-  _optimize (compressor: any) {
+  _optimize (compressor: Compressor) {
     if (compressor.option('side_effects')) {
       var body = this.body
       var node = body.drop_side_effect_free(compressor, true)
@@ -22,11 +23,11 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 

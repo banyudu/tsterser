@@ -1,4 +1,5 @@
 import AST_ObjectProperty from './object-property'
+import Compressor from '../compressor'
 import { to_moz, print_property_name, static_size, mkshallow, make_sequence } from '../utils'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
@@ -33,7 +34,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     }
   }
 
-  drop_side_effect_free = function (compressor: any) {
+  drop_side_effect_free = function (compressor: Compressor) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
     const value = this.static && this.value &&
@@ -43,14 +44,14 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     return key || value || null
   }
 
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     return (
       this.computed_key() && this.key.may_throw(compressor) ||
           this.static && this.value && this.value.may_throw(compressor)
     )
   }
 
-  has_side_effects = function (compressor: any) {
+  has_side_effects = function (compressor: Compressor) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
           this.static && this.value && this.value.has_side_effects(compressor)

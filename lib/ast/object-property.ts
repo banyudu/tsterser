@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import { lift_key, make_sequence, return_false, to_moz, pass_through, print_property_name } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -11,7 +12,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return lift_key(this, compressor)
   }
 
-  drop_side_effect_free = function (compressor: any, first_in_statement) {
+  drop_side_effect_free = function (compressor: Compressor, first_in_statement) {
     const computed_key = this.isAst('AST_ObjectKeyVal') && this.key?.isAst?.('AST_Node')
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
@@ -21,12 +22,12 @@ export default class AST_ObjectProperty extends AST_Node {
     return key || value
   }
 
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     // TODO key may throw too
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects = function (compressor: any) {
+  has_side_effects = function (compressor: Compressor) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
           this.value.has_side_effects(compressor)

@@ -1,4 +1,5 @@
 import AST_Statement from './statement'
+import Compressor from '../compressor'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -10,15 +11,15 @@ export default class AST_Definitions extends AST_Statement {
     return this
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return anyMayThrow(this.definitions, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.definitions, compressor)
   }
 
-  to_assignments (compressor: any) {
+  to_assignments (compressor: Compressor) {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
       if (def.value && !(def.name?.isAst?.('AST_Destructuring'))) {

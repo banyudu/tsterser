@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten } from '../utils'
 import { static_values, global_objs, walk_abort } from '../constants'
 
@@ -10,7 +11,7 @@ export default class AST_PropAccess extends AST_Node {
     return this.expression === child
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
       if (key?.isAst?.('AST_Node')) {

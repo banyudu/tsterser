@@ -1,16 +1,17 @@
 import AST_SwitchBranch from './switch-branch'
+import Compressor from '../compressor'
 import AST_Block from './block'
 import TreeWalker from '../tree-walker'
 
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
 
 export default class AST_Case extends AST_SwitchBranch {
-  may_throw = function (compressor: any) {
+  may_throw = function (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects = function (compressor: any) {
+  has_side_effects = function (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
   }

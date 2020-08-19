@@ -1,4 +1,5 @@
 import AST_Block from './block'
+import Compressor from '../compressor'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
 
@@ -132,12 +133,12 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
   }

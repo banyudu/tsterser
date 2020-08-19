@@ -1,4 +1,5 @@
 import AST_PropAccess from './prop-access'
+import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
@@ -74,32 +75,32 @@ export default class AST_Dot extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (this.expression.may_throw_on_access(compressor)) return this
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor)
   }
 
-  _find_defs (compressor: any, suffix) {
+  _find_defs (compressor: Compressor, suffix) {
     return this.expression._find_defs(compressor, '.' + this.property + suffix)
   }
 
-  _dot_throw (compressor: any) {
+  _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
     if (this.expression?.isAst?.('AST_Function') && this.property == 'prototype') return false
     return true
   }
 
-  is_call_pure (compressor: any) {
+  is_call_pure (compressor: Compressor) {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
     let map

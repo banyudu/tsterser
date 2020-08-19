@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
 import TreeWalker from '../tree-walker'
 import {
@@ -37,20 +38,20 @@ export default class AST_Array extends AST_Node implements IArray {
     return inline_array_like_spread(this, compressor, this.elements)
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     var values = trim(this.elements, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     return anyMayThrow(this.elements, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.elements, compressor)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
       var elements: any[] = []
       for (var i = 0, len = this.elements.length; i < len; i++) {

@@ -746,7 +746,7 @@ export default class AST_Call extends AST_Node implements ICall {
     }
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
         var exprs = this.args.slice()
@@ -769,7 +769,7 @@ export default class AST_Call extends AST_Node implements ICall {
     return args && make_sequence(this, args)
   }
 
-  may_throw (compressor: any) {
+  may_throw (compressor: Compressor) {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
@@ -777,7 +777,7 @@ export default class AST_Call extends AST_Node implements ICall {
           anyMayThrow(this.expression.body, compressor)
   }
 
-  has_side_effects (compressor: any) {
+  has_side_effects (compressor: Compressor) {
     if (!this.is_expr_pure(compressor) &&
           (!this.expression.is_call_pure(compressor) ||
               this.expression.has_side_effects(compressor))) {
@@ -786,7 +786,7 @@ export default class AST_Call extends AST_Node implements ICall {
     return anySideEffect(this.args, compressor)
   }
 
-  _eval (compressor: any, depth) {
+  _eval (compressor: Compressor, depth) {
     var exp = this.expression
     if (compressor.option('unsafe') && exp?.isAst?.<IPropAccess>('AST_PropAccess')) {
       var key = exp.property
@@ -837,7 +837,7 @@ export default class AST_Call extends AST_Node implements ICall {
     return this
   }
 
-  is_expr_pure (compressor: any) {
+  is_expr_pure (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       var expr = this.expression
       var first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
