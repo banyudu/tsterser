@@ -48,7 +48,7 @@ export default class AST_Scope extends AST_Block {
   uses_with: any
   cname: any
 
-  process_expression (insert, compressor) {
+  process_expression (insert, compressor?) {
     var self = this
     var tt = new TreeTransformer(function (node: any) {
       if (insert && node?.isAst?.('AST_SimpleStatement')) {

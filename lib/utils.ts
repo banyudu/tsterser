@@ -162,6 +162,7 @@ import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
 
 import { is_basic_identifier_string, is_identifier_string, RESERVED_WORDS } from './parse'
+import Compressor from './compressor'
 
 const AST_DICT = {
   AST_Accessor,
@@ -2986,7 +2987,7 @@ export function inline_array_like_spread (self, compressor, elements) {
 // Returns an array of expressions with side-effects or null
 // if all elements were dropped. Note: original array may be
 // returned if nothing changed.
-export function trim (nodes: any[], compressor: any, first_in_statement?) {
+export function trim (nodes: any[], compressor: Compressor, first_in_statement?) {
   var len = nodes.length
   if (!len) return null
   var ret: any[] = []; var changed = false

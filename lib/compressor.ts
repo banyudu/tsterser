@@ -51,6 +51,7 @@ import {
   string_template
 } from './utils'
 import AST_Node from './ast/node'
+import AST_Toplevel from './ast/toplevel'
 import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
@@ -207,7 +208,7 @@ export default class Compressor extends TreeWalker {
     }
   }
 
-  compress (toplevel: any) {
+  compress (toplevel: AST_Toplevel) {
     toplevel = toplevel.resolve_defines(this)
     if (this.option('expression')) {
       toplevel.process_expression(true)

@@ -20,6 +20,7 @@ import {
 } from '../utils'
 
 import { INode_Props, INode, IToken } from '../../types/ast'
+import Compressor from '../compressor'
 
 export default class AST_Node extends AST implements INode {
   start: IToken
@@ -68,23 +69,23 @@ export default class AST_Node extends AST implements INode {
     return this
   }
 
-  drop_side_effect_free (compressor: any, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement) {
     return this
   }
 
-  may_throw (compressor: any) { return true }
-  has_side_effects (compressor: any) { return true }
+  may_throw (compressor: Compressor) { return true }
+  has_side_effects (compressor: Compressor) { return true }
   _eval (compressor?: any, depth?: number): any { return this }
   is_constant_expression (scope?: any) { return false }
-  negate (compressor: any, first_in_statement?: any) {
+  negate (compressor: Compressor, first_in_statement?: any) {
     return basic_negation(this)
   }
 
-  _find_defs (compressor: any, suffix) {}
-  is_string (compressor: any) { return false }
-  is_number (compressor: any) { return false }
+  _find_defs (compressor: Compressor, suffix) {}
+  is_string (compressor: Compressor) { return false }
+  is_number (compressor: Compressor) { return false }
   is_boolean () { return false }
-  reduce_vars (tw: TreeWalker, descend, compressor: any) {}
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {}
   _dot_throw (compressor) { return is_strict(compressor) }
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
@@ -92,7 +93,7 @@ export default class AST_Node extends AST implements INode {
   // is returned.
   // They can be distinguished as constant value is never a
   // descendant of AST_Node.
-  evaluate (compressor: any) {
+  evaluate (compressor: Compressor) {
     if (!compressor.option('evaluate')) return this
     var val = this._eval(compressor, 1)
     if (!val || val instanceof RegExp) return val
@@ -112,11 +113,11 @@ export default class AST_Node extends AST implements INode {
     }
   }
 
-  is_call_pure (compressor: any) { return false }
+  is_call_pure (compressor: Compressor) { return false }
 
   // may_throw_on_access()
   // returns true if this node may be null, undefined or contain `AST_Accessor`
-  may_throw_on_access (compressor: any) {
+  may_throw_on_access (compressor: Compressor) {
     return !compressor.option('pure_getters') ||
           this._dot_throw(compressor)
   }
@@ -201,7 +202,7 @@ export default class AST_Node extends AST implements INode {
   }
 
   needs_parens (output: any) { return false }
-  optimize (compressor: any) {
+  optimize (compressor: Compressor) {
     if (!this._optimize) {
       throw new Error('optimize not defined')
     }
