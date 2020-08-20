@@ -18,7 +18,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     return true
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       this.init._walk(visitor)
       this.object._walk(visitor)

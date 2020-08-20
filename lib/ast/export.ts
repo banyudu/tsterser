@@ -9,7 +9,7 @@ export default class AST_Export extends AST_Statement {
   exported_definition: any
   exported_names: any
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this: any) {
       if (this.exported_definition) {
         this.exported_definition._walk(visitor)

@@ -120,7 +120,7 @@ export default class AST_Dot extends AST_PropAccess {
     return map && map.has(this.property)
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
     })

@@ -37,7 +37,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   is_block_scope = return_true
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       walk_body(this, visitor)
     })

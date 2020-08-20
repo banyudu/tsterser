@@ -2686,7 +2686,7 @@ export function is_identifier_atom (node: any | null) {
         node?.isAst?.('AST_Undefined')
 }
 
-export function walk_body (node: any, visitor: any) {
+export function walk_body (node: any, visitor: TreeWalker) {
   const body = node.body
   for (var i = 0, len = body.length; i < len; i++) {
     body[i]._walk(visitor)

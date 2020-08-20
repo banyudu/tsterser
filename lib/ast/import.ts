@@ -12,7 +12,7 @@ export default class AST_Import extends AST_Node {
   }
 
   aborts () { return null }
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this: any) {
       if (this.imported_name) {
         this.imported_name._walk(visitor)

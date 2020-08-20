@@ -79,7 +79,7 @@ export default class AST_For extends AST_IterationStatement {
     return true
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       if (this.init) this.init._walk(visitor)
       if (this.condition) this.condition._walk(visitor)

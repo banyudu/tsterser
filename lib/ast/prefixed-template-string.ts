@@ -10,7 +10,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     return this
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       this.prefix._walk(visitor)
       this.template_string._walk(visitor)

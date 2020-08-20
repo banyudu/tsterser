@@ -84,7 +84,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   is_string = return_true
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this: any) {
       this.segments.forEach(function (seg) {
         seg._walk(visitor)

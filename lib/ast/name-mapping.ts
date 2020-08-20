@@ -6,7 +6,7 @@ export default class AST_NameMapping extends AST_Node {
   name: any
   foreign_name: any
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       this.foreign_name._walk(visitor)
       this.name._walk(visitor)

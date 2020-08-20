@@ -8,7 +8,7 @@ export default class AST_Exit extends AST_Jump {
     return true
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, this.value && function () {
       this.value._walk(visitor)
     })

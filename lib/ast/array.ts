@@ -70,7 +70,7 @@ export default class AST_Array extends AST_Node implements IArray {
   }
 
   _dot_throw = return_false
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       var elements = this.elements
       for (var i = 0, len = elements.length; i < len; i++) {

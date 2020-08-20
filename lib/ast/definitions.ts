@@ -70,7 +70,7 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = decls
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       var definitions = this.definitions
       for (var i = 0, len = definitions.length; i < len; i++) {

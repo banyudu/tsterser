@@ -104,7 +104,7 @@ export default class AST_Object extends AST_Node {
     return false
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       var properties = this.properties
       for (var i = 0, len = properties.length; i < len; i++) {

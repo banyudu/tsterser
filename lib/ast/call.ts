@@ -859,7 +859,7 @@ export default class AST_Call extends AST_Node implements ICall {
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       var args = this.args
       for (var i = 0, len = args.length; i < len; i++) {

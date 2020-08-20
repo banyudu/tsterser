@@ -31,7 +31,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this.body.has_side_effects(compressor)
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       this.body._walk(visitor)
     })

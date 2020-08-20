@@ -143,7 +143,7 @@ export default class AST_Node extends AST implements INode {
     return this._clone(deep)
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this)
   }
 
@@ -151,7 +151,7 @@ export default class AST_Node extends AST implements INode {
 
   }
 
-  walk (visitor: any) {
+  walk (visitor: TreeWalker) {
     return this._walk(visitor) // not sure the indirection will be any help
   }
 
