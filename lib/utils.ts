@@ -153,7 +153,27 @@ import {
   AST_While,
   AST_With,
   AST_Yield,
-  AST_Node
+  AST_Node,
+  AST_Lambda,
+  AST_Class,
+  AST_Unary,
+  AST_Boolean,
+  AST_Definitions,
+  AST_PropAccess,
+  AST_ObjectProperty,
+  AST_SymbolBlockDeclaration,
+  AST_SymbolDeclaration,
+  AST_Symbol,
+  AST_Constant,
+  AST_Atom,
+  AST_Jump,
+  AST_Exit,
+  AST_LoopControl,
+  AST_StatementWithBody,
+  AST_Block,
+  AST_IterationStatement,
+  AST_DWLoop,
+  AST_SwitchBranch
 } from './ast'
 
 import { printMangleOptions, unmangleable_names, function_defs } from './ast/toplevel'
@@ -3839,4 +3859,472 @@ export const equivalent_to = (tree1, tree2) => {
   }
 
   return walk_1_state.length == 0 && walk_2_state.length == 0
+}
+
+export function is_ast_accessor (node: AST_Node): node is AST_Accessor {
+  return node?.isAst?.('AST_Accessor')
+}
+
+export function is_ast_arrow (node: AST_Node): node is AST_Arrow {
+  return node?.isAst?.('AST_Arrow')
+}
+
+export function is_ast_defun (node: AST_Node): node is AST_Defun {
+  return node?.isAst?.('AST_Defun')
+}
+
+export function is_ast_function (node: AST_Node): node is AST_Function {
+  return node?.isAst?.('AST_Function')
+}
+
+export function is_ast_class_expression (node: AST_Node): node is AST_ClassExpression {
+  return node?.isAst?.('AST_ClassExpression')
+}
+
+export function is_ast_def_class (node: AST_Node): node is AST_DefClass {
+  return node?.isAst?.('AST_DefClass')
+}
+
+export function is_ast_toplevel (node: AST_Node): node is AST_Toplevel {
+  return node?.isAst?.('AST_Toplevel')
+}
+
+export function is_ast_lambda (node: AST_Node): node is AST_Lambda {
+  return node?.isAst?.('AST_Lambda')
+}
+
+export function is_ast_class (node: AST_Node): node is AST_Class {
+  return node?.isAst?.('AST_Class')
+}
+
+export function is_ast_scope (node: AST_Node): node is AST_Scope {
+  return node?.isAst?.('AST_Scope')
+}
+
+export function is_ast_conditional (node: AST_Node): node is AST_Conditional {
+  return node?.isAst?.('AST_Conditional')
+}
+
+export function is_ast_symbol_export (node: AST_Node): node is AST_SymbolExport {
+  return node?.isAst?.('AST_SymbolExport')
+}
+
+export function is_ast_symbol_ref (node: AST_Node): node is AST_SymbolRef {
+  return node?.isAst?.('AST_SymbolRef')
+}
+
+export function is_ast_false (node: AST_Node): node is AST_False {
+  return node?.isAst?.('AST_False')
+}
+
+export function is_ast_true (node: AST_Node): node is AST_True {
+  return node?.isAst?.('AST_True')
+}
+
+export function is_ast_super (node: AST_Node): node is AST_Super {
+  return node?.isAst?.('AST_Super')
+}
+
+export function is_ast_finally (node: AST_Node): node is AST_Finally {
+  return node?.isAst?.('AST_Finally')
+}
+
+export function is_ast_catch (node: AST_Node): node is AST_Catch {
+  return node?.isAst?.('AST_Catch')
+}
+
+export function is_ast_switch (node: AST_Node): node is AST_Switch {
+  return node?.isAst?.('AST_Switch')
+}
+
+export function is_ast_try (node: AST_Node): node is AST_Try {
+  return node?.isAst?.('AST_Try')
+}
+
+export function is_ast_unary (node: AST_Node): node is AST_Unary {
+  return node?.isAst?.('AST_Unary')
+}
+
+export function is_ast_unary_prefix (node: AST_Node): node is AST_UnaryPrefix {
+  return node?.isAst?.('AST_UnaryPrefix')
+}
+
+export function is_ast_unary_postfix (node: AST_Node): node is AST_UnaryPostfix {
+  return node?.isAst?.('AST_UnaryPostfix')
+}
+
+export function is_ast_var_def (node: AST_Node): node is AST_VarDef {
+  return node?.isAst?.('AST_VarDef')
+}
+
+export function is_ast_name_mapping (node: AST_Node): node is AST_NameMapping {
+  return node?.isAst?.('AST_NameMapping')
+}
+
+export function is_ast_import (node: AST_Node): node is AST_Import {
+  return node?.isAst?.('AST_Import')
+}
+
+export function is_ast_await (node: AST_Node): node is AST_Await {
+  return node?.isAst?.('AST_Await')
+}
+
+export function is_ast_yield (node: AST_Node): node is AST_Yield {
+  return node?.isAst?.('AST_Yield')
+}
+
+export function is_ast_undefined (node: AST_Node): node is AST_Undefined {
+  return node?.isAst?.('AST_Undefined')
+}
+
+export function is_ast_boolean (node: AST_Node): node is AST_Boolean {
+  return node?.isAst?.('AST_Boolean')
+}
+
+export function is_ast_infinity (node: AST_Node): node is AST_Infinity {
+  return node?.isAst?.('AST_Infinity')
+}
+
+export function is_ast_na_n (node: AST_Node): node is AST_NaN {
+  return node?.isAst?.('AST_NaN')
+}
+
+export function is_ast_for_of (node: AST_Node): node is AST_ForOf {
+  return node?.isAst?.('AST_ForOf')
+}
+
+export function is_ast_for_in (node: AST_Node): node is AST_ForIn {
+  return node?.isAst?.('AST_ForIn')
+}
+
+export function is_ast_for (node: AST_Node): node is AST_For {
+  return node?.isAst?.('AST_For')
+}
+
+export function is_ast_sequence (node: AST_Node): node is AST_Sequence {
+  return node?.isAst?.('AST_Sequence')
+}
+
+export function is_ast_block_statement (node: AST_Node): node is AST_BlockStatement {
+  return node?.isAst?.('AST_BlockStatement')
+}
+
+export function is_ast_var (node: AST_Node): node is AST_Var {
+  return node?.isAst?.('AST_Var')
+}
+
+export function is_ast_let (node: AST_Node): node is AST_Let {
+  return node?.isAst?.('AST_Let')
+}
+
+export function is_ast_const (node: AST_Node): node is AST_Const {
+  return node?.isAst?.('AST_Const')
+}
+
+export function is_ast_if (node: AST_Node): node is AST_If {
+  return node?.isAst?.('AST_If')
+}
+
+export function is_ast_export (node: AST_Node): node is AST_Export {
+  return node?.isAst?.('AST_Export')
+}
+
+export function is_ast_definitions (node: AST_Node): node is AST_Definitions {
+  return node?.isAst?.('AST_Definitions')
+}
+
+export function is_ast_template_string (node: AST_Node): node is AST_TemplateString {
+  return node?.isAst?.('AST_TemplateString')
+}
+
+export function is_ast_destructuring (node: AST_Node): node is AST_Destructuring {
+  return node?.isAst?.('AST_Destructuring')
+}
+
+export function is_ast_dot (node: AST_Node): node is AST_Dot {
+  return node?.isAst?.('AST_Dot')
+}
+
+export function is_ast_sub (node: AST_Node): node is AST_Sub {
+  return node?.isAst?.('AST_Sub')
+}
+
+export function is_ast_prop_access (node: AST_Node): node is AST_PropAccess {
+  return node?.isAst?.('AST_PropAccess')
+}
+
+export function is_ast_concise_method (node: AST_Node): node is AST_ConciseMethod {
+  return node?.isAst?.('AST_ConciseMethod')
+}
+
+export function is_ast_class_property (node: AST_Node): node is AST_ClassProperty {
+  return node?.isAst?.('AST_ClassProperty')
+}
+
+export function is_ast_object_getter (node: AST_Node): node is AST_ObjectGetter {
+  return node?.isAst?.('AST_ObjectGetter')
+}
+
+export function is_ast_object_setter (node: AST_Node): node is AST_ObjectSetter {
+  return node?.isAst?.('AST_ObjectSetter')
+}
+
+export function is_ast_object_key_val (node: AST_Node): node is AST_ObjectKeyVal {
+  return node?.isAst?.('AST_ObjectKeyVal')
+}
+
+export function is_ast_prefixed_template_string (node: AST_Node): node is AST_PrefixedTemplateString {
+  return node?.isAst?.('AST_PrefixedTemplateString')
+}
+
+export function is_ast_object_property (node: AST_Node): node is AST_ObjectProperty {
+  return node?.isAst?.('AST_ObjectProperty')
+}
+
+export function is_ast_object (node: AST_Node): node is AST_Object {
+  return node?.isAst?.('AST_Object')
+}
+
+export function is_ast_array (node: AST_Node): node is AST_Array {
+  return node?.isAst?.('AST_Array')
+}
+
+export function is_ast_symbol_export_foreign (node: AST_Node): node is AST_SymbolExportForeign {
+  return node?.isAst?.('AST_SymbolExportForeign')
+}
+
+export function is_ast_label_ref (node: AST_Node): node is AST_LabelRef {
+  return node?.isAst?.('AST_LabelRef')
+}
+
+export function is_ast_this (node: AST_Node): node is AST_This {
+  return node?.isAst?.('AST_This')
+}
+
+export function is_ast_label (node: AST_Node): node is AST_Label {
+  return node?.isAst?.('AST_Label')
+}
+
+export function is_ast_symbol_import_foreign (node: AST_Node): node is AST_SymbolImportForeign {
+  return node?.isAst?.('AST_SymbolImportForeign')
+}
+
+export function is_ast_symbol_import (node: AST_Node): node is AST_SymbolImport {
+  return node?.isAst?.('AST_SymbolImport')
+}
+
+export function is_ast_symbol_catch (node: AST_Node): node is AST_SymbolCatch {
+  return node?.isAst?.('AST_SymbolCatch')
+}
+
+export function is_ast_symbol_class (node: AST_Node): node is AST_SymbolClass {
+  return node?.isAst?.('AST_SymbolClass')
+}
+
+export function is_ast_symbol_def_class (node: AST_Node): node is AST_SymbolDefClass {
+  return node?.isAst?.('AST_SymbolDefClass')
+}
+
+export function is_ast_symbol_lambda (node: AST_Node): node is AST_SymbolLambda {
+  return node?.isAst?.('AST_SymbolLambda')
+}
+
+export function is_ast_symbol_class_property (node: AST_Node): node is AST_SymbolClassProperty {
+  return node?.isAst?.('AST_SymbolClassProperty')
+}
+
+export function is_ast_symbol_method (node: AST_Node): node is AST_SymbolMethod {
+  return node?.isAst?.('AST_SymbolMethod')
+}
+
+export function is_ast_symbol_defun (node: AST_Node): node is AST_SymbolDefun {
+  return node?.isAst?.('AST_SymbolDefun')
+}
+
+export function is_ast_symbol_funarg (node: AST_Node): node is AST_SymbolFunarg {
+  return node?.isAst?.('AST_SymbolFunarg')
+}
+
+export function is_ast_symbol_let (node: AST_Node): node is AST_SymbolLet {
+  return node?.isAst?.('AST_SymbolLet')
+}
+
+export function is_ast_symbol_const (node: AST_Node): node is AST_SymbolConst {
+  return node?.isAst?.('AST_SymbolConst')
+}
+
+export function is_ast_symbol_block_declaration (node: AST_Node): node is AST_SymbolBlockDeclaration {
+  return node?.isAst?.('AST_SymbolBlockDeclaration')
+}
+
+export function is_ast_symbol_var (node: AST_Node): node is AST_SymbolVar {
+  return node?.isAst?.('AST_SymbolVar')
+}
+
+export function is_ast_symbol_declaration (node: AST_Node): node is AST_SymbolDeclaration {
+  return node?.isAst?.('AST_SymbolDeclaration')
+}
+
+export function is_ast_symbol (node: AST_Node): node is AST_Symbol {
+  return node?.isAst?.('AST_Symbol')
+}
+
+export function is_ast_default (node: AST_Node): node is AST_Default {
+  return node?.isAst?.('AST_Default')
+}
+
+export function is_ast_case (node: AST_Node): node is AST_Case {
+  return node?.isAst?.('AST_Case')
+}
+
+export function is_ast_node (node: AST_Node): node is AST_Node {
+  return node?.isAst?.('AST_Node')
+}
+
+export function is_ast_statement (node: AST_Node): node is AST_Statement {
+  return node?.isAst?.('AST_Statement')
+}
+
+export function is_ast_debugger (node: AST_Node): node is AST_Debugger {
+  return node?.isAst?.('AST_Debugger')
+}
+
+export function is_ast_directive (node: AST_Node): node is AST_Directive {
+  return node?.isAst?.('AST_Directive')
+}
+
+export function is_ast_simple_statement (node: AST_Node): node is AST_SimpleStatement {
+  return node?.isAst?.('AST_SimpleStatement')
+}
+
+export function is_ast_empty_statement (node: AST_Node): node is AST_EmptyStatement {
+  return node?.isAst?.('AST_EmptyStatement')
+}
+
+export function is_ast_new_target (node: AST_Node): node is AST_NewTarget {
+  return node?.isAst?.('AST_NewTarget')
+}
+
+export function is_ast_expansion (node: AST_Node): node is AST_Expansion {
+  return node?.isAst?.('AST_Expansion')
+}
+
+export function is_ast_template_segment (node: AST_Node): node is AST_TemplateSegment {
+  return node?.isAst?.('AST_TemplateSegment')
+}
+
+export function is_ast_constant (node: AST_Node): node is AST_Constant {
+  return node?.isAst?.('AST_Constant')
+}
+
+export function is_ast_string (node: AST_Node): node is AST_String {
+  return node?.isAst?.('AST_String')
+}
+
+export function is_ast_number (node: AST_Node): node is AST_Number {
+  return node?.isAst?.('AST_Number')
+}
+
+export function is_ast_big_int (node: AST_Node): node is AST_BigInt {
+  return node?.isAst?.('AST_BigInt')
+}
+
+export function is_ast_reg_exp (node: AST_Node): node is AST_RegExp {
+  return node?.isAst?.('AST_RegExp')
+}
+
+export function is_ast_atom (node: AST_Node): node is AST_Atom {
+  return node?.isAst?.('AST_Atom')
+}
+
+export function is_ast_null (node: AST_Node): node is AST_Null {
+  return node?.isAst?.('AST_Null')
+}
+
+export function is_ast_hole (node: AST_Node): node is AST_Hole {
+  return node?.isAst?.('AST_Hole')
+}
+
+export function is_ast_jump (node: AST_Node): node is AST_Jump {
+  return node?.isAst?.('AST_Jump')
+}
+
+export function is_ast_exit (node: AST_Node): node is AST_Exit {
+  return node?.isAst?.('AST_Exit')
+}
+
+export function is_ast_loop_control (node: AST_Node): node is AST_LoopControl {
+  return node?.isAst?.('AST_LoopControl')
+}
+
+export function is_ast_return (node: AST_Node): node is AST_Return {
+  return node?.isAst?.('AST_Return')
+}
+
+export function is_ast_statement_with_body (node: AST_Node): node is AST_StatementWithBody {
+  return node?.isAst?.('AST_StatementWithBody')
+}
+
+export function is_ast_throw (node: AST_Node): node is AST_Throw {
+  return node?.isAst?.('AST_Throw')
+}
+
+export function is_ast_block (node: AST_Node): node is AST_Block {
+  return node?.isAst?.('AST_Block')
+}
+
+export function is_ast_break (node: AST_Node): node is AST_Break {
+  return node?.isAst?.('AST_Break')
+}
+
+export function is_ast_labeled_statement (node: AST_Node): node is AST_LabeledStatement {
+  return node?.isAst?.('AST_LabeledStatement')
+}
+
+export function is_ast_iteration_statement (node: AST_Node): node is AST_IterationStatement {
+  return node?.isAst?.('AST_IterationStatement')
+}
+
+export function is_ast_with (node: AST_Node): node is AST_With {
+  return node?.isAst?.('AST_With')
+}
+
+export function is_ast_d_w_loop (node: AST_Node): node is AST_DWLoop {
+  return node?.isAst?.('AST_DWLoop')
+}
+
+export function is_ast_continue (node: AST_Node): node is AST_Continue {
+  return node?.isAst?.('AST_Continue')
+}
+
+export function is_ast_while (node: AST_Node): node is AST_While {
+  return node?.isAst?.('AST_While')
+}
+
+export function is_ast_do (node: AST_Node): node is AST_Do {
+  return node?.isAst?.('AST_Do')
+}
+
+export function is_ast_switch_branch (node: AST_Node): node is AST_SwitchBranch {
+  return node?.isAst?.('AST_SwitchBranch')
+}
+
+export function is_ast_call (node: AST_Node): node is AST_Call {
+  return node?.isAst?.('AST_Call')
+}
+
+export function is_ast_new (node: AST_Node): node is AST_New {
+  return node?.isAst?.('AST_New')
+}
+
+export function is_ast_binary (node: AST_Node): node is AST_Binary {
+  return node?.isAst?.('AST_Binary')
+}
+
+export function is_ast_assign (node: AST_Node): node is AST_Assign {
+  return node?.isAst?.('AST_Assign')
+}
+
+export function is_ast_default_assign (node: AST_Node): node is AST_DefaultAssign {
+  return node?.isAst?.('AST_DefaultAssign')
 }
