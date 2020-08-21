@@ -1328,20 +1328,23 @@ export const pass_through = () => true
 
 // Creates a shallow compare function
 export const mkshallow = (props) => {
-  const comparisons = Object
-    .keys(props)
-    .map(key => {
+  return function (other) {
+    for (const key in props) {
       if (props[key] === 'eq') {
-        return `this.${key} === other.${key}`
+        if (this[key] !== other[key]) {
+          return false
+        }
       } else if (props[key] === 'exist') {
-        return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
+        // return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
+        if ((this[key] != null || other[key] != null) && (this[key] == null || this[key] !== other[key])) {
+          return false
+        }
       } else {
         throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`)
       }
-    })
-    .join(' && ')
-
-  return new Function('other', 'return ' + comparisons) as any
+    }
+    return true
+  }
 }
 
 export function to_moz (node: any | null) {

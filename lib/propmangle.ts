@@ -59,7 +59,7 @@ function find_builtins (reserved: Set<string | undefined>) {
   var global_ref: AnyObject = typeof global === 'object' ? global : self
 
   new_globals.forEach(function (new_global) {
-    objects[new_global] = global_ref[new_global] || new Function()
+    objects[new_global] = global_ref[new_global] || (() => {})
   });
 
   [

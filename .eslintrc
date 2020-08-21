@@ -28,7 +28,6 @@
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/consistent-type-assertions": "warn",
         "no-useless-escape": "warn",
-        "no-new-func": "warn",
         "@typescript-eslint/no-extraneous-class": "warn",
         "@typescript-eslint/no-throw-literal": "off",
         "@typescript-eslint/no-base-to-string": "off",
