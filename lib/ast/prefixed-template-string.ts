@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import { pass_through, to_moz } from '../utils'
+import { pass_through, to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
@@ -38,12 +38,12 @@ export default class AST_PrefixedTemplateString extends AST_Node {
 
   _codegen (self, output) {
     var tag = self.prefix
-    var parenthesize_tag = tag?.isAst?.('AST_Lambda') ||
-            tag?.isAst?.('AST_Binary') ||
-            tag?.isAst?.('AST_Conditional') ||
-            tag?.isAst?.('AST_Sequence') ||
-            tag?.isAst?.('AST_Unary') ||
-            tag?.isAst?.('AST_Dot') && tag.expression?.isAst?.('AST_Object')
+    var parenthesize_tag = is_ast_lambda(tag) ||
+            is_ast_binary(tag) ||
+            is_ast_conditional(tag) ||
+            is_ast_sequence(tag) ||
+            is_ast_unary(tag) ||
+            is_ast_dot(tag) && is_ast_object(tag.expression)
     if (parenthesize_tag) output.print('(')
     self.prefix.print(output)
     if (parenthesize_tag) output.print(')')

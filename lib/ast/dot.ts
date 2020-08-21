@@ -1,6 +1,6 @@
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
-import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow } from '../utils'
+import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
@@ -24,7 +24,7 @@ export default class AST_Dot extends AST_PropAccess {
     const parent = compressor.parent()
     if (is_lhs(this, parent)) return this
     if (compressor.option('unsafe_proto') &&
-          this.expression?.isAst?.('AST_Dot') &&
+          is_ast_dot(this.expression) &&
           this.expression.property == 'prototype') {
       var exp = this.expression.expression
       if (is_undeclared_ref(exp)) {
@@ -63,7 +63,7 @@ export default class AST_Dot extends AST_PropAccess {
         }
       }
     }
-    if (!(parent?.isAst?.('AST_Call')) || !has_annotation(parent, _NOINLINE)) {
+    if (!(is_ast_call(parent)) || !has_annotation(parent, _NOINLINE)) {
       const sub = this.flatten_object(this.property, compressor)
       if (sub) return sub.optimize(compressor)
     }
@@ -96,7 +96,7 @@ export default class AST_Dot extends AST_PropAccess {
 
   _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
-    if (this.expression?.isAst?.('AST_Function') && this.property == 'prototype') return false
+    if (is_ast_function(this.expression) && this.property == 'prototype') return false
     return true
   }
 
@@ -104,13 +104,13 @@ export default class AST_Dot extends AST_PropAccess {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
     let map
-    if (expr?.isAst?.('AST_Array')) {
+    if (is_ast_array(expr)) {
       map = native_fns.get('Array')
     } else if (expr.is_boolean()) {
       map = native_fns.get('Boolean')
     } else if (expr.is_number(compressor)) {
       map = native_fns.get('Number')
-    } else if (expr?.isAst?.('AST_RegExp')) {
+    } else if (is_ast_reg_exp(expr)) {
       map = native_fns.get('RegExp')
     } else if (expr.is_string(compressor)) {
       map = native_fns.get('String')
@@ -152,7 +152,7 @@ export default class AST_Dot extends AST_PropAccess {
       output.print_string(prop)
       output.print(']')
     } else {
-      if (expr?.isAst?.('AST_Number') && expr.getValue() >= 0) {
+      if (is_ast_number(expr) && expr.getValue() >= 0) {
         if (!/[xa-f.)]/i.test(output.last())) {
           output.print('.')
         }

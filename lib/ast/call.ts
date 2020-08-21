@@ -31,7 +31,7 @@ import {
   make_sequence,
   walk,
   has_annotation,
-  inline_array_like_spread
+  inline_array_like_spread, is_ast_expansion, is_ast_string, is_ast_return, is_ast_var, is_ast_default_assign, is_ast_scope, is_ast_catch, is_ast_lambda, is_ast_prop_access, is_ast_dot, is_ast_new, is_ast_symbol_ref, is_ast_simple_statement, is_ast_empty_statement, is_ast_destructuring, is_ast_iteration_statement, is_ast_node, is_ast_export, is_ast_function, is_ast_number, is_ast_toplevel, is_ast_assign, is_ast_array, is_ast_symbol_funarg, is_ast_call, is_ast_class, is_ast_block
 } from '../utils'
 
 import {
@@ -54,18 +54,9 @@ import { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
 
-import {
-  ICall,
-  ICall_Props,
-  INode,
-  IDot,
-  ILambda,
-  IPropAccess
-} from '../../types/ast'
-
-export default class AST_Call extends AST_Node implements ICall {
-  expression: INode
-  args: INode[]
+export default class AST_Call extends AST_Node {
+  expression: AST_Node
+  args: AST_Node[]
   _annotations: number
 
   _prepend_comments_check (node) {
@@ -78,10 +69,10 @@ export default class AST_Call extends AST_Node implements ICall {
     var fn = exp
     inline_array_like_spread(self, compressor, self.args)
     var simple_args = self.args.every((arg) =>
-      !(arg?.isAst?.('AST_Expansion'))
+      !(is_ast_expansion(arg))
     )
     if (compressor.option('reduce_vars') &&
-          fn?.isAst?.('AST_SymbolRef') &&
+          is_ast_symbol_ref(fn) &&
           !has_annotation(self, _NOINLINE)
     ) {
       const fixed = fn.fixed_value()
@@ -89,7 +80,7 @@ export default class AST_Call extends AST_Node implements ICall {
         fn = fixed
       }
     }
-    var is_func = fn?.isAst?.('AST_Lambda')
+    var is_func = is_ast_lambda(fn)
     if (compressor.option('unused') &&
           simple_args &&
           is_func &&
@@ -97,7 +88,7 @@ export default class AST_Call extends AST_Node implements ICall {
           !fn.pinned()) {
       var pos = 0; var last = 0
       for (var i = 0, len = self.args.length; i < len; i++) {
-        if (fn.argnames[i]?.isAst?.('AST_Expansion')) {
+        if (is_ast_expansion(fn.argnames[i])) {
           if (has_flag(fn.argnames[i].expression, UNUSED)) {
             while (i < len) {
               var node = self.args[i++].drop_side_effect_free(compressor)
@@ -139,7 +130,7 @@ export default class AST_Call extends AST_Node implements ICall {
               return make_node('AST_Array', self, {
                 elements: self.args
               }).optimize(compressor)
-            } else if (self.args[0]?.isAst?.('AST_Number') && self.args[0].value <= 11) {
+            } else if (is_ast_number(self.args[0]) && self.args[0].value <= 11) {
               const elements: any[] = []
               for (let i = 0; i < self.args[0].value; i++) elements.push(new AST_Hole())
               return new AST_Array({ elements })
@@ -180,7 +171,7 @@ export default class AST_Call extends AST_Node implements ICall {
             }
             break
           case 'Symbol':
-            if (self.args.length == 1 && self.args[0]?.isAst?.('AST_String') && compressor.option('unsafe_symbols')) { self.args.length = 0 }
+            if (self.args.length == 1 && is_ast_string(self.args[0]) && compressor.option('unsafe_symbols')) { self.args.length = 0 }
             break
           case 'Boolean':
             if (self.args.length == 0) return make_node('AST_False', self)
@@ -221,7 +212,7 @@ export default class AST_Call extends AST_Node implements ICall {
             }
             break
         }
-      } else if (exp?.isAst?.('AST_Dot')) {
+      } else if (is_ast_dot(exp)) {
         switch (exp.property) {
           case 'toString':
             if (self.args.length == 0 && !exp.expression.may_throw_on_access(compressor)) {
@@ -233,7 +224,7 @@ export default class AST_Call extends AST_Node implements ICall {
             }
             break
           case 'join':
-            if (exp.expression?.isAst?.('AST_Array')) {
+            if (is_ast_array(exp.expression)) {
               EXIT: {
                 var separator
                 if (self.args.length > 0) {
@@ -244,7 +235,7 @@ export default class AST_Call extends AST_Node implements ICall {
                 var consts: any[] = []
                 for (let i = 0, len = exp.expression.elements.length; i < len; i++) {
                   var el = exp.expression.elements[i]
-                  if (el?.isAst?.('AST_Expansion')) break EXIT
+                  if (is_ast_expansion(el)) break EXIT
                   var value = el.evaluate(compressor)
                   if (value !== el) {
                     consts.push(value)
@@ -313,7 +304,7 @@ export default class AST_Call extends AST_Node implements ICall {
             }
             break
           case 'apply':
-            if (self.args.length == 2 && self.args[1]?.isAst?.('AST_Array')) {
+            if (self.args.length == 2 && is_ast_array(self.args[1])) {
               var args = self.args[1].elements.slice()
               args.unshift(self.args[0])
               return make_node('AST_Call', self, {
@@ -327,10 +318,10 @@ export default class AST_Call extends AST_Node implements ICall {
             break
           case 'call':
             var func = exp.expression
-            if (func?.isAst?.('AST_SymbolRef')) {
+            if (is_ast_symbol_ref(func)) {
               func = func.fixed_value()
             }
-            if (func?.isAst?.('AST_Lambda') && !func.contains_this()) {
+            if (is_ast_lambda(func) && !func.contains_this()) {
               return (self.args.length ? make_sequence(this, [
                 self.args[0],
                 make_node('AST_Call', self, {
@@ -357,7 +348,7 @@ export default class AST_Call extends AST_Node implements ICall {
         }).optimize(compressor)
       }
       if (self.args.every((x) =>
-        x?.isAst?.('AST_String')
+        is_ast_string(x)
       )) {
         // quite a corner-case, but we can handle it:
         //   https://github.com/mishoo/UglifyJS2/issues/203
@@ -408,7 +399,7 @@ export default class AST_Call extends AST_Node implements ICall {
     var stat = is_func && fn.body[0]
     var is_regular_func = is_func && !fn.is_generator && !fn.async
     var can_inline = is_regular_func && compressor.option('inline') && !self.is_expr_pure(compressor)
-    if (can_inline && stat?.isAst?.('AST_Return')) {
+    if (can_inline && is_ast_return(stat)) {
       let returned = stat.value
       if (!returned || returned.is_constant_expression()) {
         if (returned) {
@@ -423,15 +414,15 @@ export default class AST_Call extends AST_Node implements ICall {
       // optimize identity function
       if (
         fn.argnames.length === 1 &&
-              (fn.argnames[0]?.isAst?.('AST_SymbolFunarg')) &&
+              (is_ast_symbol_funarg(fn.argnames[0])) &&
               self.args.length < 2 &&
-              returned?.isAst?.('AST_SymbolRef') &&
+              is_ast_symbol_ref(returned) &&
               returned.name === fn.argnames[0].name
       ) {
         let parent
         if (
-          self.args[0]?.isAst?.('AST_PropAccess') &&
-                  (parent = compressor.parent())?.isAst?.('AST_Call') &&
+          is_ast_prop_access(self.args[0]) &&
+                  is_ast_call((parent = compressor.parent())) &&
                   parent.expression === self
         ) {
           // identity function was being used to remove `this`, like in
@@ -457,8 +448,8 @@ export default class AST_Call extends AST_Node implements ICall {
       if (simple_args &&
               !fn.uses_arguments &&
               !fn.pinned() &&
-              !(compressor.parent()?.isAst?.('AST_Class')) &&
-              !(fn.name && fn?.isAst?.('AST_Function')) &&
+              !(is_ast_class(compressor.parent())) &&
+              !(fn.name && is_ast_function(fn)) &&
               (returned_value = can_flatten_body(stat)) &&
               (exp === fn ||
                   has_annotation(self, _INLINE) ||
@@ -478,12 +469,12 @@ export default class AST_Call extends AST_Node implements ICall {
                 let i = 0
                 let p
                 while ((p = compressor.parent(i++))) {
-                  if (p?.isAst?.('AST_DefaultAssign')) return true
-                  if (p?.isAst?.('AST_Block')) break
+                  if (is_ast_default_assign(p)) return true
+                  if (is_ast_block(p)) break
                 }
                 return false
               })() &&
-              !(scope?.isAst?.('AST_Class'))
+              !(is_ast_class(scope))
       ) {
         set_flag(fn, SQUEEZED)
         nearest_scope.add_child_scope(fn)
@@ -496,7 +487,7 @@ export default class AST_Call extends AST_Node implements ICall {
       return make_sequence(self, args).optimize(compressor)
     }
     if (compressor.option('negate_iife') &&
-          compressor.parent()?.isAst?.('AST_SimpleStatement') &&
+          is_ast_simple_statement(compressor.parent()) &&
           is_iife_call(self)) {
       return self.negate(compressor, true)
     }
@@ -509,11 +500,11 @@ export default class AST_Call extends AST_Node implements ICall {
 
     function return_value (stat) {
       if (!stat) return make_node('AST_Undefined', self)
-      if (stat?.isAst?.('AST_Return')) {
+      if (is_ast_return(stat)) {
         if (!stat.value) return make_node('AST_Undefined', self)
         return stat.value.clone(true)
       }
-      if (stat?.isAst?.('AST_SimpleStatement')) {
+      if (is_ast_simple_statement(stat)) {
         return make_node('AST_UnaryPrefix', stat, {
           operator: 'void',
           expression: (stat.body).clone(true)
@@ -530,7 +521,7 @@ export default class AST_Call extends AST_Node implements ICall {
       stat = null
       for (var i = 0; i < len; i++) {
         var line = body[i]
-        if (line?.isAst?.('AST_Var')) {
+        if (is_ast_var(line)) {
           if (stat && !line.definitions.every((var_def) =>
             !var_def.value
           )) {
@@ -538,7 +529,7 @@ export default class AST_Call extends AST_Node implements ICall {
           }
         } else if (stat) {
           return false
-        } else if (!(line?.isAst?.('AST_EmptyStatement'))) {
+        } else if (!(is_ast_empty_statement(line))) {
           stat = line
         }
       }
@@ -548,12 +539,12 @@ export default class AST_Call extends AST_Node implements ICall {
     function can_inject_args (block_scoped, safe_to_inject) {
       for (var i = 0, len = fn.argnames.length; i < len; i++) {
         var arg = fn.argnames[i]
-        if (arg?.isAst?.('AST_DefaultAssign')) {
+        if (is_ast_default_assign(arg)) {
           if (has_flag(arg.left, UNUSED)) continue
           return false
         }
-        if (arg?.isAst?.('AST_Destructuring')) return false
-        if (arg?.isAst?.('AST_Expansion')) {
+        if (is_ast_destructuring(arg)) return false
+        if (is_ast_expansion(arg)) {
           if (has_flag(arg.expression, UNUSED)) continue
           return false
         }
@@ -572,7 +563,7 @@ export default class AST_Call extends AST_Node implements ICall {
     function can_inject_args_values () {
       var arg_vals_outer_refs = new Set()
       const value_walker = (node: any) => {
-        if (node?.isAst?.('AST_Scope')) {
+        if (is_ast_scope(node)) {
           var scope_outer_refs = new Set()
           node.enclosed.forEach(function (def) {
             scope_outer_refs.add(def.name)
@@ -592,17 +583,17 @@ export default class AST_Call extends AST_Node implements ICall {
       if (arg_vals_outer_refs.size == 0) return true
       for (let i = 0, len = fn.argnames.length; i < len; i++) {
         var arg = fn.argnames[i]
-        if (arg?.isAst?.('AST_DefaultAssign') && has_flag(arg.left, UNUSED)) continue
-        if (arg?.isAst?.('AST_Expansion') && has_flag(arg.expression, UNUSED)) continue
+        if (is_ast_default_assign(arg) && has_flag(arg.left, UNUSED)) continue
+        if (is_ast_expansion(arg) && has_flag(arg.expression, UNUSED)) continue
         if (has_flag(arg, UNUSED)) continue
         if (arg_vals_outer_refs.has(arg.name)) return false
       }
       for (let i = 0, len = fn.body.length; i < len; i++) {
         var stat = fn.body[i]
-        if (!(stat?.isAst?.('AST_Var'))) continue
+        if (!(is_ast_var(stat))) continue
         for (var j = stat.definitions.length; --j >= 0;) {
           var name = stat.definitions[j].name
-          if (name?.isAst?.('AST_Destructuring') ||
+          if (is_ast_destructuring(name) ||
                       arg_vals_outer_refs.has(name.name)) {
             return false
           }
@@ -615,11 +606,11 @@ export default class AST_Call extends AST_Node implements ICall {
       var len = fn.body.length
       for (var i = 0; i < len; i++) {
         var stat = fn.body[i]
-        if (!(stat?.isAst?.('AST_Var'))) continue
+        if (!(is_ast_var(stat))) continue
         if (!safe_to_inject) return false
         for (var j = stat.definitions.length; --j >= 0;) {
           var name = stat.definitions[j].name
-          if (name?.isAst?.('AST_Destructuring') ||
+          if (is_ast_destructuring(name) ||
                       block_scoped.has(name.name) ||
                       identifier_atom.has(name.name) ||
                       scope.var_names().has(name.name)) {
@@ -642,19 +633,19 @@ export default class AST_Call extends AST_Node implements ICall {
             block_scoped.add(variable.name)
           })
         }
-        if (scope?.isAst?.('AST_Catch')) {
+        if (is_ast_catch(scope)) {
           // TODO can we delete? AST_Catch is a block scope.
           if (scope.argname) {
             block_scoped.add(scope.argname.name)
           }
-        } else if (scope?.isAst?.('AST_IterationStatement')) {
+        } else if (is_ast_iteration_statement(scope)) {
           in_loop = []
-        } else if (scope?.isAst?.('AST_SymbolRef')) {
-          if (scope.fixed_value()?.isAst?.('AST_Scope')) return false
+        } else if (is_ast_symbol_ref(scope)) {
+          if (is_ast_scope(scope.fixed_value())) return false
         }
-      } while (!(scope?.isAst?.('AST_Scope')))
+      } while (!(is_ast_scope(scope)))
 
-      var safe_to_inject = !(scope?.isAst?.('AST_Toplevel')) || compressor.toplevel.vars
+      var safe_to_inject = !(is_ast_toplevel(scope)) || compressor.toplevel.vars
       var inline = compressor.option('inline')
       if (!can_inject_vars(block_scoped, inline >= 3 && safe_to_inject)) return false
       if (!can_inject_args(block_scoped, inline >= 2 && safe_to_inject)) return false
@@ -709,7 +700,7 @@ export default class AST_Call extends AST_Node implements ICall {
       var pos = expressions.length
       for (var i = 0, lines = fn.body.length; i < lines; i++) {
         var stat = fn.body[i]
-        if (!(stat?.isAst?.('AST_Var'))) continue
+        if (!(is_ast_var(stat))) continue
         for (var j = 0, defs = stat.definitions.length; j < defs; j++) {
           var var_def = stat.definitions[j]
           var name = var_def.name
@@ -773,7 +764,7 @@ export default class AST_Call extends AST_Node implements ICall {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
-    return !(this.expression?.isAst?.<ILambda>('AST_Lambda')) ||
+    return !(is_ast_lambda(this.expression)) ||
           anyMayThrow(this.expression.body, compressor)
   }
 
@@ -788,9 +779,9 @@ export default class AST_Call extends AST_Node implements ICall {
 
   _eval (compressor: Compressor, depth) {
     var exp = this.expression
-    if (compressor.option('unsafe') && exp?.isAst?.<IPropAccess>('AST_PropAccess')) {
+    if (compressor.option('unsafe') && is_ast_prop_access(exp)) {
       var key = exp.property
-      if (key instanceof AST_Node && key.isAst('AST_Node')) {
+      if (key instanceof AST_Node && is_ast_node(key)) {
         key = key._eval?.(compressor, depth)
         if (key === exp.property) return this
       }
@@ -802,7 +793,7 @@ export default class AST_Call extends AST_Node implements ICall {
                   key === 'call' &&
                   (this.args[0] && this.args[0].evaluate(compressor))
 
-        first_arg = first_arg?.isAst?.('AST_Dot') ? first_arg.expression : first_arg
+        first_arg = is_ast_dot(first_arg) ? first_arg.expression : first_arg
 
         if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
           return this.clone()
@@ -842,14 +833,14 @@ export default class AST_Call extends AST_Node implements ICall {
       var expr = this.expression
       var first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
       if (
-        expr.expression && expr.expression.name === 'hasOwnProperty' &&
+        expr.expression && (expr.expression as any).name === 'hasOwnProperty' &&
               (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)
       ) {
         return false
       }
       if (is_undeclared_ref(expr) && global_pure_fns.has(expr.name)) return true
       let static_fn
-      if (expr?.isAst?.<IDot>('AST_Dot') &&
+      if (is_ast_dot(expr) &&
               is_undeclared_ref(expr.expression) &&
               (static_fn = static_fns.get(expr.expression.name)) &&
               static_fn.has(expr.property)) {
@@ -895,15 +886,15 @@ export default class AST_Call extends AST_Node implements ICall {
 
   needs_parens (output: any) {
     var p = output.parent(); var p1
-    if (p?.isAst?.('AST_New') && p.expression === this ||
-            p?.isAst?.('AST_Export') && p.is_default && this.expression?.isAst?.('AST_Function')) { return true }
+    if (is_ast_new(p) && p.expression === this ||
+            is_ast_export(p) && p.is_default && is_ast_function(this.expression)) { return true }
 
     // workaround for Safari bug.
     // https://bugs.webkit.org/show_bug.cgi?id=123506
-    return this.expression?.isAst?.('AST_Function') &&
-            p?.isAst?.('AST_PropAccess') &&
+    return is_ast_function(this.expression) &&
+            is_ast_prop_access(p) &&
             p.expression === this &&
-            (p1 = output.parent(1))?.isAst?.('AST_Assign') &&
+            is_ast_assign((p1 = output.parent(1))) &&
             p1.left === p
   }
 
@@ -916,7 +907,7 @@ export default class AST_Call extends AST_Node implements ICall {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args: ICall_Props) { // eslint-disable-line
+  constructor (args) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args

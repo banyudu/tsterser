@@ -1,13 +1,13 @@
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
-import { to_moz, print_property_name, static_size, mkshallow, make_sequence } from '../utils'
+import { to_moz, print_property_name, static_size, mkshallow, make_sequence, is_ast_node, is_ast_symbol_class_property, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
   quote: any
   static: any
 
   _to_mozilla_ast (parent) {
-    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
+    var key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -24,7 +24,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
       }
     }
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
+    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     return {
       type: 'FieldDefinition',
       computed,
@@ -60,18 +60,18 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
 
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
-      if (this.key?.isAst?.('AST_Node')) { this.key._walk(visitor) }
-      if (this.value?.isAst?.('AST_Node')) { this.value._walk(visitor) }
+      if (is_ast_node(this.key)) { this.key._walk(visitor) }
+      if (is_ast_node(this.value)) { this.value._walk(visitor) }
     })
   }
 
   _children_backwards (push: Function) {
-    if (this.value?.isAst?.('AST_Node')) push(this.value)
-    if (this.key?.isAst?.('AST_Node')) push(this.key)
+    if (is_ast_node(this.value)) push(this.value)
+    if (is_ast_node(this.key)) push(this.key)
   }
 
   computed_key () {
-    return !(this.key?.isAst?.('AST_SymbolClassProperty'))
+    return !(is_ast_symbol_class_property(this.key))
   }
 
   _size = function (): number {
@@ -92,7 +92,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
       output.space()
     }
 
-    if (self.key?.isAst?.('AST_SymbolClassProperty')) {
+    if (is_ast_symbol_class_property(self.key)) {
       print_property_name(self.key.name, self.quote, output)
     } else {
       output.print('[')

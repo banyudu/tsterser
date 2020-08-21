@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten } from '../utils'
+import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten, is_ast_node, is_ast_object, is_ast_object_key_val, is_ast_new, is_ast_scope, is_ast_dot, is_ast_concise_method, is_ast_call, is_ast_accessor, is_ast_symbol_method } from '../utils'
 import { static_values, global_objs, walk_abort } from '../constants'
 
 export default class AST_PropAccess extends AST_Node {
@@ -14,7 +14,7 @@ export default class AST_PropAccess extends AST_Node {
   _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
       var key = this.property
-      if (key?.isAst?.('AST_Node')) {
+      if (is_ast_node(key)) {
         key = key._eval?.(compressor, depth)
         if (key === this.property) return this
       }
@@ -28,7 +28,7 @@ export default class AST_PropAccess extends AST_Node {
                   (aa && aa[0] &&
                   aa[0].evaluate(compressor))
 
-        first_arg = first_arg?.isAst?.('AST_Dot') ? first_arg.expression : first_arg
+        first_arg = is_ast_dot(first_arg) ? first_arg.expression : first_arg
 
         if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
           return this.clone()
@@ -59,23 +59,23 @@ export default class AST_PropAccess extends AST_Node {
     if (!compressor.option('properties')) return
     var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     var expr = this.expression
-    if (expr?.isAst?.('AST_Object')) {
+    if (is_ast_object(expr)) {
       var props = expr.properties
       for (var i = props.length; --i >= 0;) {
         var prop = props[i]
-        if ('' + (prop?.isAst?.('AST_ConciseMethod') ? prop.key.name : prop.key) == key) {
+        if ('' + (is_ast_concise_method(prop) ? prop.key.name : prop.key) == key) {
           if (!props.every((prop) => {
-            return prop?.isAst?.('AST_ObjectKeyVal') ||
-                          arrows && prop?.isAst?.('AST_ConciseMethod') && !prop.is_generator
+            return is_ast_object_key_val(prop) ||
+                          arrows && is_ast_concise_method(prop) && !prop.is_generator
           })) break
           if (!safe_to_flatten(prop.value, compressor)) break
           return make_node('AST_Sub', this, {
             expression: make_node('AST_Array', expr, {
               elements: props.map(function (prop) {
                 var v = prop.value
-                if (v?.isAst?.('AST_Accessor')) v = make_node('AST_Function', v, v)
+                if (is_ast_accessor(v)) v = make_node('AST_Function', v, v)
                 var k = prop.key
-                if (k?.isAst?.('AST_Node') && !(k?.isAst?.('AST_SymbolMethod'))) {
+                if (is_ast_node(k) && !(is_ast_symbol_method(k))) {
                   return make_sequence(prop, [k, v])
                 }
                 return v
@@ -102,7 +102,7 @@ export default class AST_PropAccess extends AST_Node {
 
   needs_parens (output: any) {
     var p = output.parent()
-    if (p?.isAst?.('AST_New') && p.expression === this) {
+    if (is_ast_new(p) && p.expression === this) {
       // i.e. new (foo.bar().baz)
       //
       // if there's one call into this subtree, then we need
@@ -110,8 +110,8 @@ export default class AST_PropAccess extends AST_Node {
       // interpreted as passing the arguments to the upper New
       // expression.
       return walk(this, (node: any) => {
-        if (node?.isAst?.('AST_Scope')) return true
-        if (node?.isAst?.('AST_Call')) {
+        if (is_ast_scope(node)) return true
+        if (is_ast_call(node)) {
           return walk_abort // makes walk() return true.
         }
         return undefined

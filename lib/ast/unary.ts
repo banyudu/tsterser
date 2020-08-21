@@ -2,7 +2,7 @@ import AST_Node from './node'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
-import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence, to_moz } from '../utils'
+import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
 
 export default class AST_Unary extends AST_Node {
   operator: any
@@ -16,7 +16,7 @@ export default class AST_Unary extends AST_Node {
       }
       return this
     }
-    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) return null
+    if (this.operator == 'typeof' && is_ast_symbol_ref(this.expression)) return null
     var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (first_in_statement && expression && is_iife_call(expression)) {
       if (expression === this.expression && this.operator == '!') return this
@@ -26,7 +26,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   may_throw (compressor: Compressor) {
-    if (this.operator == 'typeof' && this.expression?.isAst?.('AST_SymbolRef')) { return false }
+    if (this.operator == 'typeof' && is_ast_symbol_ref(this.expression)) { return false }
     return this.expression.may_throw(compressor)
   }
 
@@ -47,7 +47,7 @@ export default class AST_Unary extends AST_Node {
     var node = this
     if (node.operator !== '++' && node.operator !== '--') return
     var exp = node.expression
-    if (!(exp?.isAst?.('AST_SymbolRef'))) return
+    if (!(is_ast_symbol_ref(exp))) return
     var def = exp.definition?.()
     var safe = safe_to_assign(tw, def, exp.scope, true)
     def.assignments++
@@ -61,7 +61,7 @@ export default class AST_Unary extends AST_Node {
         operator: node.operator.slice(0, -1),
         left: make_node('AST_UnaryPrefix', node, {
           operator: '+',
-          expression: fixed?.isAst?.('AST_Node') ? fixed : fixed()
+          expression: is_ast_node(fixed) ? fixed : fixed()
         }),
         right: make_node('AST_Number', node, {
           value: 1
@@ -74,7 +74,7 @@ export default class AST_Unary extends AST_Node {
 
   lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
-      if (this.expression?.isAst?.('AST_Sequence')) {
+      if (is_ast_sequence(this.expression)) {
         var x = this.expression.expressions.slice()
         var e = this.clone()
         e.expression = x.pop()
@@ -110,18 +110,18 @@ export default class AST_Unary extends AST_Node {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,
-      prefix: this?.isAst?.('AST_UnaryPrefix'),
+      prefix: is_ast_unary_prefix(this),
       argument: to_moz(this.expression)
     }
   }
 
   needs_parens (output: any) {
     var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
-            p?.isAst?.('AST_Call') && p.expression === this ||
-            p?.isAst?.('AST_Binary') &&
+    return is_ast_prop_access(p) && p.expression === this ||
+            is_ast_call(p) && p.expression === this ||
+            is_ast_binary(p) &&
                 p.operator === '**' &&
-                this?.isAst?.('AST_UnaryPrefix') &&
+                is_ast_unary_prefix(this) &&
                 p.left === this &&
                 this.operator !== '++' &&
                 this.operator !== '--'

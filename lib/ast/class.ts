@@ -11,7 +11,7 @@ import {
   return_false,
   do_list,
   mkshallow,
-  to_moz
+  to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function
 } from '../utils'
 import { clear_flag, INLINED } from '../constants'
 import TreeWalker from '../tree-walker'
@@ -116,7 +116,7 @@ export default class AST_Class extends AST_Scope {
   })
 
   _to_mozilla_ast (parent) {
-    var type = this?.isAst?.('AST_ClassExpression') ? 'ClassExpression' : 'ClassDeclaration'
+    var type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
       superClass: to_moz(this.extends),
@@ -137,10 +137,10 @@ export default class AST_Class extends AST_Scope {
     }
     if (self.extends) {
       var parens = (
-        !(self.extends?.isAst?.('AST_SymbolRef')) &&
-                !(self.extends?.isAst?.('AST_PropAccess')) &&
-                !(self.extends?.isAst?.('AST_ClassExpression')) &&
-                !(self.extends?.isAst?.('AST_Function'))
+        !(is_ast_symbol_ref(self.extends)) &&
+                !(is_ast_prop_access(self.extends)) &&
+                !(is_ast_class_expression(self.extends)) &&
+                !(is_ast_function(self.extends))
       )
       output.print('extends')
       if (parens) {

@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import { pass_through } from '../utils'
+import { pass_through, is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_NameMapping extends AST_Node {
@@ -30,7 +30,7 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   _codegen (self, output) {
-    var is_import = output.parent()?.isAst?.('AST_Import')
+    var is_import = is_ast_import(output.parent())
     var definition = self.name.definition()
     var names_are_different =
             (definition && definition.mangled_name || self.name.name) !==

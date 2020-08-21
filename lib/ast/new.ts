@@ -1,5 +1,5 @@
 import AST_Call from './call'
-import { is_undeclared_ref, callCodeGen, return_this, list_overhead, to_moz, make_node } from '../utils'
+import { is_undeclared_ref, callCodeGen, return_this, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
   _optimize (compressor) {
@@ -27,8 +27,8 @@ export default class AST_New extends AST_Call {
   needs_parens (output: any) {
     var p = output.parent()
     if (this.args.length === 0 &&
-            (p?.isAst?.('AST_PropAccess') || // (new Date).getTime(), (new Date)["getTime"]()
-                p?.isAst?.('AST_Call') && p.expression === this)) // (new foo)(bar)
+            (is_ast_prop_access(p) || // (new Date).getTime(), (new Date)["getTime"]()
+                is_ast_call(p) && p.expression === this)) // (new foo)(bar)
     { return true }
     return undefined
   }

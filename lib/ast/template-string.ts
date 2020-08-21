@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { make_node, trim, first_in_statement, make_sequence, anySideEffect, return_true, pass_through, do_list, to_moz } from '../utils'
+import { make_node, trim, first_in_statement, make_sequence, anySideEffect, return_true, pass_through, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_TemplateString extends AST_Node {
@@ -8,12 +8,12 @@ export default class AST_TemplateString extends AST_Node {
 
   _optimize (compressor) {
     if (!compressor.option('evaluate') ||
-      compressor.parent()?.isAst?.('AST_PrefixedTemplateString')) { return this }
+      is_ast_prefixed_template_string(compressor.parent())) { return this }
 
     var segments: any[] = []
     for (var i = 0; i < this.segments.length; i++) {
       var segment = this.segments[i]
-      if (segment?.isAst?.('AST_Node')) {
+      if (is_ast_node(segment)) {
         var result = segment.evaluate?.(compressor)
         // Evaluate to constant value
         // Constant value shorter than ${segment}
@@ -26,7 +26,7 @@ export default class AST_TemplateString extends AST_Node {
         // TODO:
         // `before ${'test' + foo} after` => `before innerBefore ${any} innerAfter after`
         // `before ${foo + 'test} after` => `before innerBefore ${any} innerAfter after`
-        if (segment?.isAst?.('AST_TemplateString')) {
+        if (is_ast_template_string(segment)) {
           var inners = segment.segments
           segments[segments.length - 1].value += inners[0].value
           for (var j = 1; j < inners.length; j++) {
@@ -44,7 +44,7 @@ export default class AST_TemplateString extends AST_Node {
     if (segments.length == 1) {
       return make_node('AST_String', this, segments[0])
     }
-    if (segments.length === 3 && segments[1]?.isAst?.('AST_Node')) {
+    if (segments.length === 3 && is_ast_node(segments[1])) {
       // `foo${bar}` => "foo" + bar
       if (segments[2].value === '') {
         return make_node('AST_Binary', this, {
@@ -131,11 +131,11 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   _codegen (self, output) {
-    var is_tagged = output.parent()?.isAst?.('AST_PrefixedTemplateString')
+    var is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')
     for (var i = 0; i < self.segments.length; i++) {
-      if (!(self.segments[i]?.isAst?.('AST_TemplateSegment'))) {
+      if (!(is_ast_template_segment(self.segments[i]))) {
         output.print('${')
         self.segments[i].print(output)
         output.print('}')

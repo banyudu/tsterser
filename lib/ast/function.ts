@@ -11,7 +11,7 @@ import {
   return_null,
   next_mangled,
   To_Moz_FunctionExpression,
-  make_node
+  make_node, is_ast_this, is_ast_symbol_funarg, is_ast_call
 } from '../utils'
 import { walk_abort } from '../constants'
 
@@ -27,7 +27,7 @@ export default class AST_Function extends AST_Lambda {
           !self.uses_arguments &&
           !self.pinned()) {
       const has_special_symbol = walk(self, (node: any) => {
-        if (node?.isAst?.('AST_This')) return walk_abort
+        if (is_ast_this(node)) return walk_abort
       })
       if (!has_special_symbol) return make_node('AST_Arrow', self, self).optimize(compressor)
     }
@@ -57,7 +57,7 @@ export default class AST_Function extends AST_Lambda {
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
 
-    var tricky_def = def.orig[0]?.isAst?.('AST_SymbolFunarg') && this.name && this.name.definition()
+    var tricky_def = is_ast_symbol_funarg(def.orig[0]) && this.name && this.name.definition()
 
     // the function's mangled_name is null when keep_fnames is true
     var tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
@@ -91,14 +91,14 @@ export default class AST_Function extends AST_Lambda {
 
     if (output.option('wrap_iife')) {
       var p = output.parent()
-      if (p?.isAst?.('AST_Call') && p.expression === this) {
+      if (is_ast_call(p) && p.expression === this) {
         return true
       }
     }
 
     if (output.option('wrap_func_args')) {
       var p = output.parent()
-      if (p?.isAst?.('AST_Call') && p.args.includes(this)) {
+      if (is_ast_call(p) && p.args.includes(this)) {
         return true
       }
     }

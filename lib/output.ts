@@ -47,7 +47,7 @@ import {
   defaults,
   makePredicate,
   return_false,
-  return_true
+  return_true, is_ast_statement, is_ast_exit
 } from './utils'
 import AST_Node from './ast/node'
 import TreeWalker from './tree-walker'
@@ -244,7 +244,7 @@ class OutputStreamInner {
       var printed_comments = self.printed_comments
       var comments = token[tail ? 'comments_before' : 'comments_after']
       if (!comments || printed_comments.has(comments)) return
-      if (!(node?.isAst?.('AST_Statement') || comments.every((c) =>
+      if (!(is_ast_statement(node) || comments.every((c) =>
         !/comment[134]/.test(c.type)
       ))) return
       printed_comments.add(comments)
@@ -531,7 +531,7 @@ class OutputStreamInner {
       var printed_comments = self.printed_comments
 
       // There cannot be a newline between return and its value.
-      const return_with_value = node?.isAst?.('AST_Exit') && node.value
+      const return_with_value = is_ast_exit(node) && node.value
 
       if (
         start.comments_before &&

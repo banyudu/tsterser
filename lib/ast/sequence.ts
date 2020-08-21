@@ -14,7 +14,7 @@ import {
   make_sequence,
   is_undefined,
   make_node,
-  list_overhead
+  list_overhead, is_ast_sequence, is_ast_call, is_ast_unary, is_ast_binary, is_ast_var_def, is_ast_prop_access, is_ast_array, is_ast_object_property, is_ast_conditional, is_ast_arrow, is_ast_default_assign, is_ast_expansion, is_ast_for_of, is_ast_yield, is_ast_export
 } from '../utils'
 
 export default class AST_Sequence extends AST_Node {
@@ -25,7 +25,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   _optimize (compressor) {
-    let self = this
+    let self: any = this
     if (!compressor.option('side_effects')) return self
     var expressions: any[] = []
     filter_for_side_effects()
@@ -33,7 +33,7 @@ export default class AST_Sequence extends AST_Node {
     trim_right_for_undefined()
     if (end == 0) {
       self = maintain_this_binding(compressor.parent(), compressor.self(), expressions[0])
-      if (!(self?.isAst?.('AST_Sequence'))) self = self.optimize(compressor)
+      if (!(is_ast_sequence(self))) self = self.optimize(compressor)
       return self
     }
     self.expressions = expressions
@@ -143,21 +143,21 @@ export default class AST_Sequence extends AST_Node {
 
   needs_parens (output: any) {
     var p = output.parent()
-    return p?.isAst?.('AST_Call') || // (foo, bar)() or foo(1, (2, 3), 4)
-            p?.isAst?.('AST_Unary') || // !(foo, bar, baz)
-            p?.isAst?.('AST_Binary') || // 1 + (2, 3) + 4 ==> 8
-            p?.isAst?.('AST_VarDef') || // var a = (1, 2), b = a + a; ==> b == 4
-            p?.isAst?.('AST_PropAccess') || // (1, {foo:2}).foo or (1, {foo:2})["foo"] ==> 2
-            p?.isAst?.('AST_Array') || // [ 1, (2, 3), 4 ] ==> [ 1, 3, 4 ]
-            p?.isAst?.('AST_ObjectProperty') || // { foo: (1, 2) }.foo ==> 2
-            p?.isAst?.('AST_Conditional') || /* (false, true) ? (a = 10, b = 20) : (c = 30)
+    return is_ast_call(p) || // (foo, bar)() or foo(1, (2, 3), 4)
+            is_ast_unary(p) || // !(foo, bar, baz)
+            is_ast_binary(p) || // 1 + (2, 3) + 4 ==> 8
+            is_ast_var_def(p) || // var a = (1, 2), b = a + a; ==> b == 4
+            is_ast_prop_access(p) || // (1, {foo:2}).foo or (1, {foo:2})["foo"] ==> 2
+            is_ast_array(p) || // [ 1, (2, 3), 4 ] ==> [ 1, 3, 4 ]
+            is_ast_object_property(p) || // { foo: (1, 2) }.foo ==> 2
+            is_ast_conditional(p) || /* (false, true) ? (a = 10, b = 20) : (c = 30)
                                                                 * ==> 20 (side effect, set a := 10 and b := 20) */
-            p?.isAst?.('AST_Arrow') || // x => (x, x)
-            p?.isAst?.('AST_DefaultAssign') || // x => (x = (0, function(){}))
-            p?.isAst?.('AST_Expansion') || // [...(a, b)]
-            p?.isAst?.('AST_ForOf') && this === p.object || // for (e of (foo, bar)) {}
-            p?.isAst?.('AST_Yield') || // yield (foo, bar)
-            p?.isAst?.('AST_Export') // export default (foo, bar)
+            is_ast_arrow(p) || // x => (x, x)
+            is_ast_default_assign(p) || // x => (x = (0, function(){}))
+            is_ast_expansion(p) || // [...(a, b)]
+            is_ast_for_of(p) && this === p.object || // for (e of (foo, bar)) {}
+            is_ast_yield(p) || // yield (foo, bar)
+            is_ast_export(p) // export default (foo, bar)
   }
 
   _do_print (this: any, output: any) {

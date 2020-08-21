@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { lift_key, make_sequence, return_false, to_moz, pass_through, print_property_name } from '../utils'
+import { lift_key, make_sequence, return_false, to_moz, pass_through, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ObjectProperty extends AST_Node {
@@ -13,7 +13,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   drop_side_effect_free = function (compressor: Compressor, first_in_statement) {
-    const computed_key = this.isAst('AST_ObjectKeyVal') && this.key?.isAst?.('AST_Node')
+    const computed_key = is_ast_object_key_val(this) && is_ast_node(this.key)
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
     if (key && value) {
@@ -35,32 +35,32 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   is_constant_expression = function () {
-    return !(this.key?.isAst?.('AST_Node')) && this.value.is_constant_expression()
+    return !(is_ast_node(this.key)) && this.value.is_constant_expression()
   }
 
   _dot_throw = return_false
   _walk = function (visitor: any) {
     return visitor._visit(this, function () {
-      if (this.key?.isAst?.('AST_Node')) { this.key._walk(visitor) }
+      if (is_ast_node(this.key)) { this.key._walk(visitor) }
       this.value._walk(visitor)
     })
   }
 
   _children_backwards (push: Function) {
     push(this.value)
-    if (this.key?.isAst?.('AST_Node')) push(this.key)
+    if (is_ast_node(this.key)) push(this.key)
   }
 
   shallow_cmp = pass_through as any
   _transform (self, tw: TreeWalker) {
-    if (self.key?.isAst?.('AST_Node')) {
+    if (is_ast_node(self.key)) {
       self.key = self.key.transform(tw)
     }
     if (self.value) self.value = self.value.transform(tw)
   }
 
   _to_mozilla_ast (parent): any {
-    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
+    var key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -78,8 +78,8 @@ export default class AST_ObjectProperty extends AST_Node {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
-    if (parent?.isAst?.('AST_Class')) {
+    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',
         computed: computed,
@@ -108,7 +108,7 @@ export default class AST_ObjectProperty extends AST_Node {
       output.print(type)
       output.space()
     }
-    if (self.key?.isAst?.('AST_SymbolMethod')) {
+    if (is_ast_symbol_method(self.key)) {
       print_property_name(self.key.name, self.quote, output)
     } else {
       output.with_square(function () {

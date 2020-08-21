@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import AST_ObjectProperty from './object-property'
-import { to_moz, lift_key, make_node, mkshallow, print_property_name, key_size } from '../utils'
+import { to_moz, lift_key, make_node, mkshallow, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_class, is_ast_default_assign } from '../utils'
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
@@ -14,7 +14,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   _to_mozilla_ast (parent) {
-    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
+    var key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -32,12 +32,12 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
-    if (this.isAst('AST_ObjectKeyVal')) {
+    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    if (is_ast_object_key_val(this)) {
       kind = 'init'
       computed = !string_or_num
     }
-    if (parent?.isAst?.('AST_Class')) {
+    if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',
         computed: computed,
@@ -69,14 +69,14 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
           (!(unsafe_methods instanceof RegExp) || unsafe_methods.test(this.key + ''))) {
       var key = this.key
       var value = this.value
-      var is_arrow_with_block = value?.isAst?.('AST_Arrow') &&
+      var is_arrow_with_block = is_ast_arrow(value) &&
               Array.isArray(value.body) &&
               !value.contains_this()
-      if ((is_arrow_with_block || value?.isAst?.('AST_Function')) && !value.name) {
+      if ((is_arrow_with_block || is_ast_function(value)) && !value.name) {
         return make_node('AST_ConciseMethod', this, {
           async: value.async,
           is_generator: value.is_generator,
-          key: key?.isAst?.('AST_Node') ? key : make_node('AST_SymbolMethod', this, {
+          key: is_ast_node(key) ? key : make_node('AST_SymbolMethod', this, {
             name: key
           }),
           value: make_node('AST_Accessor', value, value),
@@ -88,7 +88,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   computed_key () {
-    return this.key?.isAst?.('AST_Node')
+    return is_ast_node(this.key)
   }
 
   shallow_cmp = mkshallow({ key: 'eq' })
@@ -104,15 +104,15 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
 
     var allowShortHand = output.option('shorthand')
     if (allowShortHand &&
-            self.value?.isAst?.('AST_Symbol') &&
+            is_ast_symbol(self.value) &&
             is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
             get_name(self.value) === self.key &&
             !RESERVED_WORDS.has(self.key)
     ) {
       print_property_name(self.key, self.quote, output)
     } else if (allowShortHand &&
-            self.value?.isAst?.('AST_DefaultAssign') &&
-            self.value.left?.isAst?.('AST_Symbol') &&
+            is_ast_default_assign(self.value) &&
+            is_ast_symbol(self.value.left) &&
             is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
             get_name(self.value.left) === self.key
     ) {
@@ -122,7 +122,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
       output.space()
       self.value.right.print(output)
     } else {
-      if (!(self.key?.isAst?.('AST_Node'))) {
+      if (!(is_ast_node(self.key))) {
         print_property_name(self.key, self.quote, output)
       } else {
         output.with_square(function () {

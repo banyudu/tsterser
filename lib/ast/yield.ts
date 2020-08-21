@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import { is_undefined, mkshallow, to_moz } from '../utils'
+import { is_undefined, mkshallow, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Yield extends AST_Node {
@@ -45,14 +45,14 @@ export default class AST_Yield extends AST_Node {
     var p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
-    if (p?.isAst?.('AST_Binary') && p.operator !== '=') { return true }
+    if (is_ast_binary(p) && p.operator !== '=') { return true }
     // (yield 1)()
     // new (yield 1)()
-    if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
+    if (is_ast_call(p) && p.expression === this) { return true }
     // (yield 1) ? yield 2 : yield 3
-    if (p?.isAst?.('AST_Conditional') && p.condition === this) { return true }
+    if (is_ast_conditional(p) && p.condition === this) { return true }
     // -(yield 4)
-    if (p?.isAst?.('AST_Unary')) { return true }
+    if (is_ast_unary(p)) { return true }
     // (yield x).foo
     // (yield x)['foo']
     if (p?._needs_parens(this)) { return true }

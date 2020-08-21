@@ -1,6 +1,6 @@
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
-import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence } from '../utils'
+import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence, is_ast_symbol_ref, is_ast_lambda, is_ast_arrow, is_ast_number, is_ast_symbol_funarg, is_ast_array, is_ast_expansion, is_ast_hole } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
@@ -50,18 +50,18 @@ export default class AST_Sub extends AST_PropAccess {
     }
     var fn
     OPT_ARGUMENTS: if (compressor.option('arguments') &&
-          expr?.isAst?.('AST_SymbolRef') &&
+          is_ast_symbol_ref(expr) &&
           expr.name == 'arguments' &&
           expr.definition?.().orig.length == 1 &&
-          (fn = expr.scope)?.isAst?.('AST_Lambda') &&
+          is_ast_lambda((fn = expr.scope)) &&
           fn.uses_arguments &&
-          !(fn?.isAst?.('AST_Arrow')) &&
-          prop?.isAst?.('AST_Number')) {
+          !(is_ast_arrow(fn)) &&
+          is_ast_number(prop)) {
       var index = prop.getValue()
       var params = new Set()
       var argnames = fn.argnames
       for (var n = 0; n < argnames.length; n++) {
-        if (!(argnames[n]?.isAst?.('AST_SymbolFunarg'))) {
+        if (!(is_ast_symbol_funarg(argnames[n]))) {
           break OPT_ARGUMENTS // destructuring parameter - bail
         }
         var param = argnames[n].name
@@ -102,7 +102,7 @@ export default class AST_Sub extends AST_PropAccess {
       }
     }
     if (compressor.option('properties') && compressor.option('side_effects') &&
-          prop?.isAst?.('AST_Number') && expr?.isAst?.('AST_Array')) {
+          is_ast_number(prop) && is_ast_array(expr)) {
       var index = prop.getValue()
       var elements = expr.elements
       var retValue = elements[index]
@@ -116,12 +116,12 @@ export default class AST_Sub extends AST_PropAccess {
             if (flatten && value.has_side_effects(compressor)) flatten = false
           }
         }
-        if (retValue?.isAst?.('AST_Expansion')) break FLATTEN
-        retValue = retValue?.isAst?.('AST_Hole') ? make_node('AST_Undefined', retValue) : retValue
+        if (is_ast_expansion(retValue)) break FLATTEN
+        retValue = is_ast_hole(retValue) ? make_node('AST_Undefined', retValue) : retValue
         if (!flatten) values.unshift(retValue)
         while (--i >= 0) {
           let value = elements[i]
-          if (value?.isAst?.('AST_Expansion')) break FLATTEN
+          if (is_ast_expansion(value)) break FLATTEN
           value = value.drop_side_effect_free(compressor)
           if (value) values.unshift(value)
           else index--

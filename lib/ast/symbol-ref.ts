@@ -26,7 +26,7 @@ import {
   is_modified,
   ref_once,
   mark_escaped,
-  scope_encloses_variables_in_this_scope
+  scope_encloses_variables_in_this_scope, is_ast_call, is_ast_symbol_ref, is_ast_symbol_defun, is_ast_symbol_lambda, is_ast_lambda, is_ast_class, is_ast_symbol_funarg, is_ast_defun, is_ast_def_class, is_ast_this
 } from '../utils'
 import { has_flag, set_flag, SQUEEZED, INLINED, walk_abort, pure_prop_access_globals, global_names, UNDEFINED, _NOINLINE } from '../constants'
 
@@ -66,10 +66,10 @@ export default class AST_SymbolRef extends AST_Symbol {
       }
       var fixed = this.fixed_value()
       var single_use: any = def.single_use &&
-              !(parent?.isAst?.('AST_Call') &&
+              !(is_ast_call(parent) &&
                   (parent.is_expr_pure(compressor)) ||
                       has_annotation(parent, _NOINLINE))
-      if (single_use && (fixed?.isAst?.('AST_Lambda') || fixed?.isAst?.('AST_Class'))) {
+      if (single_use && (is_ast_lambda(fixed) || is_ast_class(fixed))) {
         if (retain_top_func(fixed, compressor)) {
           single_use = false
         } else if (def.scope !== this.scope &&
@@ -79,28 +79,28 @@ export default class AST_SymbolRef extends AST_Symbol {
           single_use = false
         } else if (recursive_ref(compressor, def)) {
           single_use = false
-        } else if (def.scope !== this.scope || def.orig[0]?.isAst?.('AST_SymbolFunarg')) {
+        } else if (def.scope !== this.scope || is_ast_symbol_funarg(def.orig[0])) {
           single_use = fixed.is_constant_expression(this.scope)
           if (single_use == 'f') {
             var scope = this.scope
             do {
-              if (scope?.isAst?.('AST_Defun') || is_func_expr(scope)) {
+              if (is_ast_defun(scope) || is_func_expr(scope)) {
                 set_flag(scope, INLINED)
               }
             } while (scope = scope.parent_scope)
           }
         }
       }
-      if (single_use && fixed?.isAst?.('AST_Lambda')) {
+      if (single_use && is_ast_lambda(fixed)) {
         const block_scope = find_scope(compressor)
         single_use =
                   def.scope === this.scope &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed) ||
-                  parent?.isAst?.('AST_Call') &&
+                  is_ast_call(parent) &&
                       parent.expression === this &&
                       !scope_encloses_variables_in_this_scope(block_scope, fixed)
       }
-      if (single_use && fixed?.isAst?.('AST_Class')) {
+      if (single_use && is_ast_class(fixed)) {
         const extends_inert = !fixed.extends ||
                   !fixed.extends.may_throw(compressor) &&
                       !fixed.extends.has_side_effects(compressor)
@@ -111,40 +111,40 @@ export default class AST_SymbolRef extends AST_Symbol {
       }
       const can_pull_in = single_use && fixed
       if (can_pull_in) {
-        if (fixed?.isAst?.('AST_DefClass')) {
+        if (is_ast_def_class(fixed)) {
           set_flag(fixed, SQUEEZED)
           fixed = make_node('AST_ClassExpression', fixed, fixed)
         }
-        if (fixed?.isAst?.('AST_Defun')) {
+        if (is_ast_defun(fixed)) {
           set_flag(fixed, SQUEEZED)
           fixed = make_node('AST_Function', fixed, fixed)
         }
-        if (def.recursive_refs > 0 && fixed.name?.isAst?.('AST_SymbolDefun')) {
+        if (def.recursive_refs > 0 && is_ast_symbol_defun(fixed.name)) {
           const defun_def = fixed.name.definition?.()
           let lambda_def = fixed.variables.get(fixed.name.name)
           let name = lambda_def && lambda_def.orig[0]
-          if (!(name?.isAst?.('AST_SymbolLambda'))) {
+          if (!(is_ast_symbol_lambda(name))) {
             name = make_node('AST_SymbolLambda', fixed.name, fixed.name)
             name.scope = fixed
             fixed.name = name
             lambda_def = fixed.def_function(name)
           }
           walk(fixed, (node: any) => {
-            if (node?.isAst?.('AST_SymbolRef') && node.definition?.() === defun_def) {
+            if (is_ast_symbol_ref(node) && node.definition?.() === defun_def) {
               node.thedef = lambda_def
               lambda_def.references.push(node)
             }
           })
         }
-        if (fixed?.isAst?.('AST_Lambda') || fixed?.isAst?.('AST_Class')) {
+        if (is_ast_lambda(fixed) || is_ast_class(fixed)) {
           find_scope(compressor).add_child_scope(fixed)
         }
         return fixed.optimize(compressor)
       }
       if (fixed && def.should_replace === undefined) {
         let init
-        if (fixed?.isAst?.('AST_This')) {
-          if (!(def.orig[0]?.isAst?.('AST_SymbolFunarg')) &&
+        if (is_ast_this(fixed)) {
+          if (!(is_ast_symbol_funarg(def.orig[0])) &&
                       def.references.every((ref) =>
                         def.scope === ref.scope
                       )) {
@@ -189,7 +189,7 @@ export default class AST_SymbolRef extends AST_Symbol {
 
     function has_symbol_ref (value) {
       return walk(value, (node: any) => {
-        if (node?.isAst?.('AST_SymbolRef')) return walk_abort
+        if (is_ast_symbol_ref(node)) return walk_abort
       })
     }
   }
@@ -242,7 +242,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     d.references.push(this)
     if (d.references.length == 1 &&
           !d.fixed &&
-          d.orig[0]?.isAst?.('AST_SymbolDefun')) {
+          is_ast_symbol_defun(d.orig[0])) {
           tw.loop_ids?.set(d.id, tw.in_loop)
     }
     var fixed_value
@@ -251,7 +251,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     } else if (d.fixed) {
       fixed_value = this.fixed_value()
       if (
-        fixed_value?.isAst?.('AST_Lambda') &&
+        is_ast_lambda(fixed_value) &&
               recursive_ref(tw, d)
       ) {
         d.recursive_refs++
@@ -260,8 +260,8 @@ export default class AST_SymbolRef extends AST_Symbol {
               ref_once(tw, compressor, d)
       ) {
         d.single_use =
-                  fixed_value?.isAst?.('AST_Lambda') && !fixed_value.pinned?.() ||
-                  fixed_value?.isAst?.('AST_Class') ||
+                  is_ast_lambda(fixed_value) && !fixed_value.pinned?.() ||
+                  is_ast_class(fixed_value) ||
                   d.scope === this.scope && fixed_value.is_constant_expression()
       } else {
         d.single_use = false
@@ -294,7 +294,7 @@ export default class AST_SymbolRef extends AST_Symbol {
 
   is_immutable () {
     var orig = this.definition?.().orig
-    return orig.length == 1 && orig[0]?.isAst?.('AST_SymbolLambda')
+    return orig.length == 1 && is_ast_symbol_lambda(orig[0])
   }
 
   _size (): number {

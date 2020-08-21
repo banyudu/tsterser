@@ -1,9 +1,7 @@
 import AST_Node from './node'
 import { return_false, return_null, return_true, To_Moz_Literal } from '../utils'
 
-import { IConstant, IConstant_Props } from '../../types/ast'
-
-export default class AST_Constant extends AST_Node implements IConstant {
+export default class AST_Constant extends AST_Node {
   value: any
   literal: any
 
@@ -33,7 +31,7 @@ export default class AST_Constant extends AST_Node implements IConstant {
 
   static PROPS = AST_Node.PROPS
 
-  constructor (args?: IConstant_Props) { // eslint-disable-line
+  constructor (args?) { // eslint-disable-line
     super(args)
   }
 }

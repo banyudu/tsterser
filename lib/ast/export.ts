@@ -1,5 +1,5 @@
 import AST_Statement from './statement'
-import { to_moz, mkshallow, do_list, list_overhead } from '../utils'
+import { to_moz, mkshallow, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Export extends AST_Statement {
@@ -126,7 +126,7 @@ export default class AST_Export extends AST_Statement {
       self.exported_value.print(output)
     } else if (self.exported_definition) {
       self.exported_definition.print(output)
-      if (self.exported_definition?.isAst?.('AST_Definitions')) return
+      if (is_ast_definitions(self.exported_definition)) return
     }
     if (self.module_name) {
       output.space()
@@ -135,9 +135,9 @@ export default class AST_Export extends AST_Statement {
       self.module_name.print(output)
     }
     if (self.exported_value &&
-                !(self.exported_value?.isAst?.('AST_Defun') ||
-                    self.exported_value?.isAst?.('AST_Function') ||
-                    self.exported_value?.isAst?.('AST_Class')) ||
+                !(is_ast_defun(self.exported_value) ||
+                    is_ast_function(self.exported_value) ||
+                    is_ast_class(self.exported_value)) ||
             self.module_name ||
             self.exported_names
     ) {

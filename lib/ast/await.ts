@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import { pass_through, to_moz } from '../utils'
+import { pass_through, to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unary_prefix, is_ast_unary, is_ast_constant } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Await extends AST_Node {
@@ -28,23 +28,23 @@ export default class AST_Await extends AST_Node {
     }
   }
 
-  needs_parens = function (output: any) {
+  needs_parens (output: any) {
     var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this ||
-            p?.isAst?.('AST_Call') && p.expression === this ||
-            output.option('safari10') && p?.isAst?.('AST_UnaryPrefix')
+    return is_ast_prop_access(p) && p.expression === this ||
+            is_ast_call(p) && p.expression === this ||
+            output.option('safari10') && is_ast_unary_prefix(p)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('await')
     output.space()
     var e = self.expression
     var parens = !(
-      e?.isAst?.('AST_Call') ||
-            e?.isAst?.('AST_SymbolRef') ||
-            e?.isAst?.('AST_PropAccess') ||
-            e?.isAst?.('AST_Unary') ||
-            e?.isAst?.('AST_Constant')
+      is_ast_call(e) ||
+            is_ast_symbol_ref(e) ||
+            is_ast_prop_access(e) ||
+            is_ast_unary(e) ||
+            is_ast_constant(e)
     )
     if (parens) output.print('(')
     self.expression.print(output)

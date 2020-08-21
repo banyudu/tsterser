@@ -48,7 +48,7 @@ import {
   HOP,
   return_true,
   walk,
-  string_template
+  string_template, is_ast_symbol_defun, is_ast_scope
 } from './utils'
 import AST_Node from './ast/node'
 import AST_Toplevel from './ast/toplevel'
@@ -56,7 +56,6 @@ import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
 import TreeWalker from './tree-walker'
-import { IScope } from '../types/ast'
 
 export default class Compressor extends TreeWalker {
   options: any
@@ -186,7 +185,7 @@ export default class Compressor extends TreeWalker {
     if (def.export) return true
     if (def.global) {
       for (var i = 0, len = def.orig.length; i < len; i++) {
-        if (!this.toplevel[def.orig[i]?.isAst?.('AST_SymbolDefun') ? 'funcs' : 'vars']) { return true }
+        if (!this.toplevel[is_ast_symbol_defun(def.orig[i]) ? 'funcs' : 'vars']) { return true }
       }
     }
     return false
@@ -271,9 +270,9 @@ export default class Compressor extends TreeWalker {
   before (node: AST_Node, descend: Function) {
     if (has_flag(node, SQUEEZED)) return node
     var was_scope = false
-    if (node?.isAst?.<IScope>('AST_Scope')) {
+    if (is_ast_scope(node)) {
       node = node.hoist_properties(this)
-      if (node?.isAst?.<IScope>('AST_Scope')) {
+      if (is_ast_scope(node)) {
         node = node.hoist_declarations(this)
       }
       was_scope = true
@@ -291,7 +290,7 @@ export default class Compressor extends TreeWalker {
     // output and performance.
     descend(node, this)
     var opt: any = node.optimize(this)
-    if (was_scope && opt?.isAst?.('AST_Scope')) {
+    if (was_scope && is_ast_scope(opt)) {
             opt.drop_unused?.(this)
             descend(opt, this)
     }

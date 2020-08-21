@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import { push_uniq, mkshallow } from '../utils'
+import { push_uniq, mkshallow, is_ast_node } from '../utils'
 
 let mangle_options
 
@@ -10,7 +10,7 @@ export default class AST_Symbol extends AST_Node {
 
   fixed_value = function () {
     var fixed = this.thedef.fixed
-    if (!fixed || fixed?.isAst?.('AST_Node')) return fixed
+    if (!fixed || is_ast_node(fixed)) return fixed
     return fixed()
   }
 

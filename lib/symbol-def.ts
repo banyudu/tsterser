@@ -1,4 +1,4 @@
-import { in_function_defs, redefined_catch_def, keep_name } from './utils'
+import { in_function_defs, redefined_catch_def, keep_name, is_ast_node, is_ast_symbol_lambda, is_ast_symbol_defun, is_ast_symbol_method, is_ast_symbol_class, is_ast_symbol_def_class } from './utils'
 import { MASK_EXPORT_DONT_MANGLE } from './constants'
 
 export default class SymbolDef {
@@ -48,7 +48,7 @@ export default class SymbolDef {
   }
 
   fixed_value () {
-    if (!this.fixed || this.fixed?.isAst?.('AST_Node')) return this.fixed
+    if (!this.fixed || is_ast_node(this.fixed)) return this.fixed
     return this.fixed()
   }
 
@@ -61,11 +61,11 @@ export default class SymbolDef {
             (this.export & MASK_EXPORT_DONT_MANGLE) ||
             this.undeclared ||
             !options.eval && this.scope.pinned() ||
-            (firstOrig.isAst?.('AST_SymbolLambda') ||
-            firstOrig.isAst?.('AST_SymbolDefun')) && keep_name(options.keep_fnames, firstOrig.name) ||
-            firstOrig.isAst?.('AST_SymbolMethod') ||
-            (firstOrig.isAst?.('AST_SymbolClass') ||
-              firstOrig.isAst?.('AST_SymbolDefClass')) && keep_name(options.keep_classnames, firstOrig.name)
+            (is_ast_symbol_lambda(firstOrig) ||
+            is_ast_symbol_defun(firstOrig)) && keep_name(options.keep_fnames, firstOrig.name) ||
+            is_ast_symbol_method(firstOrig) ||
+            (is_ast_symbol_class(firstOrig) ||
+              is_ast_symbol_def_class(firstOrig)) && keep_name(options.keep_classnames, firstOrig.name)
   }
 
   mangle (options: any) {
@@ -75,7 +75,7 @@ export default class SymbolDef {
     } else if (!this.mangled_name && !this.unmangleable(options)) {
       var s = this.scope
       var sym = this.orig[0]
-      if (options.ie8 && sym?.isAst?.('AST_SymbolLambda')) { s = s.parent_scope }
+      if (options.ie8 && is_ast_symbol_lambda(sym)) { s = s.parent_scope }
       const redefinition = redefined_catch_def(this)
       this.mangled_name = redefinition
         ? redefinition.mangled_name || redefinition.name

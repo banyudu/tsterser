@@ -1,6 +1,6 @@
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
-import { suppress, reset_block_variables, push, pop, to_moz, pass_through } from '../utils'
+import { suppress, reset_block_variables, push, pop, to_moz, pass_through, is_ast_for_of } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ForIn extends AST_IterationStatement {
@@ -59,7 +59,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     output.with_parens(function () {
             self.init?.print(output)
             output.space()
-            output.print(self?.isAst?.('AST_ForOf') ? 'of' : 'in')
+            output.print(is_ast_for_of(self) ? 'of' : 'in')
             output.space()
             self.object.print(output)
     })

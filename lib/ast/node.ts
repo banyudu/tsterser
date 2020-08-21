@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import AST from './_base'
+import AST_Token from './token'
 
 import { OPTIMIZED, has_flag, set_flag, unaryPrefix } from '../constants'
 
@@ -16,16 +17,15 @@ import {
   setFromMozStack,
   print,
   basic_negation,
-  from_moz
+  from_moz, is_ast_constant, is_ast_reg_exp, is_ast_unary_prefix
 } from '../utils'
 
-import { INode_Props, INode, IToken } from '../../types/ast'
 import Compressor from '../compressor'
 
-export default class AST_Node extends AST implements INode {
-  start: IToken
-  end: IToken
-  expression: INode
+export default class AST_Node extends AST {
+  start: AST_Token
+  end: AST_Token
+  expression: AST_Node
   label?: any
 
   _prepend_comments_check (node) {
@@ -48,7 +48,7 @@ export default class AST_Node extends AST implements INode {
     return undefined
   }
 
-  isAst<T extends INode> (type: string): this is T {
+  isAst<T extends AST_Node> (type: string): this is T {
     let proto: any = this.constructor
     while (proto.name) {
       if (proto.name === type) {
@@ -69,7 +69,7 @@ export default class AST_Node extends AST implements INode {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?) {
     return this
   }
 
@@ -104,11 +104,11 @@ export default class AST_Node extends AST implements INode {
   is_constant () {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
-    if (this.isAst('AST_Constant')) {
-      return !(this.isAst('AST_RegExp'))
+    if (is_ast_constant(this)) {
+      return !(is_ast_reg_exp(this))
     } else {
-      return this.isAst('AST_UnaryPrefix') &&
-              (this as any).expression?.isAst?.('AST_Constant') &&
+      return is_ast_unary_prefix(this) &&
+              is_ast_constant((this as any).expression) &&
               unaryPrefix.has((this as any).operator)
     }
   }
@@ -250,7 +250,7 @@ export default class AST_Node extends AST implements INode {
 
   static PROPS = ['start', 'end']
 
-  constructor (args?: INode_Props) { // eslint-disable-line
+  constructor (args?) { // eslint-disable-line
     super()
     this.start = args?.start
     this.end = args?.end

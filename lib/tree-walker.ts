@@ -1,4 +1,4 @@
-import { noop } from './utils'
+import { noop, is_ast_lambda, is_ast_directive, is_ast_class } from './utils'
 import AST_Node from './ast/node'
 import AST_Scope from './ast/scope'
 
@@ -33,11 +33,11 @@ export default class TreeWalker {
   }
 
   push (node: any) {
-    if (node?.isAst?.('AST_Lambda')) {
+    if (is_ast_lambda(node)) {
       this.directives = Object.create(this.directives)
-    } else if (node?.isAst?.('AST_Directive') && !this.directives[node.value]) {
+    } else if (is_ast_directive(node) && !this.directives[node.value]) {
       this.directives[node.value] = node
-    } else if (node?.isAst?.('AST_Class')) {
+    } else if (is_ast_class(node)) {
       this.directives = Object.create(this.directives)
       if (!this.directives['use strict']) {
         this.directives['use strict'] = node
@@ -48,7 +48,7 @@ export default class TreeWalker {
 
   pop () {
     var node = this.stack.pop()
-    if (node?.isAst?.('AST_Lambda') || node?.isAst?.('AST_Class')) {
+    if (is_ast_lambda(node) || is_ast_class(node)) {
       this.directives = Object.getPrototypeOf(this.directives)
     }
   }
@@ -72,7 +72,7 @@ export default class TreeWalker {
     if (node instanceof AST_Scope && node.body) {
       for (var i = 0; i < node.body.length; ++i) {
         var st = node.body[i]
-        if (!(st?.isAst?.('AST_Directive'))) break
+        if (!(is_ast_directive(st))) break
         if (st.value == type) return st
       }
     }

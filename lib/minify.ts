@@ -1,6 +1,6 @@
 /* eslint-env browser, es6, node */
 
-import { defaults, map_from_object, map_to_object, base54, HOP } from './utils'
+import { defaults, map_from_object, map_to_object, base54, HOP, is_ast_toplevel } from './utils'
 import AST_Node from './ast/node'
 import { parse } from './parse'
 import { OutputStream } from './output'
@@ -141,7 +141,7 @@ function minify (files: any, options: any): any {
     }
     if (timings) timings.parse = Date.now()
     var toplevel
-    if (files?.isAst?.('AST_Toplevel')) {
+    if (is_ast_toplevel(files)) {
       toplevel = files
     } else {
       if (typeof files === 'string') {
@@ -208,7 +208,7 @@ function minify (files: any, options: any): any {
             root: options.sourceMap.root
           })
           if (options.sourceMap.includeSources) {
-            if (files?.isAst?.('AST_Toplevel')) {
+            if (is_ast_toplevel(files)) {
               throw new Error('original source content unavailable')
             } else {
               for (var name in files) {

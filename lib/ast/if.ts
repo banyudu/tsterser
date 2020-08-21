@@ -12,7 +12,7 @@ import {
   mkshallow,
   push,
   pop,
-  extract_declarations_from_unreachable_code
+  extract_declarations_from_unreachable_code, is_ast_node, is_ast_if, is_ast_do, is_ast_statement_with_body, is_ast_simple_statement, is_ast_binary, is_ast_empty_statement, is_ast_exit
 } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -34,13 +34,13 @@ export default class AST_If extends AST_StatementWithBody {
     // “has no side effects”; also it doesn't work for cases like
     // `x && true`, though it probably should.
     var cond = self.condition.evaluate(compressor)
-    if (!compressor.option('dead_code') && !(cond?.isAst?.('AST_Node'))) {
+    if (!compressor.option('dead_code') && !(is_ast_node(cond))) {
       var orig = self.condition
       self.condition = make_node_from_constant(cond, orig)
       self.condition = best_of_expression(self.condition.transform(compressor), orig)
     }
     if (compressor.option('dead_code')) {
-      if (cond?.isAst?.('AST_Node')) cond = self.condition.tail_node().evaluate(compressor)
+      if (is_ast_node(cond)) cond = self.condition.tail_node().evaluate(compressor)
       if (!cond) {
         compressor.warn('Condition always false [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
@@ -50,7 +50,7 @@ export default class AST_If extends AST_StatementWithBody {
         }))
         if (self.alternative) body.push(self.alternative)
         return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
-      } else if (!(cond?.isAst?.('AST_Node'))) {
+      } else if (!(is_ast_node(cond))) {
         compressor.warn('Condition always true [{file}:{line},{col}]', self.condition.start)
         var body: any[] = []
         body.push(make_node('AST_SimpleStatement', self.condition, {
@@ -81,8 +81,8 @@ export default class AST_If extends AST_StatementWithBody {
         body: self.condition.clone()
       }).optimize(compressor)
     }
-    if (self.body?.isAst?.('AST_SimpleStatement') &&
-          self.alternative?.isAst?.('AST_SimpleStatement')) {
+    if (is_ast_simple_statement(self.body) &&
+          is_ast_simple_statement(self.alternative)) {
       return make_node('AST_SimpleStatement', self, {
         body: make_node('AST_Conditional', self, {
           condition: self.condition,
@@ -91,9 +91,9 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (is_empty(self.alternative) && self.body?.isAst?.('AST_SimpleStatement')) {
+    if (is_empty(self.alternative) && is_ast_simple_statement(self.body)) {
       if (self_condition_length === negated_length && !negated_is_best &&
-              self.condition?.isAst?.('AST_Binary') && self.condition.operator == '||') {
+              is_ast_binary(self.condition) && self.condition.operator == '||') {
         // although the code length of self.condition and negated are the same,
         // negated does not require additional surrounding parentheses.
         // see https://github.com/mishoo/UglifyJS2/issues/979
@@ -116,8 +116,8 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (self.body?.isAst?.('AST_EmptyStatement') &&
-          self.alternative?.isAst?.('AST_SimpleStatement')) {
+    if (is_ast_empty_statement(self.body) &&
+          is_ast_simple_statement(self.alternative)) {
       return make_node('AST_SimpleStatement', self, {
         body: make_node('AST_Binary', self, {
           operator: '||',
@@ -126,8 +126,8 @@ export default class AST_If extends AST_StatementWithBody {
         })
       }).optimize(compressor)
     }
-    if (self.body?.isAst?.('AST_Exit') &&
-          self.alternative?.isAst?.('AST_Exit') &&
+    if (is_ast_exit(self.body) &&
+          is_ast_exit(self.alternative) &&
           self.body.TYPE == self.alternative.TYPE) {
       return make_node(self.body.constructor?.name, self, {
         value: make_node('AST_Conditional', self, {
@@ -137,7 +137,7 @@ export default class AST_If extends AST_StatementWithBody {
         }).transform(compressor)
       }).optimize(compressor)
     }
-    if (self.body?.isAst?.('AST_If') &&
+    if (is_ast_if(self.body) &&
           !self.body.alternative &&
           !self.alternative) {
       self = make_node('AST_If', self, {
@@ -248,7 +248,7 @@ export default class AST_If extends AST_StatementWithBody {
       output.space()
       output.print('else')
       output.space()
-      if (self.alternative?.isAst?.('AST_If')) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
+      if (is_ast_if(self.alternative)) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
     } else {
       self._do_print_body(output)
     }
@@ -271,7 +271,7 @@ export default class AST_If extends AST_StatementWithBody {
 function make_then (self: any, output: any) {
   var b: any = self.body
   if (output.option('braces') ||
-        output.option('ie8') && b?.isAst?.('AST_Do')) { return make_block(b, output) }
+        output.option('ie8') && is_ast_do(b)) { return make_block(b, output) }
   // The squeezer replaces "block"-s that contain only a single
   // statement with the statement itself; technically, the AST
   // is correct, but this can create problems when we output an
@@ -281,13 +281,13 @@ function make_then (self: any, output: any) {
   // adds the block braces if needed.
   if (!b) return output.force_semicolon()
   while (true) {
-    if (b?.isAst?.('AST_If')) {
+    if (is_ast_if(b)) {
       if (!b.alternative) {
         make_block(self.body, output)
         return
       }
       b = b.alternative
-    } else if (b?.isAst?.('AST_StatementWithBody')) {
+    } else if (is_ast_statement_with_body(b)) {
       b = b.body
     } else break
   }

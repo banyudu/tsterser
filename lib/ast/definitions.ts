@@ -1,6 +1,6 @@
 import AST_Statement from './statement'
 import Compressor from '../compressor'
-import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through } from '../utils'
+import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Definitions extends AST_Statement {
@@ -22,7 +22,7 @@ export default class AST_Definitions extends AST_Statement {
   to_assignments (compressor: Compressor) {
     var reduce_vars = compressor.option('reduce_vars')
     var assignments = this.definitions.reduce(function (a, def) {
-      if (def.value && !(def.name?.isAst?.('AST_Destructuring'))) {
+      if (def.value && !(is_ast_destructuring(def.name))) {
         var name = make_node('AST_SymbolRef', def.name, def.name)
         a.push(make_node('AST_Assign', def, {
           operator: '=',
@@ -53,12 +53,12 @@ export default class AST_Definitions extends AST_Statement {
   remove_initializers () {
     var decls: any[] = []
     this.definitions.forEach(function (def) {
-      if (def.name?.isAst?.('AST_SymbolDeclaration')) {
+      if (is_ast_symbol_declaration(def.name)) {
         def.value = null
         decls.push(def)
       } else {
         walk(def.name, (node: any) => {
-          if (node?.isAst?.('AST_SymbolDeclaration')) {
+          if (is_ast_symbol_declaration(node)) {
             decls.push(make_node('AST_VarDef', def, {
               name: node,
               value: null
@@ -105,7 +105,7 @@ export default class AST_Definitions extends AST_Statement {
       def.print(output)
     })
     var p = output.parent()
-    var in_for = p?.isAst?.('AST_For') || p?.isAst?.('AST_ForIn')
+    var in_for = is_ast_for(p) || is_ast_for_in(p)
     var output_semicolon = !in_for || p && p.init !== this
     if (output_semicolon) { output.semicolon() }
   }

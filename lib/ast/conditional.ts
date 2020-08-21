@@ -12,7 +12,7 @@ import {
   to_moz,
   pass_through,
   needsParens,
-  maintain_this_binding
+  maintain_this_binding, is_ast_sequence, is_ast_true, is_ast_false, is_ast_expansion, is_ast_symbol_ref, is_ast_constant, is_ast_unary_prefix, is_ast_assign, is_ast_call, is_ast_conditional, is_ast_binary
 } from '../utils'
 
 import TreeWalker from '../tree-walker'
@@ -45,7 +45,7 @@ export default class AST_Conditional extends AST_Node {
     let self = this
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
-    if (self.condition?.isAst?.('AST_Sequence')) {
+    if (is_ast_sequence(self.condition)) {
       var expressions = self.condition.expressions.slice()
       self.condition = expressions.pop()
       expressions.push(self)
@@ -73,8 +73,8 @@ export default class AST_Conditional extends AST_Node {
     var consequent = self.consequent
     var alternative = self.alternative
     // x?x:y --> x||y
-    if (condition?.isAst?.('AST_SymbolRef') &&
-          consequent?.isAst?.('AST_SymbolRef') &&
+    if (is_ast_symbol_ref(condition) &&
+          is_ast_symbol_ref(consequent) &&
           condition.definition?.() === consequent.definition?.()) {
       return make_node('AST_Binary', self, {
         operator: '||',
@@ -86,8 +86,8 @@ export default class AST_Conditional extends AST_Node {
     //                   |
     //                   v
     // exp = foo ? something : something_else;
-    if (consequent?.isAst?.('AST_Assign') &&
-          alternative?.isAst?.('AST_Assign') &&
+    if (is_ast_assign(consequent) &&
+          is_ast_assign(alternative) &&
           consequent.operator == alternative.operator &&
           consequent.left.equivalent_to(alternative.left) &&
           (!self.condition.has_side_effects(compressor) ||
@@ -105,7 +105,7 @@ export default class AST_Conditional extends AST_Node {
     }
     // x ? y(a) : y(b) --> y(x ? a : b)
     var arg_index
-    if (consequent?.isAst?.('AST_Call') &&
+    if (is_ast_call(consequent) &&
           alternative.TYPE === consequent.TYPE &&
           consequent.args.length > 0 &&
           consequent.args.length == alternative.args.length &&
@@ -122,7 +122,7 @@ export default class AST_Conditional extends AST_Node {
       return node
     }
     // a ? b : c ? b : d --> (a || c) ? b : d
-    if (alternative?.isAst?.('AST_Conditional') &&
+    if (is_ast_conditional(alternative) &&
           consequent.equivalent_to(alternative.consequent)) {
       return make_node('AST_Conditional', self, {
         condition: make_node('AST_Binary', self, {
@@ -148,7 +148,7 @@ export default class AST_Conditional extends AST_Node {
     }
 
     // a ? b : (c, b) --> (a || c), b
-    if (alternative?.isAst?.('AST_Sequence') &&
+    if (is_ast_sequence(alternative) &&
           consequent.equivalent_to(alternative.expressions[alternative.expressions.length - 1])) {
       return make_sequence(self, [
         make_node('AST_Binary', self, {
@@ -160,7 +160,7 @@ export default class AST_Conditional extends AST_Node {
       ]).optimize(compressor)
     }
     // a ? b : (c && b) --> (a || c) && b
-    if (alternative?.isAst?.('AST_Binary') &&
+    if (is_ast_binary(alternative) &&
           alternative.operator == '&&' &&
           consequent.equivalent_to(alternative.right)) {
       return make_node('AST_Binary', self, {
@@ -174,7 +174,7 @@ export default class AST_Conditional extends AST_Node {
       }).optimize(compressor)
     }
     // x?y?z:a:a --> x&&y?z:a
-    if (consequent?.isAst?.('AST_Conditional') &&
+    if (is_ast_conditional(consequent) &&
           consequent.alternative.equivalent_to(alternative)) {
       return make_node('AST_Conditional', self, {
         condition: make_node('AST_Binary', self, {
@@ -194,7 +194,7 @@ export default class AST_Conditional extends AST_Node {
       ]).optimize(compressor)
     }
     // x ? y || z : z --> x && y || z
-    if (consequent?.isAst?.('AST_Binary') &&
+    if (is_ast_binary(consequent) &&
           consequent.operator == '||' &&
           consequent.right.equivalent_to(alternative)) {
       return make_node('AST_Binary', self, {
@@ -262,24 +262,24 @@ export default class AST_Conditional extends AST_Node {
 
     // AST_True or !0
     function is_true (node: any) {
-      return node?.isAst?.('AST_True') ||
+      return is_ast_true(node) ||
               in_bool &&
-                  node?.isAst?.('AST_Constant') &&
+                  is_ast_constant(node) &&
                   node.getValue() ||
-              (node?.isAst?.('AST_UnaryPrefix') &&
+              (is_ast_unary_prefix(node) &&
                   node.operator == '!' &&
-                  node.expression?.isAst?.('AST_Constant') &&
+                  is_ast_constant(node.expression) &&
                   !node.expression.getValue())
     }
     // AST_False or !1
     function is_false (node: any) {
-      return node?.isAst?.('AST_False') ||
+      return is_ast_false(node) ||
               in_bool &&
-                  node?.isAst?.('AST_Constant') &&
+                  is_ast_constant(node) &&
                   !node.getValue() ||
-              (node?.isAst?.('AST_UnaryPrefix') &&
+              (is_ast_unary_prefix(node) &&
                   node.operator == '!' &&
-                  node.expression?.isAst?.('AST_Constant') &&
+                  is_ast_constant(node.expression) &&
                   node.expression.getValue())
     }
 
@@ -287,11 +287,11 @@ export default class AST_Conditional extends AST_Node {
       var a = consequent.args
       var b = alternative.args
       for (var i = 0, len = a.length; i < len; i++) {
-        if (a[i]?.isAst?.('AST_Expansion')) return
+        if (is_ast_expansion(a[i])) return
         if (!a[i].equivalent_to(b[i])) {
-          if (b[i]?.isAst?.('AST_Expansion')) return
+          if (is_ast_expansion(b[i])) return
           for (var j = i + 1; j < len; j++) {
-            if (a[j]?.isAst?.('AST_Expansion')) return
+            if (is_ast_expansion(a[j])) return
             if (!a[j].equivalent_to(b[j])) return
           }
           return i

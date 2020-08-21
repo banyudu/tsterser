@@ -1,13 +1,13 @@
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
-import { to_moz, key_size, static_size, mkshallow, return_true } from '../utils'
+import { to_moz, key_size, static_size, mkshallow, return_true, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
 
 export default class AST_ObjectGetter extends AST_ObjectProperty {
   static: any
   quote: any
 
   _to_mozilla_ast (parent) {
-    var key = this.key?.isAst?.('AST_Node') ? to_moz(this.key) : {
+    var key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -25,11 +25,11 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     }
     var kind
     var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(this.key?.isAst?.('AST_Symbol')) || this.key?.isAst?.('AST_SymbolRef')
-    if (this?.isAst?.('AST_ObjectGetter')) {
+    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    if (is_ast_object_getter(this)) {
       kind = 'get'
     }
-    if (parent?.isAst?.('AST_Class')) {
+    if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',
         computed: computed,
@@ -62,7 +62,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
 
   _dot_throw = return_true
   computed_key () {
-    return !(this.key?.isAst?.('AST_SymbolMethod'))
+    return !(is_ast_symbol_method(this.key))
   }
 
   _size = function (): number {

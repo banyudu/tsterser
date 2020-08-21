@@ -14,7 +14,7 @@ import {
   print_braced,
   walk_body,
   init_scope_vars,
-  mark_lambda
+  mark_lambda, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow
 } from '../utils'
 
 import {
@@ -39,11 +39,11 @@ export default class AST_Lambda extends AST_Scope {
   reduce_vars = mark_lambda
   contains_this () {
     return walk(this, (node: any) => {
-      if (node?.isAst?.('AST_This')) return walk_abort
+      if (is_ast_this(node)) return walk_abort
       if (
         node !== this &&
-              node?.isAst?.('AST_Scope') &&
-              !(node?.isAst?.('AST_Arrow'))
+              is_ast_scope(node) &&
+              !(is_ast_arrow(node))
       ) {
         return true
       }
@@ -64,7 +64,7 @@ export default class AST_Lambda extends AST_Scope {
   args_as_names () {
     var out: any[] = []
     for (var i = 0; i < this.argnames.length; i++) {
-      if (this.argnames[i]?.isAst?.('AST_Destructuring')) {
+      if (is_ast_destructuring(this.argnames[i])) {
         out.push(...this.argnames[i].all_symbols())
       } else {
         out.push(this.argnames[i])
@@ -102,7 +102,7 @@ export default class AST_Lambda extends AST_Scope {
   _transform (self, tw: TreeWalker) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
-    if (self.body?.isAst?.('AST_Node')) {
+    if (is_ast_node(self.body)) {
       self.body = (self.body).transform(tw)
     } else {
       self.body = do_list(self.body, tw)
@@ -128,9 +128,9 @@ export default class AST_Lambda extends AST_Scope {
         output.space()
       }
     }
-    if (self.name?.isAst?.('AST_Symbol')) {
+    if (is_ast_symbol(self.name)) {
       self.name.print(output)
-    } else if (nokeyword && self.name?.isAst?.('AST_Node')) {
+    } else if (nokeyword && is_ast_node(self.name)) {
       output.with_square(function () {
                 self.name?.print(output) // Computed method name
       })

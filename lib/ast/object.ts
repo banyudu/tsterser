@@ -15,7 +15,7 @@ import {
   do_list,
   to_moz,
   first_in_statement,
-  print_braced_empty
+  print_braced_empty, is_ast_expansion, is_ast_object, is_ast_symbol, is_ast_constant, is_ast_node, is_ast_string, is_ast_function
 } from '../utils'
 
 export default class AST_Object extends AST_Node {
@@ -38,14 +38,14 @@ export default class AST_Object extends AST_Node {
     var props = this.properties
     for (var i = 0; i < props.length; i++) {
       var prop = props[i]
-      if (prop?.isAst?.('AST_Expansion')) {
+      if (is_ast_expansion(prop)) {
         var expr = prop.expression
-        if (expr?.isAst?.('AST_Object')) {
+        if (is_ast_object(expr)) {
           props.splice.apply(props, [i, 1].concat(prop.expression.properties))
           // Step back one, as the property at i is now new.
           i--
-        } else if (expr?.isAst?.('AST_Constant') &&
-                  !(expr?.isAst?.('AST_String'))) {
+        } else if (is_ast_constant(expr) &&
+                  !(is_ast_string(expr))) {
           // Unlike array-like spread, in object spread, spreading a
           // non-iterable value silently does nothing; it is thus safe
           // to remove. AST_String is the only iterable AST_Constant.
@@ -74,18 +74,18 @@ export default class AST_Object extends AST_Node {
       var val = {}
       for (var i = 0, len = this.properties.length; i < len; i++) {
         var prop = this.properties[i]
-        if (prop?.isAst?.('AST_Expansion')) return this
+        if (is_ast_expansion(prop)) return this
         var key = prop.key
-        if (key?.isAst?.('AST_Symbol')) {
+        if (is_ast_symbol(key)) {
           key = key.name
-        } else if (key?.isAst?.('AST_Node')) {
+        } else if (is_ast_node(key)) {
           key = key._eval?.(compressor, depth)
           if (key === prop.key) return this
         }
         if (typeof Object.prototype[key] === 'function') {
           return this
         }
-        if (prop.value?.isAst?.('AST_Function')) continue
+        if (is_ast_function(prop.value)) continue
         val[key] = prop.value._eval(compressor, depth)
         if (val[key] === prop.value) return this
       }

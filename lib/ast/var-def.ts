@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin } from '../utils'
+import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_VarDef extends AST_Node {
@@ -18,7 +18,7 @@ export default class AST_VarDef extends AST_Node {
 
   reduce_vars (tw: TreeWalker, descend) {
     var node = this
-    if (node.name?.isAst?.('AST_Destructuring')) {
+    if (is_ast_destructuring(node.name)) {
       suppress(node.name)
       return
     }
@@ -79,7 +79,7 @@ export default class AST_VarDef extends AST_Node {
       output.print('=')
       output.space()
       var p = output.parent(1)
-      var noin = p?.isAst?.('AST_For') || p?.isAst?.('AST_ForIn')
+      var noin = is_ast_for(p) || is_ast_for_in(p)
       parenthesize_for_noin(self.value, output, noin)
     }
   }

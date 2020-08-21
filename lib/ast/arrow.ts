@@ -9,7 +9,7 @@ import {
   lambda_modifiers,
   left_is_object,
   print_braced,
-  to_moz
+  to_moz, is_ast_prop_access, is_ast_binary, is_ast_assign, is_ast_unary, is_ast_call, is_ast_symbol, is_ast_return
 } from '../utils'
 
 export default class AST_Arrow extends AST_Lambda {
@@ -28,13 +28,13 @@ export default class AST_Arrow extends AST_Lambda {
     this.uses_arguments = false
   }
 
-  _size = function (info?: any): number {
+  _size (info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (
       !(
         this.argnames.length === 1 &&
-                this.argnames[0]?.isAst?.('AST_Symbol')
+                is_ast_symbol(this.argnames[0])
       )
     ) {
       args_and_arrow += 2
@@ -58,21 +58,21 @@ export default class AST_Arrow extends AST_Lambda {
 
   needs_parens (output: any) {
     var p = output.parent()
-    return p?.isAst?.('AST_PropAccess') && p.expression === this
+    return is_ast_prop_access(p) && p.expression === this
   }
 
   _do_print (this: any, output: any) {
     var self = this
     var parent = output.parent()
-    var needs_parens = (parent?.isAst?.('AST_Binary') && !(parent?.isAst?.('AST_Assign'))) ||
-            parent?.isAst?.('AST_Unary') ||
-            (parent?.isAst?.('AST_Call') && self === parent.expression)
+    var needs_parens = (is_ast_binary(parent) && !(is_ast_assign(parent))) ||
+            is_ast_unary(parent) ||
+            (is_ast_call(parent) && self === parent.expression)
     if (needs_parens) { output.print('(') }
     if (self.async) {
       output.print('async')
       output.space()
     }
-    if (self.argnames.length === 1 && self.argnames[0]?.isAst?.('AST_Symbol')) {
+    if (self.argnames.length === 1 && is_ast_symbol(self.argnames[0])) {
       self.argnames[0].print(output)
     } else {
       output.with_parens(function () {
@@ -88,7 +88,7 @@ export default class AST_Arrow extends AST_Lambda {
     const first_statement = self.body[0]
     if (
       self.body.length === 1 &&
-            first_statement?.isAst?.('AST_Return')
+            is_ast_return(first_statement)
     ) {
       const returned = first_statement.value
       if (!returned) {

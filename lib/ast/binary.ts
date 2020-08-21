@@ -20,7 +20,7 @@ import {
   basic_negation,
   to_moz_in_destructuring,
   make_node_from_constant,
-  is_nullish
+  is_nullish, is_ast_binary, is_ast_sequence, is_ast_unary, is_ast_call, is_ast_unary_postfix, is_ast_string, is_ast_unary_prefix, is_ast_symbol_ref, is_ast_prop_access, is_ast_null, is_ast_assign, is_ast_node, is_ast_constant, is_ast_template_string
 } from '../utils'
 
 import {
@@ -35,18 +35,10 @@ import {
   lazy_op
 } from '../constants'
 
-import {
-  IBinary,
-  IBinary_Props,
-  INode,
-  ISequence,
-  IUnary
-} from '../../types/ast'
-
-export default class AST_Binary extends AST_Node implements IBinary {
-  left: INode
+export default class AST_Binary extends AST_Node {
+  left: AST_Node
   operator: string
-  right: INode
+  right: AST_Node
 
   _prepend_comments_check (node) {
     return this.left === node
@@ -85,7 +77,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
         // left side might have could not influence the
         // result.  hence, force switch.
 
-        if (!(self.left?.isAst?.('AST_Binary') &&
+        if (!(is_ast_binary(self.left) &&
                     PRECEDENCE[self.left.operator] >= PRECEDENCE[self.operator])) {
           reverse()
         }
@@ -112,20 +104,20 @@ export default class AST_Binary extends AST_Node implements IBinary {
             self.left = make_node('AST_Null', self.left)
           } else if (compressor.option('typeofs') &&
               // "undefined" == typeof x => undefined === x
-              self.left?.isAst?.('AST_String') &&
+              is_ast_string(self.left) &&
               self.left.value == 'undefined' &&
-              self.right?.isAst?.('AST_UnaryPrefix') &&
+              is_ast_unary_prefix(self.right) &&
               self.right.operator == 'typeof') {
             var expr = self.right.expression
-            if (expr?.isAst?.('AST_SymbolRef') ? expr.is_declared(compressor)
-              : !(expr?.isAst?.('AST_PropAccess') && compressor.option('ie8'))) {
+            if (is_ast_symbol_ref(expr) ? expr.is_declared(compressor)
+              : !(is_ast_prop_access(expr) && compressor.option('ie8'))) {
               self.right = expr
               self.left = make_node('AST_Undefined', self.left).optimize(compressor)
               if (self.operator.length == 2) self.operator += '='
             }
-          } else if (self.left?.isAst?.('AST_SymbolRef') &&
+          } else if (is_ast_symbol_ref(self.left) &&
               // obj !== obj => false
-              self.right?.isAst?.('AST_SymbolRef') &&
+              is_ast_symbol_ref(self.right) &&
               self.left.definition?.() === self.right.definition?.() &&
               is_object(self.left.fixed_value())) {
             return make_node(self.operator[0] == '=' ? 'AST_True' : 'AST_False', self)
@@ -137,12 +129,12 @@ export default class AST_Binary extends AST_Node implements IBinary {
           if (lhs.operator == self.operator) {
             lhs = lhs.right
           }
-          if (lhs?.isAst?.('AST_Binary') &&
+          if (is_ast_binary(lhs) &&
               lhs.operator == (self.operator == '&&' ? '!==' : '===') &&
-              self.right?.isAst?.('AST_Binary') &&
+              is_ast_binary(self.right) &&
               lhs.operator == self.right.operator &&
-              (is_undefined(lhs.left, compressor) && self.right.left?.isAst?.('AST_Null') ||
-                  lhs.left?.isAst?.('AST_Null') && is_undefined(self.right.left, compressor)) &&
+              (is_undefined(lhs.left, compressor) && is_ast_null(self.right.left) ||
+                  is_ast_null(lhs.left) && is_undefined(self.right.left, compressor)) &&
               !lhs.right.has_side_effects(compressor) &&
               lhs.right.equivalent_to(self.right.right)) {
             var combined = make_node('AST_Binary', self, {
@@ -181,8 +173,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
       }
     }
     if (compressor.option('comparisons') && self.is_boolean()) {
-      if (!(compressor.parent()?.isAst?.('AST_Binary')) ||
-              compressor.parent()?.isAst?.('AST_Assign')) {
+      if (!(is_ast_binary(compressor.parent())) ||
+              is_ast_assign(compressor.parent())) {
         var negated = make_node('AST_UnaryPrefix', self, {
           operator: '!',
           expression: self.negate(compressor, first_in_statement(compressor))
@@ -197,19 +189,19 @@ export default class AST_Binary extends AST_Node implements IBinary {
       }
     }
     if (self.operator == '+') {
-      if (self.right?.isAst?.('AST_String') &&
+      if (is_ast_string(self.right) &&
               self.right.getValue() == '' &&
               self.left.is_string(compressor)) {
         return self.left
       }
-      if (self.left?.isAst?.('AST_String') &&
+      if (is_ast_string(self.left) &&
               self.left.getValue() == '' &&
               self.right.is_string(compressor)) {
         return self.right
       }
-      if (self.left?.isAst?.('AST_Binary') &&
+      if (is_ast_binary(self.left) &&
               self.left.operator == '+' &&
-              self.left.left?.isAst?.('AST_String') &&
+              is_ast_string(self.left.left) &&
               self.left.left.getValue() == '' &&
               self.right.is_string(compressor)) {
         self.left = self.left.right
@@ -227,7 +219,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           if (!ll) {
             compressor.warn('Condition left of && always false [{file}:{line},{col}]', self.start)
             return maintain_this_binding(compressor.parent(), compressor.self(), self.left).optimize(compressor)
-          } else if (!(ll?.isAst?.('AST_Node'))) {
+          } else if (!(is_ast_node(ll))) {
             compressor.warn('Condition left of && always true [{file}:{line},{col}]', self.start)
             return make_sequence(self, [self.left, self.right]).optimize(compressor)
           }
@@ -242,7 +234,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
             } else {
               set_flag(self, FALSY)
             }
-          } else if (!(rr?.isAst?.('AST_Node'))) {
+          } else if (!(is_ast_node(rr))) {
             var parent = compressor.parent()
             if (parent.operator == '&&' && parent.left === compressor.self() || compressor.in_boolean_context()) {
               compressor.warn('Dropping side-effect-free && [{file}:{line},{col}]', self.start)
@@ -270,7 +262,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           if (!ll) {
             compressor.warn('Condition left of || always false [{file}:{line},{col}]', self.start)
             return make_sequence(self, [self.left, self.right]).optimize(compressor)
-          } else if (!(ll?.isAst?.('AST_Node'))) {
+          } else if (!(is_ast_node(ll))) {
             compressor.warn('Condition left of || always true [{file}:{line},{col}]', self.start)
             return maintain_this_binding(compressor.parent(), compressor.self(), self.left).optimize(compressor)
           }
@@ -281,7 +273,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
               compressor.warn('Dropping side-effect-free || [{file}:{line},{col}]', self.start)
               return self.left.optimize(compressor)
             }
-          } else if (!(rr?.isAst?.('AST_Node'))) {
+          } else if (!(is_ast_node(rr))) {
             if (compressor.in_boolean_context()) {
               compressor.warn('Boolean || always true [{file}:{line},{col}]', self.start)
               return make_sequence(self, [
@@ -294,7 +286,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           }
           if (self.left.operator == '&&') {
             var lr = self.left.right.evaluate(compressor)
-            if (lr && !(lr?.isAst?.('AST_Node'))) {
+            if (lr && !(is_ast_node(lr))) {
               return make_node('AST_Conditional', self, {
                 condition: self.left.left,
                 consequent: self.left.right,
@@ -309,14 +301,14 @@ export default class AST_Binary extends AST_Node implements IBinary {
           }
 
           var ll = self.left.evaluate(compressor)
-          if (!(ll?.isAst?.('AST_Node'))) {
+          if (!(is_ast_node(ll))) {
             // if we know the value for sure we can simply compute right away.
             return ll == null ? self.right : self.left
           }
 
           if (compressor.in_boolean_context()) {
             const rr = self.right.evaluate(compressor)
-            if (!(rr?.isAst?.('AST_Node')) && !rr) {
+            if (!(is_ast_node(rr)) && !rr) {
               return self.left
             }
           }
@@ -325,8 +317,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
       switch (self.operator) {
         case '+':
           // "foo" + ("bar" + x) => "foobar" + x
-          if (self.left?.isAst?.('AST_Constant') &&
-                  self.right?.isAst?.('AST_Binary') &&
+          if (is_ast_constant(self.left) &&
+                  is_ast_binary(self.right) &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -344,8 +336,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
           }
           // (x + "foo") + "bar" => x + "foobar"
-          if (self.right?.isAst?.('AST_Constant') &&
-                  self.left?.isAst?.('AST_Binary') &&
+          if (is_ast_constant(self.right) &&
+                  is_ast_binary(self.left) &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -363,10 +355,10 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
           }
           // (x + "foo") + ("bar" + y) => (x + "foobar") + y
-          if (self.left?.isAst?.('AST_Binary') &&
+          if (is_ast_binary(self.left) &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor) &&
-                  self.right?.isAst?.('AST_Binary') &&
+                  is_ast_binary(self.right) &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
             var binary = make_node('AST_Binary', self, {
@@ -388,7 +380,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
           }
           // a + -b => a - b
-          if (self.right?.isAst?.('AST_UnaryPrefix') &&
+          if (is_ast_unary_prefix(self.right) &&
                   self.right.operator == '-' &&
                   self.left.is_number(compressor)) {
             self = make_node('AST_Binary', self, {
@@ -399,7 +391,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
             break
           }
           // -a + b => b - a
-          if (self.left?.isAst?.('AST_UnaryPrefix') &&
+          if (is_ast_unary_prefix(self.left) &&
                   self.left.operator == '-' &&
                   reversible() &&
                   self.right.is_number(compressor)) {
@@ -411,7 +403,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
             break
           }
           // `foo${bar}baz` + 1 => `foo${bar}baz1`
-          if (self.left?.isAst?.('AST_TemplateString')) {
+          if (is_ast_template_string(self.left)) {
             var l = self.left
             var r = self.right.evaluate(compressor)
             if (r != self.right) {
@@ -420,7 +412,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
           }
           // 1 + `foo${bar}baz` => `1foo${bar}baz`
-          if (self.right?.isAst?.('AST_TemplateString')) {
+          if (is_ast_template_string(self.right)) {
             var r = self.right
             var l = self.left.evaluate(compressor)
             if (l != self.left) {
@@ -429,8 +421,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
           }
           // `1${bar}2` + `foo${bar}baz` => `1${bar}2foo${bar}baz`
-          if (self.left?.isAst?.('AST_TemplateString') &&
-                  self.right?.isAst?.('AST_TemplateString')) {
+          if (is_ast_template_string(self.left) &&
+                  is_ast_template_string(self.right)) {
             var l = self.left
             var segments = l.segments
             var r = self.right
@@ -449,7 +441,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           if (self.left.is_number(compressor) &&
                   self.right.is_number(compressor) &&
                   reversible() &&
-                  !(self.left?.isAst?.('AST_Binary') &&
+                  !(is_ast_binary(self.left) &&
                       self.left.operator != self.operator &&
                       PRECEDENCE[self.left.operator] >= PRECEDENCE[self.operator])) {
             var reversed = make_node('AST_Binary', self, {
@@ -457,8 +449,8 @@ export default class AST_Binary extends AST_Node implements IBinary {
               left: self.right,
               right: self.left
             })
-            if (self.right?.isAst?.('AST_Constant') &&
-                      !(self.left?.isAst?.('AST_Constant'))) {
+            if (is_ast_constant(self.right) &&
+                      !(is_ast_constant(self.left))) {
               self = best_of(compressor, reversed, self)
             } else {
               self = best_of(compressor, self, reversed)
@@ -466,7 +458,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
           }
           if (associative && self.is_number(compressor)) {
             // a + (b + c) => (a + b) + c
-            if (self.right?.isAst?.('AST_Binary') &&
+            if (is_ast_binary(self.right) &&
                       self.right.operator == self.operator) {
               self = make_node('AST_Binary', self, {
                 operator: self.operator,
@@ -482,10 +474,10 @@ export default class AST_Binary extends AST_Node implements IBinary {
             }
             // (n + 2) + 3 => 5 + n
             // (2 * n) * 3 => 6 + n
-            if (self.right?.isAst?.('AST_Constant') &&
-                      self.left?.isAst?.('AST_Binary') &&
+            if (is_ast_constant(self.right) &&
+                      is_ast_binary(self.left) &&
                       self.left.operator == self.operator) {
-              if (self.left.left?.isAst?.('AST_Constant')) {
+              if (is_ast_constant(self.left.left)) {
                 self = make_node('AST_Binary', self, {
                   operator: self.operator,
                   left: make_node('AST_Binary', self.left, {
@@ -497,7 +489,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
                   }),
                   right: self.left.right
                 })
-              } else if (self.left.right?.isAst?.('AST_Constant')) {
+              } else if (is_ast_constant(self.left.right)) {
                 self = make_node('AST_Binary', self, {
                   operator: self.operator,
                   left: make_node('AST_Binary', self.left, {
@@ -512,12 +504,12 @@ export default class AST_Binary extends AST_Node implements IBinary {
               }
             }
             // (a | 1) | (2 | d) => (3 | a) | b
-            if (self.left?.isAst?.('AST_Binary') &&
+            if (is_ast_binary(self.left) &&
                       self.left.operator == self.operator &&
-                      self.left.right?.isAst?.('AST_Constant') &&
-                      self.right?.isAst?.('AST_Binary') &&
+                      is_ast_constant(self.left.right) &&
+                      is_ast_binary(self.right) &&
                       self.right.operator == self.operator &&
-                      self.right.left?.isAst?.('AST_Constant')) {
+                      is_ast_constant(self.right.left)) {
               self = make_node('AST_Binary', self, {
                 operator: self.operator,
                 left: make_node('AST_Binary', self.left, {
@@ -541,7 +533,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
     // x || (y || z)  ==>  x || y || z
     // x + ("y" + z)  ==>  x + "y" + z
     // "x" + (y + "z")==>  "x" + y + "z"
-    if (self.right?.isAst?.('AST_Binary') &&
+    if (is_ast_binary(self.right) &&
           self.right.operator == self.operator &&
           (lazy_op.has(self.operator) ||
               (self.operator == '+' &&
@@ -702,15 +694,15 @@ export default class AST_Binary extends AST_Node implements IBinary {
 
   lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
-      if (this.left?.isAst?.<ISequence>('AST_Sequence')) {
+      if (is_ast_sequence(this.left)) {
         var x = this.left.expressions.slice()
         var e = this.clone()
         e.left = x.pop()
         x.push(e)
         return make_sequence(this, x).optimize(compressor)
       }
-      if (this.right?.isAst?.<ISequence>('AST_Sequence') && !this.left.has_side_effects(compressor)) {
-        var assign = this.operator == '=' && this.left?.isAst?.('AST_SymbolRef')
+      if (is_ast_sequence(this.right) && !this.left.has_side_effects(compressor)) {
+        var assign = this.operator == '=' && is_ast_symbol_ref(this.left)
         var x = this.right.expressions
         var last = x.length - 1
         for (var i = 0; i < last; i++) {
@@ -754,7 +746,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
 
     if (
       (this.operator === '+' || this.operator === '-') &&
-            this.right?.isAst?.<IUnary>('AST_Unary') && this.right.operator === this.operator
+            is_ast_unary(this.right) && this.right.operator === this.operator
     ) {
       // 1+ +a > needs space between the +
       size += 1
@@ -796,13 +788,13 @@ export default class AST_Binary extends AST_Node implements IBinary {
   needs_parens (output: any) {
     var p = output.parent()
     // (foo && bar)()
-    if (p?.isAst?.('AST_Call') && p.expression === this) { return true }
+    if (is_ast_call(p) && p.expression === this) { return true }
     // typeof (foo && bar)
-    if (p?.isAst?.('AST_Unary')) { return true }
+    if (is_ast_unary(p)) { return true }
     // (foo && bar)["prop"], (foo && bar).prop
     if (p?._needs_parens(this)) { return true }
     // this deals with precedence: 3 * (2 + 1)
-    if (p?.isAst?.('AST_Binary')) {
+    if (is_ast_binary(p)) {
       const po = p.operator
       const so = this.operator
 
@@ -825,7 +817,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
     var op = self.operator
     self.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */
-            self.left?.isAst?.('AST_UnaryPostfix') &&
+            is_ast_unary_postfix(self.left) &&
             self.left.operator == '--') {
       // space is mandatory to avoid outputting -->
       output.print(' ')
@@ -835,9 +827,9 @@ export default class AST_Binary extends AST_Node implements IBinary {
     }
     output.print(op)
     if ((op == '<' || op == '<<') &&
-            self.right?.isAst?.('AST_UnaryPrefix') &&
+            is_ast_unary_prefix(self.right) &&
             self.right.operator == '!' &&
-            self.right.expression?.isAst?.('AST_UnaryPrefix') &&
+            is_ast_unary_prefix(self.right.expression) &&
             self.right.expression.operator == '--') {
       // space is mandatory to avoid outputting <!--
       output.print(' ')
@@ -856,7 +848,7 @@ export default class AST_Binary extends AST_Node implements IBinary {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
-  constructor (args: IBinary_Props) { // eslint-disable-line
+  constructor (args) { // eslint-disable-line
     super(args)
     this.operator = args.operator
     this.left = args.left

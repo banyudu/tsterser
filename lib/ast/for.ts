@@ -13,7 +13,7 @@ import {
   pop,
   to_moz,
   mkshallow,
-  make_node
+  make_node, is_ast_node, is_ast_definitions, is_ast_block_statement, is_ast_break, is_ast_statement, is_ast_if
 } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -29,7 +29,7 @@ export default class AST_For extends AST_IterationStatement {
     }
     if (this.condition) {
       var cond = this.condition.evaluate(compressor)
-      if (!(cond?.isAst?.('AST_Node'))) {
+      if (!(is_ast_node(cond))) {
         if (cond) this.condition = null
         else if (!compressor.option('dead_code')) {
           var orig = this.condition
@@ -38,11 +38,11 @@ export default class AST_For extends AST_IterationStatement {
         }
       }
       if (compressor.option('dead_code')) {
-        if (cond?.isAst?.('AST_Node')) cond = this.condition.tail_node().evaluate(compressor)
+        if (is_ast_node(cond)) cond = this.condition.tail_node().evaluate(compressor)
         if (!cond) {
           var body: any[] = []
           extract_declarations_from_unreachable_code(compressor, this.body, body)
-          if (this.init?.isAst?.('AST_Statement')) {
+          if (is_ast_statement(this.init)) {
             body.push(this.init)
           } else if (this.init) {
             body.push(make_node('AST_SimpleStatement', this.init, {
@@ -124,7 +124,7 @@ export default class AST_For extends AST_IterationStatement {
     output.space()
     output.with_parens(function () {
       if (self.init) {
-        if (self.init?.isAst?.('AST_Definitions')) {
+        if (is_ast_definitions(self.init)) {
           self.init.print(output)
         } else {
           parenthesize_for_noin(self.init, output, true)
@@ -166,10 +166,10 @@ export default class AST_For extends AST_IterationStatement {
 }
 
 function if_break_in_loop (self, compressor) {
-  var first = self.body?.isAst?.('AST_BlockStatement') ? self.body.body[0] : self.body
+  var first = is_ast_block_statement(self.body) ? self.body.body[0] : self.body
   if (compressor.option('dead_code') && is_break(first)) {
     var body: any[] = []
-    if (self.init?.isAst?.('AST_Statement')) {
+    if (is_ast_statement(self.init)) {
       body.push(self.init)
     } else if (self.init) {
       body.push(make_node('AST_SimpleStatement', self.init, {
@@ -186,7 +186,7 @@ function if_break_in_loop (self, compressor) {
       body: body
     })
   }
-  if (first?.isAst?.('AST_If')) {
+  if (is_ast_if(first)) {
     if (is_break(first.body)) { // TODO: check type
       if (self.condition) {
         self.condition = make_node('AST_Binary', self.condition, {
@@ -214,13 +214,13 @@ function if_break_in_loop (self, compressor) {
   return self
 
   function is_break (node: any | null) {
-    return node?.isAst?.('AST_Break') &&
+    return is_ast_break(node) &&
             compressor.loopcontrol_target(node) === compressor.self()
   }
 
   function drop_it (rest) {
     rest = as_statement_array(rest)
-    if (self.body?.isAst?.('AST_BlockStatement')) {
+    if (is_ast_block_statement(self.body)) {
       self.body = self.body.clone()
       self.body.body = rest.concat(self.body.body.slice(1))
       self.body = self.body.transform(compressor)

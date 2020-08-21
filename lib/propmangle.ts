@@ -44,7 +44,7 @@
 'use strict'
 /* global global, self */
 
-import { defaults, base54, push_uniq } from './utils'
+import { defaults, base54, push_uniq, is_ast_object_key_val, is_ast_sequence, is_ast_object_property, is_ast_string, is_ast_sub, is_ast_dot, is_ast_conditional, is_ast_call } from './utils'
 import TreeWalker from './tree-walker'
 import { domprops } from '../tools/domprops'
 import TreeTransformer from './tree-transformer'
@@ -99,11 +99,11 @@ function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
   }
 
   ast.walk(new TreeWalker(function (node: any) {
-    if (node?.isAst?.('AST_ObjectKeyVal') && node.quote) {
+    if (is_ast_object_key_val(node) && node.quote) {
       add(node.key)
-    } else if (node?.isAst?.('AST_ObjectProperty') && node.quote) {
+    } else if (is_ast_object_property(node) && node.quote) {
       add(node.key.name)
-    } else if (node?.isAst?.('AST_Sub')) {
+    } else if (is_ast_sub(node)) {
       addStrings(node.property, add)
     }
   }))
@@ -161,17 +161,17 @@ function mangle_properties (ast: AST_Node, options: any) {
 
   // step 1: find candidates to mangle
   ast.walk(new TreeWalker(function (node: any) {
-    if (node?.isAst?.('AST_ObjectKeyVal')) {
+    if (is_ast_object_key_val(node)) {
       if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
         add(node.key)
       }
-    } else if (node?.isAst?.('AST_ObjectProperty')) {
+    } else if (is_ast_object_property(node)) {
       // setter or getter, since KeyVal is handled above
       if (!keep_quoted_strict || !node.key.end.quote) {
         add(node.key.name)
       }
-    } else if (node?.isAst?.('AST_Dot')) {
+    } else if (is_ast_dot(node)) {
       var declared = !!options.undeclared
       if (!declared) {
         // TODO: check type
@@ -185,11 +185,11 @@ function mangle_properties (ast: AST_Node, options: any) {
                 (!keep_quoted_strict || !node.quote)) {
         add(node.property as string) // TODO: check type
       }
-    } else if (node?.isAst?.('AST_Sub')) {
+    } else if (is_ast_sub(node)) {
       if (!keep_quoted_strict) {
         addStrings(node.property, add)
       }
-    } else if (node?.isAst?.('AST_Call') &&
+    } else if (is_ast_call(node) &&
             node.expression.print_to_string() == 'Object.defineProperty') {
       addStrings(node.args[1], add)
     }
@@ -197,23 +197,23 @@ function mangle_properties (ast: AST_Node, options: any) {
 
   // step 2: transform the tree, renaming properties
   return ast.transform(new TreeTransformer(function (node: any) {
-    if (node?.isAst?.('AST_ObjectKeyVal')) {
+    if (is_ast_object_key_val(node)) {
       if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
         node.key = mangle(node.key)
       }
-    } else if (node?.isAst?.('AST_ObjectProperty')) {
+    } else if (is_ast_object_property(node)) {
       // setter, getter, method or class field
       if (!keep_quoted_strict || !node.key.end.quote) {
         node.key.name = mangle(node.key.name)
       }
-    } else if (node?.isAst?.('AST_Dot')) {
+    } else if (is_ast_dot(node)) {
       if (!keep_quoted_strict || !node.quote) {
         node.property = mangle(node.property as string) // TODO: check type
       }
-    } else if (!options.keep_quoted && node?.isAst?.('AST_Sub')) {
+    } else if (!options.keep_quoted && is_ast_sub(node)) {
       node.property = mangleStrings(node.property) // TODO: check type
-    } else if (node?.isAst?.('AST_Call') &&
+    } else if (is_ast_call(node) &&
             node.expression.print_to_string() == 'Object.defineProperty') {
       node.args[1] = mangleStrings(node.args[1])
     }
@@ -276,12 +276,12 @@ function mangle_properties (ast: AST_Node, options: any) {
 
   function mangleStrings (node: any) {
     return node.transform(new TreeTransformer(function (node: any) {
-      if (node?.isAst?.('AST_Sequence')) {
+      if (is_ast_sequence(node)) {
         var last = node.expressions.length - 1
         node.expressions[last] = mangleStrings(node.expressions[last])
-      } else if (node?.isAst?.('AST_String')) {
+      } else if (is_ast_string(node)) {
         node.value = mangle(node.value)
-      } else if (node?.isAst?.('AST_Conditional')) {
+      } else if (is_ast_conditional(node)) {
         node.consequent = mangleStrings(node.consequent)
         node.alternative = mangleStrings(node.alternative)
       }

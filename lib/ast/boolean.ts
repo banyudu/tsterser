@@ -1,5 +1,5 @@
 import AST_Atom from './atom'
-import { make_node, To_Moz_Literal } from '../utils'
+import { make_node, To_Moz_Literal, is_ast_binary } from '../utils'
 
 export default class AST_Boolean extends AST_Atom {
   _optimize (compressor) {
@@ -10,7 +10,7 @@ export default class AST_Boolean extends AST_Atom {
     }
     var p = compressor.parent()
     if (compressor.option('booleans_as_integers')) {
-      if (p?.isAst?.('AST_Binary') && (p.operator == '===' || p.operator == '!==')) {
+      if (is_ast_binary(p) && (p.operator == '===' || p.operator == '!==')) {
         p.operator = p.operator.replace(/=$/, '')
       }
       return make_node('AST_Number', this, {
@@ -18,7 +18,7 @@ export default class AST_Boolean extends AST_Atom {
       })
     }
     if (compressor.option('booleans')) {
-      if (p?.isAst?.('AST_Binary') && (p.operator == '==' ||
+      if (is_ast_binary(p) && (p.operator == '==' ||
                                           p.operator == '!=')) {
         compressor.warn('Non-strict equality against boolean: {operator} {value} [{file}:{line},{col}]', {
           operator: p.operator,

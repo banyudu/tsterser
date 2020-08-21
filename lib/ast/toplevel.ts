@@ -20,7 +20,7 @@ import {
   redefined_catch_def,
   keep_name,
   base54,
-  reset_variables
+  reset_variables, is_ast_prop_access, is_ast_defun, is_ast_directive, is_ast_scope, is_ast_labeled_statement, is_ast_symbol_catch, is_ast_var_def, is_ast_lambda, is_ast_label
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
 import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP } from '../constants'
@@ -50,7 +50,7 @@ export default class AST_Toplevel extends AST_Scope {
       if (!def) return
       var level = 0; var child = node; var parent
       while (parent = this.parent(level++)) {
-        if (!(parent?.isAst?.('AST_PropAccess'))) break
+        if (!(is_ast_prop_access(parent))) break
         if (parent.expression !== child) break
         child = parent
       }
@@ -70,7 +70,7 @@ export default class AST_Toplevel extends AST_Scope {
       clear_flag(node, CLEAR_BETWEEN_PASSES)
       if (reduce_vars) {
         if (compressor.top_retain &&
-                  node?.isAst?.('AST_Defun') && // Only functions are retained
+                  is_ast_defun(node) && // Only functions are retained
                   preparation.parent() === self
         ) {
           set_flag(node, TOP)
@@ -92,7 +92,7 @@ export default class AST_Toplevel extends AST_Scope {
     return this.transform(new TreeTransformer(function (self) {
       if (self.TYPE == 'Call') {
         var exp = self.expression
-        if (exp?.isAst?.('AST_PropAccess')) {
+        if (is_ast_prop_access(exp)) {
           var name = exp.expression
           while (name.expression) {
             name = name.expression
@@ -156,7 +156,7 @@ export default class AST_Toplevel extends AST_Scope {
     var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
     var wrapped_tl = parse(_wrapped_tl)
     wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: any) {
-      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
+      if (is_ast_directive(node) && node.value == '$ORIG') {
         return MAP.splice(body)
       }
       return undefined
@@ -176,7 +176,7 @@ export default class AST_Toplevel extends AST_Scope {
       args_values.slice(index + 1),
       ')'
     ].join('')).transform(new TreeTransformer(function (node: any) {
-      if (node?.isAst?.('AST_Directive') && node.value == '$ORIG') {
+      if (is_ast_directive(node) && node.value == '$ORIG') {
         return MAP.splice(body)
       }
       return undefined
@@ -216,8 +216,8 @@ export default class AST_Toplevel extends AST_Scope {
     var cname = 0
     this.globals.forEach(rename)
     this.walk(new TreeWalker(function (node: any) {
-      if (node?.isAst?.('AST_Scope')) node.variables.forEach(rename)
-      if (node?.isAst?.('AST_SymbolCatch')) rename(node.definition())
+      if (is_ast_scope(node)) node.variables.forEach(rename)
+      if (is_ast_symbol_catch(node)) rename(node.definition())
     }))
 
     function next_name () {
@@ -249,8 +249,8 @@ export default class AST_Toplevel extends AST_Scope {
       options.reserved?.forEach(to_avoid)
       this.globals.forEach(add_def)
       this.walk(new TreeWalker(function (node: any) {
-        if (node?.isAst?.('AST_Scope')) node.variables.forEach(add_def)
-        if (node?.isAst?.('AST_SymbolCatch')) add_def(node.definition())
+        if (is_ast_scope(node)) node.variables.forEach(add_def)
+        if (is_ast_symbol_catch(node)) add_def(node.definition())
       }))
       return avoid
 
@@ -291,14 +291,14 @@ export default class AST_Toplevel extends AST_Scope {
     }
 
     var tw = new TreeWalker(function (node: any, descend) {
-      if (node?.isAst?.('AST_LabeledStatement')) {
+      if (is_ast_labeled_statement(node)) {
         // lname is incremented when we get to the AST_Label
         var save_nesting = lname
         descend()
         lname = save_nesting
         return true // don't descend again in TreeWalker
       }
-      if (node?.isAst?.('AST_Scope')) {
+      if (is_ast_scope(node)) {
         node.variables.forEach(collect)
         return
       }
@@ -308,15 +308,15 @@ export default class AST_Toplevel extends AST_Scope {
       }
       if (
         function_defs &&
-              node?.isAst?.('AST_VarDef') &&
-              node.value?.isAst?.('AST_Lambda') &&
+              is_ast_var_def(node) &&
+              is_ast_lambda(node.value) &&
               !node.value.name &&
               keep_name(options.keep_fnames, node.name.name)
       ) {
         function_defs.add(node.name.definition?.().id)
         return
       }
-      if (node?.isAst?.('AST_Label')) {
+      if (is_ast_label(node)) {
         let name
         do {
           name = base54(++lname)
@@ -324,7 +324,7 @@ export default class AST_Toplevel extends AST_Scope {
         node.mangled_name = name
         return true
       }
-      if (!(options.ie8 || options.safari10) && node?.isAst?.('AST_SymbolCatch')) {
+      if (!(options.ie8 || options.safari10) && is_ast_symbol_catch(node)) {
         to_mangle.push(node.definition())
       }
     })

@@ -13,13 +13,11 @@ import {
   pass_through,
   make_sequence,
   anyMayThrow,
-  anySideEffect
+  anySideEffect, is_ast_hole
 } from '../utils'
 
-import { IArray_Props, INode, IArray } from '../../types/ast'
-
-export default class AST_Array extends AST_Node implements IArray {
-  elements: INode[]
+export default class AST_Array extends AST_Node {
+  elements: AST_Node[]
 
   to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
     return insert_default(new AST_Destructuring({
@@ -110,7 +108,7 @@ export default class AST_Array extends AST_Node implements IArray {
         // If the final element is a hole, we need to make sure it
         // doesn't look like a trailing comma, by inserting an actual
         // trailing comma.
-        if (i === len - 1 && exp?.isAst?.('AST_Hole')) { output.comma() }
+        if (i === len - 1 && is_ast_hole(exp)) { output.comma() }
       })
       if (len > 0) output.space()
     })
@@ -123,7 +121,7 @@ export default class AST_Array extends AST_Node implements IArray {
   }
 
   static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args: IArray_Props) { // eslint-disable-line
+  constructor (args) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }

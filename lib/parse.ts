@@ -48,7 +48,7 @@ import {
   characters,
   defaults,
   makePredicate,
-  set_annotation
+  set_annotation, is_ast_string, is_ast_iteration_statement, is_ast_definitions, is_ast_expansion, is_ast_symbol_method, is_ast_symbol_declaration, is_ast_symbol_ref, is_ast_prop_access, is_ast_object, is_ast_continue, is_ast_destructuring, is_ast_array, is_ast_lambda, is_ast_call, is_ast_symbol_class_property, is_ast_def_class, is_ast_object_property, is_ast_node, is_ast_simple_statement, is_ast_assign, is_ast_arrow, is_ast_unary_prefix
 } from './utils'
 import {
   AST_Accessor,
@@ -1126,7 +1126,7 @@ function parse ($TEXT: string, opt?: any) {
           }
         }
         var dir = S.in_directives; var stat = simple_statement()
-        return dir && stat.body?.isAst?.('AST_String') ? new AST_Directive(stat.body) : stat
+        return dir && is_ast_string(stat.body) ? new AST_Directive(stat.body) : stat
       case 'template_head':
       case 'num':
       case 'big_int':
@@ -1325,12 +1325,12 @@ function parse ($TEXT: string, opt?: any) {
     S.labels.push(label)
     var stat = statement()
     S.labels.pop()
-    if (!(stat?.isAst?.('AST_IterationStatement'))) {
+    if (!(is_ast_iteration_statement(stat))) {
       // check for `continue` that refers to this label.
       // those should be reported as syntax errors.
       // https://github.com/mishoo/UglifyJS2/issues/287
       label.references.forEach(function (ref) {
-        if (ref?.isAst?.('AST_Continue')) {
+        if (is_ast_continue(ref)) {
           ref = ref.label?.start
           croak('Continue label `' + label.name + '` refers to non-IterationStatement.',
             ref.line, ref.col, ref.pos)
@@ -1385,9 +1385,9 @@ function parse ($TEXT: string, opt?: any) {
         token_error(await_tok, for_await_error)
       }
       if (is_in || is_of) {
-        if (init?.isAst?.('AST_Definitions')) {
+        if (is_ast_definitions(init)) {
           if (init.definitions.length > 1) { token_error(init.start, 'Only one variable declaration allowed in for..in loop') }
-        } else if (!(is_assignable(init) || (init = to_destructuring(init))?.isAst?.('AST_Destructuring'))) {
+        } else if (!(is_assignable(init) || is_ast_destructuring((init = to_destructuring(init))))) {
           token_error(init.start, 'Invalid left-hand side in for..in loop')
         }
         next()
@@ -1418,7 +1418,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function for_of (init, is_await) {
-    var lhs = init?.isAst?.('AST_Definitions') ? init.definitions[0].name : null
+    var lhs = is_ast_definitions(init) ? init.definitions[0].name : null
     var obj = expression(true)
     expect(')')
     return new AST_ForOf({
@@ -1479,7 +1479,7 @@ function parse ($TEXT: string, opt?: any) {
       }
     }
 
-    if (name && ctor !== AST_Accessor && !(name?.isAst?.('AST_SymbolDeclaration'))) { unexpected(prev()) }
+    if (name && ctor !== AST_Accessor && !(is_ast_symbol_declaration(name))) { unexpected(prev()) }
 
     var args: any = []
     var body: any = _function_body(true, is_generator || is_generator_property, is_async, name, args)
@@ -1566,7 +1566,7 @@ function parse ($TEXT: string, opt?: any) {
         if (is('punc', ')') && (options.ecma as number) < 2017) unexpected()
       }
 
-      if (param?.isAst?.('AST_Expansion')) {
+      if (is_ast_expansion(param)) {
         break
       }
     }
@@ -2191,7 +2191,7 @@ function parse ($TEXT: string, opt?: any) {
             end.comments_after = ex.end.comments_after
           }
           ex.end = end
-          if (ex?.isAst?.('AST_Call')) annotate(ex)
+          if (is_ast_call(ex)) annotate(ex)
           return subscripts(ex, allow_calls)
         case '[':
           return subscripts(array_(), allow_calls)
@@ -2358,7 +2358,7 @@ function parse ($TEXT: string, opt?: any) {
       a.push(new AST_ObjectKeyVal({
         start: start,
         quote: start?.quote,
-        key: name?.isAst?.('AST_Node') ? name : '' + name,
+        key: is_ast_node(name) ? name : '' + name,
         value: value,
         end: prev()
       }))
@@ -2468,7 +2468,7 @@ function parse ($TEXT: string, opt?: any) {
         is_generator: is_generator,
         async: is_async,
         key: name,
-        quote: name?.isAst?.('AST_SymbolMethod')
+        quote: is_ast_symbol_method(name)
           ? property_token.quote : undefined,
         value: create_accessor(is_generator, is_async),
         end: prev()
@@ -2483,7 +2483,7 @@ function parse ($TEXT: string, opt?: any) {
           start: start,
           static: is_static,
           key: name,
-          quote: name?.isAst?.('AST_SymbolMethod')
+          quote: is_ast_symbol_method(name)
             ? setter_token?.quote : undefined,
           value: create_accessor(),
           end: prev()
@@ -2496,7 +2496,7 @@ function parse ($TEXT: string, opt?: any) {
           start: start,
           static: is_static,
           key: name,
-          quote: name?.isAst?.('AST_SymbolMethod')
+          quote: is_ast_symbol_method(name)
             ? setter_token?.quote : undefined,
           value: create_accessor(),
           end: prev()
@@ -2505,7 +2505,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     if (is_class) {
       const key = get_class_property_key_ast(name, property_token)
-      const quote = key?.isAst?.('AST_SymbolClassProperty')
+      const quote = is_ast_symbol_class_property(key)
         ? property_token.quote
         : undefined
       if (is('operator', '=')) {
@@ -2707,11 +2707,11 @@ function parse ($TEXT: string, opt?: any) {
                 is_token(peek(), 'punc')) {
       exported_value = expression(false)
       semicolon()
-    } else if ((node = statement(is_default))?.isAst?.('AST_Definitions') && is_default) {
+    } else if (is_ast_definitions((node = statement(is_default))) && is_default) {
       unexpected(node.start)
-    } else if (node?.isAst?.('AST_Definitions') || node?.isAst?.('AST_Lambda') || node?.isAst?.('AST_DefClass')) {
+    } else if (is_ast_definitions(node) || is_ast_lambda(node) || is_ast_def_class(node)) {
       exported_definition = node
-    } else if (node?.isAst?.('AST_SimpleStatement')) {
+    } else if (is_ast_simple_statement(node)) {
       exported_value = node.body
     } else {
       unexpected(node.start)
@@ -2794,7 +2794,7 @@ function parse ($TEXT: string, opt?: any) {
       if (name == 'yield') {
         token_error(sym.start, 'Unexpected yield identifier inside strict mode')
       }
-      if (sym?.isAst?.('AST_SymbolDeclaration') && (name == 'arguments' || name == 'eval')) {
+      if (is_ast_symbol_declaration(sym) && (name == 'arguments' || name == 'eval')) {
         token_error(sym.start, 'Unexpected ' + name + ' in strict mode')
       }
     }
@@ -2922,7 +2922,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     var val = expr_atom(allow_calls, allow_arrows)
     while (is('operator') && UNARY_POSTFIX.has(S.token?.value as string) && !has_newline_before(S.token)) {
-      if (val?.isAst?.('AST_Arrow')) unexpected()
+      if (is_ast_arrow(val)) unexpected()
       val = make_unary(AST_UnaryPostfix, S.token, val)
       val.start = start
       val.end = S.token
@@ -2939,7 +2939,7 @@ function parse ($TEXT: string, opt?: any) {
         if (!is_assignable(expr)) { croak('Invalid use of ' + op + ' operator', token.line, token.col, token.pos) }
         break
       case 'delete':
-        if (expr?.isAst?.('AST_SymbolRef') && S.input.has_directive('use strict')) { croak('Calling delete on expression not allowed in strict mode', expr.start.line, expr.start.col, expr.start.pos) }
+        if (is_ast_symbol_ref(expr) && S.input.has_directive('use strict')) { croak('Calling delete on expression not allowed in strict mode', expr.start.line, expr.start.col, expr.start.pos) }
         break
     }
     return new ctor({ operator: op, expression: expr })
@@ -2948,7 +2948,7 @@ function parse ($TEXT: string, opt?: any) {
   var expr_op = function (left: any, min_prec: number, no_in: boolean) {
     var op = is('operator') ? S.token?.value : null
     if (op == 'in' && no_in) op = null
-    if (op == '**' && left?.isAst?.('AST_UnaryPrefix') &&
+    if (op == '**' && is_ast_unary_prefix(left) &&
             /* unary token in front not allowed - parenthesis required */
             !is_token(left.start, 'punc', '(') &&
             left.operator !== '--' && left.operator !== '++') { unexpected(left.start) }
@@ -2990,23 +2990,23 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function is_assignable (expr) {
-    return expr?.isAst?.('AST_PropAccess') || expr?.isAst?.('AST_SymbolRef')
+    return is_ast_prop_access(expr) || is_ast_symbol_ref(expr)
   }
 
   function to_destructuring (node: any) {
-    if (node?.isAst?.('AST_Object')) {
+    if (is_ast_object(node)) {
       node = new AST_Destructuring({
         start: node.start,
         names: node.properties.map(to_destructuring),
         is_array: false,
         end: node.end
       })
-    } else if (node?.isAst?.('AST_Array')) {
+    } else if (is_ast_array(node)) {
       var names: any[] = []
 
       for (var i = 0; i < node.elements.length; i++) {
         // Only allow expansion as last element
-        if (node.elements[i]?.isAst?.('AST_Expansion')) {
+        if (is_ast_expansion(node.elements[i])) {
           if (i + 1 !== node.elements.length) {
             token_error(node.elements[i].start, 'Spread must the be last element in destructuring array')
           }
@@ -3022,9 +3022,9 @@ function parse ($TEXT: string, opt?: any) {
         is_array: true,
         end: node.end
       })
-    } else if (node?.isAst?.('AST_ObjectProperty')) {
+    } else if (is_ast_object_property(node)) {
       node.value = to_destructuring(node.value)
-    } else if (node?.isAst?.('AST_Assign')) {
+    } else if (is_ast_assign(node)) {
       node = new AST_DefaultAssign({
         start: node.start,
         left: node.left,
@@ -3054,7 +3054,7 @@ function parse ($TEXT: string, opt?: any) {
     var val = S.token?.value
 
     if (is('operator') && ASSIGNMENT.has(val as string)) {
-      if (is_assignable(left) || (left = to_destructuring(left))?.isAst?.('AST_Destructuring')) {
+      if (is_assignable(left) || is_ast_destructuring((left = to_destructuring(left)))) {
         next()
         return new AST_Assign({
           start: start,
