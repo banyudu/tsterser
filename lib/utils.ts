@@ -1745,15 +1745,21 @@ export function tighten_body (statements, compressor) {
         var may_throw = candidate.may_throw(compressor)
         var funarg = is_ast_symbol_funarg(candidate.name)
         var hit = funarg
-        var abort = false; var replaced: any = 0; var can_replace = !args || !hit
+        var abort = false
+        var replaced: any = 0
+        var can_replace = !args || !hit
         if (!can_replace) {
-          for (var j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; !abort && j < args.length; j++) {
-            args[j].transform(scanner)
+          if (!abort) {
+            for (var j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
+              args[j].transform(scanner)
+            }
           }
           can_replace = true
         }
-        for (var i = stat_index; !abort && i < statements.length; i++) {
-          statements[i].transform(scanner)
+        if (!abort) {
+          for (var i = stat_index; i < statements.length; i++) {
+            statements[i].transform(scanner)
+          }
         }
         if (value_def) {
           var def = candidate.name.definition?.()
@@ -1762,8 +1768,10 @@ export function tighten_body (statements, compressor) {
             abort = false
             hit_index = 0
             hit = funarg
-            for (let i = stat_index; !abort && i < statements.length; i++) {
-              statements[i].transform(multi_replacer)
+            if (!abort) {
+              for (let i = stat_index; i < statements.length; i++) {
+                statements[i].transform(multi_replacer)
+              }
             }
             value_def.single_use = false
           }
@@ -1779,15 +1787,17 @@ export function tighten_body (statements, compressor) {
       // Scan case expressions first in a switch statement
       if (is_ast_switch(node)) {
         node.expression = node.expression.transform(scanner)
-        for (var i = 0, len = node.body.length; !abort && i < len; i++) {
-          var branch = node.body[i]
-          if (is_ast_case(branch)) {
-            if (!hit) {
-              if (branch !== hit_stack[hit_index]) continue
-              hit_index++
+        if (!abort) {
+          for (var i = 0, len = node.body.length; i < len; i++) {
+            var branch = node.body[i]
+            if (is_ast_case(branch)) {
+              if (!hit) {
+                if (branch !== hit_stack[hit_index]) continue
+                hit_index++
+              }
+              branch.expression = branch.expression.transform(scanner)
+              if (!replace_all) break
             }
-            branch.expression = branch.expression.transform(scanner)
-            if (!replace_all) break
           }
         }
         abort = true

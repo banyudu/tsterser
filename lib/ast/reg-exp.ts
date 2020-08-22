@@ -14,7 +14,7 @@ export default class AST_RegExp extends AST_Constant {
     let evaluated = compressor.evaluated_regexps.get(this)
     if (evaluated === undefined) {
       try {
-        evaluated = (0, eval)(this.print_to_string())
+        evaluated = eval(this.print_to_string()) // eslint-disable-line no-eval
       } catch (e) {
         evaluated = null
       }

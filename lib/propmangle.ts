@@ -75,7 +75,7 @@ function find_builtins (reserved: Set<string | undefined>) {
     String, Boolean, Error, Math,
     Date, RegExp, objects.Symbol, ArrayBuffer,
     DataView, decodeURI, decodeURIComponent,
-    encodeURI, encodeURIComponent, eval, EvalError,
+    encodeURI, encodeURIComponent, eval, EvalError, // eslint-disable-line no-eval
     Float32Array, Float64Array, Int8Array, Int16Array,
     Int32Array, isFinite, isNaN, JSON, objects.Map, parseFloat,
     parseInt, objects.Promise, objects.Proxy, RangeError, ReferenceError,
