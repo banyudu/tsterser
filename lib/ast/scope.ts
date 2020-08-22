@@ -799,7 +799,7 @@ export default class AST_Scope extends AST_Block {
       this.variables.set(symbol.name, def)
       def.global = !this.parent_scope
     }
-    return symbol.thedef = def
+    return (symbol.thedef = def)
   }
 
   next_mangled (options: any, def: any) {
@@ -1005,7 +1005,8 @@ export default class AST_Scope extends AST_Block {
         } while (tw.parent(i++) !== in_destructuring)
       }
       var node = tw.parent(level)
-      if (def.export = is_ast_export(node) ? MASK_EXPORT_DONT_MANGLE : 0) {
+      def.export = is_ast_export(node) ? MASK_EXPORT_DONT_MANGLE : 0
+      if (def.export) {
         var exported = node.exported_definition
         if ((is_ast_defun(exported) || is_ast_def_class(exported)) && node.is_default) {
           def.export = MASK_EXPORT_WANT_MANGLE

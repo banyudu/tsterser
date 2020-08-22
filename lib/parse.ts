@@ -507,7 +507,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
         case 120: case 88: // xX
           return has_x ? false : (has_x = true)
         case 101: case 69: // eE
-          return has_x ? true : has_e ? false : (has_e = after_e = true)
+          return has_x ? true : has_e ? false : (has_e = (after_e = true))
         case 45: // -
           return after_e || (i == 0 && !prefix)
         case 43: // +
@@ -1154,7 +1154,7 @@ function parse ($TEXT: string, opt?: any) {
           ? labeled_statement()
           : simple_statement()
 
-      case 'punc':
+      case 'punc': {
         switch (S.token?.value) {
           case '{':
             return new AST_BlockStatement({
@@ -1172,8 +1172,8 @@ function parse ($TEXT: string, opt?: any) {
           default:
             unexpected()
         }
-
-      case 'keyword':
+      }
+      case 'keyword': {
         switch (S.token?.value) {
           case 'break':
             next()
@@ -1252,7 +1252,7 @@ function parse ($TEXT: string, opt?: any) {
               body: in_loop(switch_body_)
             })
 
-          case 'throw':
+          case 'throw': {
             next()
             if (has_newline_before(S.token)) { croak("Illegal newline after 'throw'") }
             const value = expression(true)
@@ -1260,7 +1260,7 @@ function parse ($TEXT: string, opt?: any) {
             return new AST_Throw({
               value: value
             })
-
+          }
           case 'try':
             next()
             return try_()
@@ -1305,6 +1305,7 @@ function parse ($TEXT: string, opt?: any) {
             }
           }
         }
+      }
     }
     unexpected()
   })
@@ -1341,7 +1342,9 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function simple_statement (tmp?) {
-    return new AST_SimpleStatement({ body: (tmp = expression(true), semicolon(), tmp) })
+    tmp = expression(true)
+    semicolon()
+    return new AST_SimpleStatement({ body: tmp })
   }
 
   function break_cont (type) {
@@ -2666,7 +2669,7 @@ function parse ($TEXT: string, opt?: any) {
     if (is('keyword', 'default')) {
       is_default = true
       next()
-    } else if (exported_names = map_names(false)) {
+    } else if ((exported_names = map_names(false))) {
       if (is('name', 'from')) {
         next()
 

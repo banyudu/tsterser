@@ -87,7 +87,7 @@ export default class AST_SymbolRef extends AST_Symbol {
               if (is_ast_defun(scope) || is_func_expr(scope)) {
                 set_flag(scope, INLINED)
               }
-            } while (scope = scope.parent_scope)
+            } while ((scope = scope.parent_scope))
           }
         }
       }

@@ -1400,14 +1400,14 @@ export function make_num (num: number) {
     }
   }
   var match: RegExpExecArray | null, len, digits
-  if (match = /^\.0+/.exec(str)) {
+  if ((match = /^\.0+/.exec(str))) {
     len = match[0].length
     digits = str.slice(len)
     candidates.push(digits + 'e-' + (digits.length + len - 1))
-  } else if (match = /0+$/.exec(str)) {
+  } else if ((match = /0+$/.exec(str))) {
     len = match[0].length
     candidates.push(str.slice(0, -len) + 'e' + len)
-  } else if (match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str)) {
+  } else if ((match = /^(\d)\.(\d+)e(-?\d+)$/.exec(str))) {
     candidates.push(match[1] + match[2] + 'e' + (Number(match[3]) - match[2].length))
   }
   return best_of_string(candidates)
@@ -1460,7 +1460,7 @@ export function best_of (compressor, ast1, ast2) {
 // a statement.
 export function first_in_statement (stack: any) {
   let node = stack.parent(-1)
-  for (let i = 0, p; p = stack.parent(i); i++) {
+  for (let i = 0, p; (p = stack.parent(i)); i++) {
     if (is_ast_statement(p) && p.body === node) { return true }
     if ((is_ast_sequence(p) && p.expressions[0] === node) ||
             (p.TYPE === 'Call' && p.expression === node) ||
@@ -1560,7 +1560,7 @@ export function tighten_body (statements, compressor) {
       } else if (is_ast_try(node)) {
         in_try = true
       }
-    } while (node = compressor.parent(level++))
+    } while ((node = compressor.parent(level++)))
   }
 
   // Search from right to left for assignment-like expressions:
@@ -1822,14 +1822,14 @@ export function tighten_body (statements, compressor) {
         if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
           var s = node.definition?.().scope
           if (s !== scope) {
-            while (s = s.parent_scope) {
+            while ((s = s.parent_scope)) {
               if (s === scope) return true
             }
           }
-          return found = true
+          return (found = true)
         }
         if ((fn_strict || scan_this) && is_ast_this(node)) {
-          return found = true
+          return (found = true)
         }
         if (is_ast_scope(node) && !(is_ast_arrow(node))) {
           var prev = scan_this
@@ -2032,7 +2032,7 @@ export function tighten_body (statements, compressor) {
       if (value.name == 'arguments') return
       var def = value.definition?.()
       if (def.undeclared) return
-      return value_def = def
+      return (value_def = def)
     }
 
     function get_lhs (expr) {
@@ -2981,7 +2981,7 @@ export function has_break_or_continue (loop, parent?) {
   var tw = new TreeWalker(function (node: any) {
     if (found || is_ast_scope(node)) return true
     if (is_ast_loop_control(node) && tw.loopcontrol_target(node) === loop) {
-      return found = true
+      return (found = true)
     }
   })
   if (is_ast_labeled_statement(parent)) tw.push(parent)
@@ -3398,7 +3398,7 @@ export function mark_lambda (tw: TreeWalker, descend, compressor) {
 
 export function recursive_ref (compressor, def) {
   var node
-  for (var i = 0; node = compressor.parent(i); i++) {
+  for (var i = 0; (node = compressor.parent(i)); i++) {
     if (
       is_ast_lambda(node) ||
             is_ast_class(node)
@@ -3516,7 +3516,7 @@ export function is_object (node: any) {
 
 export function within_array_or_object_literal (compressor) {
   var node; var level = 0
-  while (node = compressor.parent(level++)) {
+  while ((node = compressor.parent(level++))) {
     if (is_ast_statement(node)) return false
     if (is_ast_array(node) ||
             is_ast_object_key_val(node) ||
@@ -3643,7 +3643,7 @@ export function find_scope (tw: TreeWalker) {
 
 export function find_variable (compressor, name) {
   var scope; var i = 0
-  while (scope = compressor.parent(i++)) {
+  while ((scope = compressor.parent(i++))) {
     if (is_ast_scope(scope)) break
     if (is_ast_catch(scope) && scope.argname) {
       scope = scope.argname.definition?.().scope

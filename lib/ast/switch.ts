@@ -83,7 +83,7 @@ export default class AST_Switch extends AST_Block {
       body[0].body = decl.concat(body[0].body)
     }
     self.body = body
-    while (branch = body[body.length - 1]) {
+    while ((branch = body[body.length - 1])) {
       var stat = branch.body[branch.body.length - 1]
       if (is_ast_break(stat) && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
       if (branch.body.length || is_ast_case(branch) &&

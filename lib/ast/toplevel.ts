@@ -49,7 +49,7 @@ export default class AST_Toplevel extends AST_Scope {
       var def = node._find_defs(compressor, '')
       if (!def) return
       var level = 0; var child = node; var parent
-      while (parent = this.parent(level++)) {
+      while ((parent = this.parent(level++))) {
         if (!(is_ast_prop_access(parent))) break
         if (parent.expression !== child) break
         child = parent

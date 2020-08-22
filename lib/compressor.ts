@@ -194,7 +194,7 @@ export default class Compressor extends TreeWalker {
   in_boolean_context () {
     if (!this.option('booleans')) return false
     var self = this.self()
-    for (var i = 0, p; p = this.parent(i); i++) {
+    for (var i = 0, p; (p = this.parent(i)); i++) {
       const result = p?._in_boolean_context(self)
       if (result) {
         return true
