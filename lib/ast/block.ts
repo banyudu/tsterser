@@ -10,7 +10,6 @@ import {
   walk_body,
   clone_block_scope,
   list_overhead,
-  pass_through,
   to_moz,
   do_list
 } from '../utils'
@@ -53,7 +52,7 @@ export default class AST_Block extends AST_Statement {
     return 2 + list_overhead(this.body)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp = (other) => true
   _transform (self, tw: TreeWalker) {
     self.body = do_list(self.body, tw)
   }
