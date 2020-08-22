@@ -107,7 +107,7 @@ function minify (files: any, options: any): any {
         safari10: false,
         toplevel: false
       }, true)
-      if (options.mangle && options.mangle.properties) {
+      if (options.mangle?.properties) {
         if (typeof options.mangle.properties !== 'object') {
           options.mangle.properties = {}
         }
@@ -120,8 +120,8 @@ function minify (files: any, options: any): any {
           options.mangle.properties.cache = options.nameCache.props || {}
         }
       }
-      init_cache(options.mangle && options.mangle.cache)
-      init_cache(options.mangle && options.mangle.properties && options.mangle.properties.cache)
+      init_cache(options.mangle?.cache)
+      init_cache(options.mangle?.properties?.cache)
     }
     if (options.sourceMap) {
       options.sourceMap = defaults(options.sourceMap, {
@@ -188,7 +188,7 @@ function minify (files: any, options: any): any {
       toplevel.mangle_names(options.mangle)
     }
     if (timings) timings.properties = Date.now()
-    if (options.mangle && options.mangle.properties) {
+    if (options.mangle?.properties) {
       toplevel = mangle_properties(toplevel, options.mangle.properties)
     }
     if (timings) timings.output = Date.now()
@@ -241,7 +241,7 @@ function minify (files: any, options: any): any {
     }
     if (options.nameCache && options.mangle) {
       if (options.mangle.cache) options.nameCache.vars = cache_to_json(options.mangle.cache)
-      if (options.mangle.properties && options.mangle.properties.cache) {
+      if (options.mangle.properties?.cache) {
         options.nameCache.props = cache_to_json(options.mangle.properties.cache)
       }
     }

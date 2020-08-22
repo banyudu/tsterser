@@ -122,7 +122,7 @@ export default class AST_SymbolRef extends AST_Symbol {
         if (def.recursive_refs > 0 && is_ast_symbol_defun(fixed.name)) {
           const defun_def = fixed.name.definition?.()
           let lambda_def = fixed.variables.get(fixed.name.name)
-          let name = lambda_def && lambda_def.orig[0]
+          let name = lambda_def?.orig[0]
           if (!(is_ast_symbol_lambda(name))) {
             name = make_node('AST_SymbolLambda', fixed.name, fixed.name)
             name.scope = fixed
@@ -300,7 +300,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   _size (): number {
     const { name, thedef } = this
 
-    if (thedef && thedef.global) return name.length
+    if (thedef?.global) return name.length
 
     if (name === 'arguments') return 9
 

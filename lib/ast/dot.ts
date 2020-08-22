@@ -117,7 +117,7 @@ export default class AST_Dot extends AST_PropAccess {
     } else if (!this.may_throw_on_access(compressor)) {
       map = native_fns.get('Object')
     }
-    return map && map.has(this.property)
+    return map?.has(this.property)
   }
 
   _walk (visitor: TreeWalker) {

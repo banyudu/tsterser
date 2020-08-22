@@ -27,7 +27,7 @@ export default class AST_Exit extends AST_Jump {
     if (this.value) {
       output.space()
       const comments = this.value.start.comments_before
-      if (comments && comments.length && !output.printed_comments.has(comments)) {
+      if (comments?.length && !output.printed_comments.has(comments)) {
         output.print('(')
         this.value.print(output)
         output.print(')')

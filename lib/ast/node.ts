@@ -160,7 +160,7 @@ export default class AST_Node extends AST {
     let size = 0
     walk_parent(this, (node, info) => {
       size += node?._size(info) || 0
-    }, stack || (compressor && compressor.stack))
+    }, stack || (compressor?.stack))
 
     // just to save a bit of memory
 

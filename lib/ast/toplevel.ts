@@ -242,7 +242,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   find_colliding_names (options: any) {
-    const cache = options.cache && options.cache.props
+    const cache = options.cache?.props
     const avoid = new Set()
       options.reserved?.forEach(to_avoid)
       this.globals.forEach(add_def)

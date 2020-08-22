@@ -110,7 +110,7 @@ export default class Compressor extends TreeWalker {
       side_effects: !false_by_default,
       switches: !false_by_default,
       top_retain: null,
-      toplevel: !!(options && options.top_retain),
+      toplevel: !!(options?.top_retain),
       typeofs: !false_by_default,
       unsafe: false,
       unsafe_arrows: false,

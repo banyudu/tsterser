@@ -60,7 +60,7 @@ export default class AST_Scope extends AST_Block {
       }
       if (!insert && is_ast_return(node)) {
         if (compressor) {
-          const value = node.value && node.value.drop_side_effect_free?.(compressor, true)
+          const value = node.value?.drop_side_effect_free?.(compressor, true)
           return value ? make_node('AST_SimpleStatement', node, {
             body: value
           }) : make_node('AST_EmptyStatement', node)
@@ -360,12 +360,12 @@ export default class AST_Scope extends AST_Block {
                 head.push(def)
               }
             } else if (is_ast_symbol_catch(sym.orig[0])) {
-              const value = def.value && def.value.drop_side_effect_free(compressor)
+              const value = def.value?.drop_side_effect_free(compressor)
               if (value) side_effects.push(value)
               def.value = null
               head.push(def)
             } else {
-              const value = def.value && def.value.drop_side_effect_free(compressor)
+              const value = def.value?.drop_side_effect_free(compressor)
               if (value) {
                 if (!is_destructure) compressor.warn('Side effects in initialization of unused variable {name} [{file}:{line},{col}]', template(def.name))
                 side_effects.push(value)
@@ -781,7 +781,7 @@ export default class AST_Scope extends AST_Block {
   find_variable (name: any | string) {
     if (is_ast_symbol(name)) name = name.name
     return this.variables.get(name) ||
-          (this.parent_scope && this.parent_scope.find_variable(name))
+          (this.parent_scope?.find_variable(name))
   }
 
   def_function (this: any, symbol: any, init: boolean) {

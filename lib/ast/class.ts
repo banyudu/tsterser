@@ -27,7 +27,7 @@ export default class AST_Class extends AST_Scope {
 
   drop_side_effect_free (compressor: Compressor) {
     const with_effects: any[] = []
-    const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
+    const trimmed_extends = this.extends?.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
     for (const prop of this.properties) {
       const trimmed_prop = prop.drop_side_effect_free(compressor)
@@ -38,12 +38,12 @@ export default class AST_Class extends AST_Scope {
   }
 
   may_throw (compressor: Compressor) {
-    if (this.extends && this.extends.may_throw(compressor)) return true
+    if (this.extends?.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
   }
 
   has_side_effects (compressor) {
-    if (this.extends && this.extends.has_side_effects(compressor)) {
+    if (this.extends?.has_side_effects(compressor)) {
       return true
     }
     return anySideEffect(this.properties, compressor)

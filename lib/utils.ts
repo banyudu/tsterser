@@ -411,7 +411,7 @@ function push_uniq<T> (array: T[], el: T) {
 
 function string_template (text: string, props?: AnyObject) {
   return text.replace(/{(.+?)}/g, function (_, p) {
-    return props && props[p]
+    return props?.[p]
   })
 }
 
@@ -794,7 +794,7 @@ var MOZ_TO_ME: any = {
   },
   TryStatement: function (M) {
     const handlers = M.handlers || [M.handler]
-    if (handlers.length > 1 || M.guardedHandlers && M.guardedHandlers.length) {
+    if (handlers.length > 1 || M.guardedHandlers?.length) {
       throw new Error('Multiple catch clauses are not supported.')
     }
     return new AST_Try({
@@ -985,7 +985,7 @@ var MOZ_TO_ME: any = {
       start: my_start_token(M),
       end: my_end_token(M),
       exported_definition: from_moz(M.declaration),
-      exported_names: M.specifiers && M.specifiers.length ? M.specifiers.map(function (specifier) {
+      exported_names: M.specifiers?.length ? M.specifiers.map(function (specifier) {
         return new AST_NameMapping({
           foreign_name: from_moz(specifier.exported),
           name: from_moz(specifier.local)
@@ -1008,7 +1008,7 @@ var MOZ_TO_ME: any = {
       end: my_end_token(M)
     }
     const rx = M.regex
-    if (rx && rx.pattern) {
+    if (rx?.pattern) {
       // RegExpLiteral as per ESTree AST spec
       args.value = {
         source: rx.pattern,
@@ -1245,30 +1245,32 @@ var MOZ_TO_ME: any = {
 }
 
 export function my_start_token (moznode: any) {
-  const loc = moznode.loc; const start = loc && loc.start
+  const loc = moznode.loc
+  const start = loc?.start
   const range = moznode.range
   return new AST_Token({
-    file: loc && loc.source,
-    line: start && start.line,
-    col: start && start.column,
+    file: loc?.source,
+    line: start?.line,
+    col: start?.column,
     pos: range ? range[0] : moznode.start,
-    endline: start && start.line,
-    endcol: start && start.column,
+    endline: start?.line,
+    endcol: start?.column,
     endpos: range ? range[0] : moznode.start,
     raw: raw_token(moznode)
   })
 }
 
 export function my_end_token (moznode) {
-  const loc = moznode.loc; const end = loc && loc.end
+  const loc = moznode.loc
+  const end = loc?.end
   const range = moznode.range
   return new AST_Token({
-    file: loc && loc.source,
-    line: end && end.line,
-    col: end && end.column,
+    file: loc?.source,
+    line: end?.line,
+    col: end?.column,
     pos: range ? range[1] : moznode.end,
-    endline: end && end.line,
-    endcol: end && end.column,
+    endline: end?.line,
+    endcol: end?.column,
     endpos: range ? range[1] : moznode.end,
     raw: raw_token(moznode)
   })
@@ -1864,7 +1866,7 @@ export function tighten_body (statements, compressor) {
           // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
           // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
           // Might be doing the exact same thing.
-          const def = sym.definition && sym.definition?.()
+          const def = sym.definition?.()
           const is_reassigned = def && def.orig.length > 1
           if (is_reassigned) continue
           args.unshift(make_node('AST_VarDef', sym, {
@@ -2830,7 +2832,7 @@ export function can_be_evicted_from_block (node: any) {
 
 // tell me if a statement aborts
 export function aborts (thing) {
-  return thing && thing.aborts()
+  return thing?.aborts()
 }
 
 export function as_statement_array (thing) {
@@ -3243,7 +3245,7 @@ export function next_mangled (scope: any, options: any) {
 
     // Functions with short names might collide with base54 output
     // and therefore cause collisions when keep_fnames is true.
-    if (unmangleable_names && unmangleable_names.has(m)) continue out
+    if (unmangleable_names?.has(m)) continue out
 
     // we must ensure that the mangled name does not shadow a name
     // from some parent scope that is referenced in this or in
@@ -3332,7 +3334,7 @@ export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, dept
         is_ast_exit(parent) && node === parent.value && node.scope !== d.scope ||
         is_ast_var_def(parent) && node === parent.value ||
         is_ast_yield(parent) && node === parent.value && node.scope !== d.scope) {
-    if (depth > 1 && !(value && value.is_constant_expression(scope))) depth = 1
+    if (depth > 1 && !(value?.is_constant_expression(scope))) depth = 1
     if (!d.escaped || d.escaped > depth) d.escaped = depth
     return
   } else if (is_ast_array(parent) ||

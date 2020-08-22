@@ -791,11 +791,11 @@ export default class AST_Call extends AST_Node {
         let first_arg =
                   e.name === 'hasOwnProperty' &&
                   key === 'call' &&
-                  (this.args[0] && this.args[0].evaluate(compressor))
+                  (this.args[0]?.evaluate(compressor))
 
         first_arg = is_ast_dot(first_arg) ? first_arg.expression : first_arg
 
-        if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
+        if ((first_arg == null || first_arg.thedef?.undeclared)) {
           return this.clone()
         }
         const static_fn = static_fns.get(e.name)
@@ -831,10 +831,10 @@ export default class AST_Call extends AST_Node {
   is_expr_pure (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       const expr = this.expression
-      const first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
+      const first_arg = (this.args?.[0]?.evaluate(compressor))
       if (
         expr.expression && (expr.expression as any).name === 'hasOwnProperty' &&
-              (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)
+              (first_arg == null || first_arg.thedef?.undeclared)
       ) {
         return false
       }

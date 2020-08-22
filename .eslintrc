@@ -7,7 +7,6 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/naming-convention": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "@typescript-eslint/prefer-optional-chain": "warn",
         "eqeqeq": "warn",
         "no-mixed-operators": "warn",
         "@typescript-eslint/restrict-plus-operands": "off",

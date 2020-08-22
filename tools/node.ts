@@ -15,5 +15,5 @@ export function default_options () {
 
 function infer_options (options: any) {
   const result = minify('', options)
-  return result.error && result.error.defs
+  return result.error?.defs
 }

@@ -25,12 +25,11 @@ export default class AST_PropAccess extends AST_Node {
         let first_arg = exp.name === 'hasOwnProperty' &&
                   key === 'call' &&
                   (aa = compressor.parent() && compressor.parent().args) &&
-                  (aa && aa[0] &&
-                  aa[0].evaluate(compressor))
+                  (aa?.[0]?.evaluate(compressor))
 
         first_arg = is_ast_dot(first_arg) ? first_arg.expression : first_arg
 
-        if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
+        if (first_arg == null || first_arg.thedef?.undeclared) {
           return this.clone()
         }
         const static_value = static_values.get(exp.name)

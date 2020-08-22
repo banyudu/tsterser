@@ -179,7 +179,7 @@ function mangle_properties (ast: AST_Node, options: any) {
         while (root.expression) {
           root = root.expression
         }
-        declared = !(root.thedef && root.thedef.undeclared)
+        declared = !(root.thedef?.undeclared)
       }
       if (declared &&
                 (!keep_quoted_strict || !node.quote)) {

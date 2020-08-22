@@ -69,7 +69,7 @@ export default class SymbolDef {
   }
 
   mangle (options: any) {
-    const cache = options.cache && options.cache.props
+    const cache = options.cache?.props
     if (this.global && cache && cache.has(this.name)) {
       this.mangled_name = cache.get(this.name)
     } else if (!this.mangled_name && !this.unmangleable(options)) {
