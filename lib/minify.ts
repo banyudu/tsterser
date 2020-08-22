@@ -211,7 +211,7 @@ function minify (files: any, options: any): any {
             if (is_ast_toplevel(files)) {
               throw new Error('original source content unavailable')
             } else {
-              for (var name in files) {
+              for (const name in files) {
                 if (HOP(files, name)) {
                   options.output.source_map.get().setSourceContent(name, files[name])
                 }

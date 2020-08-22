@@ -90,14 +90,14 @@ export default class AST_Function extends AST_Lambda {
     }
 
     if (output.option('wrap_iife')) {
-      var p = output.parent()
+      const p = output.parent()
       if (is_ast_call(p) && p.expression === this) {
         return true
       }
     }
 
     if (output.option('wrap_func_args')) {
-      var p = output.parent()
+      const p = output.parent()
       if (is_ast_call(p) && p.args.includes(this)) {
         return true
       }

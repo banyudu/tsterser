@@ -52,7 +52,7 @@ export default class AST_If extends AST_StatementWithBody {
         return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
       } else if (!(is_ast_node(cond))) {
         compressor.warn('Condition always true [{file}:{line},{col}]', self.condition.start)
-        var body: any[] = []
+        const body: any[] = []
         body.push(make_node('AST_SimpleStatement', self.condition, {
           body: self.condition
         }))

@@ -108,7 +108,7 @@ export default class AST_Switch extends AST_Block {
       self.walk(tw)
       if (!has_break) {
         var statements = body[0].body.slice()
-        var exp = body[0].expression
+        const exp = body[0].expression
         if (exp) {
           statements.unshift(make_node('AST_SimpleStatement', exp, {
             body: exp

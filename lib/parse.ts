@@ -1985,7 +1985,7 @@ function parse ($TEXT: string, opt?: any) {
       })
     }
     if (is('keyword', 'finally')) {
-      var start = S.token
+      const start = S.token
       next()
       bfinally = new AST_Finally({
         start: start,

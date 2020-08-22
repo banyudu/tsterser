@@ -106,7 +106,7 @@ export default class AST_Call extends AST_Node {
         }
         var trim = i >= fn.argnames.length
         if (trim || has_flag(fn.argnames[i], UNUSED)) {
-          var node = self.args[i].drop_side_effect_free(compressor)
+          const node = self.args[i].drop_side_effect_free(compressor)
           if (node) {
             self.args[pos++] = node
           } else if (!trim) {
@@ -283,7 +283,7 @@ export default class AST_Call extends AST_Node {
                 }
                 // need this awkward cloning to not affect original element
                 // best_of will decide which one to get through.
-                var node = self.clone()
+                const node = self.clone()
                 node.expression = node.expression.clone()
                 node.expression.expression = node.expression.expression.clone()
                 node.expression.expression.elements = elements
@@ -389,7 +389,7 @@ export default class AST_Call extends AST_Node {
         } catch (ex) {
           if (ex instanceof JS_Parse_Error) {
             compressor.warn('Error parsing code passed to new Function [{file}:{line},{col}]', self.args[self.args.length - 1].start)
-            compressor.warn(ex.toString())
+            compressor.warn(ex.message)
           } else {
             throw ex
           }

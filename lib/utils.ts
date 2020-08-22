@@ -1762,7 +1762,7 @@ export function tighten_body (statements, compressor) {
             abort = false
             hit_index = 0
             hit = funarg
-            for (var i = stat_index; !abort && i < statements.length; i++) {
+            for (let i = stat_index; !abort && i < statements.length; i++) {
               statements[i].transform(multi_replacer)
             }
             value_def.single_use = false
@@ -2221,7 +2221,7 @@ export function tighten_body (statements, compressor) {
           continue
         }
 
-        var ab = aborts(stat.alternative)
+        ab = aborts(stat.alternative)
         if (can_merge_flow(ab)) {
           if (ab.label) {
             remove(ab.label.thedef.references, ab)
@@ -2231,7 +2231,7 @@ export function tighten_body (statements, compressor) {
           stat.body = make_node('AST_BlockStatement', stat.body, {
             body: as_statement_array(stat.body).concat(extract_functions())
           })
-          var body = as_statement_array_with_return(stat.alternative, ab)
+          body = as_statement_array_with_return(stat.alternative, ab)
           stat.alternative = make_node('AST_BlockStatement', stat.alternative, {
             body: body
           })
@@ -2628,7 +2628,7 @@ export function tighten_body (statements, compressor) {
       } else if (is_ast_if(stat)) {
         stat.condition = extract_object_assignments(stat.condition)
       } else if (is_ast_simple_statement(stat)) {
-        var exprs = join_object_assignments(prev, stat.body)
+        exprs = join_object_assignments(prev, stat.body)
         if (exprs) {
           CHANGED = true
           if (!exprs.length) continue

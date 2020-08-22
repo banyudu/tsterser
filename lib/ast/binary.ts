@@ -210,8 +210,8 @@ export default class AST_Binary extends AST_Node {
     }
     if (compressor.option('evaluate')) {
       switch (self.operator) {
-        case '&&':
-          var ll = has_flag(self.left, TRUTHY)
+        case '&&': {
+          const ll = has_flag(self.left, TRUTHY)
             ? true
             : has_flag(self.left, FALSY)
               ? false
@@ -223,7 +223,7 @@ export default class AST_Binary extends AST_Node {
             compressor.warn('Condition left of && always true [{file}:{line},{col}]', self.start)
             return make_sequence(self, [self.left, self.right]).optimize(compressor)
           }
-          var rr = self.right.evaluate(compressor)
+          const rr = self.right.evaluate(compressor)
           if (!rr) {
             if (compressor.in_boolean_context()) {
               compressor.warn('Boolean && always false [{file}:{line},{col}]', self.start)
@@ -253,8 +253,9 @@ export default class AST_Binary extends AST_Node {
             }
           }
           break
-        case '||':
-          var ll = has_flag(self.left, TRUTHY)
+        }
+        case '||': {
+          const ll = has_flag(self.left, TRUTHY)
             ? true
             : has_flag(self.left, FALSY)
               ? false
@@ -266,9 +267,9 @@ export default class AST_Binary extends AST_Node {
             compressor.warn('Condition left of || always true [{file}:{line},{col}]', self.start)
             return maintain_this_binding(compressor.parent(), compressor.self(), self.left).optimize(compressor)
           }
-          var rr = self.right.evaluate(compressor)
+          const rr = self.right.evaluate(compressor)
           if (!rr) {
-            var parent = compressor.parent()
+            const parent = compressor.parent()
             if (parent.operator == '||' && parent.left === compressor.self() || compressor.in_boolean_context()) {
               compressor.warn('Dropping side-effect-free || [{file}:{line},{col}]', self.start)
               return self.left.optimize(compressor)
@@ -285,7 +286,7 @@ export default class AST_Binary extends AST_Node {
             }
           }
           if (self.left.operator == '&&') {
-            var lr = self.left.right.evaluate(compressor)
+            const lr = self.left.right.evaluate(compressor)
             if (lr && !(is_ast_node(lr))) {
               return make_node('AST_Conditional', self, {
                 condition: self.left.left,
@@ -295,12 +296,13 @@ export default class AST_Binary extends AST_Node {
             }
           }
           break
-        case '??':
+        }
+        case '??': {
           if (is_nullish(self.left)) {
             return self.right
           }
 
-          var ll = self.left.evaluate(compressor)
+          const ll = self.left.evaluate(compressor)
           if (!(is_ast_node(ll))) {
             // if we know the value for sure we can simply compute right away.
             return ll == null ? self.right : self.left
@@ -312,6 +314,7 @@ export default class AST_Binary extends AST_Node {
               return self.left
             }
           }
+        }
       }
       var associative = true
       switch (self.operator) {
@@ -340,7 +343,7 @@ export default class AST_Binary extends AST_Node {
                   is_ast_binary(self.left) &&
                   self.left.operator == '+' &&
                   self.left.is_string(compressor)) {
-            var binary = make_node('AST_Binary', self, {
+            const binary = make_node('AST_Binary', self, {
               operator: '+',
               left: self.left.right,
               right: self.right
@@ -361,7 +364,7 @@ export default class AST_Binary extends AST_Node {
                   is_ast_binary(self.right) &&
                   self.right.operator == '+' &&
                   self.right.is_string(compressor)) {
-            var binary = make_node('AST_Binary', self, {
+            const binary = make_node('AST_Binary', self, {
               operator: '+',
               left: self.left.right,
               right: self.right.left
@@ -404,8 +407,8 @@ export default class AST_Binary extends AST_Node {
           }
           // `foo${bar}baz` + 1 => `foo${bar}baz1`
           if (is_ast_template_string(self.left)) {
-            var l = self.left
-            var r = self.right.evaluate(compressor)
+            const l = self.left
+            const r = self.right.evaluate(compressor)
             if (r != self.right) {
               l.segments[l.segments.length - 1].value += r.toString()
               return l
@@ -413,8 +416,8 @@ export default class AST_Binary extends AST_Node {
           }
           // 1 + `foo${bar}baz` => `1foo${bar}baz`
           if (is_ast_template_string(self.right)) {
-            var r = self.right
-            var l = self.left.evaluate(compressor)
+            const r = self.right
+            const l = self.left.evaluate(compressor)
             if (l != self.left) {
               r.segments[0].value = l.toString() + r.segments[0].value
               return r
@@ -423,9 +426,9 @@ export default class AST_Binary extends AST_Node {
           // `1${bar}2` + `foo${bar}baz` => `1${bar}2foo${bar}baz`
           if (is_ast_template_string(self.left) &&
                   is_ast_template_string(self.right)) {
-            var l = self.left
+            const l = self.left
             var segments = l.segments
-            var r = self.right
+            const r = self.right
             segments[segments.length - 1].value += r.segments[0].value
             for (var i = 1; i < r.segments.length; i++) {
               segments.push(r.segments[i])
@@ -703,19 +706,19 @@ export default class AST_Binary extends AST_Node {
       }
       if (is_ast_sequence(this.right) && !this.left.has_side_effects(compressor)) {
         var assign = this.operator == '=' && is_ast_symbol_ref(this.left)
-        var x = this.right.expressions
+        let x = this.right.expressions
         var last = x.length - 1
         for (var i = 0; i < last; i++) {
           if (!assign && x[i].has_side_effects(compressor)) break
         }
         if (i == last) {
           x = x.slice()
-          var e = this.clone()
+          const e = this.clone()
           e.right = x.pop()
           x.push(e)
           return make_sequence(this, x).optimize(compressor)
         } else if (i > 0) {
-          var e = this.clone()
+          const e = this.clone()
           e.right = make_sequence(this.right, x.slice(i))
           x = x.slice(0, i)
           x.push(e)

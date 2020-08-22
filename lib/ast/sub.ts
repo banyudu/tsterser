@@ -103,7 +103,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
     if (compressor.option('properties') && compressor.option('side_effects') &&
           is_ast_number(prop) && is_ast_array(expr)) {
-      var index = prop.getValue()
+      let index = prop.getValue()
       var elements = expr.elements
       var retValue = elements[index]
       FLATTEN: if (safe_to_flatten(retValue, compressor)) {

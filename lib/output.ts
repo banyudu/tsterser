@@ -216,7 +216,7 @@ class OutputStreamInner {
           return '\\u{' + code + '}'
         })
       }
-      return str.replace(/[\u0000-\u001f\u007f-\uffff]/g, (ch) => {
+      return str.replace(/[\u0000-\u001f\u007f-\uffff]/g, (ch) => { // eslint-disable-line no-control-regex
         var code = ch.charCodeAt(0).toString(16)
         if (code.length <= 2 && !identifier) {
           while (code.length < 2) code = '0' + code
@@ -302,7 +302,7 @@ class OutputStreamInner {
   encode_string (str: string, quote: string) {
     var ret = this.make_string(str, quote)
     if (this.options.inline_script) {
-      ret = ret.replace(/<\x2f(script)([>\/\t\n\f\r ])/gi, '<\\/$1$2')
+      ret = ret.replace(/<\x2f(script)([>/\t\n\f\r ])/gi, '<\\/$1$2')
       ret = ret.replace(/\x3c!--/g, '\\x3c!--')
       ret = ret.replace(/--\x3e/g, '--\\x3e')
     }
@@ -604,7 +604,7 @@ class OutputStreamInner {
           }
           last_nlb = true
         } else if (c.type == 'comment2') {
-          var value = this.filter_comment(c.value)
+          const value = this.filter_comment(c.value)
           if (value) {
             this.print('/*' + value + '*/')
           }

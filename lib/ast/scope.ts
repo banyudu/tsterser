@@ -223,10 +223,11 @@ export default class AST_Scope extends AST_Block {
     var tt = new TreeTransformer(
       function before (node, descend, in_list) {
         var parent = tt.parent()
+        var def
         if (drop_vars) {
           const sym = assign_as_unused(node)
           if (is_ast_symbol_ref(sym)) {
-            var def = sym.definition?.()
+            def = sym.definition?.()
             var in_use = in_use_ids.has(def.id)
             if (is_ast_assign(node)) {
               if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
@@ -240,7 +241,6 @@ export default class AST_Scope extends AST_Block {
           }
         }
         if (scope !== self) return
-        var def
         if (node.name &&
                   (is_ast_class_expression(node) &&
                       !keep_name(compressor.option('keep_classnames'), (def = node.name?.definition?.()).name) ||
@@ -364,7 +364,7 @@ export default class AST_Scope extends AST_Block {
               def.value = null
               head.push(def)
             } else {
-              var value = def.value && def.value.drop_side_effect_free(compressor)
+              const value = def.value && def.value.drop_side_effect_free(compressor)
               if (value) {
                 if (!is_destructure) compressor.warn('Side effects in initialization of unused variable {name} [{file}:{line},{col}]', template(def.name))
                 side_effects.push(value)
@@ -596,7 +596,7 @@ export default class AST_Scope extends AST_Block {
                               is_ast_symbol((sym = assign.left)) &&
                               vars.has(sym.name)
               ) {
-                var def = vars.get(sym.name)
+                const def = vars.get(sym.name)
                 if (def.value) break
                 def.value = assign.right
                 remove(defs, def)
@@ -1019,7 +1019,7 @@ export default class AST_Scope extends AST_Block {
       this.globals = new Map()
     }
 
-    var tw = new TreeWalker((node: any) => {
+    tw = new TreeWalker((node: any) => {
       if (is_ast_loop_control(node) && node.label) {
         node.label.thedef.references.push(node) // TODO: check type
         return true
