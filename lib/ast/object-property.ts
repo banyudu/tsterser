@@ -42,7 +42,7 @@ export default class AST_ObjectProperty extends AST_Node {
 
   _dot_throw () { return false }
   _walk (visitor: any) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       if (is_ast_node(this.key)) { this.key._walk(visitor) }
       this.value._walk(visitor)
     })

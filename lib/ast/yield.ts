@@ -15,7 +15,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   _walk (visitor: any) {
-    return visitor._visit(this, this.expression && function () {
+    return visitor._visit(this, this.expression && function (this) {
       this.expression._walk(visitor)
     })
   }

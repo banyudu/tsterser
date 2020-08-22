@@ -6,7 +6,7 @@ export default class AST_Await extends AST_Node {
   expression: any
 
   _walk (visitor: any) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       this.expression._walk(visitor)
     })
   }

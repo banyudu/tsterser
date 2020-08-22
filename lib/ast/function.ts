@@ -66,10 +66,10 @@ export default class AST_Function extends AST_Lambda {
     }
   }
 
-  _size = function (info: any) {
+  _size (info: any) {
     const first: any = !!first_in_statement(info)
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
-  } as any
+  }
 
   _to_mozilla_ast (parent) {
     return To_Moz_FunctionExpression(this, parent)

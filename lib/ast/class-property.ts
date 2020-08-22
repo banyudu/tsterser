@@ -59,7 +59,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   }
 
   _walk (visitor: any) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       if (is_ast_node(this.key)) { this.key._walk(visitor) }
       if (is_ast_node(this.value)) { this.value._walk(visitor) }
     })

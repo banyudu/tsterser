@@ -851,7 +851,7 @@ export default class AST_Call extends AST_Node {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       const args = this.args
       for (let i = 0, len = args.length; i < len; i++) {
         args[i]._walk(visitor)

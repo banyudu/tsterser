@@ -6,7 +6,7 @@ export default class AST_Catch extends AST_Block {
   argname: any
 
   _walk (visitor: any) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       if (this.argname) this.argname._walk(visitor)
       walk_body(this, visitor)
     })

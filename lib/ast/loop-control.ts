@@ -5,7 +5,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_LoopControl extends AST_Jump {
   label: any
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, this.label && function () {
+    return visitor._visit(this, this.label && function (this) {
       this.label._walk(visitor)
     })
   }

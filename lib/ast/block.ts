@@ -36,7 +36,7 @@ export default class AST_Block extends AST_Statement {
 
   is_block_scope () { return true }
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       walk_body(this, visitor)
     })
   }
@@ -50,7 +50,7 @@ export default class AST_Block extends AST_Statement {
     return clone_block_scope.call(this, deep)
   }
 
-  _size () {
+  _size (info: any) {
     return 2 + list_overhead(this.body)
   }
 

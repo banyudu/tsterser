@@ -350,7 +350,7 @@ function defaults (args: any, defs: AnyObject, croak?: boolean): typeof args {
 function noop () {}
 function return_false () { return false }
 function return_true () { return true }
-function return_this () { return this }
+function return_this (this) { return this }
 function return_null () { return null }
 
 const MAP = (function () {
@@ -1328,7 +1328,7 @@ export const pass_through = () => true
 
 // Creates a shallow compare function
 export const mkshallow = (props) => {
-  return function (other) {
+  return function (this, other) {
     for (const key in props) {
       if (props[key] === 'eq') {
         if (this[key] !== other[key]) {
@@ -2726,7 +2726,7 @@ export function walk_body (node: any, visitor: TreeWalker) {
   }
 }
 
-export function clone_block_scope (deep: boolean) {
+export function clone_block_scope (this, deep: boolean) {
   const clone = this._clone(deep)
   if (this.block_scope) {
     // TODO this is sometimes undefined during compression.
@@ -2990,7 +2990,7 @@ export function has_break_or_continue (loop, parent?) {
   return found
 }
 
-export function block_aborts () {
+export function block_aborts (this) {
   for (let i = 0; i < this.body.length; i++) {
     if (aborts(this.body[i])) {
       return this.body[i]
@@ -3215,7 +3215,7 @@ export function skip_string (node: any) {
   }
 }
 
-export function needsParens (output: any) {
+export function needsParens (this, output: any) {
   const p = output.parent()
   // !(a = false) → true
   if (is_ast_unary(p)) { return true }
@@ -3356,7 +3356,7 @@ export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, dept
   d.direct_access = true
 }
 
-export function mark_lambda (tw: TreeWalker, descend, compressor) {
+export function mark_lambda (this, tw: TreeWalker, descend, compressor) {
   clear_flag(this, INLINED)
   push(tw)
   reset_variables(tw, compressor, this)
@@ -3457,7 +3457,7 @@ export function best (orig, alt, first_in_statement) {
 
 /* -----[ boolean/negation helpers ]----- */
 // determine if expression is constant
-export function all_refs_local (scope) {
+export function all_refs_local (this, scope) {
   let result: any = true
   walk(this, (node: any) => {
     if (is_ast_symbol_ref(node)) {
@@ -3740,7 +3740,7 @@ export function left_is_object (node: any): boolean {
   return false
 }
 
-export function init_scope_vars (parent_scope: any) {
+export function init_scope_vars (this, parent_scope: any) {
   this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
   this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
   this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement

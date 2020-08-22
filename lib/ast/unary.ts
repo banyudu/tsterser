@@ -86,7 +86,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       this.expression._walk(visitor)
     })
   }

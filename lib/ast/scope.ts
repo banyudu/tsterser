@@ -222,7 +222,7 @@ export default class AST_Scope extends AST_Block {
     })
     // pass 3: we should drop declarations not in_use
     var tt = new TreeTransformer(
-      function before (node, descend, in_list) {
+      function before (this, node, descend, in_list) {
         const parent = tt.parent()
         let def
         if (drop_vars) {
@@ -642,7 +642,7 @@ export default class AST_Scope extends AST_Block {
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     const top_retain = is_ast_toplevel(self) && compressor.top_retain || return_false
     const defs_by_id = new Map()
-    var hoister = new TreeTransformer(function (node: any, descend) {
+    var hoister = new TreeTransformer(function (this, node: any, descend) {
       if (is_ast_definitions(node) &&
               is_ast_export(hoister.parent())) return node
       if (is_ast_var_def(node)) {

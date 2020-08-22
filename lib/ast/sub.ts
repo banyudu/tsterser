@@ -171,7 +171,7 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       this.expression._walk(visitor)
       this.property._walk(visitor)
     })

@@ -40,10 +40,10 @@ export default class AST_Toplevel extends AST_Scope {
     reset_variables(tw, compressor, this)
   }
 
-  resolve_defines (compressor: Compressor) {
+  resolve_defines (this, compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
-    return this.transform(new TreeTransformer(function (node: any) {
+    return this.transform(new TreeTransformer(function (this, node: any) {
       const def = node._find_defs(compressor, '')
       if (!def) return
       let level = 0; let child = node; let parent

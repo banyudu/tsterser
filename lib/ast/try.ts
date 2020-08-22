@@ -68,7 +68,7 @@ export default class AST_Try extends AST_Block {
   }
 
   _walk (visitor: any) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       walk_body(this, visitor)
       if (this.bcatch) this.bcatch._walk(visitor)
       if (this.bfinally) this.bfinally._walk(visitor)

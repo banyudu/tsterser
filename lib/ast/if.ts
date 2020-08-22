@@ -201,7 +201,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function () {
+    return visitor._visit(this, function (this) {
       this.condition._walk(visitor)
       this.body._walk(visitor)
       if (this.alternative) this.alternative._walk(visitor)
