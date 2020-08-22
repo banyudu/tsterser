@@ -50,7 +50,7 @@ export default class AST_Scope extends AST_Block {
   cname: any
 
   process_expression (insert, compressor?) {
-    var self = this
+    const self = this
     var tt = new TreeTransformer(function (node: any) {
       if (insert && is_ast_simple_statement(node)) {
         return make_node('AST_Return', node, {
@@ -59,7 +59,7 @@ export default class AST_Scope extends AST_Block {
       }
       if (!insert && is_ast_return(node)) {
         if (compressor) {
-          var value = node.value && node.value.drop_side_effect_free?.(compressor, true)
+          const value = node.value && node.value.drop_side_effect_free?.(compressor, true)
           return value ? make_node('AST_SimpleStatement', node, {
             body: value
           }) : make_node('AST_EmptyStatement', node)
@@ -77,7 +77,7 @@ export default class AST_Scope extends AST_Block {
         return node
       }
       if (is_ast_block(node)) {
-        var index = node.body.length - 1
+        const index = node.body.length - 1
         if (index >= 0) {
           node.body[index] = node.body[index].transform(tt)
         }
@@ -98,10 +98,10 @@ export default class AST_Scope extends AST_Block {
     const optUnused = compressor.option('unused')
     if (!optUnused) return
     if (compressor.has_directive('use asm')) return
-    var self = this
+    const self = this
     if (self.pinned()) return
-    var drop_funcs = !(is_ast_toplevel(self)) || compressor.toplevel.funcs
-    var drop_vars = !(is_ast_toplevel(self)) || compressor.toplevel.vars
+    const drop_funcs = !(is_ast_toplevel(self)) || compressor.toplevel.funcs
+    const drop_vars = !(is_ast_toplevel(self)) || compressor.toplevel.vars
     const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: any) {
       if (is_ast_assign(node) &&
               (has_flag(node, WRITE_ONLY) || node.operator == '=')
@@ -112,8 +112,8 @@ export default class AST_Scope extends AST_Block {
         return node.expression
       }
     }
-    var in_use_ids = new Map()
-    var fixed_ids = new Map()
+    const in_use_ids = new Map()
+    const fixed_ids = new Map()
     if (is_ast_toplevel(self) && compressor.top_retain) {
       self.variables.forEach(function (def) {
         if (compressor.top_retain?.(def) && !in_use_ids.has(def.id)) {
@@ -121,16 +121,16 @@ export default class AST_Scope extends AST_Block {
         }
       })
     }
-    var var_defs_by_id = new Map()
-    var initializations = new Map()
+    const var_defs_by_id = new Map()
+    const initializations = new Map()
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
-    var scope: any = this
+    let scope: any = this
     var tw = new TreeWalker(function (node: any, descend) {
       if (is_ast_lambda(node) && node.uses_arguments && !tw.has_directive('use strict')) {
         node.argnames.forEach(function (argname) {
           if (!(is_ast_symbol_declaration(argname))) return
-          var def = argname.definition?.()
+          const def = argname.definition?.()
           if (!in_use_ids.has(def.id)) {
             in_use_ids.set(def.id, def)
           }
@@ -138,7 +138,7 @@ export default class AST_Scope extends AST_Block {
       }
       if (node === self) return
       if (is_ast_defun(node) || is_ast_def_class(node)) {
-        var node_def = node.name?.definition?.()
+        const node_def = node.name?.definition?.()
         const in_export = is_ast_export(tw.parent())
         if (in_export || !drop_funcs && scope === self) {
           if (node_def.global && !in_use_ids.has(node_def.id)) {
@@ -191,7 +191,7 @@ export default class AST_Scope extends AST_Block {
             if (is_ast_destructuring(def.name)) {
               def.walk(tw)
             } else {
-              var node_def = def.name.definition?.()
+              const node_def = def.name.definition?.()
               map_add(initializations, node_def.id, def.value)
               if (!node_def.chained && def.name.fixed_value() === def.value) {
                 fixed_ids.set(node_def.id, def)
@@ -212,7 +212,7 @@ export default class AST_Scope extends AST_Block {
     // symbols (that may not be in_use).
     tw = new TreeWalker(scan_ref_scoped)
     in_use_ids.forEach(function (def) {
-      var init = initializations.get(def.id)
+      const init = initializations.get(def.id)
       if (init) {
         init.forEach(function (init) {
           init.walk(tw)
@@ -222,13 +222,13 @@ export default class AST_Scope extends AST_Block {
     // pass 3: we should drop declarations not in_use
     var tt = new TreeTransformer(
       function before (node, descend, in_list) {
-        var parent = tt.parent()
-        var def
+        const parent = tt.parent()
+        let def
         if (drop_vars) {
           const sym = assign_as_unused(node)
           if (is_ast_symbol_ref(sym)) {
             def = sym.definition?.()
-            var in_use = in_use_ids.has(def.id)
+            const in_use = in_use_ids.has(def.id)
             if (is_ast_assign(node)) {
               if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
                 return maintain_this_binding(parent, node, node.right.transform(tt))
@@ -252,9 +252,9 @@ export default class AST_Scope extends AST_Block {
           if (!in_use_ids.has(def.id) || def.orig.length > 1) node.name = null
         }
         if (is_ast_lambda(node) && !(is_ast_accessor(node))) {
-          var trim = !compressor.option('keep_fargs')
-          for (var a = node.argnames, i = a.length; --i >= 0;) {
-            var sym = a[i]
+          let trim = !compressor.option('keep_fargs')
+          for (let a = node.argnames, i = a.length; --i >= 0;) {
+            let sym = a[i]
             if (is_ast_expansion(sym)) {
               sym = sym.expression
             }
@@ -296,17 +296,17 @@ export default class AST_Scope extends AST_Block {
           }
         }
         if (is_ast_definitions(node) && !(is_ast_for_in(parent) && parent.init === node)) {
-          var drop_block = !(is_ast_toplevel(parent)) && !(is_ast_var(node))
+          const drop_block = !(is_ast_toplevel(parent)) && !(is_ast_var(node))
           // place uninitialized names at the start
-          var body: any[] = []; var head: any[] = []; var tail: any[] = []
+          const body: any[] = []; const head: any[] = []; const tail: any[] = []
           // for unused names whose initialization has
           // side effects, we can cascade the init. code
           // into the next one, or next statement.
-          var side_effects: any[] = []
+          let side_effects: any[] = []
           node.definitions.forEach(function (def) {
             if (def.value) def.value = def.value.transform(tt)
-            var is_destructure = is_ast_destructuring(def.name)
-            var sym = is_destructure
+            const is_destructure = is_ast_destructuring(def.name)
+            const sym = is_destructure
               ? new SymbolDef(null, { name: '<destructure>' }) /* fake SymbolDef */
               : def.name.definition?.()
             if (drop_block && sym.global) return tail.push(def)
@@ -321,13 +321,13 @@ export default class AST_Scope extends AST_Block {
                 def.value = def.value.drop_side_effect_free(compressor)
               }
               if (is_ast_symbol_var(def.name)) {
-                var var_defs = var_defs_by_id.get(sym.id)
+                const var_defs = var_defs_by_id.get(sym.id)
                 if (var_defs.length > 1 && (!def.value || sym.orig.indexOf(def.name) > sym.eliminated)) {
                   compressor.warn('Dropping duplicated definition of variable {name} [{file}:{line},{col}]', template(def.name))
                   if (def.value) {
-                    var ref = make_node('AST_SymbolRef', def.name, def.name)
+                    const ref = make_node('AST_SymbolRef', def.name, def.name)
                     sym.references.push(ref)
-                    var assign = make_node('AST_Assign', def, {
+                    const assign = make_node('AST_Assign', def, {
                       operator: '=',
                       left: ref,
                       right: def.value
@@ -359,7 +359,7 @@ export default class AST_Scope extends AST_Block {
                 head.push(def)
               }
             } else if (is_ast_symbol_catch(sym.orig[0])) {
-              var value = def.value && def.value.drop_side_effect_free(compressor)
+              const value = def.value && def.value.drop_side_effect_free(compressor)
               if (value) side_effects.push(value)
               def.value = null
               head.push(def)
@@ -402,7 +402,7 @@ export default class AST_Scope extends AST_Block {
         // We fix it at this stage by moving the `var` outside the `for`.
         if (is_ast_for(node)) {
           descend(node, this)
-          var block
+          let block
           if (is_ast_block_statement(node.init)) {
             block = node.init
             node.init = block.body.pop()
@@ -457,7 +457,7 @@ export default class AST_Scope extends AST_Block {
     self.transform(tt)
 
     function scan_ref_scoped (node, descend) {
-      var node_def
+      let node_def
       const sym = assign_as_unused(node)
       if (is_ast_symbol_ref(sym) &&
               !is_ref_of(node.left, AST_SymbolBlockDeclaration) &&
@@ -484,7 +484,7 @@ export default class AST_Scope extends AST_Block {
         return true
       }
       if (is_ast_scope(node)) {
-        var save_scope = scope
+        const save_scope = scope
         scope = node
         descend()
         scope = save_scope
@@ -494,18 +494,18 @@ export default class AST_Scope extends AST_Block {
   }
 
   hoist_declarations (compressor: Compressor) {
-    var self = this
+    let self = this
     if (compressor.has_directive('use asm')) return self
     // Hoisting makes no sense in an arrow func
     if (!Array.isArray(self.body)) return self
 
-    var hoist_funs = compressor.option('hoist_funs')
-    var hoist_vars = compressor.option('hoist_vars')
+    const hoist_funs = compressor.option('hoist_funs')
+    let hoist_vars = compressor.option('hoist_vars')
 
     if (hoist_funs || hoist_vars) {
-      var dirs: any[] = []
-      var hoisted: any[] = []
-      var vars = new Map(); var vars_found = 0; var var_decl = 0
+      const dirs: any[] = []
+      const hoisted: any[] = []
+      const vars = new Map(); let vars_found = 0; let var_decl = 0
       // let's count var_decl first, we seem to waste a lot of
       // space if we hoist `var` when there's only one.
       walk(self, (node: any) => {
@@ -535,11 +535,11 @@ export default class AST_Scope extends AST_Block {
                 vars.set(def.name.name, def)
                 ++vars_found
               })
-              var seq = node.to_assignments(compressor)
-              var p = tt.parent()
+              const seq = node.to_assignments(compressor)
+              const p = tt.parent()
               if (is_ast_for_in(p) && p.init === node) {
                 if (seq == null) {
-                  var def = node.definitions[0].name
+                  const def = node.definitions[0].name
                   return make_node('AST_SymbolRef', def, def)
                 }
                 return seq
@@ -559,7 +559,7 @@ export default class AST_Scope extends AST_Block {
       self = self.transform(tt)
       if (vars_found > 0) {
         // collect only vars which don't show up in self's arguments list
-        var defs: any[] = []
+        let defs: any[] = []
         const is_lambda = is_ast_lambda(self)
         const args_as_names = is_lambda ? (self as any).args_as_names() : null
         vars.forEach((def, name) => {
@@ -574,15 +574,15 @@ export default class AST_Scope extends AST_Block {
         })
         if (defs.length > 0) {
           // try to merge in assignments
-          for (var i = 0; i < self.body.length;) {
+          for (let i = 0; i < self.body.length;) {
             if (is_ast_simple_statement(self.body[i])) {
-              var expr = self.body[i].body; var sym; var assign
+              const expr = self.body[i].body; var sym; var assign
               if (is_ast_assign(expr) &&
                               expr.operator == '=' &&
                               is_ast_symbol((sym = expr.left)) &&
                               vars.has(sym.name)
               ) {
-                var def = vars.get(sym.name)
+                const def = vars.get(sym.name)
                 if (def.value) break
                 def.value = expr.right
                 remove(defs, def)
@@ -610,7 +610,7 @@ export default class AST_Scope extends AST_Block {
               continue
             }
             if (is_ast_block_statement(self.body[i])) {
-              var tmp = [i, 1].concat(self.body[i].body)
+              const tmp = [i, 1].concat(self.body[i].body)
               self.body.splice.apply(self.body, tmp)
               continue
             }
@@ -628,19 +628,19 @@ export default class AST_Scope extends AST_Block {
   }
 
   make_var_name (prefix) {
-    var var_names = this.var_names()
+    const var_names = this.var_names()
     prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
-    var name = prefix
-    for (var i = 0; var_names.has(name); i++) name = prefix + '$' + i
+    let name = prefix
+    for (let i = 0; var_names.has(name); i++) name = prefix + '$' + i
     this.add_var_name(name)
     return name
   }
 
   hoist_properties (compressor: Compressor) {
-    var self = this
+    const self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
-    var top_retain = is_ast_toplevel(self) && compressor.top_retain || return_false
-    var defs_by_id = new Map()
+    const top_retain = is_ast_toplevel(self) && compressor.top_retain || return_false
+    const defs_by_id = new Map()
     var hoister = new TreeTransformer(function (node: any, descend) {
       if (is_ast_definitions(node) &&
               is_ast_export(hoister.parent())) return node
@@ -703,7 +703,7 @@ export default class AST_Scope extends AST_Block {
 
   init_scope_vars = init_scope_vars
   var_names = function varNames (this: any): Set<string> | null {
-    var var_names = this._var_name_cache
+    let var_names = this._var_name_cache
     if (!var_names) {
       this._var_name_cache = var_names = new Set(
         this.parent_scope ? varNames.call(this.parent_scope) : null
@@ -781,14 +781,14 @@ export default class AST_Scope extends AST_Block {
   }
 
   def_function (this: any, symbol: any, init: boolean) {
-    var def = this.def_variable(symbol, init)
+    const def = this.def_variable(symbol, init)
     if (!def.init || is_ast_defun(def.init)) def.init = init
     this.functions.set(symbol.name, def)
     return def
   }
 
   def_variable (symbol: any, init?: boolean) {
-    var def = this.variables.get(symbol.name)
+    let def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
       if (def.init && (def.scope !== symbol.scope || is_ast_function(def.init))) {
@@ -807,7 +807,7 @@ export default class AST_Scope extends AST_Block {
   }
 
   get_defun_scope () {
-    var self = this
+    let self = this
     while (self.is_block_scope()) {
       self = self.parent_scope
     }
@@ -815,7 +815,7 @@ export default class AST_Scope extends AST_Block {
   }
 
   clone = function (deep: boolean) {
-    var node = this._clone(deep)
+    const node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
     if (this.enclosed) node.enclosed = this.enclosed.slice()
@@ -841,11 +841,11 @@ export default class AST_Scope extends AST_Block {
     }
 
     // pass 1: setup scope chaining and handle definitions
-    var scope: any = this.parent_scope = parent_scope
-    var labels = new Map()
-    var defun: any = null
-    var in_destructuring: any = null
-    var for_scopes: any[] = []
+    let scope: any = this.parent_scope = parent_scope
+    let labels = new Map()
+    let defun: any = null
+    let in_destructuring: any = null
+    const for_scopes: any[] = []
     var tw = new TreeWalker((node, descend) => {
       if (node.is_block_scope()) {
         const save_scope = scope
@@ -893,9 +893,9 @@ export default class AST_Scope extends AST_Block {
       }
       if (is_ast_scope(node)) {
                 node.init_scope_vars?.(scope)
-                var save_scope = scope
-                var save_defun = defun
-                var save_labels = labels
+                const save_scope = scope
+                const save_defun = defun
+                const save_labels = labels
                 defun = scope = node
                 labels = new Map()
                 descend()
@@ -905,7 +905,7 @@ export default class AST_Scope extends AST_Block {
                 return true // don't descend again in TreeWalker
       }
       if (is_ast_labeled_statement(node)) {
-        var l = node.label
+        const l = node.label
         if (labels.has(l.name)) {
           throw new Error(string_template('Label {name} defined twice', l))
         }
@@ -915,7 +915,7 @@ export default class AST_Scope extends AST_Block {
         return true // no descend again
       }
       if (is_ast_with(node)) {
-        for (var s: any | null = scope; s; s = s.parent_scope) { s.uses_with = true }
+        for (let s: any | null = scope; s; s = s.parent_scope) { s.uses_with = true }
         return
       }
       if (is_ast_symbol(node)) {
@@ -944,7 +944,7 @@ export default class AST_Scope extends AST_Block {
                 is_ast_symbol_const(node) ||
                 is_ast_symbol_catch(node)
       ) {
-        var def: any
+        let def: any
         if (is_ast_symbol_block_declaration(node)) {
           def = scope.def_variable(node, null)
         } else {
@@ -975,7 +975,7 @@ export default class AST_Scope extends AST_Block {
           }
         }
       } else if (is_ast_label_ref(node)) {
-        var sym = labels.get(node.name)
+        const sym = labels.get(node.name)
         if (!sym) {
           throw new Error(string_template('Undefined label {name} [{line},{col}]', {
             name: node.name,
@@ -999,15 +999,15 @@ export default class AST_Scope extends AST_Block {
 
     function mark_export (def: any, level: number) {
       if (in_destructuring) {
-        var i = 0
+        let i = 0
         do {
           level++
         } while (tw.parent(i++) !== in_destructuring)
       }
-      var node = tw.parent(level)
+      const node = tw.parent(level)
       def.export = is_ast_export(node) ? MASK_EXPORT_DONT_MANGLE : 0
       if (def.export) {
-        var exported = node.exported_definition
+        const exported = node.exported_definition
         if ((is_ast_defun(exported) || is_ast_def_class(exported)) && node.is_default) {
           def.export = MASK_EXPORT_WANT_MANGLE
         }
@@ -1026,13 +1026,13 @@ export default class AST_Scope extends AST_Block {
         return true
       }
       if (is_ast_symbol_ref(node)) {
-        var name = node.name
+        const name = node.name
         if (name == 'eval' && is_ast_call(tw.parent())) {
-          for (var s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
+          for (let s: any = node.scope; s && !s.uses_eval; s = s.parent_scope) {
             s.uses_eval = true
           }
         }
-        var sym
+        let sym
         if (is_ast_name_mapping(tw.parent()) && tw.parent(1).module_name ||
                     !(sym = node.scope.find_variable(name))) {
           sym = toplevel.def_global?.(node)
@@ -1049,7 +1049,7 @@ export default class AST_Scope extends AST_Block {
         return true
       }
       // ensure mangling works if catch reuses a scope variable
-      var def
+      let def
       if (is_ast_symbol_catch(node) && (def = redefined_catch_def(node.definition()))) {
         let s: any = node.scope
         while (s) {
@@ -1065,10 +1065,10 @@ export default class AST_Scope extends AST_Block {
     if (options.ie8 || options.safari10) {
       walk(this, (node: any) => {
         if (is_ast_symbol_catch(node)) {
-          var name = node.name
-          var refs = node.thedef.references
-          var scope = node.scope.get_defun_scope()
-          var def = scope.find_variable(name) ||
+          const name = node.name
+          const refs = node.thedef.references
+          const scope = node.scope.get_defun_scope()
+          const def = scope.find_variable(name) ||
                         toplevel.globals.get(name) ||
                         scope.def_variable(node)
           refs.forEach(function (ref) {

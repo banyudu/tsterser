@@ -10,7 +10,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
 
   _optimize (compressor) {
     let self = this
-    var e = self.expression
+    let e = self.expression
     if (self.operator == 'delete' &&
           !(is_ast_symbol_ref(e) ||
               is_ast_prop_access(e) ||
@@ -22,7 +22,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
       }
       return make_sequence(self, [e, make_node('AST_True', self)]).optimize(compressor)
     }
-    var seq = self.lift_sequences(compressor)
+    const seq = self.lift_sequences(compressor)
     if (seq !== self) {
       return seq
     }
@@ -74,7 +74,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     // avoids infinite recursion of numerals
     if (self.operator != '-' ||
           !(is_ast_number(e) || is_ast_infinity(e) || is_ast_big_int(e))) {
-      var ev = self.evaluate(compressor)
+      let ev = self.evaluate(compressor)
       if (ev !== self) {
         ev = make_node_from_constant(ev, self).optimize(compressor)
         return best_of(compressor, ev, self)
@@ -84,7 +84,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
   }
 
   _eval (compressor: Compressor, depth) {
-    var e = this.expression
+    let e = this.expression
     // Function would be evaluated to an array and so typeof would
     // incorrectly return 'object'. Hence making is a special case.
     if (compressor.option('typeofs') &&
@@ -130,7 +130,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
   }
 
   _codegen (self, output) {
-    var op = self.operator
+    const op = self.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||
             (/[+-]$/.test(op) &&

@@ -62,8 +62,8 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   args_as_names () {
-    var out: any[] = []
-    for (var i = 0; i < this.argnames.length; i++) {
+    const out: any[] = []
+    for (let i = 0; i < this.argnames.length; i++) {
       if (is_ast_destructuring(this.argnames[i])) {
         out.push(...this.argnames[i].all_symbols())
       } else {
@@ -76,8 +76,8 @@ export default class AST_Lambda extends AST_Scope {
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       if (this.name) this.name._walk(visitor)
-      var argnames = this.argnames
-      for (var i = 0, len = argnames.length; i < len; i++) {
+      const argnames = this.argnames
+      for (let i = 0, len = argnames.length; i < len; i++) {
         argnames[i]._walk(visitor)
       }
       walk_body(this, visitor)
@@ -114,7 +114,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   _do_print (this: any, output: any, nokeyword: boolean) {
-    var self = this
+    const self = this
     if (!nokeyword) {
       if (self.async) {
         output.print('async')

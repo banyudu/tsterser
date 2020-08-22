@@ -14,7 +14,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   _to_mozilla_ast (parent) {
-    var key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -30,9 +30,9 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
         name: this.key
       }
     }
-    var kind
-    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    let kind
+    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    let computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     if (is_ast_object_key_val(this)) {
       kind = 'init'
       computed = !string_or_num
@@ -63,13 +63,13 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     // p:async function(){} ---> async p(){}
     // p:()=>{} ---> p(){}
     // p:async()=>{} ---> async p(){}
-    var unsafe_methods = compressor.option('unsafe_methods')
+    const unsafe_methods = compressor.option('unsafe_methods')
     if (unsafe_methods &&
           compressor.option('ecma') >= 2015 &&
           (!(unsafe_methods instanceof RegExp) || unsafe_methods.test(this.key + ''))) {
-      var key = this.key
-      var value = this.value
-      var is_arrow_with_block = is_ast_arrow(value) &&
+      const key = this.key
+      const value = this.value
+      const is_arrow_with_block = is_ast_arrow(value) &&
               Array.isArray(value.body) &&
               !value.contains_this()
       if ((is_arrow_with_block || is_ast_function(value)) && !value.name) {
@@ -98,11 +98,11 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
 
   _codegen = function (self, output) {
     function get_name (self: any) {
-      var def = self.definition()
+      const def = self.definition()
       return def ? def.mangled_name || def.name : self.name
     }
 
-    var allowShortHand = output.option('shorthand')
+    const allowShortHand = output.option('shorthand')
     if (allowShortHand &&
             is_ast_symbol(self.value) &&
             is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&

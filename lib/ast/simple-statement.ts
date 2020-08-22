@@ -10,8 +10,8 @@ export default class AST_SimpleStatement extends AST_Statement {
 
   _optimize (compressor: Compressor) {
     if (compressor.option('side_effects')) {
-      var body = this.body
-      var node = body.drop_side_effect_free(compressor, true)
+      const body = this.body
+      const node = body.drop_side_effect_free(compressor, true)
       if (!node) {
         compressor.warn('Dropping side-effect-free statement [{file}:{line},{col}]', this.start)
         return make_node('AST_EmptyStatement', this)

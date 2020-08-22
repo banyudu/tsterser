@@ -148,27 +148,27 @@ import {
 
 import { _INLINE, _NOINLINE, _PURE } from './constants'
 
-var _KEYWORDS = 'break case catch class const continue debugger default delete do else export extends finally for function if in instanceof let new return switch throw try typeof var void while with'
-var _KEYWORDS_ATOM = 'false null true'
-var _RESERVED_WORDS = 'enum implements import interface package private protected public static super this ' + _KEYWORDS_ATOM + ' ' + _KEYWORDS
-var _KEYWORDS_BEFORE_EXPRESSION = 'return new delete throw else case yield await'
+const _KEYWORDS = 'break case catch class const continue debugger default delete do else export extends finally for function if in instanceof let new return switch throw try typeof var void while with'
+const _KEYWORDS_ATOM = 'false null true'
+const _RESERVED_WORDS = 'enum implements import interface package private protected public static super this ' + _KEYWORDS_ATOM + ' ' + _KEYWORDS
+const _KEYWORDS_BEFORE_EXPRESSION = 'return new delete throw else case yield await'
 
-var KEYWORDS = makePredicate(_KEYWORDS)
-var RESERVED_WORDS = makePredicate(_RESERVED_WORDS)
-var KEYWORDS_BEFORE_EXPRESSION = makePredicate(_KEYWORDS_BEFORE_EXPRESSION)
-var KEYWORDS_ATOM = makePredicate(_KEYWORDS_ATOM)
+const KEYWORDS = makePredicate(_KEYWORDS)
+const RESERVED_WORDS = makePredicate(_RESERVED_WORDS)
+const KEYWORDS_BEFORE_EXPRESSION = makePredicate(_KEYWORDS_BEFORE_EXPRESSION)
+const KEYWORDS_ATOM = makePredicate(_KEYWORDS_ATOM)
 
-var OPERATOR_CHARS = makePredicate(characters('+-*&%=<>!?|~^'))
+const OPERATOR_CHARS = makePredicate(characters('+-*&%=<>!?|~^'))
 
-var RE_NUM_LITERAL = /[0-9a-f]/i
-var RE_HEX_NUMBER = /^0x[0-9a-f]+$/i
-var RE_OCT_NUMBER = /^0[0-7]+$/
-var RE_ES6_OCT_NUMBER = /^0o[0-7]+$/i
-var RE_BIN_NUMBER = /^0b[01]+$/i
-var RE_DEC_NUMBER = /^\d*\.?\d*(?:e[+-]?\d*(?:\d\.?|\.?\d)\d*)?$/i
-var RE_BIG_INT = /^(0[xob])?[0-9a-f]+n$/i
+const RE_NUM_LITERAL = /[0-9a-f]/i
+const RE_HEX_NUMBER = /^0x[0-9a-f]+$/i
+const RE_OCT_NUMBER = /^0[0-7]+$/
+const RE_ES6_OCT_NUMBER = /^0o[0-7]+$/i
+const RE_BIN_NUMBER = /^0b[01]+$/i
+const RE_DEC_NUMBER = /^\d*\.?\d*(?:e[+-]?\d*(?:\d\.?|\.?\d)\d*)?$/i
+const RE_BIG_INT = /^(0[xob])?[0-9a-f]+n$/i
 
-var OPERATORS = makePredicate([
+const OPERATORS = makePredicate([
   'in',
   'instanceof',
   'typeof',
@@ -218,20 +218,20 @@ var OPERATORS = makePredicate([
   '||'
 ])
 
-var WHITESPACE_CHARS = makePredicate(characters(' \u00a0\n\r\t\f\u000b\u200b\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\uFEFF'))
+const WHITESPACE_CHARS = makePredicate(characters(' \u00a0\n\r\t\f\u000b\u200b\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\uFEFF'))
 
-var NEWLINE_CHARS = makePredicate(characters('\n\r\u2028\u2029'))
+const NEWLINE_CHARS = makePredicate(characters('\n\r\u2028\u2029'))
 
-var PUNC_AFTER_EXPRESSION = makePredicate(characters(';]),:'))
+const PUNC_AFTER_EXPRESSION = makePredicate(characters(';]),:'))
 
-var PUNC_BEFORE_EXPRESSION = makePredicate(characters('[{(,;:'))
+const PUNC_BEFORE_EXPRESSION = makePredicate(characters('[{(,;:'))
 
-var PUNC_CHARS = makePredicate(characters('[]{}(),;:'))
+const PUNC_CHARS = makePredicate(characters('[]{}(),;:'))
 
 /* -----[ Tokenizer ]----- */
 
 // surrogate safe regexps adapted from https://github.com/mathiasbynens/unicode-8.0.0/tree/89b412d8a71ecca9ed593d9e9fa073ab64acfebe/Binary_Property
-var UNICODE = {
+const UNICODE = {
   ID_Start: /[$A-Z_a-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u052F\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0-\u08B4\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0AF9\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D\u0C58-\u0C5A\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D5F-\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F8\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191E\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2118-\u211D\u2124\u2126\u2128\u212A-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309B-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FD5\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA69D\uA6A0-\uA6EF\uA717-\uA71F\uA722-\uA788\uA78B-\uA7AD\uA7B0-\uA7B7\uA7F7-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA8FD\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uA9E0-\uA9E4\uA9E6-\uA9EF\uA9FA-\uA9FE\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA7E-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB65\uAB70-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDD40-\uDD74\uDE80-\uDE9C\uDEA0-\uDED0\uDF00-\uDF1F\uDF30-\uDF4A\uDF50-\uDF75\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF\uDFD1-\uDFD5]|\uD801[\uDC00-\uDC9D\uDD00-\uDD27\uDD30-\uDD63\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDCE0-\uDCF2\uDCF4\uDCF5\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00\uDE10-\uDE13\uDE15-\uDE17\uDE19-\uDE33\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE4\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2]|\uD804[\uDC03-\uDC37\uDC83-\uDCAF\uDCD0-\uDCE8\uDD03-\uDD26\uDD50-\uDD72\uDD76\uDD83-\uDDB2\uDDC1-\uDDC4\uDDDA\uDDDC\uDE00-\uDE11\uDE13-\uDE2B\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEDE\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3D\uDF50\uDF5D-\uDF61]|\uD805[\uDC80-\uDCAF\uDCC4\uDCC5\uDCC7\uDD80-\uDDAE\uDDD8-\uDDDB\uDE00-\uDE2F\uDE44\uDE80-\uDEAA\uDF00-\uDF19]|\uD806[\uDCA0-\uDCDF\uDCFF\uDEC0-\uDEF8]|\uD808[\uDC00-\uDF99]|\uD809[\uDC00-\uDC6E\uDC80-\uDD43]|[\uD80C\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDED0-\uDEED\uDF00-\uDF2F\uDF40-\uDF43\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDF00-\uDF44\uDF50\uDF93-\uDF9F]|\uD82C[\uDC00\uDC01]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB]|\uD83A[\uDC00-\uDCC4]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDED6\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF34\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1]|\uD87E[\uDC00-\uDE1D]/,
   ID_Continue: /(?:[$0-9A-Z_a-z\xAA\xB5\xB7\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0300-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u0483-\u0487\u048A-\u052F\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA\u05F0-\u05F2\u0610-\u061A\u0620-\u0669\u066E-\u06D3\u06D5-\u06DC\u06DF-\u06E8\u06EA-\u06FC\u06FF\u0710-\u074A\u074D-\u07B1\u07C0-\u07F5\u07FA\u0800-\u082D\u0840-\u085B\u08A0-\u08B4\u08E3-\u0963\u0966-\u096F\u0971-\u0983\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7\u09C8\u09CB-\u09CE\u09D7\u09DC\u09DD\u09DF-\u09E3\u09E6-\u09F1\u0A01-\u0A03\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A3C\u0A3E-\u0A42\u0A47\u0A48\u0A4B-\u0A4D\u0A51\u0A59-\u0A5C\u0A5E\u0A66-\u0A75\u0A81-\u0A83\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABC-\u0AC5\u0AC7-\u0AC9\u0ACB-\u0ACD\u0AD0\u0AE0-\u0AE3\u0AE6-\u0AEF\u0AF9\u0B01-\u0B03\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3C-\u0B44\u0B47\u0B48\u0B4B-\u0B4D\u0B56\u0B57\u0B5C\u0B5D\u0B5F-\u0B63\u0B66-\u0B6F\u0B71\u0B82\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BBE-\u0BC2\u0BC6-\u0BC8\u0BCA-\u0BCD\u0BD0\u0BD7\u0BE6-\u0BEF\u0C00-\u0C03\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D-\u0C44\u0C46-\u0C48\u0C4A-\u0C4D\u0C55\u0C56\u0C58-\u0C5A\u0C60-\u0C63\u0C66-\u0C6F\u0C81-\u0C83\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBC-\u0CC4\u0CC6-\u0CC8\u0CCA-\u0CCD\u0CD5\u0CD6\u0CDE\u0CE0-\u0CE3\u0CE6-\u0CEF\u0CF1\u0CF2\u0D01-\u0D03\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D-\u0D44\u0D46-\u0D48\u0D4A-\u0D4E\u0D57\u0D5F-\u0D63\u0D66-\u0D6F\u0D7A-\u0D7F\u0D82\u0D83\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0DCA\u0DCF-\u0DD4\u0DD6\u0DD8-\u0DDF\u0DE6-\u0DEF\u0DF2\u0DF3\u0E01-\u0E3A\u0E40-\u0E4E\u0E50-\u0E59\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB9\u0EBB-\u0EBD\u0EC0-\u0EC4\u0EC6\u0EC8-\u0ECD\u0ED0-\u0ED9\u0EDC-\u0EDF\u0F00\u0F18\u0F19\u0F20-\u0F29\u0F35\u0F37\u0F39\u0F3E-\u0F47\u0F49-\u0F6C\u0F71-\u0F84\u0F86-\u0F97\u0F99-\u0FBC\u0FC6\u1000-\u1049\u1050-\u109D\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u135D-\u135F\u1369-\u1371\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F8\u1700-\u170C\u170E-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176C\u176E-\u1770\u1772\u1773\u1780-\u17D3\u17D7\u17DC\u17DD\u17E0-\u17E9\u180B-\u180D\u1810-\u1819\u1820-\u1877\u1880-\u18AA\u18B0-\u18F5\u1900-\u191E\u1920-\u192B\u1930-\u193B\u1946-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u19D0-\u19DA\u1A00-\u1A1B\u1A20-\u1A5E\u1A60-\u1A7C\u1A7F-\u1A89\u1A90-\u1A99\u1AA7\u1AB0-\u1ABD\u1B00-\u1B4B\u1B50-\u1B59\u1B6B-\u1B73\u1B80-\u1BF3\u1C00-\u1C37\u1C40-\u1C49\u1C4D-\u1C7D\u1CD0-\u1CD2\u1CD4-\u1CF6\u1CF8\u1CF9\u1D00-\u1DF5\u1DFC-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200C\u200D\u203F\u2040\u2054\u2071\u207F\u2090-\u209C\u20D0-\u20DC\u20E1\u20E5-\u20F0\u2102\u2107\u210A-\u2113\u2115\u2118-\u211D\u2124\u2126\u2128\u212A-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2160-\u2188\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D7F-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2DE0-\u2DFF\u3005-\u3007\u3021-\u302F\u3031-\u3035\u3038-\u303C\u3041-\u3096\u3099-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FD5\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA62B\uA640-\uA66F\uA674-\uA67D\uA67F-\uA6F1\uA717-\uA71F\uA722-\uA788\uA78B-\uA7AD\uA7B0-\uA7B7\uA7F7-\uA827\uA840-\uA873\uA880-\uA8C4\uA8D0-\uA8D9\uA8E0-\uA8F7\uA8FB\uA8FD\uA900-\uA92D\uA930-\uA953\uA960-\uA97C\uA980-\uA9C0\uA9CF-\uA9D9\uA9E0-\uA9FE\uAA00-\uAA36\uAA40-\uAA4D\uAA50-\uAA59\uAA60-\uAA76\uAA7A-\uAAC2\uAADB-\uAADD\uAAE0-\uAAEF\uAAF2-\uAAF6\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB65\uAB70-\uABEA\uABEC\uABED\uABF0-\uABF9\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE00-\uFE0F\uFE20-\uFE2F\uFE33\uFE34\uFE4D-\uFE4F\uFE70-\uFE74\uFE76-\uFEFC\uFF10-\uFF19\uFF21-\uFF3A\uFF3F\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDD40-\uDD74\uDDFD\uDE80-\uDE9C\uDEA0-\uDED0\uDEE0\uDF00-\uDF1F\uDF30-\uDF4A\uDF50-\uDF7A\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF\uDFD1-\uDFD5]|\uD801[\uDC00-\uDC9D\uDCA0-\uDCA9\uDD00-\uDD27\uDD30-\uDD63\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDCE0-\uDCF2\uDCF4\uDCF5\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00-\uDE03\uDE05\uDE06\uDE0C-\uDE13\uDE15-\uDE17\uDE19-\uDE33\uDE38-\uDE3A\uDE3F\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE6\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2]|\uD804[\uDC00-\uDC46\uDC66-\uDC6F\uDC7F-\uDCBA\uDCD0-\uDCE8\uDCF0-\uDCF9\uDD00-\uDD34\uDD36-\uDD3F\uDD50-\uDD73\uDD76\uDD80-\uDDC4\uDDCA-\uDDCC\uDDD0-\uDDDA\uDDDC\uDE00-\uDE11\uDE13-\uDE37\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEEA\uDEF0-\uDEF9\uDF00-\uDF03\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3C-\uDF44\uDF47\uDF48\uDF4B-\uDF4D\uDF50\uDF57\uDF5D-\uDF63\uDF66-\uDF6C\uDF70-\uDF74]|\uD805[\uDC80-\uDCC5\uDCC7\uDCD0-\uDCD9\uDD80-\uDDB5\uDDB8-\uDDC0\uDDD8-\uDDDD\uDE00-\uDE40\uDE44\uDE50-\uDE59\uDE80-\uDEB7\uDEC0-\uDEC9\uDF00-\uDF19\uDF1D-\uDF2B\uDF30-\uDF39]|\uD806[\uDCA0-\uDCE9\uDCFF\uDEC0-\uDEF8]|\uD808[\uDC00-\uDF99]|\uD809[\uDC00-\uDC6E\uDC80-\uDD43]|[\uD80C\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDE60-\uDE69\uDED0-\uDEED\uDEF0-\uDEF4\uDF00-\uDF36\uDF40-\uDF43\uDF50-\uDF59\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDF00-\uDF44\uDF50-\uDF7E\uDF8F-\uDF9F]|\uD82C[\uDC00\uDC01]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99\uDC9D\uDC9E]|\uD834[\uDD65-\uDD69\uDD6D-\uDD72\uDD7B-\uDD82\uDD85-\uDD8B\uDDAA-\uDDAD\uDE42-\uDE44]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB\uDFCE-\uDFFF]|\uD836[\uDE00-\uDE36\uDE3B-\uDE6C\uDE75\uDE84\uDE9B-\uDE9F\uDEA1-\uDEAF]|\uD83A[\uDC00-\uDCC4\uDCD0-\uDCD6]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDED6\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF34\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1]|\uD87E[\uDC00-\uDE1D]|\uDB40[\uDD00-\uDDEF])+/ // eslint-disable-line no-misleading-character-class
 }
@@ -258,9 +258,9 @@ function get_full_char_code (str: string, pos: number) {
 }
 
 function get_full_char_length (str: string) {
-  var surrogates = 0
+  let surrogates = 0
 
-  for (var i = 0; i < str.length; i++) {
+  for (let i = 0; i < str.length; i++) {
     if (is_surrogate_pair_head(str.charCodeAt(i)) && is_surrogate_pair_tail(str.charCodeAt(i + 1))) {
       surrogates++
       i++
@@ -311,7 +311,7 @@ function is_identifier_string (str: string, allow_surrogates: boolean) {
   if (!allow_surrogates && /[\ud800-\udfff]/.test(str)) {
     return false
   }
-  var match = UNICODE.ID_Start.exec(str)
+  let match = UNICODE.ID_Start.exec(str)
   if (!match || match.index !== 0) {
     return false
   }
@@ -340,7 +340,7 @@ function parse_js_number (num: string, allow_e = true) {
   } else if (RE_DEC_NUMBER.test(num)) {
     return parseFloat(num)
   } else {
-    var val = parseFloat(num)
+    const val = parseFloat(num)
     if (String(val) == num) return val
   }
 }
@@ -369,10 +369,10 @@ function is_token (token: any, type?: string, val?: string) {
   return token.type == type && (val == null || token.value == val)
 }
 
-var EX_EOF = {}
+const EX_EOF = {}
 
 function tokenizer ($TEXT: string, filename: string | undefined, html5_comments: boolean, shebang: boolean) {
-  var S = {
+  let S = {
     text: $TEXT,
     filename: filename,
     pos: 0,
@@ -393,7 +393,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   function peek () { return get_full_char(S.text, S.pos) }
 
   function next (signal_eof?: boolean, in_string?: boolean) {
-    var ch = get_full_char(S.text, S.pos++)
+    let ch = get_full_char(S.text, S.pos++)
     if (signal_eof && !ch) { throw EX_EOF }
     if (NEWLINE_CHARS.has(ch)) {
       S.newline_before = S.newline_before || !in_string
@@ -423,16 +423,16 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function find_eol () {
-    var text = S.text
-    for (var i = S.pos, n = S.text.length; i < n; ++i) {
-      var ch = text[i]
+    const text = S.text
+    for (let i = S.pos, n = S.text.length; i < n; ++i) {
+      const ch = text[i]
       if (NEWLINE_CHARS.has(ch)) { return i }
     }
     return -1
   }
 
   function find (what: string, signal_eof: boolean) {
-    var pos = S.text.indexOf(what, S.pos)
+    const pos = S.text.indexOf(what, S.pos)
     if (signal_eof && pos == -1) throw EX_EOF
     return pos
   }
@@ -443,8 +443,8 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
     S.tokpos = S.pos
   }
 
-  var prev_was_dot = false
-  var previous_token: any = null
+  let prev_was_dot = false
+  let previous_token: any = null
   function token (type: string, value?: string | number | object, is_comment?: boolean) {
     S.regex_allowed = ((type == 'operator' && !UNARY_POSTFIX.has(value as string)) ||
                            (type == 'keyword' && KEYWORDS_BEFORE_EXPRESSION.has(value as string)) ||
@@ -455,7 +455,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
     } else if (!is_comment) {
       prev_was_dot = false
     }
-    var ret: any = {
+    let ret: any = {
       type: type,
       value: value,
       line: S.tokline,
@@ -485,7 +485,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function read_while (pred: (ch: string, i: number) => boolean) {
-    var ret = ''; var ch; var i = 0
+    let ret = ''; let ch; let i = 0
     while ((ch = peek()) && pred(ch, i++)) { ret += next() }
     return ret
   }
@@ -495,11 +495,11 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function read_num (prefix?: string) {
-    var has_e = false; var after_e = false; var has_x = false; var has_dot = prefix == '.'; var is_big_int = false
-    var num = read_while(function (ch, i) {
+    let has_e = false; let after_e = false; let has_x = false; let has_dot = prefix == '.'; let is_big_int = false
+    let num = read_while(function (ch, i) {
       if (is_big_int) return false
 
-      var code = ch.charCodeAt(0)
+      const code = ch.charCodeAt(0)
       switch (code) {
         case 98: case 66: // bB
           return (has_x = true) // Can occur in hex sequence, don't return false yet
@@ -535,7 +535,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
       if (!has_dot && RE_BIG_INT.test(num) && !isNaN(valid)) { return token('big_int', without_n) }
       parse_error('Invalid or unexpected token')
     }
-    var valid = parse_js_number(num)
+    const valid = parse_js_number(num)
     if (!isNaN(valid)) {
       return token('num', valid)
     } else {
@@ -548,7 +548,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function read_escaped_char (in_string: boolean, strict_hex: boolean, template_string?: boolean) {
-    var ch = next(true, in_string)
+    const ch = next(true, in_string)
     switch (ch.charCodeAt(0)) {
       case 110 : return '\n'
       case 114 : return '\r'
@@ -562,7 +562,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
           next(true)
           if (peek() === '}') { parse_error('Expecting hex-character between {}') }
           while (peek() == '0') next(true) // No significance
-          var result; var length = find('}', true) - S.pos
+          let result; const length = find('}', true) - S.pos
           // Avoid 32 bit integer overflow (1 << 32 === 1)
           // We know first character isn't 0 and thus out of range anyway
           if (length > 6 || (result = hex_bytes(length, strict_hex)) > 0x10FFFF) {
@@ -593,7 +593,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
 
   function read_octal_escape_sequence (ch: string, strict_octal: boolean) {
     // Read
-    var p = peek()
+    let p = peek()
     if (p >= '0' && p <= '7') {
       ch += next(true)
       if (ch[0] <= '3' && (p = peek()) >= '0' && p <= '7') { ch += next(true) }
@@ -606,37 +606,37 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function hex_bytes (n: number, strict_hex: boolean) {
-    var num: string = '0'
+    let num: string = '0'
     for (; n > 0; --n) {
       if (!strict_hex && isNaN(parseInt(peek(), 16))) {
         return parseInt(num, 16) || ''
       }
-      var digit = next(true)
+      const digit = next(true)
       if (isNaN(parseInt(digit, 16))) { parse_error('Invalid hex-character pattern in string') }
       num += digit
     }
     return parseInt(num, 16)
   }
 
-  var read_string = with_eof_error('Unterminated string constant', function () {
-    var quote = next(); var ret = ''
+  const read_string = with_eof_error('Unterminated string constant', function () {
+    const quote = next(); let ret = ''
     for (;;) {
-      var ch = next(true, true)
+      let ch = next(true, true)
       if (ch == '\\') ch = read_escaped_char(true, true)
       else if (ch == '\r' || ch == '\n') parse_error('Unterminated string constant')
       else if (ch == quote) break
       ret += ch
     }
-    var tok: any = token('string', ret)
+    const tok: any = token('string', ret)
     tok.quote = quote
     return tok
   })
 
-  var read_template_characters = with_eof_error('Unterminated template', function (begin: boolean) {
+  const read_template_characters = with_eof_error('Unterminated template', function (begin: boolean) {
     if (begin) {
       S.template_braces.push(S.brace_counter)
     }
-    var content = ''; var raw = ''; var ch; var tok
+    let content = ''; let raw = ''; let ch; let tok
     next(true, true)
     while ((ch = next(true, true)) != '`') {
       if (ch == '\r') {
@@ -652,8 +652,8 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
 
       raw += ch
       if (ch == '\\') {
-        var tmp = S.pos
-        var prev_is_tag = previous_token && (previous_token.type === 'name' || previous_token.type === 'punc' && (previous_token.value === ')' || previous_token.value === ']'))
+        const tmp = S.pos
+        const prev_is_tag = previous_token && (previous_token.type === 'name' || previous_token.type === 'punc' && (previous_token.value === ')' || previous_token.value === ']'))
         ch = read_escaped_char(true, !prev_is_tag, true)
         raw += S.text.substr(tmp, S.pos - tmp)
       }
@@ -668,8 +668,8 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   })
 
   function skip_line_comment (type: string) {
-    var regex_allowed = S.regex_allowed
-    var i = find_eol(); var ret
+    const regex_allowed = S.regex_allowed
+    const i = find_eol(); let ret
     if (i == -1) {
       ret = S.text.substr(S.pos)
       S.pos = S.text.length
@@ -683,10 +683,10 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
     return next_token
   }
 
-  var skip_multiline_comment = with_eof_error('Unterminated multiline comment', function () {
-    var regex_allowed = S.regex_allowed
-    var i = find('*/', true)
-    var text = S.text.substring(S.pos, i).replace(/\r\n|\r|\u2028|\u2029/g, '\n')
+  const skip_multiline_comment = with_eof_error('Unterminated multiline comment', function () {
+    const regex_allowed = S.regex_allowed
+    const i = find('*/', true)
+    const text = S.text.substring(S.pos, i).replace(/\r\n|\r|\u2028|\u2029/g, '\n')
     // update stream position
     forward(get_full_char_length(text) /* text length doesn't count \r\n as 2 char while S.pos - i does */ + 2)
     S.comments_before.push(token('comment2', text, true))
@@ -695,9 +695,9 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
     return next_token
   })
 
-  var read_name = with_eof_error('Unterminated identifier name', function () {
-    var name: string; var ch: string; var escaped = false
-    var read_escaped_identifier_char = function () {
+  const read_name = with_eof_error('Unterminated identifier name', function () {
+    let name: string; let ch: string; let escaped = false
+    const read_escaped_identifier_char = function () {
       escaped = true
       next()
       if (peek() !== 'u') {
@@ -739,8 +739,8 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
     return name
   })
 
-  var read_regexp = with_eof_error('Unterminated regular expression', function (source: string) {
-    var prev_backslash = false; var ch; var in_class = false
+  const read_regexp = with_eof_error('Unterminated regular expression', function (source: string) {
+    let prev_backslash = false; let ch; let in_class = false
     while ((ch = next(true))) {
       if (NEWLINE_CHARS.has(ch)) {
         parse_error('Unexpected line terminator')
@@ -768,7 +768,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   function read_operator (prefix?: string | undefined) {
     function grow (op: string): string {
       if (!peek()) return op
-      var bigger = op + peek()
+      const bigger = op + peek()
       if (OPERATORS.has(bigger)) {
         next()
         return grow(bigger)
@@ -817,7 +817,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   function read_word () {
-    var word = read_name()
+    const word = read_name()
     if (prev_was_dot) return token('name', word)
     return KEYWORDS_ATOM.has(word) ? token('atom', word)
       : !KEYWORDS.has(word) ? token('name', word)
@@ -860,12 +860,12 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
       }
       var ch = peek()
       if (!ch) return token('eof')
-      var code = ch.charCodeAt(0)
+      const code = ch.charCodeAt(0)
       switch (code) {
         case 34: case 39: return read_string()
         case 46: return handle_dot()
         case 47: {
-          var tok = handle_slash()
+          const tok = handle_slash()
           if (tok === next_token) continue
           return tok
         }
@@ -912,9 +912,9 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
   }
 
   next_token.pop_directives_stack = function () {
-    var directives = S.directive_stack[S.directive_stack.length - 1]
+    const directives = S.directive_stack[S.directive_stack.length - 1]
 
-    for (var i = 0; i < directives.length; i++) {
+    for (let i = 0; i < directives.length; i++) {
       S.directives[directives[i]]--
     }
 
@@ -930,7 +930,7 @@ function tokenizer ($TEXT: string, filename: string | undefined, html5_comments:
 
 /* -----[ Parser (constants) ]----- */
 
-var UNARY_PREFIX = makePredicate([
+const UNARY_PREFIX = makePredicate([
   'typeof',
   'void',
   'delete',
@@ -944,12 +944,12 @@ var UNARY_PREFIX = makePredicate([
 
 var UNARY_POSTFIX = makePredicate(['--', '++'])
 
-var ASSIGNMENT = makePredicate(['=', '+=', '-=', '/=', '*=', '**=', '%=', '>>=', '<<=', '>>>=', '|=', '^=', '&='])
+const ASSIGNMENT = makePredicate(['=', '+=', '-=', '/=', '*=', '**=', '%=', '>>=', '<<=', '>>>=', '|=', '^=', '&='])
 
-var PRECEDENCE = (function (a: string[][], ret: AnyObject) {
-  for (var i = 0; i < a.length; ++i) {
-    var b = a[i]
-    for (var j = 0; j < b.length; ++j) {
+const PRECEDENCE = (function (a: string[][], ret: AnyObject) {
+  for (let i = 0; i < a.length; ++i) {
+    const b = a[i]
+    for (let j = 0; j < b.length; ++j) {
       ret[b[j]] = i + 1
     }
   }
@@ -972,7 +972,7 @@ var PRECEDENCE = (function (a: string[][], ret: AnyObject) {
   {}
 )
 
-var ATOMIC_START_TOKEN = makePredicate(['atom', 'num', 'big_int', 'string', 'regexp', 'name'])
+const ATOMIC_START_TOKEN = makePredicate(['atom', 'num', 'big_int', 'string', 'regexp', 'name'])
 
 /* -----[ Parser ]----- */
 
@@ -996,7 +996,7 @@ function parse ($TEXT: string, opt?: any) {
     toplevel: null
   }, true)
 
-  var S = {
+  const S = {
     input: (typeof $TEXT === 'string'
       ? tokenizer($TEXT, options.filename,
         options.html5_comments as boolean, options.shebang as boolean)
@@ -1037,7 +1037,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function croak (msg: string, line?: number | null, col?: number | null, pos?: number | null) {
-    var ctx = S.input.context()
+    const ctx = S.input.context()
     js_error(msg,
       ctx.filename,
       line != null ? line : ctx.tokline,
@@ -1087,7 +1087,7 @@ function parse ($TEXT: string, opt?: any) {
 
   function parenthesised () {
     expect('(')
-    var exp = expression(true)
+    const exp = expression(true)
     expect(')')
     return exp
   }
@@ -1114,7 +1114,7 @@ function parse ($TEXT: string, opt?: any) {
     switch (S.token?.type) {
       case 'string':
         if (S.in_directives) {
-          var token = peek()
+          const token = peek()
           if (!S.token?.raw.includes('\\') &&
                     (is_token(token, 'punc', ';') ||
                         is_token(token, 'punc', '}') ||
@@ -1146,7 +1146,7 @@ function parse ($TEXT: string, opt?: any) {
         }
         if (S.token?.value == 'import' && !is_token(peek(), 'punc', '(')) {
           next()
-          var node = import_()
+          const node = import_()
           semicolon()
           return node
         }
@@ -1311,7 +1311,7 @@ function parse ($TEXT: string, opt?: any) {
   })
 
   function labeled_statement () {
-    var label = as_symbol(AST_Label)
+    const label = as_symbol(AST_Label)
     if (label.name === 'await' && is_in_async()) {
       token_error(S.prev, 'await cannot be used as label inside async function')
     }
@@ -1324,7 +1324,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     expect(':')
     S.labels.push(label)
-    var stat = statement()
+    const stat = statement()
     S.labels.pop()
     if (!(is_ast_iteration_statement(stat))) {
       // check for `continue` that refers to this label.
@@ -1348,7 +1348,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function break_cont (type) {
-    var label: any = null; var ldef
+    let label: any = null; let ldef
     if (!can_insert_semicolon()) {
       label = as_symbol(AST_LabelRef, true)
     }
@@ -1358,14 +1358,14 @@ function parse ($TEXT: string, opt?: any) {
       label.thedef = ldef
     } else if (S.in_loop == 0) { croak(type.TYPE + ' not inside a loop or switch') }
     semicolon()
-    var stat = new type({ label: label })
+    const stat = new type({ label: label })
     if (ldef) ldef.references.push(stat)
     return stat
   }
 
   function for_ () {
-    var for_await_error = '`for await` invalid in this context'
-    var await_tok: any | false | null = S.token
+    const for_await_error = '`for await` invalid in this context'
+    let await_tok: any | false | null = S.token
     if (await_tok?.type == 'name' && await_tok.value == 'await') {
       if (!is_in_async()) {
         token_error(await_tok, for_await_error)
@@ -1375,15 +1375,15 @@ function parse ($TEXT: string, opt?: any) {
       await_tok = false
     }
     expect('(')
-    var init: any = null
+    let init: any = null
     if (!is('punc', ';')) {
       init =
                 is('keyword', 'var') ? (next(), var_(true))
                   : is('keyword', 'let') ? (next(), let_(true))
                     : is('keyword', 'const') ? (next(), const_(true))
                       : expression(true, true)
-      var is_in = is('operator', 'in')
-      var is_of = is('name', 'of')
+      const is_in = is('operator', 'in')
+      const is_of = is('name', 'of')
       if (await_tok && !is_of) {
         token_error(await_tok, for_await_error)
       }
@@ -1408,9 +1408,9 @@ function parse ($TEXT: string, opt?: any) {
 
   function regular_for (init: any) {
     expect(';')
-    var test = is('punc', ';') ? null : expression(true)
+    const test = is('punc', ';') ? null : expression(true)
     expect(';')
-    var step = is('punc', ')') ? null : expression(true)
+    const step = is('punc', ')') ? null : expression(true)
     expect(')')
     return new AST_For({
       init: init,
@@ -1421,8 +1421,8 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function for_of (init, is_await) {
-    var lhs = is_ast_definitions(init) ? init.definitions[0].name : null
-    var obj = expression(true)
+    const lhs = is_ast_definitions(init) ? init.definitions[0].name : null
+    const obj = expression(true)
     expect(')')
     return new AST_ForOf({
       await: is_await,
@@ -1434,7 +1434,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function for_in (init) {
-    var obj = expression(true)
+    const obj = expression(true)
     expect(')')
     return new AST_ForIn({
       init: init,
@@ -1443,16 +1443,16 @@ function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var arrow_function = function (start, argnames, is_async) {
+  const arrow_function = function (start, argnames, is_async) {
     if (has_newline_before(S.token)) {
       croak('Unexpected newline before arrow (=>)')
     }
 
     expect_token('arrow', '=>')
 
-    var body: any = _function_body(is('punc', '{'), false, is_async)
+    const body: any = _function_body(is('punc', '{'), false, is_async)
 
-    var end =
+    const end =
             body instanceof Array && body.length ? body[body.length - 1].end
               : body instanceof Array ? start
                 : body.end
@@ -1467,13 +1467,13 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   var function_ = function (ctor, is_generator_property, is_async, is_export_default?) {
-    var in_statement = ctor === AST_Defun
-    var is_generator = is('operator', '*')
+    const in_statement = ctor === AST_Defun
+    const is_generator = is('operator', '*')
     if (is_generator) {
       next()
     }
 
-    var name = is('name') ? as_symbol(in_statement ? AST_SymbolDefun : AST_SymbolLambda) : null
+    const name = is('name') ? as_symbol(in_statement ? AST_SymbolDefun : AST_SymbolLambda) : null
     if (in_statement && !name) {
       if (is_export_default) {
         ctor = AST_Function
@@ -1484,8 +1484,8 @@ function parse ($TEXT: string, opt?: any) {
 
     if (name && ctor !== AST_Accessor && !(is_ast_symbol_declaration(name))) { unexpected(prev()) }
 
-    var args: any = []
-    var body: any = _function_body(true, is_generator || is_generator_property, is_async, name, args)
+    const args: any = []
+    const body: any = _function_body(true, is_generator || is_generator_property, is_async, name, args)
     return new ctor({
       start: args.start,
       end: body.end,
@@ -1498,11 +1498,11 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function track_used_binding_identifiers (is_parameter: boolean, strict: boolean) {
-    var parameters = new Set()
-    var duplicate: any = false
-    var default_assignment = false
-    var spread = false
-    var strict_mode = !!strict
+    const parameters = new Set()
+    let duplicate: any = false
+    let default_assignment = false
+    let spread = false
+    let strict_mode = !!strict
     var tracker = {
       add_parameter: function (token) {
         if (parameters.has(token.value)) {
@@ -1556,12 +1556,12 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function parameters (params) {
-    var used_parameters = track_used_binding_identifiers(true, S.input.has_directive('use strict'))
+    const used_parameters = track_used_binding_identifiers(true, S.input.has_directive('use strict'))
 
     expect('(')
 
     while (!is('punc', ')')) {
-      var param = parameter(used_parameters)
+      const param = parameter(used_parameters)
       params.push(param)
 
       if (!is('punc', ')')) {
@@ -1578,8 +1578,8 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function parameter (used_parameters, symbol_type?) {
-    var param
-    var expand: any | null | false = false
+    let param
+    let expand: any | null | false = false
     if (used_parameters === undefined) {
       used_parameters = track_used_binding_identifiers(true, S.input.has_directive('use strict'))
     }
@@ -1618,11 +1618,11 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function binding_element (used_parameters, symbol_type) {
-    var elements: any[] = []
-    var first = true
-    var is_expand = false
-    var expand_token
-    var first_token = S.token
+    const elements: any[] = []
+    let first = true
+    let is_expand = false
+    let expand_token
+    const first_token = S.token
     if (used_parameters === undefined) {
       used_parameters = track_used_binding_identifiers(false, S.input.has_directive('use strict'))
     }
@@ -1711,8 +1711,8 @@ function parse ($TEXT: string, opt?: any) {
         }
         if (is('name') && (is_token(peek(), 'punc') || is_token(peek(), 'operator')) && [',', '}', '='].includes(peek().value)) {
           used_parameters.add_parameter(S.token)
-          var start = prev()
-          var value = as_symbol(symbol_type)
+          const start = prev()
+          const value = as_symbol(symbol_type)
           if (is_expand) {
             elements.push(new AST_Expansion({
               start: expand_token,
@@ -1730,8 +1730,8 @@ function parse ($TEXT: string, opt?: any) {
         } else if (is('punc', '}')) {
           continue // Allow trailing hole
         } else {
-          var property_token = S.token
-          var property = as_property_name()
+          const property_token = S.token
+          const property = as_property_name()
           if (property === null) {
             unexpected(prev())
           } else if (prev()?.type === 'name' && !is('punc', ':')) {
@@ -1789,10 +1789,10 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function params_or_seq_ (allow_arrows, maybe_sequence) {
-    var spread_token
-    var invalid_sequence
-    var trailing_comma
-    var a: any[] = []
+    let spread_token
+    let invalid_sequence
+    let trailing_comma
+    const a: any[] = []
     expect('(')
     while (!is('punc', ')')) {
       if (spread_token) unexpected(spread_token)
@@ -1827,10 +1827,10 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function _function_body (block, generator, is_async, name?, args?) {
-    var loop = S.in_loop
-    var labels = S.labels
-    var current_generator = S.in_generator
-    var current_async = S.in_async
+    const loop = S.in_loop
+    const labels = S.labels
+    const current_generator = S.in_generator
+    const current_async = S.in_async
     ++S.in_function
     if (generator) { S.in_generator = S.in_function }
     if (is_async) { S.in_async = S.in_function }
@@ -1880,9 +1880,9 @@ function parse ($TEXT: string, opt?: any) {
       croak('Unexpected yield expression outside generator function',
                 S.prev?.line, S.prev?.col, S.prev?.pos)
     }
-    var start = S.token
-    var star = false
-    var has_expression = true
+    const start = S.token
+    let star = false
+    let has_expression = true
 
     // Attempt to get expression or star (and then the mandatory expression)
     // behind yield on the same line.
@@ -1911,7 +1911,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function if_ () {
-    var cond = parenthesised(); var body = statement(false, false, true); var belse = null
+    const cond = parenthesised(); const body = statement(false, false, true); let belse = null
     if (is('keyword', 'else')) {
       next()
       belse = statement(false, false, true)
@@ -1925,7 +1925,7 @@ function parse ($TEXT: string, opt?: any) {
 
   function block_ () {
     expect('{')
-    var a: any[] = []
+    const a: any[] = []
     while (!is('punc', '}')) {
       if (is('eof')) unexpected()
       a.push(statement())
@@ -1936,7 +1936,7 @@ function parse ($TEXT: string, opt?: any) {
 
   function switch_body_ () {
     expect('{')
-    var a: any[] = []; var cur: any = null; var branch: any = null; var tmp
+    const a: any[] = []; let cur: any = null; let branch: any = null; let tmp
     while (!is('punc', '}')) {
       if (is('eof')) unexpected()
       if (is('keyword', 'case')) {
@@ -1968,11 +1968,11 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function try_ () {
-    var body = block_(); var bcatch: any = null; var bfinally: any = null
+    const body = block_(); let bcatch: any = null; let bfinally: any = null
     if (is('keyword', 'catch')) {
-      var start = S.token
+      const start = S.token
       next()
-      var name
+      let name
       if (is('punc', '{')) {
         name = null
       } else {
@@ -2005,10 +2005,10 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function vardefs (no_in, kind) {
-    var a: any[] = []
-    var def
+    const a: any[] = []
+    let def
     for (;;) {
-      var sym_type =
+      const sym_type =
                 kind === 'var' ? AST_SymbolVar
                   : kind === 'const' ? AST_SymbolConst
                     : kind === 'let' ? AST_SymbolLet : null
@@ -2062,8 +2062,8 @@ function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var new_ = function (allow_calls) {
-    var start = S.token
+  const new_ = function (allow_calls) {
+    const start = S.token
     expect_token('operator', 'new')
     if (is('punc', '.')) {
       next()
@@ -2073,14 +2073,14 @@ function parse ($TEXT: string, opt?: any) {
         end: prev()
       }), allow_calls)
     }
-    var newexp = expr_atom(false); var args
+    const newexp = expr_atom(false); let args
     if (is('punc', '(')) {
       next()
       args = expr_list(')', (options.ecma as number) >= 2017)
     } else {
       args = []
     }
-    var call = new AST_New({
+    const call = new AST_New({
       start: start,
       expression: newexp,
       args: args,
@@ -2091,7 +2091,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function as_atom_node () {
-    var tok = S.token; var ret
+    const tok = S.token; let ret
     switch (tok?.type) {
       case 'name':
         ret = _make_symbol(AST_SymbolRef)
@@ -2132,7 +2132,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function to_fun_args (ex: AST_Node, _?, __?, default_seen_above?: AST_Node) {
-    var insert_default = function (ex) {
+    const insert_default = function (ex) {
       if (default_seen_above) {
         return new AST_DefaultAssign({
           start: ex.start,
@@ -2151,9 +2151,9 @@ function parse ($TEXT: string, opt?: any) {
     if (is('operator', 'new')) {
       return new_(allow_calls)
     }
-    var start = S.token
-    var peeked
-    var async = is('name', 'async') &&
+    const start = S.token
+    let peeked
+    const async = is('name', 'async') &&
             (peeked = peek()).value != '[' &&
             peeked.type != 'arrow' &&
             as_atom_node()
@@ -2178,7 +2178,7 @@ function parse ($TEXT: string, opt?: any) {
             ex.start.comments_before.unshift(...startToken.comments_before)
             startToken.comments_before = ex.start.comments_before
             if (outer_comments_before == 0 && startToken.comments_before.length > 0) {
-              var comment = startToken.comments_before[0]
+              const comment = startToken.comments_before[0]
               if (!comment.nlb) {
                 comment.nlb = startToken.nlb
                 startToken.nlb = false
@@ -2204,7 +2204,7 @@ function parse ($TEXT: string, opt?: any) {
       if (!async) unexpected()
     }
     if (allow_arrows && is('name') && is_token(peek(), 'arrow')) {
-      var param = new AST_SymbolFunarg({
+      const param = new AST_SymbolFunarg({
         name: S.token?.value,
         start: start,
         end: start
@@ -2214,7 +2214,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     if (is('keyword', 'function')) {
       next()
-      var func = function_(AST_Function, false, !!async)
+      const func = function_(AST_Function, false, !!async)
       func.start = start
       func.end = prev()
       return subscripts(func, allow_calls)
@@ -2222,7 +2222,7 @@ function parse ($TEXT: string, opt?: any) {
     if (async) return subscripts(async, allow_calls)
     if (is('keyword', 'class')) {
       next()
-      var cls = class_(AST_ClassExpression)
+      const cls = class_(AST_ClassExpression)
       cls.start = start
       cls.end = prev()
       return subscripts(cls, allow_calls)
@@ -2240,7 +2240,7 @@ function parse ($TEXT: string, opt?: any) {
     if (_arg) {
       // do nothing
     }
-    var segments: any[] = []; var start = S.token
+    const segments: any[] = []; const start = S.token
 
     segments.push(new AST_TemplateSegment({
       start: S.token,
@@ -2274,7 +2274,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function expr_list (closing, allow_trailing_comma, allow_empty?) {
-    var first = true; var a: any[] = []
+    let first = true; const a: any[] = []
     while (!is('punc', closing)) {
       if (first) first = false; else expect(',')
       if (allow_trailing_comma && is('punc', closing)) break
@@ -2298,12 +2298,12 @@ function parse ($TEXT: string, opt?: any) {
     })
   })
 
-  var create_accessor = embed_tokens((is_generator, is_async) => {
+  const create_accessor = embed_tokens((is_generator, is_async) => {
     return function_(AST_Accessor, is_generator, is_async)
   })
 
   var object_or_destructuring_ = embed_tokens(function object_or_destructuring_ () {
-    var start = S.token; var first = true; var a: any[] = []
+    let start = S.token; let first = true; const a: any[] = []
     expect('{')
     while (!is('punc', '}')) {
       if (first) first = false; else expect(',')
@@ -2322,12 +2322,12 @@ function parse ($TEXT: string, opt?: any) {
         continue
       }
 
-      var name = as_property_name()
+      const name = as_property_name()
       var value
 
       // Check property and fetch value
       if (!is('punc', ':')) {
-        var concise = concise_method_or_getset(name, start)
+        const concise = concise_method_or_getset(name, start)
         if (concise) {
           a.push(concise)
           continue
@@ -2371,7 +2371,7 @@ function parse ($TEXT: string, opt?: any) {
   })
 
   function class_ (KindOfClass) {
-    var start; var method; var class_name; var extends_; var a: any[] = []
+    let start; let method; let class_name; let extends_; const a: any[] = []
 
     S.input.push_directives_stack() // Push directive stack, but not scope stack
     S.input.add_directive('use strict')
@@ -2414,7 +2414,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function concise_method_or_getset (name, start, is_class?) {
-    var get_method_name_ast = function (name, start) {
+    const get_method_name_ast = function (name, start) {
       if (typeof name === 'string' || typeof name === 'number') {
         return new AST_SymbolMethod({
           start,
@@ -2441,9 +2441,9 @@ function parse ($TEXT: string, opt?: any) {
       }
       return name
     }
-    var is_async = false
-    var is_static = false
-    var is_generator = false
+    let is_async = false
+    let is_static = false
+    let is_generator = false
     var property_token = start
     if (is_class && name === 'static' && !is('punc', '(')) {
       is_static = true
@@ -2465,7 +2465,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     if (is('punc', '(')) {
       name = get_method_name_ast(name, start)
-      var node = new AST_ConciseMethod({
+      const node = new AST_ConciseMethod({
         start: start,
         static: is_static,
         is_generator: is_generator,
@@ -2534,9 +2534,8 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function import_ () {
-    var start = prev()
-    var imported_name
-    var imported_names
+    const start = prev()
+    let imported_name
     if (is('name')) {
       imported_name = as_symbol(AST_SymbolImport)
     }
@@ -2545,12 +2544,12 @@ function parse ($TEXT: string, opt?: any) {
       next()
     }
 
-    imported_names = map_names(true)
+    const imported_names = map_names(true)
 
     if (imported_names || imported_name) {
       expect_token('name', 'from')
     }
-    var mod_str: any = S.token
+    const mod_str: any = S.token
     if (mod_str.type !== 'string') {
       unexpected()
     }
@@ -2578,11 +2577,11 @@ function parse ($TEXT: string, opt?: any) {
       })
     }
 
-    var foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
-    var type = is_import ? AST_SymbolImport : AST_SymbolExport
-    var start = S.token
-    var foreign_name
-    var name
+    const foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
+    const type = is_import ? AST_SymbolImport : AST_SymbolExport
+    const start = S.token
+    let foreign_name
+    let name
 
     if (is_import) {
       foreign_name = make_symbol(foreign_type)
@@ -2611,11 +2610,10 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function map_nameAsterisk (is_import, name) {
-    var foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
-    var type = is_import ? AST_SymbolImport : AST_SymbolExport
-    var start = S.token
-    var foreign_name
-    var end = prev()
+    const foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
+    const type = is_import ? AST_SymbolImport : AST_SymbolExport
+    const start = S.token
+    const end = prev()
 
     name = name || new type({
       name: '*',
@@ -2623,7 +2621,7 @@ function parse ($TEXT: string, opt?: any) {
       end: end
     })
 
-    foreign_name = new foreign_type({
+    const foreign_name = new foreign_type({
       name: '*',
       start: start,
       end: end
@@ -2638,7 +2636,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function map_names (is_import) {
-    var names
+    let names
     if (is('punc', '{')) {
       next()
       names = []
@@ -2650,7 +2648,7 @@ function parse ($TEXT: string, opt?: any) {
       }
       next()
     } else if (is('operator', '*')) {
-      var name
+      let name
       next()
       if (is_import && is('name', 'as')) {
         next() // The "as" word
@@ -2662,9 +2660,9 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function export_ () {
-    var start = S.token
-    var is_default
-    var exported_names
+    const start = S.token
+    let is_default
+    let exported_names
 
     if (is('keyword', 'default')) {
       is_default = true
@@ -2673,7 +2671,7 @@ function parse ($TEXT: string, opt?: any) {
       if (is('name', 'from')) {
         next()
 
-        var mod_str = S.token
+        const mod_str = S.token
         if (mod_str.type !== 'string') {
           unexpected()
         }
@@ -2701,9 +2699,9 @@ function parse ($TEXT: string, opt?: any) {
       }
     }
 
-    var node
-    var exported_value
-    var exported_definition
+    let node
+    let exported_value
+    let exported_definition
     if (is('punc', '{') ||
             is_default &&
                 (is('keyword', 'class') || is('keyword', 'function')) &&
@@ -2730,12 +2728,12 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function as_property_name () {
-    var tmp = S.token
+    const tmp = S.token
     switch (tmp.type) {
       case 'punc':
         if (tmp.value === '[') {
           next()
-          var ex = expression(false)
+          const ex = expression(false)
           expect(']')
           return ex
         } else unexpected(tmp)
@@ -2771,14 +2769,14 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function as_name () {
-    var tmp = S.token
+    const tmp = S.token
     if (tmp.type != 'name') unexpected()
     next()
     return tmp.value
   }
 
   function _make_symbol (type) {
-    var name = S.token?.value
+    const name = S.token?.value
     return new (name == 'this' ? AST_This
       : name == 'super' ? AST_Super
         : type)({
@@ -2789,7 +2787,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function _verify_symbol (sym) {
-    var name = sym.name
+    const name = sym.name
     if (is_in_generator() && name == 'yield') {
       token_error(sym.start, 'Yield cannot be used as identifier inside generators')
     }
@@ -2808,7 +2806,7 @@ function parse ($TEXT: string, opt?: any) {
       if (!noerror) croak('Name expected')
       return null
     }
-    var sym = _make_symbol(type)
+    const sym = _make_symbol(type)
     _verify_symbol(sym)
     next()
     return sym
@@ -2816,12 +2814,12 @@ function parse ($TEXT: string, opt?: any) {
 
   // Annotate AST_Call, AST_Lambda or AST_New with the special comments
   function annotate (node: AST_Node) {
-    var start = node.start
-    var comments = start.comments_before
+    const start = node.start
+    const comments = start.comments_before
     const comments_outside_parens = outer_comments_before_counts.get(start)
-    var i = comments_outside_parens != null ? comments_outside_parens : comments.length
+    let i = comments_outside_parens != null ? comments_outside_parens : comments.length
     while (--i >= 0) {
-      var comment = comments[i]
+      const comment = comments[i]
       if (/[@#]__/.test(comment.value)) {
         if (/[@#]__PURE__/.test(comment.value)) {
           set_annotation(node, _PURE)
@@ -2840,7 +2838,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   var subscripts = function (expr, allow_calls) {
-    var start = expr.start
+    const start = expr.start
     if (is('punc', '.')) {
       next()
       return subscripts(new AST_Dot({
@@ -2852,7 +2850,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     if (is('punc', '[')) {
       next()
-      var prop = expression(true)
+      const prop = expression(true)
       expect(']')
       return subscripts(new AST_Sub({
         start: start,
@@ -2863,7 +2861,7 @@ function parse ($TEXT: string, opt?: any) {
     }
     if (allow_calls && is('punc', '(')) {
       next()
-      var call = new AST_Call({
+      const call = new AST_Call({
         start: start,
         expression: expr,
         args: call_args(),
@@ -2884,7 +2882,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function call_args () {
-    var args: any[] = []
+    const args: any[] = []
     while (!is('punc', ')')) {
       if (is('expand', '...')) {
         next()
@@ -2906,7 +2904,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   var maybe_unary = function (allow_calls, allow_arrows?) {
-    var start = S.token
+    const start = S.token
     if (start.type == 'name' && start.value == 'await') {
       if (is_in_async()) {
         next()
@@ -2918,12 +2916,12 @@ function parse ($TEXT: string, opt?: any) {
     if (is('operator') && UNARY_PREFIX.has(start.value)) {
       next()
       handle_regexp()
-      var ex = make_unary(AST_UnaryPrefix, start, maybe_unary(allow_calls))
+      const ex = make_unary(AST_UnaryPrefix, start, maybe_unary(allow_calls))
       ex.start = start
       ex.end = prev()
       return ex
     }
-    var val = expr_atom(allow_calls, allow_arrows)
+    let val = expr_atom(allow_calls, allow_arrows)
     while (is('operator') && UNARY_POSTFIX.has(S.token?.value as string) && !has_newline_before(S.token)) {
       if (is_ast_arrow(val)) unexpected()
       val = make_unary(AST_UnaryPostfix, S.token, val)
@@ -2935,7 +2933,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function make_unary (ctor, token, expr) {
-    var op = token.value
+    const op = token.value
     switch (op) {
       case '++':
       case '--':
@@ -2949,16 +2947,16 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   var expr_op = function (left: any, min_prec: number, no_in: boolean) {
-    var op = is('operator') ? S.token?.value : null
+    let op = is('operator') ? S.token?.value : null
     if (op == 'in' && no_in) op = null
     if (op == '**' && is_ast_unary_prefix(left) &&
             /* unary token in front not allowed - parenthesis required */
             !is_token(left.start, 'punc', '(') &&
             left.operator !== '--' && left.operator !== '++') { unexpected(left.start) }
-    var prec = op != null ? PRECEDENCE[op] : null
+    const prec = op != null ? PRECEDENCE[op] : null
     if (prec != null && (prec > min_prec || (op === '**' && min_prec === prec))) {
       next()
-      var right = expr_op(maybe_unary(true), prec, no_in)
+      const right = expr_op(maybe_unary(true), prec, no_in)
       return expr_op(new AST_Binary({
         start: left.start,
         left: left,
@@ -2974,12 +2972,12 @@ function parse ($TEXT: string, opt?: any) {
     return expr_op(maybe_unary(true, true), 0, no_in)
   }
 
-  var maybe_conditional = function (no_in) {
-    var start = S.token
-    var expr = expr_ops(no_in)
+  const maybe_conditional = function (no_in) {
+    const start = S.token
+    const expr = expr_ops(no_in)
     if (is('operator', '?')) {
       next()
-      var yes = expression(false)
+      const yes = expression(false)
       expect(':')
       return new AST_Conditional({
         start: start,
@@ -3005,9 +3003,9 @@ function parse ($TEXT: string, opt?: any) {
         end: node.end
       })
     } else if (is_ast_array(node)) {
-      var names: any[] = []
+      const names: any[] = []
 
-      for (var i = 0; i < node.elements.length; i++) {
+      for (let i = 0; i < node.elements.length; i++) {
         // Only allow expansion as last element
         if (is_ast_expansion(node.elements[i])) {
           if (i + 1 !== node.elements.length) {
@@ -3042,7 +3040,7 @@ function parse ($TEXT: string, opt?: any) {
   // In ES6, AssignmentExpression can also be an ArrowFunction
   var maybe_assign = function (no_in) {
     handle_regexp()
-    var start = S.token
+    const start = S.token
 
     if (start.type == 'name' && start.value == 'yield') {
       if (is_in_generator()) {
@@ -3053,8 +3051,8 @@ function parse ($TEXT: string, opt?: any) {
       }
     }
 
-    var left = maybe_conditional(no_in)
-    var val = S.token?.value
+    let left = maybe_conditional(no_in)
+    const val = S.token?.value
 
     if (is('operator') && ASSIGNMENT.has(val as string)) {
       if (is_assignable(left) || is_ast_destructuring((left = to_destructuring(left)))) {
@@ -3073,8 +3071,8 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   var expression = function (commas?: boolean, no_in?) {
-    var start = S.token
-    var exprs: any[] = []
+    const start = S.token
+    const exprs: any[] = []
     while (true) {
       exprs.push(maybe_assign(no_in))
       if (!commas || !is('punc', ',')) break
@@ -3090,7 +3088,7 @@ function parse ($TEXT: string, opt?: any) {
 
   function in_loop (cont) {
     ++S.in_loop
-    var ret = cont()
+    const ret = cont()
     --S.in_loop
     return ret
   }
@@ -3100,14 +3098,14 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   return (function () {
-    var start = S.token
-    var body: any[] = []
+    const start = S.token
+    const body: any[] = []
     S.input.push_directives_stack()
     if (options.module) S.input.add_directive('use strict')
     while (!is('eof')) { body.push(statement()) }
     S.input.pop_directives_stack()
-    var end = prev()
-    var toplevel = options.toplevel
+    const end = prev()
+    let toplevel = options.toplevel
     if (toplevel) {
       toplevel.body = toplevel.body.concat(body)
       toplevel.end = end

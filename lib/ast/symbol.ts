@@ -9,14 +9,14 @@ export default class AST_Symbol extends AST_Node {
   scope: any
 
   fixed_value = function () {
-    var fixed = this.thedef.fixed
+    const fixed = this.thedef.fixed
     if (!fixed || is_ast_node(fixed)) return fixed
     return fixed()
   }
 
   mark_enclosed = function () {
-    var def = this.definition()
-    var s = this.scope
+    const def = this.definition()
+    let s = this.scope
     while (s) {
       push_uniq(s.enclosed, def)
       if (s === def.scope) break
@@ -30,7 +30,7 @@ export default class AST_Symbol extends AST_Node {
   }
 
   unmangleable = function (options: any) {
-    var def = this.definition()
+    const def = this.definition()
     return !def || def.unmangleable(options)
   }
 
@@ -57,7 +57,7 @@ export default class AST_Symbol extends AST_Node {
   })
 
   _to_mozilla_ast (parent) {
-    var def = this.definition()
+    const def = this.definition()
     return {
       type: 'Identifier',
       name: def ? def.mangled_name || def.name : this.name
@@ -65,7 +65,7 @@ export default class AST_Symbol extends AST_Node {
   }
 
   _do_print = function (output: any) {
-    var def = this.definition()
+    const def = this.definition()
     output.print_name(def ? def.mangled_name || def.name : this.name)
   }
 

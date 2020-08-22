@@ -17,12 +17,12 @@ export default class AST_VarDef extends AST_Node {
   }
 
   reduce_vars (tw: TreeWalker, descend) {
-    var node = this
+    const node = this
     if (is_ast_destructuring(node.name)) {
       suppress(node.name)
       return
     }
-    var d = node.name.definition?.()
+    const d = node.name.definition?.()
     if (node.value) {
       if (safe_to_assign(tw, d, node.name.scope, node.value)) {
         d.fixed = function () {
@@ -78,8 +78,8 @@ export default class AST_VarDef extends AST_Node {
       output.space()
       output.print('=')
       output.space()
-      var p = output.parent(1)
-      var noin = is_ast_for(p) || is_ast_for_in(p)
+      const p = output.parent(1)
+      const noin = is_ast_for(p) || is_ast_for_in(p)
       parenthesize_for_noin(self.value, output, noin)
     }
   }

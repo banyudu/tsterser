@@ -46,12 +46,12 @@ export default class AST_Conditional extends AST_Node {
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
     if (is_ast_sequence(self.condition)) {
-      var expressions = self.condition.expressions.slice()
+      const expressions = self.condition.expressions.slice()
       self.condition = expressions.pop()
       expressions.push(self)
       return make_sequence(self, expressions)
     }
-    var cond = self.condition.evaluate(compressor)
+    const cond = self.condition.evaluate(compressor)
     if (cond !== self.condition) {
       if (cond) {
         compressor.warn('Condition always true [{file}:{line},{col}]', self.start)
@@ -61,7 +61,7 @@ export default class AST_Conditional extends AST_Node {
         return maintain_this_binding(compressor.parent(), compressor.self(), self.alternative)
       }
     }
-    var negated = cond.negate(compressor, first_in_statement(compressor))
+    const negated = cond.negate(compressor, first_in_statement(compressor))
     if (best_of(compressor, cond, negated) === negated) {
       self = make_node('AST_Conditional', self, {
         condition: negated,
@@ -69,9 +69,9 @@ export default class AST_Conditional extends AST_Node {
         alternative: self.consequent
       })
     }
-    var condition = self.condition
-    var consequent = self.consequent
-    var alternative = self.alternative
+    const condition = self.condition
+    const consequent = self.consequent
+    const alternative = self.alternative
     // x?x:y --> x||y
     if (is_ast_symbol_ref(condition) &&
           is_ast_symbol_ref(consequent) &&
@@ -104,7 +104,7 @@ export default class AST_Conditional extends AST_Node {
       })
     }
     // x ? y(a) : y(b) --> y(x ? a : b)
-    var arg_index
+    let arg_index
     if (is_ast_call(consequent) &&
           alternative.TYPE === consequent.TYPE &&
           consequent.args.length > 0 &&
@@ -113,7 +113,7 @@ export default class AST_Conditional extends AST_Node {
           !self.condition.has_side_effects(compressor) &&
           !consequent.expression.has_side_effects(compressor) &&
           typeof (arg_index = single_arg_diff()) === 'number') {
-      var node = consequent.clone()
+      const node = consequent.clone()
       node.args[arg_index] = make_node('AST_Conditional', self, {
         condition: self.condition,
         consequent: consequent.args[arg_index],
@@ -207,7 +207,7 @@ export default class AST_Conditional extends AST_Node {
         right: alternative
       }).optimize(compressor)
     }
-    var in_bool = compressor.in_boolean_context()
+    const in_bool = compressor.in_boolean_context()
     if (is_true(self.consequent)) {
       if (is_false(self.alternative)) {
         // c ? true : false ---> !!c
@@ -284,13 +284,13 @@ export default class AST_Conditional extends AST_Node {
     }
 
     function single_arg_diff () {
-      var a = consequent.args
-      var b = alternative.args
-      for (var i = 0, len = a.length; i < len; i++) {
+      const a = consequent.args
+      const b = alternative.args
+      for (let i = 0, len = a.length; i < len; i++) {
         if (is_ast_expansion(a[i])) return
         if (!a[i].equivalent_to(b[i])) {
           if (is_ast_expansion(b[i])) return
-          for (var j = i + 1; j < len; j++) {
+          for (let j = i + 1; j < len; j++) {
             if (is_ast_expansion(a[j])) return
             if (!a[j].equivalent_to(b[j])) return
           }
@@ -301,8 +301,8 @@ export default class AST_Conditional extends AST_Node {
   }
 
   drop_side_effect_free (compressor: Compressor) {
-    var consequent = this.consequent.drop_side_effect_free(compressor)
-    var alternative = this.alternative.drop_side_effect_free(compressor)
+    const consequent = this.consequent.drop_side_effect_free(compressor)
+    const alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
     if (!consequent) {
       return alternative ? make_node('AST_Binary', this, {
@@ -318,7 +318,7 @@ export default class AST_Conditional extends AST_Node {
         right: consequent
       })
     }
-    var node = this.clone()
+    const node = this.clone()
     node.consequent = consequent
     node.alternative = alternative
     return node
@@ -337,15 +337,15 @@ export default class AST_Conditional extends AST_Node {
   }
 
   _eval (compressor: Compressor, depth) {
-    var condition = this.condition._eval(compressor, depth)
+    const condition = this.condition._eval(compressor, depth)
     if (condition === this.condition) return this
-    var node = condition ? this.consequent : this.alternative
-    var value = node._eval(compressor, depth)
+    const node = condition ? this.consequent : this.alternative
+    const value = node._eval(compressor, depth)
     return value === node ? this : value
   }
 
   negate (compressor: Compressor, first_in_statement) {
-    var self = this.clone()
+    const self = this.clone()
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
     return best(this, self, first_in_statement)

@@ -26,7 +26,7 @@ export default class AST_Dot extends AST_PropAccess {
     if (compressor.option('unsafe_proto') &&
           is_ast_dot(this.expression) &&
           this.expression.property == 'prototype') {
-      var exp = this.expression.expression
+      const exp = this.expression.expression
       if (is_undeclared_ref(exp)) {
         switch (exp.name) {
           case 'Array':
@@ -140,10 +140,10 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   _codegen (self, output) {
-    var expr = self.expression
+    const expr = self.expression
     expr.print(output)
-    var prop: string = self.property as string
-    var print_computed = RESERVED_WORDS.has(prop)
+    const prop: string = self.property as string
+    const print_computed = RESERVED_WORDS.has(prop)
       ? output.option('ie8')
       : !is_identifier_string(prop, (output.option('ecma') as unknown as number) >= 2015)
     if (print_computed) {

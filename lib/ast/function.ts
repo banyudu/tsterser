@@ -37,7 +37,7 @@ export default class AST_Function extends AST_Lambda {
   drop_side_effect_free = return_null
   _eval = function (compressor: Compressor) {
     if (compressor.option('unsafe')) {
-      var fn: any = function () {}
+      const fn: any = function () {}
       fn.node = this
       fn.toString = function () {
         return this.node.print_to_string()
@@ -57,13 +57,13 @@ export default class AST_Function extends AST_Lambda {
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
 
-    var tricky_def = is_ast_symbol_funarg(def.orig[0]) && this.name && this.name.definition()
+    const tricky_def = is_ast_symbol_funarg(def.orig[0]) && this.name && this.name.definition()
 
     // the function's mangled_name is null when keep_fnames is true
-    var tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
+    const tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
 
     while (true) {
-      var name = next_mangled(this, options)
+      const name = next_mangled(this, options)
       if (!tricky_name || tricky_name != name) { return name }
     }
   }
@@ -85,7 +85,7 @@ export default class AST_Function extends AST_Lambda {
     }
 
     if (output.option('webkit')) {
-      var p = output.parent()
+      const p = output.parent()
       if (p?._needs_parens(this)) { return true }
     }
 

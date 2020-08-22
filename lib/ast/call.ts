@@ -65,10 +65,10 @@ export default class AST_Call extends AST_Node {
 
   _optimize (compressor) {
     const self: any = this
-    var exp = self.expression
-    var fn = exp
+    const exp = self.expression
+    let fn = exp
     inline_array_like_spread(self, compressor, self.args)
-    var simple_args = self.args.every((arg) =>
+    const simple_args = self.args.every((arg) =>
       !(is_ast_expansion(arg))
     )
     if (compressor.option('reduce_vars') &&
@@ -80,18 +80,18 @@ export default class AST_Call extends AST_Node {
         fn = fixed
       }
     }
-    var is_func = is_ast_lambda(fn)
+    const is_func = is_ast_lambda(fn)
     if (compressor.option('unused') &&
           simple_args &&
           is_func &&
           !fn.uses_arguments &&
           !fn.pinned()) {
-      var pos = 0; var last = 0
-      for (var i = 0, len = self.args.length; i < len; i++) {
+      let pos = 0; let last = 0
+      for (let i = 0, len = self.args.length; i < len; i++) {
         if (is_ast_expansion(fn.argnames[i])) {
           if (has_flag(fn.argnames[i].expression, UNUSED)) {
             while (i < len) {
-              var node = self.args[i++].drop_side_effect_free(compressor)
+              const node = self.args[i++].drop_side_effect_free(compressor)
               if (node) {
                 self.args[pos++] = node
               }
@@ -104,7 +104,7 @@ export default class AST_Call extends AST_Node {
           last = pos
           break
         }
-        var trim = i >= fn.argnames.length
+        const trim = i >= fn.argnames.length
         if (trim || has_flag(fn.argnames[i], UNUSED)) {
           const node = self.args[i].drop_side_effect_free(compressor)
           if (node) {
@@ -190,7 +190,7 @@ export default class AST_Call extends AST_Node {
             if (self.args.length >= 1 &&
                   self.args.length <= 2 &&
                   self.args.every((arg) => {
-                    var value = arg.evaluate(compressor)
+                    const value = arg.evaluate(compressor)
                     params.push(value)
                     return arg !== value
                   })
@@ -226,17 +226,17 @@ export default class AST_Call extends AST_Node {
           case 'join':
             if (is_ast_array(exp.expression)) {
               EXIT: {
-                var separator
+                let separator
                 if (self.args.length > 0) {
                   separator = self.args[0].evaluate(compressor)
                   if (separator === self.args[0]) break EXIT // not a constant
                 }
-                var elements: any[] = []
-                var consts: any[] = []
+                const elements: any[] = []
+                const consts: any[] = []
                 for (let i = 0, len = exp.expression.elements.length; i < len; i++) {
-                  var el = exp.expression.elements[i]
+                  const el = exp.expression.elements[i]
                   if (is_ast_expansion(el)) break EXIT
-                  var value = el.evaluate(compressor)
+                  const value = el.evaluate(compressor)
                   if (value !== el) {
                     consts.push(value)
                   } else {
@@ -266,7 +266,7 @@ export default class AST_Call extends AST_Node {
                   })
                 }
                 if (separator == '') {
-                  var first
+                  let first
                   if (elements[0].is_string(compressor) ||
                           elements[1].is_string(compressor)) {
                     first = elements.shift()
@@ -293,8 +293,8 @@ export default class AST_Call extends AST_Node {
             break
           case 'charAt':
             if (exp.expression.is_string(compressor)) {
-              var arg = self.args[0]
-              var index = arg ? arg.evaluate(compressor) : 0
+              const arg = self.args[0]
+              const index = arg ? arg.evaluate(compressor) : 0
               if (index !== arg) {
                 return make_node('AST_Sub', exp, {
                   expression: exp.expression,
@@ -305,7 +305,7 @@ export default class AST_Call extends AST_Node {
             break
           case 'apply':
             if (self.args.length == 2 && is_ast_array(self.args[1])) {
-              var args = self.args[1].elements.slice()
+              const args = self.args[1].elements.slice()
               args.unshift(self.args[0])
               return make_node('AST_Call', self, {
                 expression: make_node('AST_Dot', exp, {
@@ -354,19 +354,19 @@ export default class AST_Call extends AST_Node {
         //   https://github.com/mishoo/UglifyJS2/issues/203
         // if the code argument is a constant, then we can minify it.
         try {
-          var code = 'n(function(' + self.args.slice(0, -1).map(function (arg) {
+          const code = 'n(function(' + self.args.slice(0, -1).map(function (arg) {
             return arg.value
           }).join(',') + '){' + self.args[self.args.length - 1].value + '})'
-          var ast = parse(code)
-          var mangle = { ie8: compressor.option('ie8') }
+          let ast = parse(code)
+          const mangle = { ie8: compressor.option('ie8') }
           ast.figure_out_scope(mangle)
-          var comp = new Compressor(compressor.options)
+          const comp = new Compressor(compressor.options)
           ast = ast.transform(comp)
           ast.figure_out_scope(mangle)
           base54.reset()
           ast.compute_char_frequency(mangle)
           ast.mangle_names(mangle)
-          var fun
+          let fun
           walk(ast, (node: any) => {
             if (is_func_expr(node)) {
               fun = node
@@ -396,9 +396,9 @@ export default class AST_Call extends AST_Node {
         }
       }
     }
-    var stat = is_func && fn.body[0]
-    var is_regular_func = is_func && !fn.is_generator && !fn.async
-    var can_inline = is_regular_func && compressor.option('inline') && !self.is_expr_pure(compressor)
+    const stat = is_func && fn.body[0]
+    const is_regular_func = is_func && !fn.is_generator && !fn.async
+    const can_inline = is_regular_func && compressor.option('inline') && !self.is_expr_pure(compressor)
     if (can_inline && is_ast_return(stat)) {
       let returned = stat.value
       if (!returned || returned.is_constant_expression()) {
@@ -491,7 +491,7 @@ export default class AST_Call extends AST_Node {
           is_iife_call(self)) {
       return self.negate(compressor, true)
     }
-    var ev = self.evaluate(compressor)
+    let ev = self.evaluate(compressor)
     if (ev !== self) {
       ev = make_node_from_constant(ev, self).optimize(compressor)
       return best_of(compressor, ev, self)
@@ -513,14 +513,14 @@ export default class AST_Call extends AST_Node {
     }
 
     function can_flatten_body (stat) {
-      var body = fn.body
-      var len = body.length
+      const body = fn.body
+      const len = body.length
       if (compressor.option('inline') < 3) {
         return len == 1 && return_value(stat)
       }
       stat = null
-      for (var i = 0; i < len; i++) {
-        var line = body[i]
+      for (let i = 0; i < len; i++) {
+        const line = body[i]
         if (is_ast_var(line)) {
           if (stat && !line.definitions.every((var_def) =>
             !var_def.value
@@ -537,8 +537,8 @@ export default class AST_Call extends AST_Node {
     }
 
     function can_inject_args (block_scoped, safe_to_inject) {
-      for (var i = 0, len = fn.argnames.length; i < len; i++) {
-        var arg = fn.argnames[i]
+      for (let i = 0, len = fn.argnames.length; i < len; i++) {
+        const arg = fn.argnames[i]
         if (is_ast_default_assign(arg)) {
           if (has_flag(arg.left, UNUSED)) continue
           return false
@@ -561,10 +561,10 @@ export default class AST_Call extends AST_Node {
     }
 
     function can_inject_args_values () {
-      var arg_vals_outer_refs = new Set()
+      const arg_vals_outer_refs = new Set()
       const value_walker = (node: any) => {
         if (is_ast_scope(node)) {
-          var scope_outer_refs = new Set()
+          const scope_outer_refs = new Set()
           node.enclosed.forEach(function (def) {
             scope_outer_refs.add(def.name)
           })
@@ -582,17 +582,17 @@ export default class AST_Call extends AST_Node {
       }
       if (arg_vals_outer_refs.size == 0) return true
       for (let i = 0, len = fn.argnames.length; i < len; i++) {
-        var arg = fn.argnames[i]
+        const arg = fn.argnames[i]
         if (is_ast_default_assign(arg) && has_flag(arg.left, UNUSED)) continue
         if (is_ast_expansion(arg) && has_flag(arg.expression, UNUSED)) continue
         if (has_flag(arg, UNUSED)) continue
         if (arg_vals_outer_refs.has(arg.name)) return false
       }
       for (let i = 0, len = fn.body.length; i < len; i++) {
-        var stat = fn.body[i]
+        const stat = fn.body[i]
         if (!(is_ast_var(stat))) continue
-        for (var j = stat.definitions.length; --j >= 0;) {
-          var name = stat.definitions[j].name
+        for (let j = stat.definitions.length; --j >= 0;) {
+          const name = stat.definitions[j].name
           if (is_ast_destructuring(name) ||
                       arg_vals_outer_refs.has(name.name)) {
             return false
@@ -603,13 +603,13 @@ export default class AST_Call extends AST_Node {
     }
 
     function can_inject_vars (block_scoped, safe_to_inject) {
-      var len = fn.body.length
-      for (var i = 0; i < len; i++) {
-        var stat = fn.body[i]
+      const len = fn.body.length
+      for (let i = 0; i < len; i++) {
+        const stat = fn.body[i]
         if (!(is_ast_var(stat))) continue
         if (!safe_to_inject) return false
-        for (var j = stat.definitions.length; --j >= 0;) {
-          var name = stat.definitions[j].name
+        for (let j = stat.definitions.length; --j >= 0;) {
+          const name = stat.definitions[j].name
           if (is_ast_destructuring(name) ||
                       block_scoped.has(name.name) ||
                       identifier_atom.has(name.name) ||
@@ -623,7 +623,7 @@ export default class AST_Call extends AST_Node {
     }
 
     function can_inject_symbols () {
-      var block_scoped = new Set()
+      const block_scoped = new Set()
       do {
         scope = compressor.parent(++level)
         if (scope.is_block_scope() && scope.block_scope) {
@@ -645,8 +645,8 @@ export default class AST_Call extends AST_Node {
         }
       } while (!(is_ast_scope(scope)))
 
-      var safe_to_inject = !(is_ast_toplevel(scope)) || compressor.toplevel.vars
-      var inline = compressor.option('inline')
+      const safe_to_inject = !(is_ast_toplevel(scope)) || compressor.toplevel.vars
+      const inline = compressor.option('inline')
       if (!can_inject_vars(block_scoped, inline >= 3 && safe_to_inject)) return false
       if (!can_inject_args(block_scoped, inline >= 2 && safe_to_inject)) return false
       if (!can_inject_args_values()) return false
@@ -654,7 +654,7 @@ export default class AST_Call extends AST_Node {
     }
 
     function append_var (decls, expressions, name, value) {
-      var def = name.definition?.()
+      const def = name.definition?.()
       scope.variables.set(name.name, def)
       scope.enclosed.push(def)
       if (!scope.var_names().has(name.name)) {
@@ -664,7 +664,7 @@ export default class AST_Call extends AST_Node {
           value: null
         }))
       }
-      var sym = make_node('AST_SymbolRef', name, name)
+      const sym = make_node('AST_SymbolRef', name, name)
       def.references.push(sym)
       if (value) {
         expressions.push(make_node('AST_Assign', self, {
@@ -676,17 +676,17 @@ export default class AST_Call extends AST_Node {
     }
 
     function flatten_args (decls, expressions) {
-      var len = fn.argnames.length
+      const len = fn.argnames.length
       for (var i = self.args.length; --i >= len;) {
         expressions.push(self.args[i])
       }
       for (i = len; --i >= 0;) {
-        var name = fn.argnames[i]
-        var value = self.args[i]
+        const name = fn.argnames[i]
+        let value = self.args[i]
         if (has_flag(name, UNUSED) || !name.name || scope.var_names().has(name.name)) {
           if (value) expressions.push(value)
         } else {
-          var symbol = make_node('AST_SymbolVar', name, name)
+          const symbol = make_node('AST_SymbolVar', name, name)
                   name.definition?.().orig.push(symbol)
                   if (!value && in_loop) value = make_node('AST_Undefined', self)
                   append_var(decls, expressions, symbol, value)
@@ -697,19 +697,19 @@ export default class AST_Call extends AST_Node {
     }
 
     function flatten_vars (decls, expressions) {
-      var pos = expressions.length
-      for (var i = 0, lines = fn.body.length; i < lines; i++) {
-        var stat = fn.body[i]
+      let pos = expressions.length
+      for (let i = 0, lines = fn.body.length; i < lines; i++) {
+        const stat = fn.body[i]
         if (!(is_ast_var(stat))) continue
-        for (var j = 0, defs = stat.definitions.length; j < defs; j++) {
-          var var_def = stat.definitions[j]
+        for (let j = 0, defs = stat.definitions.length; j < defs; j++) {
+          const var_def = stat.definitions[j]
           var name = var_def.name
           append_var(decls, expressions, name, var_def.value)
           if (in_loop && fn.argnames.every((argname) =>
             argname.name != name.name
           )) {
-            var def = fn.variables.get(name.name)
-            var sym = make_node('AST_SymbolRef', name, name)
+            const def = fn.variables.get(name.name)
+            const sym = make_node('AST_SymbolRef', name, name)
             def.references.push(sym)
             expressions.splice(pos++, 0, make_node('AST_Assign', var_def, {
               operator: '=',
@@ -722,8 +722,8 @@ export default class AST_Call extends AST_Node {
     }
 
     function flatten_fn (returned_value) {
-      var decls: any[] = []
-      var expressions: any[] = []
+      const decls: any[] = []
+      const expressions: any[] = []
       flatten_args(decls, expressions)
       flatten_vars(decls, expressions)
       expressions.push(returned_value)
@@ -740,14 +740,14 @@ export default class AST_Call extends AST_Node {
   drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
-        var exprs = this.args.slice()
+        let exprs = this.args.slice()
         exprs.unshift(this.expression.expression)
         exprs = trim(exprs, compressor, first_in_statement)
         return exprs && make_sequence(this, exprs)
       }
       if (is_func_expr(this.expression) &&
               (!this.expression.name || !this.expression.name.definition?.().references.length)) {
-        var node = this.clone()
+        const node = this.clone()
         node.expression.process_expression(false, compressor)
         return node
       }
@@ -756,7 +756,7 @@ export default class AST_Call extends AST_Node {
     if (has_annotation(this, _PURE)) {
       compressor.warn('Dropping __PURE__ call [{file}:{line},{col}]', this.start)
     }
-    var args = trim(this.args, compressor, first_in_statement)
+    const args = trim(this.args, compressor, first_in_statement)
     return args && make_sequence(this, args)
   }
 
@@ -778,17 +778,17 @@ export default class AST_Call extends AST_Node {
   }
 
   _eval (compressor: Compressor, depth) {
-    var exp = this.expression
+    const exp = this.expression
     if (compressor.option('unsafe') && is_ast_prop_access(exp)) {
-      var key = exp.property
+      let key = exp.property
       if (key instanceof AST_Node && is_ast_node(key)) {
         key = key._eval?.(compressor, depth)
         if (key === exp.property) return this
       }
-      var val
-      var e = exp.expression
+      let val
+      const e = exp.expression
       if (is_undeclared_ref(e)) {
-        var first_arg =
+        let first_arg =
                   e.name === 'hasOwnProperty' &&
                   key === 'call' &&
                   (this.args[0] && this.args[0].evaluate(compressor))
@@ -798,19 +798,19 @@ export default class AST_Call extends AST_Node {
         if ((first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)) {
           return this.clone()
         }
-        var static_fn = static_fns.get(e.name)
+        const static_fn = static_fns.get(e.name)
         if (!static_fn || !static_fn.has(key)) return this
         val = global_objs[e.name]
       } else {
         val = e._eval(compressor, depth + 1)
         if (val === e || !val) return this
-        var native_fn = native_fns.get(val.constructor.name)
+        const native_fn = native_fns.get(val.constructor.name)
         if (!native_fn || !native_fn.has(key)) return this
       }
-      var args: any[] = []
-      for (var i = 0, len = this.args.length; i < len; i++) {
-        var arg = this.args[i]
-        var value = arg._eval(compressor, depth)
+      const args: any[] = []
+      for (let i = 0, len = this.args.length; i < len; i++) {
+        const arg = this.args[i]
+        const value = arg._eval(compressor, depth)
         if (arg === value) return this
         args.push(value)
       }
@@ -830,8 +830,8 @@ export default class AST_Call extends AST_Node {
 
   is_expr_pure (compressor: Compressor) {
     if (compressor.option('unsafe')) {
-      var expr = this.expression
-      var first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
+      const expr = this.expression
+      const first_arg = (this.args && this.args[0] && this.args[0].evaluate(compressor))
       if (
         expr.expression && (expr.expression as any).name === 'hasOwnProperty' &&
               (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared)
@@ -852,8 +852,8 @@ export default class AST_Call extends AST_Node {
 
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
-      var args = this.args
-      for (var i = 0, len = args.length; i < len; i++) {
+      const args = this.args
+      for (let i = 0, len = args.length; i < len; i++) {
         args[i]._walk(visitor)
       }
       this.expression._walk(visitor) // TODO why do we need to crawl this last?
@@ -885,7 +885,7 @@ export default class AST_Call extends AST_Node {
   }
 
   needs_parens (output: any) {
-    var p = output.parent(); var p1
+    const p = output.parent(); let p1
     if (is_ast_new(p) && p.expression === this ||
             is_ast_export(p) && p.is_default && is_ast_function(this.expression)) { return true }
 

@@ -116,7 +116,7 @@ export default class AST_Class extends AST_Scope {
   })
 
   _to_mozilla_ast (parent) {
-    var type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
+    const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
       superClass: to_moz(this.extends),
@@ -136,7 +136,7 @@ export default class AST_Class extends AST_Scope {
       output.space()
     }
     if (self.extends) {
-      var parens = (
+      const parens = (
         !(is_ast_symbol_ref(self.extends)) &&
                 !(is_ast_prop_access(self.extends)) &&
                 !(is_ast_class_expression(self.extends)) &&

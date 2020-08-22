@@ -44,7 +44,7 @@ export default class AST_Arrow extends AST_Lambda {
   }
 
   _to_mozilla_ast (parent): any {
-    var body = {
+    const body = {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
     }
@@ -57,14 +57,14 @@ export default class AST_Arrow extends AST_Lambda {
   }
 
   needs_parens (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this
   }
 
   _do_print (this: any, output: any) {
-    var self = this
-    var parent = output.parent()
-    var needs_parens = (is_ast_binary(parent) && !(is_ast_assign(parent))) ||
+    const self = this
+    const parent = output.parent()
+    const needs_parens = (is_ast_binary(parent) && !(is_ast_assign(parent))) ||
             is_ast_unary(parent) ||
             (is_ast_call(parent) && self === parent.expression)
     if (needs_parens) { output.print('(') }

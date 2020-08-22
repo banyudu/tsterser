@@ -10,11 +10,11 @@ export default class AST_TemplateString extends AST_Node {
     if (!compressor.option('evaluate') ||
       is_ast_prefixed_template_string(compressor.parent())) { return this }
 
-    var segments: any[] = []
-    for (var i = 0; i < this.segments.length; i++) {
-      var segment = this.segments[i]
+    const segments: any[] = []
+    for (let i = 0; i < this.segments.length; i++) {
+      let segment = this.segments[i]
       if (is_ast_node(segment)) {
-        var result = segment.evaluate?.(compressor)
+        const result = segment.evaluate?.(compressor)
         // Evaluate to constant value
         // Constant value shorter than ${segment}
         if (result !== segment && (result + '').length <= segment.size?.(undefined, undefined) + '${}'.length) {
@@ -27,9 +27,9 @@ export default class AST_TemplateString extends AST_Node {
         // `before ${'test' + foo} after` => `before innerBefore ${any} innerAfter after`
         // `before ${foo + 'test} after` => `before innerBefore ${any} innerAfter after`
         if (is_ast_template_string(segment)) {
-          var inners = segment.segments
+          const inners = segment.segments
           segments[segments.length - 1].value += inners[0].value
-          for (var j = 1; j < inners.length; j++) {
+          for (let j = 1; j < inners.length; j++) {
             segment = inners[j]
             segments.push(segment)
           }
@@ -70,7 +70,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   drop_side_effect_free (compressor: Compressor) {
-    var values = trim(this.segments, compressor, first_in_statement)
+    const values = trim(this.segments, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
@@ -107,9 +107,9 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   _to_mozilla_ast (parent) {
-    var quasis: any[] = []
-    var expressions: any[] = []
-    for (var i = 0; i < this.segments.length; i++) {
+    const quasis: any[] = []
+    const expressions: any[] = []
+    for (let i = 0; i < this.segments.length; i++) {
       if (i % 2 !== 0) {
         expressions.push(to_moz(this.segments[i]))
       } else {
@@ -131,10 +131,10 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   _codegen (self, output) {
-    var is_tagged = is_ast_prefixed_template_string(output.parent())
+    const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')
-    for (var i = 0; i < self.segments.length; i++) {
+    for (let i = 0; i < self.segments.length; i++) {
       if (!(is_ast_template_segment(self.segments[i]))) {
         output.print('${')
         self.segments[i].print(output)

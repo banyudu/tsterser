@@ -125,9 +125,9 @@ export default class Compressor extends TreeWalker {
       unused: !false_by_default,
       warnings: false
     }, true)
-    var global_defs = this.options.global_defs as AnyObject
+    const global_defs = this.options.global_defs as AnyObject
     if (typeof global_defs === 'object') {
-      for (var key in global_defs) {
+      for (const key in global_defs) {
         if (key[0] === '@' && HOP(global_defs, key)) {
           global_defs[key.slice(1)] = parse(global_defs[key], {
             expression: true
@@ -136,7 +136,7 @@ export default class Compressor extends TreeWalker {
       }
     }
     if (this.options.inline === true) this.options.inline = 3
-    var pure_funcs = this.options.pure_funcs
+    const pure_funcs = this.options.pure_funcs
     if (typeof pure_funcs === 'function') {
       this.pure_funcs = pure_funcs
     } else {
@@ -144,7 +144,7 @@ export default class Compressor extends TreeWalker {
         return !pure_funcs?.includes(node.expression.print_to_string())
       } : return_true
     }
-    var top_retain = this.options.top_retain
+    let top_retain = this.options.top_retain
     if (top_retain instanceof RegExp) {
       this.top_retain = function (def) {
         return (top_retain as RegExp).test(def.name)
@@ -163,7 +163,7 @@ export default class Compressor extends TreeWalker {
       this.directives['use strict'] = true
       this.options.toplevel = true
     }
-    var toplevel = this.options.toplevel
+    const toplevel = this.options.toplevel
     this.toplevel = typeof toplevel === 'string' ? {
       funcs: toplevel.includes('funcs'),
       vars: toplevel.includes('vars')
@@ -171,7 +171,7 @@ export default class Compressor extends TreeWalker {
       funcs: toplevel,
       vars: toplevel
     }
-    var sequences = this.options.sequences
+    const sequences = this.options.sequences
     this.sequences_limit = sequences == 1 ? 800 : sequences as number | 0
     this.warnings_produced = {}
     this.evaluated_regexps = new Map()
@@ -184,7 +184,7 @@ export default class Compressor extends TreeWalker {
   exposed (def: any) {
     if (def.export) return true
     if (def.global) {
-      for (var i = 0, len = def.orig.length; i < len; i++) {
+      for (let i = 0, len = def.orig.length; i < len; i++) {
         if (!this.toplevel[is_ast_symbol_defun(def.orig[i]) ? 'funcs' : 'vars']) { return true }
       }
     }
@@ -193,7 +193,7 @@ export default class Compressor extends TreeWalker {
 
   in_boolean_context () {
     if (!this.option('booleans')) return false
-    var self = this.self()
+    let self = this.self()
     for (var i = 0, p; (p = this.parent(i)); i++) {
       const result = p?._in_boolean_context(self)
       if (result) {
@@ -212,11 +212,11 @@ export default class Compressor extends TreeWalker {
     if (this.option('expression')) {
       toplevel.process_expression(true)
     }
-    var passes = Number(this.options.passes) || 1
-    var min_count = 1 / 0
-    var stopping = false
-    var mangle = { ie8: this.option('ie8') }
-    for (var pass = 0; pass < passes; pass++) {
+    const passes = Number(this.options.passes) || 1
+    let min_count = 1 / 0
+    let stopping = false
+    const mangle = { ie8: this.option('ie8') }
+    for (let pass = 0; pass < passes; pass++) {
       toplevel.figure_out_scope(mangle)
       if (pass === 0 && this.option('drop_console')) {
         // must be run before reduce_vars and compress pass
@@ -255,7 +255,7 @@ export default class Compressor extends TreeWalker {
   warn (text: string, props: AnyObject<any>) {
     if (this.options.warnings) {
       // only emit unique warnings
-      var message = string_template(text, props)
+      const message = string_template(text, props)
       if (!(message in this.warnings_produced)) {
         this.warnings_produced[message] = true
                 AST_Node.warn?.apply(AST_Node, [text, props])
@@ -269,7 +269,7 @@ export default class Compressor extends TreeWalker {
 
   before (node: AST_Node, descend: Function) {
     if (has_flag(node, SQUEEZED)) return node
-    var was_scope = false
+    let was_scope = false
     if (is_ast_scope(node)) {
       node = node.hoist_properties(this)
       if (is_ast_scope(node)) {
@@ -289,7 +289,7 @@ export default class Compressor extends TreeWalker {
     // following replacement call would result in degraded efficiency of both
     // output and performance.
     descend(node, this)
-    var opt: any = node.optimize(this)
+    const opt: any = node.optimize(this)
     if (was_scope && is_ast_scope(opt)) {
             opt.drop_unused?.(this)
             descend(opt, this)

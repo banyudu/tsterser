@@ -7,7 +7,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   static: any
 
   _to_mozilla_ast (parent) {
-    var key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -23,10 +23,9 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
         name: this.key
       }
     }
-    var kind
-    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
-    kind = 'set'
+    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    const kind = 'set'
     if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',

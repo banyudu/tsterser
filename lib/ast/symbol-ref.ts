@@ -55,7 +55,7 @@ export default class AST_SymbolRef extends AST_Symbol {
           return make_node('AST_Infinity', this).optimize(compressor)
       }
     }
-    var parent = compressor.parent()
+    const parent = compressor.parent()
     if (compressor.option('reduce_vars') && is_lhs(this, parent) !== this) {
       const def = this.definition?.()
       if (compressor.top_retain && def.global && compressor.top_retain(def)) {
@@ -64,8 +64,8 @@ export default class AST_SymbolRef extends AST_Symbol {
         def.single_use = false
         return this
       }
-      var fixed = this.fixed_value()
-      var single_use: any = def.single_use &&
+      let fixed = this.fixed_value()
+      let single_use: any = def.single_use &&
               !(is_ast_call(parent) &&
                   (parent.is_expr_pure(compressor)) ||
                       has_annotation(parent, _NOINLINE))
@@ -82,7 +82,7 @@ export default class AST_SymbolRef extends AST_Symbol {
         } else if (def.scope !== this.scope || is_ast_symbol_funarg(def.orig[0])) {
           single_use = fixed.is_constant_expression(this.scope)
           if (single_use == 'f') {
-            var scope = this.scope
+            let scope = this.scope
             do {
               if (is_ast_defun(scope) || is_func_expr(scope)) {
                 set_flag(scope, INLINED)
@@ -151,28 +151,28 @@ export default class AST_SymbolRef extends AST_Symbol {
             init = fixed
           }
         } else {
-          var ev = fixed.evaluate(compressor)
+          const ev = fixed.evaluate(compressor)
           if (ev !== fixed && (compressor.option('unsafe_regexp') || !(ev instanceof RegExp))) {
             init = make_node_from_constant(ev, fixed)
           }
         }
         if (init) {
-          var value_length = init.optimize(compressor).size()
-          var fn
+          let value_length = init.optimize(compressor).size()
+          let fn
           if (has_symbol_ref(fixed)) {
             fn = function () {
-              var result = init.optimize(compressor)
+              const result = init.optimize(compressor)
               return result === init ? result.clone(true) : result
             }
           } else {
             value_length = Math.min(value_length, fixed.size())
             fn = function () {
-              var result = best_of_expression(init.optimize(compressor), fixed)
+              const result = best_of_expression(init.optimize(compressor), fixed)
               return result === init || result === fixed ? result.clone(true) : result
             }
           }
-          var name_length = def.name.length
-          var overhead = 0
+          const name_length = def.name.length
+          let overhead = 0
           if (compressor.option('unused') && !compressor.exposed(def)) {
             overhead = (name_length + 2 + value_length) / (def.references.length - def.assignments)
           }
@@ -209,9 +209,9 @@ export default class AST_SymbolRef extends AST_Symbol {
   }
 
   _eval (compressor: Compressor, depth) {
-    var fixed = this.fixed_value()
+    const fixed = this.fixed_value()
     if (!fixed) return this
-    var value
+    let value
     if (HOP(fixed, '_eval')) {
       value = fixed._eval(compressor)
     } else {
@@ -224,7 +224,7 @@ export default class AST_SymbolRef extends AST_Symbol {
       }
     }
     if (value && typeof value === 'object') {
-      var escaped = this.definition?.().escaped
+      const escaped = this.definition?.().escaped
       if (escaped && depth > escaped) return this
     }
     return value
@@ -232,20 +232,20 @@ export default class AST_SymbolRef extends AST_Symbol {
 
   _find_defs (compressor: Compressor, suffix) {
     if (!this.global()) return
-    var defines = compressor.option('global_defs') as AnyObject
-    var name = this.name + suffix
+    const defines = compressor.option('global_defs') as AnyObject
+    const name = this.name + suffix
     if (HOP(defines, name)) return to_node(defines[name], this)
   }
 
   reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
-    var d = this.definition?.()
+    const d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&
           !d.fixed &&
           is_ast_symbol_defun(d.orig[0])) {
           tw.loop_ids?.set(d.id, tw.in_loop)
     }
-    var fixed_value
+    let fixed_value
     if (d.fixed === undefined || !safe_to_read(tw, d)) {
       d.fixed = false
     } else if (d.fixed) {
@@ -283,7 +283,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     if (!is_strict(compressor)) return false
     if (is_undeclared_ref(this) && this.is_declared(compressor)) return false
     if (this.is_immutable()) return false
-    var fixed = this.fixed_value()
+    const fixed = this.fixed_value()
     return !fixed || fixed._dot_throw(compressor)
   }
 
@@ -293,7 +293,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   }
 
   is_immutable () {
-    var orig = this.definition?.().orig
+    const orig = this.definition?.().orig
     return orig.length == 1 && is_ast_symbol_lambda(orig[0])
   }
 

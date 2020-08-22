@@ -13,7 +13,7 @@ export default class AST_DefaultAssign extends AST_Binary {
     if (!compressor.option('evaluate')) {
       return self
     }
-    var evaluateRight = self.right.evaluate(compressor)
+    let evaluateRight = self.right.evaluate(compressor)
 
     // `[x = undefined] = foo` ---> `[x] = foo`
     if (evaluateRight === undefined) {

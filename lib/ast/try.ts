@@ -30,7 +30,7 @@ export default class AST_Try extends AST_Block {
     tighten_body(this.body, compressor)
     if (this.bcatch && this.bfinally && this.bfinally.body.every(is_empty)) this.bfinally = null
     if (compressor.option('dead_code') && this.body.every(is_empty)) {
-      var body: any[] = []
+      const body: any[] = []
       if (this.bcatch) {
         extract_declarations_from_unreachable_code(compressor, this.bcatch, body)
       }

@@ -33,9 +33,9 @@ export default class AST_If extends AST_StatementWithBody {
     // one of the blocks.  note, statically determined implies
     // “has no side effects”; also it doesn't work for cases like
     // `x && true`, though it probably should.
-    var cond = self.condition.evaluate(compressor)
+    let cond = self.condition.evaluate(compressor)
     if (!compressor.option('dead_code') && !(is_ast_node(cond))) {
-      var orig = self.condition
+      const orig = self.condition
       self.condition = make_node_from_constant(cond, orig)
       self.condition = best_of_expression(self.condition.transform(compressor), orig)
     }
@@ -43,7 +43,7 @@ export default class AST_If extends AST_StatementWithBody {
       if (is_ast_node(cond)) cond = self.condition.tail_node().evaluate(compressor)
       if (!cond) {
         compressor.warn('Condition always false [{file}:{line},{col}]', self.condition.start)
-        var body: any[] = []
+        const body: any[] = []
         extract_declarations_from_unreachable_code(compressor, self.body, body)
         body.push(make_node('AST_SimpleStatement', self.condition, {
           body: self.condition
@@ -63,16 +63,16 @@ export default class AST_If extends AST_StatementWithBody {
         return make_node('AST_BlockStatement', self, { body: body }).optimize(compressor)
       }
     }
-    var negated = self.condition.negate(compressor)
-    var self_condition_length = self.condition.size()
-    var negated_length = negated.size()
-    var negated_is_best = negated_length < self_condition_length
+    const negated = self.condition.negate(compressor)
+    const self_condition_length = self.condition.size()
+    const negated_length = negated.size()
+    let negated_is_best = negated_length < self_condition_length
     if (self.alternative && negated_is_best) {
       negated_is_best = false // because we already do the switch here.
       // no need to swap values of self_condition_length and negated_length
       // here because they are only used in an equality comparison later on.
       self.condition = negated
-      var tmp = self.body
+      const tmp = self.body
       self.body = self.alternative || make_node('AST_EmptyStatement', self)
       self.alternative = tmp
     }
@@ -152,7 +152,7 @@ export default class AST_If extends AST_StatementWithBody {
     }
     if (aborts(self.body)) {
       if (self.alternative) {
-        var alt = self.alternative
+        const alt = self.alternative
         self.alternative = null
         return make_node('AST_BlockStatement', self, {
           body: [self, alt]
@@ -269,7 +269,7 @@ export default class AST_If extends AST_StatementWithBody {
 }
 
 function make_then (self: any, output: any) {
-  var b: any = self.body
+  let b: any = self.body
   if (output.option('braces') ||
         output.option('ie8') && is_ast_do(b)) { return make_block(b, output) }
   // The squeezer replaces "block"-s that contain only a single

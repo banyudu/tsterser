@@ -10,7 +10,7 @@ export default class AST_SymbolMethod extends AST_Symbol {
         value: this.name
       }
     }
-    var def = this.definition()
+    const def = this.definition()
     return {
       type: 'Identifier',
       name: def ? def.mangled_name || def.name : this.name

@@ -5,9 +5,9 @@ import { set_flag, UNDEFINED } from '../constants'
 export default class AST_Undefined extends AST_Atom {
   _optimize (compressor) {
     if (compressor.option('unsafe_undefined')) {
-      var undef = find_variable(compressor, 'undefined')
+      const undef = find_variable(compressor, 'undefined')
       if (undef) {
-        var ref = make_node('AST_SymbolRef', this, {
+        const ref = make_node('AST_SymbolRef', this, {
           name: 'undefined',
           scope: undef.scope,
           thedef: undef
@@ -16,7 +16,7 @@ export default class AST_Undefined extends AST_Atom {
         return ref
       }
     }
-    var lhs = is_lhs(compressor.self(), compressor.parent())
+    const lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && is_atomic(lhs, this)) return this
     return make_node('AST_UnaryPrefix', this, {
       operator: 'void',

@@ -64,7 +64,7 @@ export default class AST_Import extends AST_Node {
   }
 
   _to_mozilla_ast (parent) {
-    var specifiers: any[] = []
+    const specifiers: any[] = []
     if (this.imported_name) {
       specifiers.push({
         type: 'ImportDefaultSpecifier',

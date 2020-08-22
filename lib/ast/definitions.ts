@@ -20,10 +20,10 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   to_assignments (compressor: Compressor) {
-    var reduce_vars = compressor.option('reduce_vars')
-    var assignments = this.definitions.reduce(function (a, def) {
+    const reduce_vars = compressor.option('reduce_vars')
+    const assignments = this.definitions.reduce(function (a, def) {
       if (def.value && !(is_ast_destructuring(def.name))) {
-        var name = make_node('AST_SymbolRef', def.name, def.name)
+        const name = make_node('AST_SymbolRef', def.name, def.name)
         a.push(make_node('AST_Assign', def, {
           operator: '=',
           left: name,
@@ -32,11 +32,11 @@ export default class AST_Definitions extends AST_Statement {
         if (reduce_vars) name.definition().fixed = false
       } else if (def.value) {
         // Because it's a destructuring, do not turn into an assignment.
-        var varDef = make_node('AST_VarDef', def, {
+        const varDef = make_node('AST_VarDef', def, {
           name: def.name,
           value: def.value
         })
-        var var_ = make_node('AST_Var', def, {
+        const var_ = make_node('AST_Var', def, {
           definitions: [varDef]
         })
         a.push(var_)
@@ -51,7 +51,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   remove_initializers () {
-    var decls: any[] = []
+    const decls: any[] = []
     this.definitions.forEach(function (def) {
       if (is_ast_symbol_declaration(def.name)) {
         def.value = null
@@ -72,8 +72,8 @@ export default class AST_Definitions extends AST_Statement {
 
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
-      var definitions = this.definitions
-      for (var i = 0, len = definitions.length; i < len; i++) {
+      const definitions = this.definitions
+      for (let i = 0, len = definitions.length; i < len; i++) {
         definitions[i]._walk(visitor)
       }
     })
@@ -104,9 +104,9 @@ export default class AST_Definitions extends AST_Statement {
       if (i) output.comma()
       def.print(output)
     })
-    var p = output.parent()
-    var in_for = is_ast_for(p) || is_ast_for_in(p)
-    var output_semicolon = !in_for || p && p.init !== this
+    const p = output.parent()
+    const in_for = is_ast_for(p) || is_ast_for_in(p)
+    const output_semicolon = !in_for || p && p.init !== this
     if (output_semicolon) { output.semicolon() }
   }
 

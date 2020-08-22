@@ -17,7 +17,7 @@ export default class AST_Unary extends AST_Node {
       return this
     }
     if (this.operator == 'typeof' && is_ast_symbol_ref(this.expression)) return null
-    var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
+    const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (first_in_statement && expression && is_iife_call(expression)) {
       if (expression === this.expression && this.operator == '!') return this
       return expression.negate(compressor, first_in_statement)
@@ -44,15 +44,15 @@ export default class AST_Unary extends AST_Node {
   }
 
   reduce_vars (tw: TreeWalker) {
-    var node = this
+    const node = this
     if (node.operator !== '++' && node.operator !== '--') return
-    var exp = node.expression
+    const exp = node.expression
     if (!(is_ast_symbol_ref(exp))) return
-    var def = exp.definition?.()
-    var safe = safe_to_assign(tw, def, exp.scope, true)
+    const def = exp.definition?.()
+    const safe = safe_to_assign(tw, def, exp.scope, true)
     def.assignments++
     if (!safe) return
-    var fixed = def.fixed
+    const fixed = def.fixed
     if (!fixed) return
     def.references.push(exp)
     def.chained = true
@@ -75,8 +75,8 @@ export default class AST_Unary extends AST_Node {
   lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
       if (is_ast_sequence(this.expression)) {
-        var x = this.expression.expressions.slice()
-        var e = this.clone()
+        const x = this.expression.expressions.slice()
+        const e = this.clone()
         e.expression = x.pop()
         x.push(e)
         return make_sequence(this, x).optimize(compressor)
@@ -116,7 +116,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   needs_parens (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this ||
             is_ast_call(p) && p.expression === this ||
             is_ast_binary(p) &&

@@ -95,7 +95,7 @@ export default class AST_Node extends AST {
   // descendant of AST_Node.
   evaluate (compressor: Compressor) {
     if (!compressor.option('evaluate')) return this
-    var val = this._eval(compressor, 1)
+    const val = this._eval(compressor, 1)
     if (!val || val instanceof RegExp) return val
     if (typeof val === 'function' || typeof val === 'object') return this
     return val
@@ -129,7 +129,7 @@ export default class AST_Node extends AST {
   is_block_scope = return_false
   _clone (deep?: boolean) {
     if (deep) {
-      var self = this.clone()
+      const self = this.clone()
       return self.transform(new TreeTransformer(function (node: AST_Node) {
         if (node !== self) {
           return node.clone(true)
@@ -196,7 +196,7 @@ export default class AST_Node extends AST {
 
   _print = print
   print_to_string (options?: any) {
-    var output = OutputStream(options)
+    const output = OutputStream(options)
     this.print(output)
     return output.get()
   }
@@ -206,10 +206,10 @@ export default class AST_Node extends AST {
     if (!this._optimize) {
       throw new Error('optimize not defined')
     }
-    var self = this
+    const self = this
     if (has_flag(self, OPTIMIZED)) return self
     if (compressor.has_directive('use asm')) return self
-    var opt = this._optimize(compressor)
+    const opt = this._optimize(compressor)
     set_flag(opt, OPTIMIZED)
     return opt
   }
@@ -235,9 +235,9 @@ export default class AST_Node extends AST {
   }
 
   static from_mozilla_ast (node: AST_Node) {
-    var save_stack = FROM_MOZ_STACK
+    const save_stack = FROM_MOZ_STACK
     setFromMozStack([])
-    var ast = from_moz(node)
+    const ast = from_moz(node)
     setFromMozStack(save_stack)
     return ast
   }

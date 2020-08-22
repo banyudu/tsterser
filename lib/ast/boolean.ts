@@ -8,7 +8,7 @@ export default class AST_Boolean extends AST_Atom {
         value: +this.value
       })
     }
-    var p = compressor.parent()
+    const p = compressor.parent()
     if (compressor.option('booleans_as_integers')) {
       if (is_ast_binary(p) && (p.operator == '===' || p.operator == '!==')) {
         p.operator = p.operator.replace(/=$/, '')

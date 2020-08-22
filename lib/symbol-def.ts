@@ -73,8 +73,8 @@ export default class SymbolDef {
     if (this.global && cache && cache.has(this.name)) {
       this.mangled_name = cache.get(this.name)
     } else if (!this.mangled_name && !this.unmangleable(options)) {
-      var s = this.scope
-      var sym = this.orig[0]
+      let s = this.scope
+      const sym = this.orig[0]
       if (options.ie8 && is_ast_symbol_lambda(sym)) { s = s.parent_scope }
       const redefinition = redefined_catch_def(this)
       this.mangled_name = redefinition

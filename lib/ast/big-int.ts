@@ -19,9 +19,9 @@ export default class AST_BigInt extends AST_Constant {
   }
 
   needs_parens = function (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     if (p?._needs_parens(this)) {
-      var value = this.getValue()
+      const value = this.getValue()
       if (value.startsWith('-')) {
         return true
       }

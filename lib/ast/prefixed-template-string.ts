@@ -37,8 +37,8 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   _codegen (self, output) {
-    var tag = self.prefix
-    var parenthesize_tag = is_ast_lambda(tag) ||
+    const tag = self.prefix
+    const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||
             is_ast_conditional(tag) ||
             is_ast_sequence(tag) ||

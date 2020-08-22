@@ -20,7 +20,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
           is_ast_return(this.value.body[0]) &&
           this.value.body[0].value &&
           !this.value.contains_this()) {
-      var arrow = make_node('AST_Arrow', this.value, this.value)
+      const arrow = make_node('AST_Arrow', this.value, this.value)
       arrow.async = this.async
       arrow.is_generator = this.is_generator
       return make_node('AST_ObjectKeyVal', this, {
@@ -81,7 +81,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   }
 
   _codegen = function (self, output) {
-    var type
+    let type
     if (self.is_generator && self.async) {
       type = 'async*'
     } else if (self.is_generator) {

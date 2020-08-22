@@ -20,9 +20,9 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   _optimize (compressor) {
-    var expr = this.expression
-    var prop = this.property
-    var property: any
+    let expr = this.expression
+    let prop = this.property
+    let property: any
     if (compressor.option('properties')) {
       var key = prop.evaluate(compressor)
       if (key !== prop) {
@@ -30,7 +30,7 @@ export default class AST_Sub extends AST_PropAccess {
           if (key == 'undefined') {
             key = undefined
           } else {
-            var value = parseFloat(key)
+            const value = parseFloat(key)
             if (value.toString() == key) {
               key = value
             }
@@ -48,7 +48,7 @@ export default class AST_Sub extends AST_PropAccess {
         }
       }
     }
-    var fn
+    let fn
     OPT_ARGUMENTS: if (compressor.option('arguments') &&
           is_ast_symbol_ref(expr) &&
           expr.name == 'arguments' &&
@@ -57,22 +57,22 @@ export default class AST_Sub extends AST_PropAccess {
           fn.uses_arguments &&
           !(is_ast_arrow(fn)) &&
           is_ast_number(prop)) {
-      var index = prop.getValue()
-      var params = new Set()
-      var argnames = fn.argnames
-      for (var n = 0; n < argnames.length; n++) {
+      const index = prop.getValue()
+      const params = new Set()
+      const argnames = fn.argnames
+      for (let n = 0; n < argnames.length; n++) {
         if (!(is_ast_symbol_funarg(argnames[n]))) {
           break OPT_ARGUMENTS // destructuring parameter - bail
         }
-        var param = argnames[n].name
+        const param = argnames[n].name
         if (params.has(param)) {
           break OPT_ARGUMENTS // duplicate parameter - bail
         }
         params.add(param)
       }
-      var argname: any = fn.argnames[index]
+      let argname: any = fn.argnames[index]
       if (argname && compressor.has_directive('use strict')) {
-        var def = argname.definition?.()
+        const def = argname.definition?.()
         if (!compressor.option('reduce_vars') || def.assignments || def.orig.length > 1) {
           argname = null
         }
@@ -87,7 +87,7 @@ export default class AST_Sub extends AST_PropAccess {
         }
       }
       if (argname) {
-        var sym = make_node('AST_SymbolRef', this, argname)
+        const sym = make_node('AST_SymbolRef', this, argname)
         sym.reference({})
         clear_flag(argname, UNUSED)
         return sym
@@ -95,7 +95,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
     if (is_lhs(this, compressor.parent())) return this
     if (key !== prop) {
-      var sub = this.flatten_object(property, compressor)
+      const sub = this.flatten_object(property, compressor)
       if (sub) {
         expr = this.expression = sub.expression
         prop = this.property = sub.property
@@ -104,11 +104,11 @@ export default class AST_Sub extends AST_PropAccess {
     if (compressor.option('properties') && compressor.option('side_effects') &&
           is_ast_number(prop) && is_ast_array(expr)) {
       let index = prop.getValue()
-      var elements = expr.elements
-      var retValue = elements[index]
+      const elements = expr.elements
+      let retValue = elements[index]
       FLATTEN: if (safe_to_flatten(retValue, compressor)) {
-        var flatten = true
-        var values: any[] = []
+        let flatten = true
+        const values: any[] = []
         for (var i = elements.length; --i > index;) {
           const value = elements[i].drop_side_effect_free(compressor)
           if (value) {
@@ -141,7 +141,7 @@ export default class AST_Sub extends AST_PropAccess {
         }
       }
     }
-    var ev = this.evaluate(compressor)
+    let ev = this.evaluate(compressor)
     if (ev !== this) {
       ev = make_node_from_constant(ev, this).optimize(compressor)
       return best_of(compressor, ev, this)
@@ -151,9 +151,9 @@ export default class AST_Sub extends AST_PropAccess {
 
   drop_side_effect_free (compressor: Compressor, first_in_statement) {
     if (this.expression.may_throw_on_access(compressor)) return this
-    var expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
+    const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
-    var property = this.property.drop_side_effect_free(compressor)
+    const property = this.property.drop_side_effect_free(compressor)
     if (!property) return expression
     return make_sequence(this, [expression, property])
   }

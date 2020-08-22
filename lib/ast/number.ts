@@ -16,9 +16,9 @@ export default class AST_Number extends AST_Constant {
   })
 
   needs_parens = function (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     if (p?._needs_parens(this)) {
-      var value = this.getValue()
+      const value = this.getValue()
       if (value < 0 || /^0/.test(make_num(value))) {
         return true
       }

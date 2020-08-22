@@ -42,7 +42,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   needs_parens = function (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
     if (is_ast_binary(p) && p.operator !== '=') { return true }
@@ -60,7 +60,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   _codegen = function (self, output) {
-    var star = self.is_star ? '*' : ''
+    const star = self.is_star ? '*' : ''
     output.print('yield' + star)
     if (self.expression) {
       output.space()

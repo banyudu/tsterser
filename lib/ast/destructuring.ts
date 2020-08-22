@@ -18,9 +18,9 @@ export default class AST_Destructuring extends AST_Node {
           !this.is_array &&
           Array.isArray(this.names) &&
           !is_destructuring_export_decl(compressor)) {
-      var keep: any[] = []
-      for (var i = 0; i < this.names.length; i++) {
-        var elem = this.names[i]
+      const keep: any[] = []
+      for (let i = 0; i < this.names.length; i++) {
+        const elem = this.names[i]
         if (!(is_ast_object_key_val(elem) &&
                   typeof elem.key === 'string' &&
                   is_ast_symbol_declaration(elem.value) &&
@@ -35,9 +35,9 @@ export default class AST_Destructuring extends AST_Node {
     return this
 
     function is_destructuring_export_decl (compressor) {
-      var ancestors = [/^VarDef$/, /^(Const|Let|Var)$/, /^Export$/]
-      for (var a = 0, p = 0, len = ancestors.length; a < len; p++) {
-        var parent = compressor.parent(p)
+      const ancestors = [/^VarDef$/, /^(Const|Let|Var)$/, /^Export$/]
+      for (let a = 0, p = 0, len = ancestors.length; a < len; p++) {
+        const parent = compressor.parent(p)
         if (!parent) return false
         if (a === 0 && parent.TYPE == 'Destructuring') continue
         if (!ancestors[a].test(parent.TYPE)) {
@@ -75,7 +75,7 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   all_symbols () {
-    var out: any[] = []
+    const out: any[] = []
     this.walk(new TreeWalker(function (node: any) {
       if (is_ast_symbol(node)) {
         out.push(node)
@@ -105,7 +105,7 @@ export default class AST_Destructuring extends AST_Node {
 
   _codegen (self, output) {
     output.print(self.is_array ? '[' : '{')
-    var len = self.names.length
+    const len = self.names.length
     self.names.forEach(function (name, i) {
       if (i > 0) output.comma()
       name.print(output)

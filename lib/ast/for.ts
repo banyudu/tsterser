@@ -28,11 +28,11 @@ export default class AST_For extends AST_IterationStatement {
       this.init = this.init.drop_side_effect_free(compressor)
     }
     if (this.condition) {
-      var cond = this.condition.evaluate(compressor)
+      let cond = this.condition.evaluate(compressor)
       if (!(is_ast_node(cond))) {
         if (cond) this.condition = null
         else if (!compressor.option('dead_code')) {
-          var orig = this.condition
+          const orig = this.condition
           this.condition = make_node_from_constant(cond, this.condition)
           this.condition = best_of_expression(this.condition.transform(compressor), orig)
         }
@@ -40,7 +40,7 @@ export default class AST_For extends AST_IterationStatement {
       if (compressor.option('dead_code')) {
         if (is_ast_node(cond)) cond = this.condition.tail_node().evaluate(compressor)
         if (!cond) {
-          var body: any[] = []
+          const body: any[] = []
           extract_declarations_from_unreachable_code(compressor, this.body, body)
           if (is_ast_statement(this.init)) {
             body.push(this.init)
@@ -166,9 +166,9 @@ export default class AST_For extends AST_IterationStatement {
 }
 
 function if_break_in_loop (self, compressor) {
-  var first = is_ast_block_statement(self.body) ? self.body.body[0] : self.body
+  const first = is_ast_block_statement(self.body) ? self.body.body[0] : self.body
   if (compressor.option('dead_code') && is_break(first)) {
-    var body: any[] = []
+    const body: any[] = []
     if (is_ast_statement(self.init)) {
       body.push(self.init)
     } else if (self.init) {

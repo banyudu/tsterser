@@ -13,16 +13,16 @@ export default class AST_PropAccess extends AST_Node {
 
   _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
-      var key = this.property
+      let key = this.property
       if (is_ast_node(key)) {
         key = key._eval?.(compressor, depth)
         if (key === this.property) return this
       }
-      var exp = this.expression
-      var val
+      const exp = this.expression
+      let val
       if (is_undeclared_ref(exp)) {
-        var aa
-        var first_arg = exp.name === 'hasOwnProperty' &&
+        let aa
+        let first_arg = exp.name === 'hasOwnProperty' &&
                   key === 'call' &&
                   (aa = compressor.parent() && compressor.parent().args) &&
                   (aa && aa[0] &&
@@ -33,7 +33,7 @@ export default class AST_PropAccess extends AST_Node {
         if (first_arg == null || first_arg.thedef && first_arg.thedef.undeclared) {
           return this.clone()
         }
-        var static_value = static_values.get(exp.name)
+        const static_value = static_values.get(exp.name)
         if (!static_value || !static_value.has(key)) return this
         val = global_objs[exp.name]
       } else {
@@ -57,12 +57,12 @@ export default class AST_PropAccess extends AST_Node {
 
   flatten_object (key, compressor) {
     if (!compressor.option('properties')) return
-    var arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
-    var expr = this.expression
+    const arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
+    const expr = this.expression
     if (is_ast_object(expr)) {
-      var props = expr.properties
-      for (var i = props.length; --i >= 0;) {
-        var prop = props[i]
+      const props = expr.properties
+      for (let i = props.length; --i >= 0;) {
+        const prop = props[i]
         if ('' + (is_ast_concise_method(prop) ? prop.key.name : prop.key) == key) {
           if (!props.every((prop) => {
             return is_ast_object_key_val(prop) ||
@@ -72,9 +72,9 @@ export default class AST_PropAccess extends AST_Node {
           return make_node('AST_Sub', this, {
             expression: make_node('AST_Array', expr, {
               elements: props.map(function (prop) {
-                var v = prop.value
+                let v = prop.value
                 if (is_ast_accessor(v)) v = make_node('AST_Function', v, v)
-                var k = prop.key
+                const k = prop.key
                 if (is_ast_node(k) && !(is_ast_symbol_method(k))) {
                   return make_sequence(prop, [k, v])
                 }
@@ -101,7 +101,7 @@ export default class AST_PropAccess extends AST_Node {
   }
 
   needs_parens (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     if (is_ast_new(p) && p.expression === this) {
       // i.e. new (foo.bar().baz)
       //

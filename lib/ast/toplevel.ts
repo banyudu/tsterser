@@ -46,9 +46,9 @@ export default class AST_Toplevel extends AST_Scope {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
     return this.transform(new TreeTransformer(function (node: any) {
-      var def = node._find_defs(compressor, '')
+      const def = node._find_defs(compressor, '')
       if (!def) return
-      var level = 0; var child = node; var parent
+      let level = 0; let child = node; let parent
       while ((parent = this.parent(level++))) {
         if (!(is_ast_prop_access(parent))) break
         if (parent.expression !== child) break
@@ -91,9 +91,9 @@ export default class AST_Toplevel extends AST_Scope {
   drop_console () {
     return this.transform(new TreeTransformer(function (self) {
       if (self.TYPE == 'Call') {
-        var exp = self.expression
+        const exp = self.expression
         if (is_ast_prop_access(exp)) {
-          var name = exp.expression
+          let name = exp.expression
           while (name.expression) {
             name = name.expression
           }
@@ -106,11 +106,11 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   def_global (node: any) {
-    var globals = this.globals; var name = node.name
+    const globals = this.globals; const name = node.name
     if (globals.has(name)) {
       return globals.get(name)
     } else {
-      var g = new SymbolDef(this, node)
+      const g = new SymbolDef(this, node)
       g.undeclared = true
       g.global = true
       globals.set(name, g)
@@ -152,9 +152,9 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   wrap_commonjs (name: string) {
-    var body = this.body
-    var _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
-    var wrapped_tl = parse(_wrapped_tl)
+    const body = this.body
+    const _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
+    let wrapped_tl = parse(_wrapped_tl)
     wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: any) {
       if (is_ast_directive(node) && node.value == '$ORIG') {
         return MAP.splice(body)
@@ -166,9 +166,9 @@ export default class AST_Toplevel extends AST_Scope {
 
   wrap_enclose (args_values: string) {
     if (typeof args_values !== 'string') args_values = ''
-    var index = args_values.indexOf(':')
+    let index = args_values.indexOf(':')
     if (index < 0) index = args_values.length
-    var body = this.body
+    const body = this.body
     return parse([
       '(function(',
       args_values.slice(0, index),
@@ -212,8 +212,8 @@ export default class AST_Toplevel extends AST_Scope {
     base54.reset()
     base54.sort()
     options = this._default_mangler_options(options)
-    var avoid = this.find_colliding_names(options)
-    var cname = 0
+    const avoid = this.find_colliding_names(options)
+    let cname = 0
     this.globals.forEach(rename)
     this.walk(new TreeWalker(function (node: any) {
       if (is_ast_scope(node)) node.variables.forEach(rename)
@@ -221,7 +221,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
 
     function next_name () {
-      var name
+      let name
       do {
         name = base54(cname++)
       } while (avoid.has(name) || RESERVED_WORDS.has(name))
@@ -259,7 +259,7 @@ export default class AST_Toplevel extends AST_Scope {
       }
 
       function add_def (def: any) {
-        var name = def.name
+        let name = def.name
         if (def.global && cache && cache.has(name)) name = cache.get(name) as string
         else if (!def.unmangleable(options)) return
         to_avoid(name)
@@ -273,8 +273,8 @@ export default class AST_Toplevel extends AST_Scope {
     // into the code generator will display the mangled name if it's
     // present (and for AST_SymbolRef-s it'll use the mangled name of
     // the AST_SymbolDeclaration that it points to).
-    var lname = -1
-    var to_mangle: any[] = []
+    let lname = -1
+    const to_mangle: any[] = []
 
     if (options.keep_fnames) {
       function_defs = new Set()
@@ -290,10 +290,10 @@ export default class AST_Toplevel extends AST_Scope {
       }
     }
 
-    var tw = new TreeWalker(function (node: any, descend) {
+    const tw = new TreeWalker(function (node: any, descend) {
       if (is_ast_labeled_statement(node)) {
         // lname is incremented when we get to the AST_Label
-        var save_nesting = lname
+        const save_nesting = lname
         descend()
         lname = save_nesting
         return true // don't descend again in TreeWalker

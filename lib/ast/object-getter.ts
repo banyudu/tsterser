@@ -7,7 +7,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
   quote: any
 
   _to_mozilla_ast (parent) {
-    var key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -23,9 +23,9 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
         name: this.key
       }
     }
-    var kind
-    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    let kind
+    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     if (is_ast_object_getter(this)) {
       kind = 'get'
     }

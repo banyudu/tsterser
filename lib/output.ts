@@ -109,7 +109,7 @@ class OutputStreamInner {
     this.print('(')
     // XXX: still nice to have that for argument lists
     // var ret = with_indent(current_col, cont);
-    var ret = cont()
+    const ret = cont()
     this.print(')')
     return ret
   }
@@ -146,10 +146,10 @@ class OutputStreamInner {
     if (this.options.max_line_len) {
       if (this._current_col > (this.options.max_line_len as number)) {
         if (this._might_add_newline) {
-          var left = this._OUTPUT.slice(0, this._might_add_newline)
-          var right = this._OUTPUT.slice(this._might_add_newline)
+          const left = this._OUTPUT.slice(0, this._might_add_newline)
+          const right = this._OUTPUT.slice(this._might_add_newline)
           if (this._mappings) {
-            var delta = right.length - this._current_col
+            const delta = right.length - this._current_col
             this._mappings.forEach((mapping) => {
               mapping.line++
               mapping.col += delta
@@ -172,7 +172,7 @@ class OutputStreamInner {
   }
 
   with_block (cont: Function) {
-    var ret
+    let ret
     this.print('{')
     this.newline()
     this.with_indent(this.next_indent(), () => {
@@ -212,12 +212,12 @@ class OutputStreamInner {
     if (this.options.ascii_only) {
       if (this.options.ecma as number >= 2015) {
         str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, (ch) => {
-          var code = get_full_char_code(ch, 0).toString(16)
+          const code = get_full_char_code(ch, 0).toString(16)
           return '\\u{' + code + '}'
         })
       }
       return str.replace(/[\u0000-\u001f\u007f-\uffff]/g, (ch) => { // eslint-disable-line no-control-regex
-        var code = ch.charCodeAt(0).toString(16)
+        let code = ch.charCodeAt(0).toString(16)
         if (code.length <= 2 && !identifier) {
           while (code.length < 2) code = '0' + code
           return '\\x' + code
@@ -238,17 +238,17 @@ class OutputStreamInner {
 
   append_comments (node: any, tail?: boolean) {
     if (!this.readonly && this._comment_filter !== return_false) {
-      var self = this
-      var token = node.end
+      const self = this
+      const token = node.end
       if (!token) return
-      var printed_comments = self.printed_comments
-      var comments = token[tail ? 'comments_before' : 'comments_after']
+      const printed_comments = self.printed_comments
+      const comments = token[tail ? 'comments_before' : 'comments_after']
       if (!comments || printed_comments.has(comments)) return
       if (!(is_ast_statement(node) || comments.every((c) =>
         !/comment[134]/.test(c.type)
       ))) return
       printed_comments.add(comments)
-      var insert = this._OUTPUT.length
+      const insert = this._OUTPUT.length
       comments.filter(this._comment_filter, node).forEach((c, i) => {
         if (printed_comments.has(c)) return
         printed_comments.add(c)
@@ -300,7 +300,7 @@ class OutputStreamInner {
   print_name (name: string) { this.print(this._make_name(name)) }
 
   encode_string (str: string, quote: string) {
-    var ret = this.make_string(str, quote)
+    let ret = this.make_string(str, quote)
     if (this.options.inline_script) {
       ret = ret.replace(/<\x2f(script)([>/\t\n\f\r ])/gi, '<\\/$1$2')
       ret = ret.replace(/\x3c!--/g, '\\x3c!--')
@@ -315,7 +315,7 @@ class OutputStreamInner {
   }
 
   print_string (str: string, quote: string, escape_directive: boolean) {
-    var encoded = this.encode_string(str, quote)
+    const encoded = this.encode_string(str, quote)
     if (escape_directive && !encoded.includes('\\')) {
     // Insert semicolons to break directive prologue
       if (!EXPECT_DIRECTIVE.test(this._OUTPUT)) {
@@ -327,7 +327,7 @@ class OutputStreamInner {
   }
 
   print_template_string_chars (str: string) {
-    var encoded = this.encode_string(str, '`').replace(/\${/g, '\\${')
+    const encoded = this.encode_string(str, '`').replace(/\${/g, '\\${')
     return this.print(encoded.substr(1, encoded.length - 2))
   }
 
@@ -363,9 +363,9 @@ class OutputStreamInner {
   with_indent (col: boolean | number, cont: Function) {
     if (this.options.beautify) {
       if (col === true) col = this.next_indent()
-      var save_indentation = this._indentation
+      const save_indentation = this._indentation
       this._indentation = col as number
-      var ret = cont()
+      const ret = cont()
       this._indentation = save_indentation
       return ret
     }
@@ -373,7 +373,7 @@ class OutputStreamInner {
   }
 
   make_string (str: string, quote: string) {
-    var dq = 0; var sq = 0
+    let dq = 0; let sq = 0
     str = str.replace(/[\\\b\f\n\r\v\t\x22\x27\u2028\u2029\0\ufeff]/g,
       (s, i) => {
         switch (s) {
@@ -411,7 +411,7 @@ class OutputStreamInner {
 
   print (str: string) {
     str = String(str)
-    var ch = get_full_char(str, 0)
+    const ch = get_full_char(str, 0)
     if (this._need_newline_indented && ch) {
       this._need_newline_indented = false
       if (ch !== '\n') {
@@ -426,7 +426,7 @@ class OutputStreamInner {
       }
     }
     this._newline_insert = -1
-    var prev = this._last.charAt(this._last.length - 1)
+    const prev = this._last.charAt(this._last.length - 1)
     if (this._might_need_semicolon) {
       this._might_need_semicolon = false
 
@@ -482,7 +482,7 @@ class OutputStreamInner {
     this._OUTPUT += str
     this._has_parens = str[str.length - 1] == '('
     this._current_pos += str.length
-    var a = str.split(/\r?\n/); var n = a.length - 1
+    const a = str.split(/\r?\n/); const n = a.length - 1
     this._current_line += n
     this._current_col += a[0].length
     if (n > 0) {
@@ -525,10 +525,10 @@ class OutputStreamInner {
 
   prepend_comments (node: any) {
     if (!this.readonly) {
-      var self = this
-      var start = node.start
+      const self = this
+      const start = node.start
       if (!start) return
-      var printed_comments = self.printed_comments
+      const printed_comments = self.printed_comments
 
       // There cannot be a newline between return and its value.
       const return_with_value = is_ast_exit(node) && node.value
@@ -544,7 +544,7 @@ class OutputStreamInner {
         }
       }
 
-      var comments = start.comments_before
+      let comments = start.comments_before
       if (!comments) {
         comments = start.comments_before = []
       }
@@ -552,10 +552,10 @@ class OutputStreamInner {
 
       if (return_with_value) {
         var tw = new TreeWalker((node: any) => {
-          var parent: AST_Node = tw.parent()
+          const parent: AST_Node = tw.parent()
           if (parent?._prepend_comments_check(node)) {
             if (!node.start) return undefined
-            var text = node.start.comments_before
+            const text = node.start.comments_before
             if (text && !printed_comments.has(text)) {
               printed_comments.add(text)
               comments = comments.concat(text)
@@ -575,7 +575,7 @@ class OutputStreamInner {
           this.print('#!' + comments.shift()?.value + '\n')
           this.indent()
         }
-        var preamble = this.options.preamble
+        const preamble = this.options.preamble
         if (preamble) {
           this.print(preamble.replace(/\r\n?|[\n\u2028\u2029]|\s*$/g, '\n'))
         }
@@ -583,7 +583,7 @@ class OutputStreamInner {
 
       comments = comments.filter(this._comment_filter, node).filter(c => !printed_comments.has(c))
       if (comments.length == 0) return
-      var last_nlb = this.has_nlb()
+      let last_nlb = this.has_nlb()
       comments.forEach((c, i) => {
         printed_comments.add(c)
         if (!last_nlb) {
@@ -597,7 +597,7 @@ class OutputStreamInner {
         }
 
         if (/comment[134]/.test(c.type)) {
-          var value = this.filter_comment(c.value)
+          const value = this.filter_comment(c.value)
           if (value) {
             this.print('//' + value + '\n')
             this.indent()
@@ -641,7 +641,7 @@ class OutputStreamInner {
   with_square (cont: Function) {
     this.print('[')
     // var ret = with_indent(current_col, cont);
-    var ret = cont()
+    const ret = cont()
     this.print(']')
     return ret
   }
@@ -707,7 +707,7 @@ class OutputStreamInner {
     if (_options.comments) {
       let comments = _options.comments
       if (typeof _options.comments === 'string' && /^\/.*\/[a-zA-Z]*$/.test(_options.comments)) {
-        var regex_pos = _options.comments.lastIndexOf('/')
+        const regex_pos = _options.comments.lastIndexOf('/')
         comments = new RegExp(
           _options.comments.substr(1, regex_pos - 1),
           _options.comments.substr(regex_pos + 1)

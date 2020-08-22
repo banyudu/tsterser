@@ -27,9 +27,9 @@ export default class AST_Sequence extends AST_Node {
   _optimize (compressor) {
     let self: any = this
     if (!compressor.option('side_effects')) return self
-    var expressions: any[] = []
+    const expressions: any[] = []
     filter_for_side_effects()
-    var end = expressions.length - 1
+    let end = expressions.length - 1
     trim_right_for_undefined()
     if (end == 0) {
       self = maintain_this_binding(compressor.parent(), compressor.self(), expressions[0])
@@ -40,8 +40,8 @@ export default class AST_Sequence extends AST_Node {
     return self
 
     function filter_for_side_effects () {
-      var first = first_in_statement(compressor)
-      var last = self.expressions.length - 1
+      let first = first_in_statement(compressor)
+      const last = self.expressions.length - 1
       self.expressions.forEach(function (expr, index) {
         if (index < last) expr = expr.drop_side_effect_free(compressor, first)
         if (expr) {
@@ -64,10 +64,10 @@ export default class AST_Sequence extends AST_Node {
   }
 
   drop_side_effect_free (compressor: Compressor) {
-    var last = this.tail_node()
-    var expr = last.drop_side_effect_free(compressor)
+    const last = this.tail_node()
+    const expr = last.drop_side_effect_free(compressor)
     if (expr === last) return this
-    var expressions = this.expressions.slice(0, -1)
+    const expressions = this.expressions.slice(0, -1)
     if (expr) expressions.push(expr)
     if (!expressions.length) {
       return make_node('AST_Number', this, { value: 0 })
@@ -84,7 +84,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   negate (compressor: Compressor) {
-    var expressions = this.expressions.slice()
+    const expressions = this.expressions.slice()
     expressions.push(expressions.pop().negate(compressor))
     return make_sequence(this, expressions)
   }
@@ -142,7 +142,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   needs_parens (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     return is_ast_call(p) || // (foo, bar)() or foo(1, (2, 3), 4)
             is_ast_unary(p) || // !(foo, bar, baz)
             is_ast_binary(p) || // 1 + (2, 3) + 4 ==> 8

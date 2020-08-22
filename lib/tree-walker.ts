@@ -18,7 +18,7 @@ export default class TreeWalker {
 
   _visit (node: any, descend?: Function) {
     this.push(node)
-    var ret = this.visit(node, descend ? function () {
+    const ret = this.visit(node, descend ? function () {
       descend.call(node)
     } : noop)
     if (!ret && descend) {
@@ -47,7 +47,7 @@ export default class TreeWalker {
   }
 
   pop () {
-    var node = this.stack.pop()
+    const node = this.stack.pop()
     if (is_ast_lambda(node) || is_ast_class(node)) {
       this.directives = Object.getPrototypeOf(this.directives)
     }
@@ -58,20 +58,20 @@ export default class TreeWalker {
   }
 
   find_parent (type: any) {
-    var stack = this.stack
-    for (var i = stack.length; --i >= 0;) {
-      var x = stack[i]
+    const stack = this.stack
+    for (let i = stack.length; --i >= 0;) {
+      const x = stack[i]
       if (x instanceof type) return x
     }
   }
 
   has_directive (type: string): any {
-    var dir = this.directives[type]
+    const dir = this.directives[type]
     if (dir) return dir
-    var node = this.stack[this.stack.length - 1]
+    const node = this.stack[this.stack.length - 1]
     if (node instanceof AST_Scope && node.body) {
-      for (var i = 0; i < node.body.length; ++i) {
-        var st = node.body[i]
+      for (let i = 0; i < node.body.length; ++i) {
+        const st = node.body[i]
         if (!(is_ast_directive(st))) break
         if (st.value == type) return st
       }
@@ -79,9 +79,9 @@ export default class TreeWalker {
   }
 
   loopcontrol_target (node: any): any | undefined {
-    var stack = this.stack
-    for (var i = stack.length; --i >= 0;) {
-      var x = stack[i]
+    const stack = this.stack
+    for (let i = stack.length; --i >= 0;) {
+      const x = stack[i]
       const target = x.get_loopcontrol_target(node)
       if (target) {
         return target

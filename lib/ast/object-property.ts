@@ -60,7 +60,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   _to_mozilla_ast (parent): any {
-    var key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }
@@ -76,9 +76,9 @@ export default class AST_ObjectProperty extends AST_Node {
         name: this.key
       }
     }
-    var kind
-    var string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    var computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    let kind
+    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',
@@ -99,7 +99,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   _print_getter_setter = function (this: any, type: string, output: any) {
-    var self = this
+    const self = this
     if (self.static) {
       output.print('static')
       output.space()

@@ -29,10 +29,10 @@ export default class AST_Switch extends AST_Block {
   _optimize (compressor) {
     const self = this
     if (!compressor.option('switches')) return self
-    var branch
-    var value = self.expression.evaluate(compressor)
+    let branch
+    let value = self.expression.evaluate(compressor)
     if (!(is_ast_node(value))) {
-      var orig = self.expression
+      const orig = self.expression
       self.expression = make_node_from_constant(value, orig)
       self.expression = best_of_expression(self.expression.transform(compressor), orig)
     }
@@ -40,10 +40,10 @@ export default class AST_Switch extends AST_Block {
     if (is_ast_node(value)) {
       value = self.expression.tail_node().evaluate(compressor)
     }
-    var decl: any[] = []
-    var body: any[] = []
-    var default_branch
-    var exact_match
+    const decl: any[] = []
+    const body: any[] = []
+    let default_branch
+    let exact_match
     for (var i = 0, len = self.body.length; i < len && !exact_match; i++) {
       branch = self.body[i]
       if (is_ast_default(branch)) {
@@ -53,7 +53,7 @@ export default class AST_Switch extends AST_Block {
           eliminate_branch(branch, body[body.length - 1])
         }
       } else if (!(is_ast_node(value))) {
-        var exp = branch.expression.evaluate(compressor)
+        let exp = branch.expression.evaluate(compressor)
         if (!(is_ast_node(exp)) && exp !== value) {
           eliminate_branch(branch, body[body.length - 1])
           continue
@@ -62,7 +62,7 @@ export default class AST_Switch extends AST_Block {
         if (exp === value) {
           exact_match = branch
           if (default_branch) {
-            var default_index = body.indexOf(default_branch)
+            const default_index = body.indexOf(default_branch)
             body.splice(default_index, 1)
             eliminate_branch(default_branch, body[default_index - 1])
             default_branch = null
@@ -70,7 +70,7 @@ export default class AST_Switch extends AST_Block {
         }
       }
       if (aborts(branch)) {
-        var prev = body[body.length - 1]
+        const prev = body[body.length - 1]
         if (aborts(prev) && prev.body.length == branch.body.length &&
                   make_node('AST_BlockStatement', prev, prev).equivalent_to(make_node('AST_BlockStatement', branch, branch))) {
           prev.body = []
@@ -84,7 +84,7 @@ export default class AST_Switch extends AST_Block {
     }
     self.body = body
     while ((branch = body[body.length - 1])) {
-      var stat = branch.body[branch.body.length - 1]
+      const stat = branch.body[branch.body.length - 1]
       if (is_ast_break(stat) && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
       if (branch.body.length || is_ast_case(branch) &&
               (default_branch || branch.expression.has_side_effects(compressor))) break
@@ -98,7 +98,7 @@ export default class AST_Switch extends AST_Block {
       }).optimize(compressor)
     }
     if (body.length == 1 && (body[0] === exact_match || body[0] === default_branch)) {
-      var has_break = false
+      let has_break = false
       var tw = new TreeWalker(function (node: any) {
         if (has_break ||
                   is_ast_lambda(node) ||
@@ -107,7 +107,7 @@ export default class AST_Switch extends AST_Block {
       })
       self.walk(tw)
       if (!has_break) {
-        var statements = body[0].body.slice()
+        const statements = body[0].body.slice()
         const exp = body[0].expression
         if (exp) {
           statements.unshift(make_node('AST_SimpleStatement', exp, {
@@ -181,7 +181,7 @@ export default class AST_Switch extends AST_Block {
       self.expression.print(output)
     })
     output.space()
-    var last = self.body.length - 1
+    const last = self.body.length - 1
     if (last < 0) print_braced_empty(self, output)
     else {
       output.with_block(function () {

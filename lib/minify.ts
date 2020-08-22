@@ -11,15 +11,15 @@ import {
   reserve_quoted_keys
 } from './propmangle'
 
-var to_ascii = typeof atob === 'undefined' ? function (b64: string) {
+const to_ascii = typeof atob === 'undefined' ? function (b64: string) {
   return Buffer.from(b64, 'base64').toString()
 } : atob
-var to_base64 = typeof btoa === 'undefined' ? function (str: string) {
+const to_base64 = typeof btoa === 'undefined' ? function (str: string) {
   return Buffer.from(str).toString('base64')
 } : btoa
 
 function read_source_map (code: string) {
-  var match = /(?:^|[^.])\/\/# sourceMappingURL=data:application\/json(;[\w=-]*)?;base64,([+/0-9A-Za-z]*=*)\s*$/.exec(code)
+  const match = /(?:^|[^.])\/\/# sourceMappingURL=data:application\/json(;[\w=-]*)?;base64,([+/0-9A-Za-z]*=*)\s*$/.exec(code)
   if (!match) {
         AST_Node.warn?.('inline source map not found')
         return null
@@ -54,7 +54,7 @@ function cache_to_json (cache: any) {
 }
 
 function minify (files: any, options: any): any {
-  var warn_function = AST_Node.warn_function
+  const warn_function = AST_Node.warn_function
   try {
     options = defaults(options, {
       compress: {},
@@ -76,7 +76,7 @@ function minify (files: any, options: any): any {
       warnings: false,
       wrap: false
     }, true)
-    var timings: any = options.timings && {
+    const timings: any = options.timings && {
       start: Date.now()
     }
     if (options.keep_classnames === undefined) {
@@ -93,7 +93,7 @@ function minify (files: any, options: any): any {
     set_shorthand('safari10', options, ['mangle', 'output'])
     set_shorthand('toplevel', options, ['compress', 'mangle'])
     set_shorthand('warnings', options, ['compress'])
-    var quoted_props: string[] | undefined
+    let quoted_props: string[] | undefined
     if (options.mangle) {
       options.mangle = defaults(options.mangle, {
         cache: options.nameCache && (options.nameCache.vars || {}),
@@ -133,14 +133,14 @@ function minify (files: any, options: any): any {
         url: null
       }, true)
     }
-    var warnings: any[] = []
+    const warnings: any[] = []
     if (options.warnings && !AST_Node.warn_function) {
       AST_Node.warn_function = function (warning: any) {
         warnings.push(warning)
       }
     }
     if (timings) timings.parse = Date.now()
-    var toplevel
+    let toplevel
     if (is_ast_toplevel(files)) {
       toplevel = files
     } else {
@@ -149,7 +149,7 @@ function minify (files: any, options: any): any {
       }
       options.parse = options.parse || {}
       options.parse.toplevel = null
-      for (var name in files) {
+      for (const name in files) {
         if (HOP(files, name)) {
           options.parse.filename = name
           options.parse.toplevel = parse(files[name], options.parse)
@@ -192,7 +192,7 @@ function minify (files: any, options: any): any {
       toplevel = mangle_properties(toplevel, options.mangle.properties)
     }
     if (timings) timings.output = Date.now()
-    var result: any = {}
+    const result: any = {}
     if (options.output) {
       if (options.output.ast) {
         result.ast = toplevel
@@ -221,7 +221,7 @@ function minify (files: any, options: any): any {
         }
         delete options.output.ast
         delete options.output.code
-        var stream = OutputStream(options.output)
+        const stream = OutputStream(options.output)
         toplevel.print(stream)
         result.code = stream.get()
         if (options.sourceMap) {
@@ -231,7 +231,7 @@ function minify (files: any, options: any): any {
             result.map = options.output.source_map.toString()
           }
           if (options.sourceMap.url == 'inline') {
-            var sourceMap = typeof result.map === 'object' ? JSON.stringify(result.map) : result.map
+            const sourceMap = typeof result.map === 'object' ? JSON.stringify(result.map) : result.map
             result.code += '\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,' + to_base64(sourceMap)
           } else if (options.sourceMap.url) {
             result.code += '\n//# sourceMappingURL=' + options.sourceMap.url

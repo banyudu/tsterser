@@ -54,9 +54,9 @@ function find_builtins (reserved: Set<string | undefined>) {
   domprops.forEach(add)
 
   // Compatibility fix for some standard defined globals not defined on every js environment
-  var new_globals = ['Symbol', 'Map', 'Promise', 'Proxy', 'Reflect', 'Set', 'WeakMap', 'WeakSet']
-  var objects: any = {}
-  var global_ref: AnyObject = typeof global === 'object' ? global : self
+  const new_globals = ['Symbol', 'Map', 'Promise', 'Proxy', 'Reflect', 'Set', 'WeakMap', 'WeakSet']
+  const objects: any = {}
+  const global_ref: AnyObject = typeof global === 'object' ? global : self
 
   new_globals.forEach(function (new_global) {
     objects[new_global] = global_ref[new_global] || (() => {})
@@ -128,12 +128,12 @@ function mangle_properties (ast: AST_Node, options: any) {
     undeclared: false
   }, true)
 
-  var reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved]
-  var reserved = new Set(reserved_option as string)
+  const reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved]
+  const reserved = new Set(reserved_option as string)
   if (!options.builtins) find_builtins(reserved)
 
-  var cname = -1
-  var cache: Map<string, any>
+  let cname = -1
+  let cache: Map<string, any>
   if (options.cache) {
     cache = options.cache.props
     cache.forEach(function (mangled_name) {
@@ -143,21 +143,21 @@ function mangle_properties (ast: AST_Node, options: any) {
     cache = new Map()
   }
 
-  var regex = options.regex && new RegExp(options.regex)
+  const regex = options.regex && new RegExp(options.regex)
 
   // note debug is either false (disabled), or a string of the debug suffix to use (enabled).
   // note debug may be enabled as an empty string, which is falsey. Also treat passing 'true'
   // the same as passing an empty string.
-  var debug = options.debug !== false
-  var debug_name_suffix: string
+  const debug = options.debug !== false
+  let debug_name_suffix: string
   if (debug) {
     debug_name_suffix = (options.debug === true ? '' : options.debug as string)
   }
 
-  var names_to_mangle = new Set()
-  var unmangleable = new Set<string>()
+  const names_to_mangle = new Set()
+  const unmangleable = new Set<string>()
 
-  var keep_quoted_strict = options.keep_quoted === 'strict'
+  const keep_quoted_strict = options.keep_quoted === 'strict'
 
   // step 1: find candidates to mangle
   ast.walk(new TreeWalker(function (node: any) {
@@ -172,10 +172,10 @@ function mangle_properties (ast: AST_Node, options: any) {
         add(node.key.name)
       }
     } else if (is_ast_dot(node)) {
-      var declared = !!options.undeclared
+      let declared = !!options.undeclared
       if (!declared) {
         // TODO: check type
-        var root: any = node
+        let root: any = node
         while (root.expression) {
           root = root.expression
         }
@@ -251,11 +251,11 @@ function mangle_properties (ast: AST_Node, options: any) {
       return name
     }
 
-    var mangled = cache.get(name)
+    let mangled = cache.get(name)
     if (!mangled) {
       if (debug) {
         // debug mode: use a prefix and suffix to preserve readability, e.g. o.foo -> o._$foo$NNN_.
-        var debug_mangled = '_$' + name + '$' + debug_name_suffix + '_'
+        const debug_mangled = '_$' + name + '$' + debug_name_suffix + '_'
 
         if (can_mangle(debug_mangled)) {
           mangled = debug_mangled
@@ -277,7 +277,7 @@ function mangle_properties (ast: AST_Node, options: any) {
   function mangleStrings (node: any) {
     return node.transform(new TreeTransformer(function (node: any) {
       if (is_ast_sequence(node)) {
-        var last = node.expressions.length - 1
+        const last = node.expressions.length - 1
         node.expressions[last] = mangleStrings(node.expressions[last])
       } else if (is_ast_string(node)) {
         node.value = mangle(node.value)

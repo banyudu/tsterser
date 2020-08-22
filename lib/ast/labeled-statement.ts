@@ -48,10 +48,10 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   }
 
   clone (deep: boolean) {
-    var node = this._clone(deep)
+    const node = this._clone(deep)
     if (deep) {
-      var label = node.label
-      var def = this.label
+      const label = node.label
+      const def = this.label
       node.walk(new TreeWalker(function (node: any) {
         if (is_ast_loop_control(node) &&
                     node.label && node.label.thedef === def) {

@@ -29,7 +29,7 @@ export default class AST_Await extends AST_Node {
   }
 
   needs_parens (output: any) {
-    var p = output.parent()
+    const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this ||
             is_ast_call(p) && p.expression === this ||
             output.option('safari10') && is_ast_unary_prefix(p)
@@ -38,8 +38,8 @@ export default class AST_Await extends AST_Node {
   _codegen (self, output) {
     output.print('await')
     output.space()
-    var e = self.expression
-    var parens = !(
+    const e = self.expression
+    const parens = !(
       is_ast_call(e) ||
             is_ast_symbol_ref(e) ||
             is_ast_prop_access(e) ||

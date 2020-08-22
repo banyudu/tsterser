@@ -35,11 +35,11 @@ export default class AST_Assign extends AST_Binary {
 
   _optimize (compressor) {
     let self: any = this
-    var def
+    let def
     if (compressor.option('dead_code') &&
           is_ast_symbol_ref(self.left) &&
           (def = self.left.definition?.()).scope === compressor.find_parent(AST_Lambda)) {
-      var level = 0; var node; var parent = self
+      let level = 0; let node; let parent = self
       do {
         node = parent
         parent = compressor.parent(level++)
@@ -78,12 +78,12 @@ export default class AST_Assign extends AST_Binary {
     return self
 
     function in_try (level, node) {
-      var right = self.right
+      const right = self.right
       self.right = make_node('AST_Null', right)
-      var may_throw = node.may_throw(compressor)
+      const may_throw = node.may_throw(compressor)
       self.right = right
-      var scope = self.left.definition?.().scope
-      var parent
+      const scope = self.left.definition?.().scope
+      let parent
       while ((parent = compressor.parent(level++)) !== scope) {
         if (is_ast_try(parent)) {
           if (parent.bfinally) return true
@@ -94,7 +94,7 @@ export default class AST_Assign extends AST_Binary {
   }
 
   drop_side_effect_free (compressor: Compressor) {
-    var left = this.left
+    let left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&
               is_ast_prop_access(left) &&
@@ -136,21 +136,21 @@ export default class AST_Assign extends AST_Binary {
   }
 
   reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
-    var node = this
+    const node = this
     if (is_ast_destructuring(node.left)) {
       suppress(node.left)
       return
     }
-    var sym = node.left
+    const sym = node.left
     if (!(is_ast_symbol_ref(sym))) return
-    var def = sym.definition?.()
-    var safe = safe_to_assign(tw, def, sym.scope, node.right)
+    const def = sym.definition?.()
+    const safe = safe_to_assign(tw, def, sym.scope, node.right)
     def.assignments++
     if (!safe) return
-    var fixed = def.fixed
+    const fixed = def.fixed
     if (!fixed && node.operator != '=') return
-    var eq = node.operator == '='
-    var value = eq ? node.right : node
+    const eq = node.operator == '='
+    const value = eq ? node.right : node
     if (is_modified(compressor, tw, node, value, 0)) return
     def.references.push(sym)
     if (!eq) def.chained = true

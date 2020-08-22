@@ -31,15 +31,15 @@ export default class AST_Object extends AST_Node {
   }
 
   _optimize (compressor) {
-    var optimized = literals_in_boolean_context(this, compressor)
+    const optimized = literals_in_boolean_context(this, compressor)
     if (optimized !== this) {
       return optimized
     }
-    var props = this.properties
-    for (var i = 0; i < props.length; i++) {
-      var prop = props[i]
+    const props = this.properties
+    for (let i = 0; i < props.length; i++) {
+      const prop = props[i]
       if (is_ast_expansion(prop)) {
-        var expr = prop.expression
+        const expr = prop.expression
         if (is_ast_object(expr)) {
           props.splice.apply(props, [i, 1].concat(prop.expression.properties))
           // Step back one, as the property at i is now new.
@@ -57,7 +57,7 @@ export default class AST_Object extends AST_Node {
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement) {
-    var values = trim(this.properties, compressor, first_in_statement)
+    const values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
@@ -71,11 +71,11 @@ export default class AST_Object extends AST_Node {
 
   _eval (compressor: Compressor, depth) {
     if (compressor.option('unsafe')) {
-      var val = {}
-      for (var i = 0, len = this.properties.length; i < len; i++) {
-        var prop = this.properties[i]
+      const val = {}
+      for (let i = 0, len = this.properties.length; i < len; i++) {
+        const prop = this.properties[i]
         if (is_ast_expansion(prop)) return this
-        var key = prop.key
+        let key = prop.key
         if (is_ast_symbol(key)) {
           key = key.name
         } else if (is_ast_node(key)) {
@@ -100,14 +100,14 @@ export default class AST_Object extends AST_Node {
 
   _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
-    for (var i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
+    for (let i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
     return false
   }
 
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
-      var properties = this.properties
-      for (var i = 0, len = properties.length; i < len; i++) {
+      const properties = this.properties
+      for (let i = 0, len = properties.length; i < len; i++) {
         properties[i]._walk(visitor)
       }
     })

@@ -3,7 +3,7 @@ import { is_lhs, is_atomic, make_node, find_variable } from '../utils'
 
 export default class AST_Infinity extends AST_Atom {
   _optimize (compressor) {
-    var lhs = is_lhs(compressor.self(), compressor.parent())
+    const lhs = is_lhs(compressor.self(), compressor.parent())
     if (lhs && is_atomic(lhs, this)) return this
     if (
       compressor.option('keep_infinity') &&

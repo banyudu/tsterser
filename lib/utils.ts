@@ -353,12 +353,12 @@ function return_true () { return true }
 function return_this () { return this }
 function return_null () { return null }
 
-var MAP = (function () {
+const MAP = (function () {
   function MAP (a: any[] | AnyObject, f: Function, backwards?: boolean) {
-    var ret: any[] = []; var top: any[] = []; var i: string | number
+    const ret: any[] = []; const top: any[] = []; let i: string | number
     function doit () {
-      var val: any = f((a as any)[i], i)
-      var is_last = val instanceof Last
+      let val: any = f((a as any)[i], i)
+      const is_last = val instanceof Last
       if (is_last) val = val.v
       if (val instanceof AtTop) {
         val = val.v
@@ -416,7 +416,7 @@ function string_template (text: string, props?: AnyObject) {
 }
 
 function remove<T = any> (array: T[], el: T) {
-  for (var i = array.length; --i >= 0;) {
+  for (let i = array.length; --i >= 0;) {
     if (array[i] === el) array.splice(i, 1)
   }
 }
@@ -424,7 +424,7 @@ function remove<T = any> (array: T[], el: T) {
 function mergeSort<T> (array: T[], cmp: (a: T, b: T) => number): T[] {
   if (array.length < 2) return array.slice()
   function merge (a: T[], b: T[]) {
-    var r: T[] = []; var ai = 0; var bi = 0; var i = 0
+    const r: T[] = []; let ai = 0; let bi = 0; let i = 0
     while (ai < a.length && bi < b.length) {
       cmp(a[ai], b[bi]) <= 0
         ? r[i++] = a[ai++]
@@ -436,7 +436,7 @@ function mergeSort<T> (array: T[], cmp: (a: T, b: T) => number): T[] {
   }
   function _ms (a: any[]) {
     if (a.length <= 1) { return a }
-    var m = Math.floor(a.length / 2); var left = a.slice(0, m); var right = a.slice(m)
+    const m = Math.floor(a.length / 2); let left = a.slice(0, m); let right = a.slice(m)
     left = _ms(left)
     right = _ms(right)
     return merge(left, right)
@@ -459,8 +459,8 @@ function map_add (map: Map<string, any[]>, key: string, value: any) {
 }
 
 function map_from_object (obj: AnyObject) {
-  var map = new Map()
-  for (var key in obj) {
+  const map = new Map()
+  for (const key in obj) {
     if (HOP(obj, key) && key.charAt(0) === '$') {
       map.set(key.substr(1), obj[key])
     }
@@ -469,7 +469,7 @@ function map_from_object (obj: AnyObject) {
 }
 
 function map_to_object (map: Map<any, any>) {
-  var obj = Object.create(null)
+  const obj = Object.create(null)
   map.forEach(function (value, key) {
     obj['$' + key] = value
   })
@@ -485,7 +485,7 @@ function keep_name (keep_setting: boolean | RegExp | undefined, name: string) {
         (keep_setting instanceof RegExp && keep_setting.test(name))
 }
 
-var lineTerminatorEscape: AnyObject<string> = {
+const lineTerminatorEscape: AnyObject<string> = {
   '\n': 'n',
   '\r': 'r',
   '\u2028': 'u2028',
@@ -494,7 +494,7 @@ var lineTerminatorEscape: AnyObject<string> = {
 function regexp_source_fix (source: string) {
   // V8 does not escape line terminators in regexp patterns in node 12
   return source.replace(/[\n\r\u2028\u2029]/g, function (match, offset) {
-    var escaped = source[offset - 1] == '\\' &&
+    const escaped = source[offset - 1] == '\\' &&
             (source[offset - 2] != '\\' ||
             /(?:^|[^\\])(?:\\{2})*$/.test(source.slice(0, offset - 1)))
     return (escaped ? '' : '\\') + lineTerminatorEscape[match]
@@ -549,7 +549,7 @@ export {
 
 export function convert_to_predicate (obj) {
   const out = new Map()
-  for (var key of Object.keys(obj)) {
+  for (const key of Object.keys(obj)) {
     out.set(key, makePredicate(obj[key]))
   }
   return out
@@ -639,8 +639,8 @@ export function walk_parent (node: AST_Node, cb: Function, initial_stack?: any[]
 }
 
 export function set_moz_loc (mynode: AST_Node, moznode) {
-  var start = mynode.start
-  var end = mynode.end
+  const start = mynode.start
+  const end = mynode.end
   if (!(start && end)) {
     return moznode
   }
@@ -663,7 +663,7 @@ export let FROM_MOZ_STACK = []
 
 export function from_moz (node) {
     FROM_MOZ_STACK?.push(node)
-    var ret = node != null ? MOZ_TO_ME[node.type](node) : null
+    const ret = node != null ? MOZ_TO_ME[node.type](node) : null
     FROM_MOZ_STACK?.pop()
     return ret
 }
@@ -729,9 +729,9 @@ var MOZ_TO_ME: any = {
     })
   },
   TemplateLiteral: function (M: any) {
-    var segments: any[] = []
+    const segments: any[] = []
     const quasis = (M).quasis as any[]
-    for (var i = 0; i < quasis.length; i++) {
+    for (let i = 0; i < quasis.length; i++) {
       segments.push(from_moz(quasis[i]))
       if (M.expressions[i]) {
         segments.push(from_moz(M.expressions[i]))
@@ -793,7 +793,7 @@ var MOZ_TO_ME: any = {
     })
   },
   TryStatement: function (M) {
-    var handlers = M.handlers || [M.handler]
+    const handlers = M.handlers || [M.handler]
     if (handlers.length > 1 || M.guardedHandlers && M.guardedHandlers.length) {
       throw new Error('Multiple catch clauses are not supported.')
     }
@@ -806,8 +806,8 @@ var MOZ_TO_ME: any = {
     })
   },
   Property: function (M) {
-    var key = M.key
-    var args: any = {
+    const key = M.key
+    const args: any = {
       start: my_start_token(key || M.value),
       end: my_end_token(M.value),
       key: key.type == 'Identifier' ? key.name : key.value,
@@ -848,7 +848,7 @@ var MOZ_TO_ME: any = {
     }
   },
   MethodDefinition: function (M) {
-    var args: any = {
+    const args: any = {
       start: my_start_token(M),
       end: my_end_token(M),
       key: M.computed ? from_moz(M.key) : new AST_SymbolMethod({ name: M.key.name || M.key.value }),
@@ -936,8 +936,8 @@ var MOZ_TO_ME: any = {
   },
 
   ImportDeclaration: function (M) {
-    var imported_name = null
-    var imported_names: any[] | null = null
+    let imported_name = null
+    let imported_names: any[] | null = null
     M.specifiers.forEach(function (specifier) {
       if (specifier.type === 'ImportSpecifier') {
         if (!imported_names) { imported_names = [] }
@@ -1003,11 +1003,11 @@ var MOZ_TO_ME: any = {
     })
   },
   Literal: function (M) {
-    var val = M.value; var args: any = {
+    const val = M.value; const args: any = {
       start: my_start_token(M),
       end: my_end_token(M)
     }
-    var rx = M.regex
+    const rx = M.regex
     if (rx && rx.pattern) {
       // RegExpLiteral as per ESTree AST spec
       args.value = {
@@ -1045,7 +1045,7 @@ var MOZ_TO_ME: any = {
     }
   },
   Identifier: function (M) {
-    var p = FROM_MOZ_STACK?.[FROM_MOZ_STACK.length - 2]
+    const p = FROM_MOZ_STACK?.[FROM_MOZ_STACK.length - 2]
     return new (p.type == 'LabeledStatement' ? AST_Label
       : p.type == 'VariableDeclarator' && p.id === M ? (p.kind == 'const' ? AST_SymbolConst : p.kind == 'let' ? AST_SymbolLet : AST_SymbolVar)
         : /Import.*Specifier/.test(p.type) ? (p.local === M ? AST_SymbolImport : AST_SymbolImportForeign)
@@ -1245,8 +1245,8 @@ var MOZ_TO_ME: any = {
 }
 
 export function my_start_token (moznode: any) {
-  var loc = moznode.loc; var start = loc && loc.start
-  var range = moznode.range
+  const loc = moznode.loc; const start = loc && loc.start
+  const range = moznode.range
   return new AST_Token({
     file: loc && loc.source,
     line: start && start.line,
@@ -1260,8 +1260,8 @@ export function my_start_token (moznode: any) {
 }
 
 export function my_end_token (moznode) {
-  var loc = moznode.loc; var end = loc && loc.end
-  var range = moznode.range
+  const loc = moznode.loc; const end = loc && loc.end
+  const range = moznode.range
   return new AST_Token({
     file: loc && loc.source,
     line: end && end.line,
@@ -1275,9 +1275,9 @@ export function my_end_token (moznode) {
 }
 
 export function normalize_directives (body: any[]) {
-  var in_directive = true
+  let in_directive = true
 
-  for (var i = 0; i < body.length; i++) {
+  for (let i = 0; i < body.length; i++) {
     const item = body[i]
     if (in_directive && is_ast_statement(item) && is_ast_string(item.body)) {
       body[i] = new AST_Directive({
@@ -1300,7 +1300,7 @@ export function raw_token (moznode) {
 }
 
 export function To_Moz_Unary (M) {
-  var prefix = 'prefix' in M ? M.prefix
+  const prefix = 'prefix' in M ? M.prefix
     : M.type == 'UnaryExpression'
   return new (prefix ? AST_UnaryPrefix : AST_UnaryPostfix)({
     start: my_start_token(M),
@@ -1350,7 +1350,7 @@ export const mkshallow = (props) => {
 export function to_moz (node: any | null) {
   if (TO_MOZ_STACK === null) { TO_MOZ_STACK = [] }
   TO_MOZ_STACK.push(node)
-  var ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
+  const ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
   TO_MOZ_STACK.pop()
   if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null }
   return ast
@@ -1359,7 +1359,7 @@ export function to_moz (node: any | null) {
 let TO_MOZ_STACK: Array<any | null> | null = null
 
 export function to_moz_in_destructuring () {
-  var i = TO_MOZ_STACK?.length
+  let i = TO_MOZ_STACK?.length
   while (i--) {
     if (is_ast_destructuring(TO_MOZ_STACK?.[i])) {
       return true
@@ -1369,7 +1369,7 @@ export function to_moz_in_destructuring () {
 }
 
 export function To_Moz_Literal (M) {
-  var value = M.value
+  const value = M.value
   if (typeof value === 'number' && (value < 0 || (value === 0 && 1 / value < 0))) {
     return {
       type: 'UnaryExpression',
@@ -1390,8 +1390,8 @@ export function To_Moz_Literal (M) {
 }
 
 export function make_num (num: number) {
-  var str = num.toString(10).replace(/^0\./, '.').replace('e+', 'e')
-  var candidates = [str]
+  const str = num.toString(10).replace(/^0\./, '.').replace('e+', 'e')
+  const candidates = [str]
   if (Math.floor(num) === num) {
     if (num < 0) {
       candidates.push('-0x' + (-num).toString(16).toLowerCase())
@@ -1399,7 +1399,7 @@ export function make_num (num: number) {
       candidates.push('0x' + num.toString(16).toLowerCase())
     }
   }
-  var match: RegExpExecArray | null, len, digits
+  let match: RegExpExecArray | null, len, digits
   if ((match = /^\.0+/.exec(str))) {
     len = match[0].length
     digits = str.slice(len)
@@ -1414,8 +1414,8 @@ export function make_num (num: number) {
 }
 
 export function best_of_string (a: string[]) {
-  var best = a[0]; var len = best.length
-  for (var i = 1; i < a.length; ++i) {
+  let best = a[0]; let len = best.length
+  for (let i = 1; i < a.length; ++i) {
     if (a[i].length < len) {
       best = a[i]
       len = best.length
@@ -1522,10 +1522,10 @@ export function make_block (stmt: any, output: any) {
 
 // Tighten a bunch of statements together. Used whenever there is a block.
 export function tighten_body (statements, compressor) {
-  var in_loop, in_try
-  var scope = compressor.find_parent(AST_Scope).get_defun_scope()
+  let in_loop, in_try
+  let scope = compressor.find_parent(AST_Scope).get_defun_scope()
   find_loop_scope_try()
-  var CHANGED; var max_iter = 10
+  let CHANGED; let max_iter = 10
   do {
     CHANGED = false
     eliminate_spurious_blocks(statements)
@@ -1548,7 +1548,7 @@ export function tighten_body (statements, compressor) {
   } while (CHANGED && max_iter-- > 0)
 
   function find_loop_scope_try () {
-    var node = compressor.self(); var level = 0
+    let node = compressor.self(); let level = 0
     do {
       if (is_ast_catch(node) || is_ast_finally(node)) {
         level++
@@ -1573,9 +1573,9 @@ export function tighten_body (statements, compressor) {
   // which are not sequentially executed, e.g. loops and conditionals.
   function collapse (statements, compressor) {
     if (scope.pinned()) return statements
-    var args
-    var candidates: any[] = []
-    var stat_index = statements.length
+    let args
+    const candidates: any[] = []
+    let stat_index = statements.length
     var scanner = new TreeTransformer(function (node: any) {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
@@ -1589,7 +1589,7 @@ export function tighten_body (statements, compressor) {
         return node
       }
       // Stop immediately if these node types are encountered
-      var parent = scanner.parent()
+      const parent = scanner.parent()
       if (is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left) ||
                 is_ast_await(node) ||
                 is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
@@ -1652,8 +1652,8 @@ export function tighten_body (statements, compressor) {
           return make_node('AST_UnaryPrefix', candidate, candidate)
         }
         if (is_ast_var_def(candidate)) {
-          var def = candidate.name.definition?.()
-          var value = candidate.value
+          const def = candidate.name.definition?.()
+          const value = candidate.value
           if (def.references.length - def.replaced == 1 && !compressor.exposed(def)) {
             def.replaced++
             if (funarg && is_identifier_atom(value)) {
@@ -1673,7 +1673,7 @@ export function tighten_body (statements, compressor) {
       }
       // These node types have child nodes that execute sequentially,
       // but are otherwise not safe to scan into or beyond them.
-      var sym
+      let sym
       if (is_ast_call(node) ||
                 is_ast_exit(node) &&
                     (side_effects || is_ast_prop_access(lhs) || may_modify(lhs)) ||
@@ -1750,14 +1750,14 @@ export function tighten_body (statements, compressor) {
         var can_replace = !args || !hit
         if (!can_replace) {
           if (!abort) {
-            for (var j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
+            for (let j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
               args[j].transform(scanner)
             }
           }
           can_replace = true
         }
         if (!abort) {
-          for (var i = stat_index; i < statements.length; i++) {
+          for (let i = stat_index; i < statements.length; i++) {
             statements[i].transform(scanner)
           }
         }
@@ -1788,8 +1788,8 @@ export function tighten_body (statements, compressor) {
       if (is_ast_switch(node)) {
         node.expression = node.expression.transform(scanner)
         if (!abort) {
-          for (var i = 0, len = node.body.length; i < len; i++) {
-            var branch = node.body[i]
+          for (let i = 0, len = node.body.length; i < len; i++) {
+            const branch = node.body[i]
             if (is_ast_case(branch)) {
               if (!hit) {
                 if (branch !== hit_stack[hit_index]) continue
@@ -1816,11 +1816,11 @@ export function tighten_body (statements, compressor) {
     }
 
     function has_overlapping_symbol (fn, arg, fn_strict) {
-      var found = false; var scan_this = !(is_ast_arrow(fn))
+      let found = false; let scan_this = !(is_ast_arrow(fn))
       arg.walk(new TreeWalker(function (node: any, descend) {
         if (found) return true
         if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
-          var s = node.definition?.().scope
+          let s = node.definition?.().scope
           if (s !== scope) {
             while ((s = s.parent_scope)) {
               if (s === scope) return true
@@ -1832,7 +1832,7 @@ export function tighten_body (statements, compressor) {
           return (found = true)
         }
         if (is_ast_scope(node) && !(is_ast_arrow(node))) {
-          var prev = scan_this
+          const prev = scan_this
           scan_this = false
           descend()
           scan_this = prev
@@ -1843,7 +1843,7 @@ export function tighten_body (statements, compressor) {
     }
 
     function extract_args () {
-      var iife; var fn = compressor.self()
+      let iife; const fn = compressor.self()
       if (is_func_expr(fn) &&
                 !fn.name &&
                 !fn.uses_arguments &&
@@ -1852,14 +1852,14 @@ export function tighten_body (statements, compressor) {
                 iife.expression === fn &&
                 iife.args.every((arg) => !(is_ast_expansion(arg)))
       ) {
-        var fn_strict = compressor.has_directive('use strict')
+        let fn_strict = compressor.has_directive('use strict')
         if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
-        var len = fn.argnames.length
+        const len = fn.argnames.length
         args = iife.args.slice(len)
-        var names = new Set()
-        for (var i = len; --i >= 0;) {
-          var sym = fn.argnames[i]
-          var arg: any = iife.args[i]
+        const names = new Set()
+        for (let i = len; --i >= 0;) {
+          const sym = fn.argnames[i]
+          let arg: any = iife.args[i]
           // The following two line fix is a duplicate of the fix at
           // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
           // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
@@ -1874,7 +1874,7 @@ export function tighten_body (statements, compressor) {
           if (names.has(sym.name)) continue
           names.add(sym.name)
           if (is_ast_expansion(sym)) {
-            var elements = iife.args.slice(i)
+            const elements = iife.args.slice(i)
             if (elements.every((arg) =>
               !has_overlapping_symbol(fn, arg, fn_strict)
             )) {
@@ -1924,9 +1924,9 @@ export function tighten_body (statements, compressor) {
         extract_candidates(expr.consequent)
         extract_candidates(expr.alternative)
       } else if (is_ast_definitions(expr)) {
-        var len = expr.definitions.length
+        const len = expr.definitions.length
         // limit number of trailing variable definitions for consideration
-        var i = len - 200
+        let i = len - 200
         if (i < 0) i = 0
         for (; i < len; i++) {
           extract_candidates(expr.definitions[i])
@@ -1979,7 +1979,7 @@ export function tighten_body (statements, compressor) {
     }
 
     function find_stop (node, level, write_only?) {
-      var parent = scanner.parent(level)
+      const parent = scanner.parent(level)
       if (is_ast_assign(parent)) {
         if (write_only &&
                     !(is_ast_prop_access(parent.left) ||
@@ -2027,21 +2027,21 @@ export function tighten_body (statements, compressor) {
     }
 
     function mangleable_var (var_def) {
-      var value = var_def.value
+      const value = var_def.value
       if (!(is_ast_symbol_ref(value))) return
       if (value.name == 'arguments') return
-      var def = value.definition?.()
+      const def = value.definition?.()
       if (def.undeclared) return
       return (value_def = def)
     }
 
     function get_lhs (expr) {
       if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
-        var def = expr.name.definition?.()
+        const def = expr.name.definition?.()
         if (!member(expr.name, def.orig)) return
-        var referenced = def.references.length - def.replaced
+        const referenced = def.references.length - def.replaced
         if (!referenced) return
-        var declared = def.orig.length - def.eliminated
+        const declared = def.orig.length - def.eliminated
         if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) ||
                     (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
           return make_node('AST_SymbolRef', expr.name, expr.name)
@@ -2058,10 +2058,10 @@ export function tighten_body (statements, compressor) {
     }
 
     function get_lvalues (expr) {
-      var lvalues = new Map()
+      const lvalues = new Map()
       if (is_ast_unary(expr)) return lvalues
       var tw = new TreeWalker(function (node: any) {
-        var sym = node
+        let sym = node
         while (is_ast_prop_access(sym)) sym = sym.expression
         if (is_ast_symbol_ref(sym) || is_ast_this(sym)) {
           lvalues.set(sym.name, lvalues.get(sym.name) || is_modified(compressor, tw, node, node, 0))
@@ -2073,12 +2073,12 @@ export function tighten_body (statements, compressor) {
 
     function remove_candidate (expr) {
       if (is_ast_symbol_funarg(expr.name)) {
-        var iife = compressor.parent(); var argnames = compressor.self().argnames
-        var index = argnames.indexOf(expr.name)
+        const iife = compressor.parent(); const argnames = compressor.self().argnames
+        const index = argnames.indexOf(expr.name)
         if (index < 0) {
           iife.args.length = Math.min(iife.args.length, argnames.length - 1)
         } else {
-          var args = iife.args
+          const args = iife.args
           if (args[index]) {
             args[index] = make_node('AST_Number', args[index], {
               value: 0
@@ -2087,7 +2087,7 @@ export function tighten_body (statements, compressor) {
         }
         return true
       }
-      var found = false
+      let found = false
       return statements[stat_index].transform(new TreeTransformer(function (node, descend, in_list) {
         if (found) return node
         if (node === expr || node.body === expr) {
@@ -2129,7 +2129,7 @@ export function tighten_body (statements, compressor) {
       if (side_effects) return false
       if (value_def) return true
       if (is_ast_symbol_ref(lhs)) {
-        var def = lhs.definition?.()
+        const def = lhs.definition?.()
         if (def.references.length - def.replaced == (is_ast_var_def(candidate) ? 1 : 2)) {
           return true
         }
@@ -2139,11 +2139,11 @@ export function tighten_body (statements, compressor) {
 
     function may_modify (sym) {
       if (!sym.definition) return true // AST_Destructuring
-      var def = sym.definition?.()
+      const def = sym.definition?.()
       if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
       if (def.scope.get_defun_scope() !== scope) return true
       return !def.references.every((ref) => {
-        var s = ref.scope.get_defun_scope()
+        let s = ref.scope.get_defun_scope()
         // "block" scope within AST_Catch
         if (s.TYPE == 'Scope') s = s.parent_scope
         return s === scope
@@ -2164,9 +2164,9 @@ export function tighten_body (statements, compressor) {
   }
 
   function eliminate_spurious_blocks (statements) {
-    var seen_dirs: any[] = []
-    for (var i = 0; i < statements.length;) {
-      var stat = statements[i]
+    const seen_dirs: any[] = []
+    for (let i = 0; i < statements.length;) {
+      const stat = statements[i]
       if (is_ast_block_statement(stat) && stat.body.every(can_be_evicted_from_block)) {
         CHANGED = true
         eliminate_spurious_blocks(stat.body)
@@ -2188,13 +2188,13 @@ export function tighten_body (statements, compressor) {
   }
 
   function handle_if_return (statements, compressor) {
-    var self = compressor.self()
-    var multiple_if_returns = has_multiple_if_returns(statements)
-    var in_lambda = is_ast_lambda(self)
+    const self = compressor.self()
+    const multiple_if_returns = has_multiple_if_returns(statements)
+    const in_lambda = is_ast_lambda(self)
     for (var i = statements.length; --i >= 0;) {
-      var stat = statements[i]
-      var j = next_index(i)
-      var next = statements[j]
+      let stat = statements[i]
+      const j = next_index(i)
+      const next = statements[j]
 
       if (in_lambda && !next && is_ast_return(stat)) {
         if (!stat.value) {
@@ -2212,7 +2212,7 @@ export function tighten_body (statements, compressor) {
       }
 
       if (is_ast_if(stat)) {
-        var ab = aborts(stat.body)
+        let ab = aborts(stat.body)
         if (can_merge_flow(ab)) {
           if (ab.label) {
             remove(ab.label.thedef.references, ab)
@@ -2251,7 +2251,7 @@ export function tighten_body (statements, compressor) {
       }
 
       if (is_ast_if(stat) && is_ast_return(stat.body)) {
-        var value = stat.body.value
+        const value = stat.body.value
         // ---
         // pretty silly case, but:
         // if (foo()) return; return; ==> foo(); return;
@@ -2293,7 +2293,7 @@ export function tighten_body (statements, compressor) {
         // if sequences is not enabled, this can lead to an endless loop (issue #866).
         // however, with sequences on this helps producing slightly better output for
         // the example code.
-        var prev = statements[prev_index(i)]
+        const prev = statements[prev_index(i)]
         if (compressor.option('sequences') && in_lambda && !stat.alternative &&
                     is_ast_if(prev) && is_ast_return(prev.body) &&
                     next_index(j) == statements.length && is_ast_simple_statement(next)) {
@@ -2315,9 +2315,9 @@ export function tighten_body (statements, compressor) {
     }
 
     function has_multiple_if_returns (statements) {
-      var n = 0
-      for (var i = statements.length; --i >= 0;) {
-        var stat = statements[i]
+      let n = 0
+      for (let i = statements.length; --i >= 0;) {
+        const stat = statements[i]
         if (is_ast_if(stat) && is_ast_return(stat.body)) {
           if (++n > 1) return true
         }
@@ -2331,18 +2331,18 @@ export function tighten_body (statements, compressor) {
 
     function can_merge_flow (ab) {
       if (!ab) return false
-      for (var j = i + 1, len = statements.length; j < len; j++) {
-        var stat = statements[j]
+      for (let j = i + 1, len = statements.length; j < len; j++) {
+        const stat = statements[j]
         if (is_ast_const(stat) || is_ast_let(stat)) return false
       }
-      var lct = is_ast_loop_control(ab) ? compressor.loopcontrol_target(ab) : null
+      const lct = is_ast_loop_control(ab) ? compressor.loopcontrol_target(ab) : null
       return is_ast_return(ab) && in_lambda && is_return_void(ab.value) ||
                 is_ast_continue(ab) && self === loop_body(lct) ||
                 is_ast_break(ab) && is_ast_block_statement(lct) && self === lct
     }
 
     function extract_functions () {
-      var tail = statements.slice(i + 1)
+      const tail = statements.slice(i + 1)
       statements.length = i + 1
       return tail.filter(function (stat) {
         if (is_ast_defun(stat)) {
@@ -2354,7 +2354,7 @@ export function tighten_body (statements, compressor) {
     }
 
     function as_statement_array_with_return (node, ab) {
-      var body = as_statement_array(node).slice(0, -1)
+      const body = as_statement_array(node).slice(0, -1)
       if (ab.value) {
         body.push(make_node('AST_SimpleStatement', ab.value, {
           body: ab.value.expression
@@ -2365,7 +2365,7 @@ export function tighten_body (statements, compressor) {
 
     function next_index (i) {
       for (var j = i + 1, len = statements.length; j < len; j++) {
-        var stat = statements[j]
+        const stat = statements[j]
         if (!(is_ast_var(stat) && declarations_only(stat))) {
           break
         }
@@ -2375,7 +2375,7 @@ export function tighten_body (statements, compressor) {
 
     function prev_index (i) {
       for (var j = i; --j >= 0;) {
-        var stat = statements[j]
+        const stat = statements[j]
         if (!(is_ast_var(stat) && declarations_only(stat))) {
           break
         }
@@ -2385,12 +2385,12 @@ export function tighten_body (statements, compressor) {
   }
 
   function eliminate_dead_code (statements, compressor) {
-    var has_quit
-    var self = compressor.self()
+    let has_quit
+    const self = compressor.self()
     for (var i = 0, n = 0, len = statements.length; i < len; i++) {
-      var stat = statements[i]
+      const stat = statements[i]
       if (is_ast_loop_control(stat)) {
-        var lct = compressor.loopcontrol_target(stat)
+        const lct = compressor.loopcontrol_target(stat)
         if (is_ast_break(stat) &&
                         !(is_ast_iteration_statement(lct)) &&
                         loop_body(lct) === self ||
@@ -2427,18 +2427,18 @@ export function tighten_body (statements, compressor) {
 
   function sequencesize (statements, compressor) {
     if (statements.length < 2) return
-    var seq: any[] = []; var n = 0
+    let seq: any[] = []; let n = 0
     function push_seq () {
       if (!seq.length) return
-      var body = make_sequence(seq[0], seq)
+      const body = make_sequence(seq[0], seq)
       statements[n++] = make_node('AST_SimpleStatement', body, { body: body })
       seq = []
     }
     for (var i = 0, len = statements.length; i < len; i++) {
-      var stat = statements[i]
+      const stat = statements[i]
       if (is_ast_simple_statement(stat)) {
         if (seq.length >= compressor.sequences_limit) push_seq()
-        var body = stat.body
+        let body = stat.body
         if (seq.length > 0) body = body.drop_side_effect_free(compressor)
         if (body) merge_sequence(seq, body)
       } else if (is_ast_definitions(stat) && declarations_only(stat) ||
@@ -2456,9 +2456,9 @@ export function tighten_body (statements, compressor) {
 
   function to_simple_statement (block, decls) {
     if (!(is_ast_block_statement(block))) return block
-    var stat: any = null
-    for (var i = 0, len = block.body.length; i < len; i++) {
-      var line = block.body[i]
+    let stat: any = null
+    for (let i = 0, len = block.body.length; i < len; i++) {
+      const line = block.body[i]
       if (is_ast_var(line) && declarations_only(line)) {
         decls.push(line)
       } else if (stat) {
@@ -2474,12 +2474,12 @@ export function tighten_body (statements, compressor) {
     function cons_seq (right) {
       n--
       CHANGED = true
-      var left = prev.body
+      const left = prev.body
       return make_sequence(left, [left, right]).transform(compressor)
     }
-    var n = 0; var prev
-    for (var i = 0; i < statements.length; i++) {
-      var stat = statements[i]
+    var n = 0; let prev
+    for (let i = 0; i < statements.length; i++) {
+      const stat = statements[i]
       if (prev) {
         if (is_ast_exit(stat)) {
           stat.value = cons_seq(stat.value || make_node('AST_Undefined', stat).transform(compressor))
@@ -2516,11 +2516,11 @@ export function tighten_body (statements, compressor) {
         }
       }
       if (compressor.option('conditionals') && is_ast_if(stat)) {
-        var decls: any[] = []
-        var body = to_simple_statement(stat.body, decls)
-        var alt = to_simple_statement(stat.alternative, decls)
+        const decls: any[] = []
+        const body = to_simple_statement(stat.body, decls)
+        const alt = to_simple_statement(stat.alternative, decls)
         if (body !== false && alt !== false && decls.length > 0) {
-          var len = decls.length
+          const len = decls.length
           decls.push(make_node('AST_If', stat, {
             condition: stat.condition,
             body: body || make_node('AST_EmptyStatement', stat.body),
@@ -2543,22 +2543,22 @@ export function tighten_body (statements, compressor) {
 
   function join_object_assignments (defn, body) {
     if (!(is_ast_definitions(defn))) return
-    var def = defn.definitions[defn.definitions.length - 1]
+    const def = defn.definitions[defn.definitions.length - 1]
     if (!(is_ast_object(def.value))) return
-    var exprs
+    let exprs
     if (is_ast_assign(body)) {
       exprs = [body]
     } else if (is_ast_sequence(body)) {
       exprs = body.expressions.slice()
     }
     if (!exprs) return
-    var trimmed = false
+    let trimmed = false
     do {
-      var node = exprs[0]
+      const node = exprs[0]
       if (!(is_ast_assign(node))) break
       if (node.operator != '=') break
       if (!(is_ast_prop_access(node.left))) break
-      var sym = node.left.expression
+      const sym = node.left.expression
       if (!(is_ast_symbol_ref(sym))) break
       if (def.name.name != sym.name) break
       if (!node.right.is_constant_expression(scope)) break
@@ -2568,14 +2568,14 @@ export function tighten_body (statements, compressor) {
       }
       if (is_ast_node(prop)) break
       prop = '' + prop
-      var diff = compressor.option('ecma') < 2015 &&
+      const diff = compressor.option('ecma') < 2015 &&
                 compressor.has_directive('use strict') ? function (node: any) {
           return node.key != prop && (node.key && node.key.name != prop)
         } : function (node: any) {
           return node.key && node.key.name != prop
         }
       if (!def.value.properties.every(diff)) break
-      var p = def.value.properties.filter(function (p) { return p.key === prop })[0]
+      const p = def.value.properties.filter(function (p) { return p.key === prop })[0]
       if (!p) {
         def.value.properties.push(make_node('AST_ObjectKeyVal', node, {
           key: prop,
@@ -2595,7 +2595,7 @@ export function tighten_body (statements, compressor) {
   }
 
   function join_consecutive_vars (statements) {
-    var defs
+    let defs
     for (var i = 0, j = -1, len = statements.length; i < len; i++) {
       var stat = statements[i]
       var prev = statements[j]
@@ -2657,7 +2657,7 @@ export function tighten_body (statements, compressor) {
 
     function extract_object_assignments (value) {
       statements[++j] = stat
-      var exprs = join_object_assignments(prev, value)
+      const exprs = join_object_assignments(prev, value)
       if (exprs) {
         CHANGED = true
         if (exprs.length) {
@@ -2674,14 +2674,14 @@ export function tighten_body (statements, compressor) {
 }
 
 export function anyMayThrow (list, compressor) {
-  for (var i = list.length; --i >= 0;) {
+  for (let i = list.length; --i >= 0;) {
     if (list[i].may_throw(compressor)) { return true }
   }
   return false
 }
 
 export function anySideEffect (list, compressor) {
-  for (var i = list.length; --i >= 0;) {
+  for (let i = list.length; --i >= 0;) {
     if (list[i].has_side_effects(compressor)) { return true }
   }
   return false
@@ -2721,13 +2721,13 @@ export function is_identifier_atom (node: any | null) {
 
 export function walk_body (node: any, visitor: TreeWalker) {
   const body = node.body
-  for (var i = 0, len = body.length; i < len; i++) {
+  for (let i = 0, len = body.length; i < len; i++) {
     body[i]._walk(visitor)
   }
 }
 
 export function clone_block_scope (deep: boolean) {
-  var clone = this._clone(deep)
+  const clone = this._clone(deep)
   if (this.block_scope) {
     // TODO this is sometimes undefined during compression.
     // But it should always have a value!
@@ -2784,15 +2784,15 @@ export function is_func_expr (node: AST_Node): node is AST_Arrow | AST_Function 
 
 export function is_ref_of (ref, type) {
   if (!(is_ast_symbol_ref(ref))) return false
-  var orig = ref.definition?.().orig
-  for (var i = orig.length; --i >= 0;) {
+  const orig = ref.definition?.().orig
+  for (let i = orig.length; --i >= 0;) {
     if (orig[i] instanceof type) return true
   }
 }
 
 export function is_modified (compressor, tw, node, value, level, immutable?) {
-  var parent = tw.parent(level)
-  var lhs = is_lhs(node, parent)
+  const parent = tw.parent(level)
+  const lhs = is_lhs(node, parent)
   if (lhs) return lhs
   if (!immutable &&
         is_ast_call(parent) &&
@@ -2808,11 +2808,11 @@ export function is_modified (compressor, tw, node, value, level, immutable?) {
     return is_modified(compressor, tw, parent, parent, level + 1)
   }
   if (is_ast_object_key_val(parent) && node === parent.value) {
-    var obj = tw.parent(level + 1)
+    const obj = tw.parent(level + 1)
     return is_modified(compressor, tw, obj, obj, level + 2)
   }
   if (is_ast_prop_access(parent) && parent.expression === node) {
-    var prop = read_property(value, parent.property)
+    const prop = read_property(value, parent.property)
     return !immutable && is_modified(compressor, tw, parent, prop, level + 1)
   }
 }
@@ -2907,16 +2907,16 @@ export function walk (node: any, cb: Function, to_visit = [node]) {
 export function read_property (obj, key) {
   key = get_value(key)
   if (is_ast_node(key)) return
-  var value
+  let value
   if (is_ast_array(obj)) {
-    var elements = obj.elements
+    const elements = obj.elements
     if (key == 'length') return make_node_from_constant(elements.length, obj)
     if (typeof key === 'number' && key in elements) value = elements[key]
   } else if (is_ast_object(obj)) {
     key = '' + key
-    var props = obj.properties
-    for (var i = props.length; --i >= 0;) {
-      var prop = props[i]
+    const props = obj.properties
+    for (let i = props.length; --i >= 0;) {
+      const prop = props[i]
       if (!(is_ast_object_key_val(prop))) return
       if (!value && props[i].key === key) value = props[i].value
     }
@@ -2977,7 +2977,7 @@ export function make_node_from_constant (val, orig) {
 }
 
 export function has_break_or_continue (loop, parent?) {
-  var found = false
+  let found = false
   var tw = new TreeWalker(function (node: any) {
     if (found || is_ast_scope(node)) return true
     if (is_ast_loop_control(node) && tw.loopcontrol_target(node) === loop) {
@@ -2991,7 +2991,7 @@ export function has_break_or_continue (loop, parent?) {
 }
 
 export function block_aborts () {
-  for (var i = 0; i < this.body.length; i++) {
+  for (let i = 0; i < this.body.length; i++) {
     if (aborts(this.body[i])) {
       return this.body[i]
     }
@@ -3000,10 +3000,10 @@ export function block_aborts () {
 }
 
 export function inline_array_like_spread (self, compressor, elements) {
-  for (var i = 0; i < elements.length; i++) {
-    var el = elements[i]
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i]
     if (is_ast_expansion(el)) {
-      var expr = el.expression
+      const expr = el.expression
       if (is_ast_array(expr)) {
         elements.splice(i, 1, ...expr.elements)
         // Step back one, as the element at i is now new.
@@ -3021,11 +3021,11 @@ export function inline_array_like_spread (self, compressor, elements) {
 // if all elements were dropped. Note: original array may be
 // returned if nothing changed.
 export function trim (nodes: any[], compressor: Compressor, first_in_statement?) {
-  var len = nodes.length
+  const len = nodes.length
   if (!len) return null
-  var ret: any[] = []; var changed = false
-  for (var i = 0; i < len; i++) {
-    var node = nodes[i].drop_side_effect_free(compressor, first_in_statement)
+  const ret: any[] = []; let changed = false
+  for (let i = 0; i < len; i++) {
+    const node = nodes[i].drop_side_effect_free(compressor, first_in_statement)
     changed = (node !== nodes[i]) || changed
     if (node) {
       ret.push(node)
@@ -3079,7 +3079,7 @@ export function print_property_name (key: string, quote: string, output: any) {
     }
     return output.print(make_num(Number(key)))
   }
-  var print_string = RESERVED_WORDS.has(key)
+  const print_string = RESERVED_WORDS.has(key)
     ? output.option('ie8')
     : (
       output.option('ecma') < 2015
@@ -3141,7 +3141,7 @@ export function print_braced (self: any, output: any, allow_directives?: boolean
 }
 
 export function display_body (body: any[], is_toplevel: boolean, output: any, allow_directives: boolean) {
-  var last = body.length - 1
+  const last = body.length - 1
   output.in_directive = allow_directives
   body.forEach(function (stmt, i) {
     if (output.in_directive === true && !(is_ast_directive(stmt) ||
@@ -3169,7 +3169,7 @@ export function display_body (body: any[], is_toplevel: boolean, output: any, al
 }
 
 export function parenthesize_for_noin (node: any, output: any, noin: boolean) {
-  var parens = false
+  let parens = false
   // need to take some precautions here:
   //    https://github.com/mishoo/UglifyJS2/issues/60
   if (noin) {
@@ -3186,7 +3186,7 @@ export function parenthesize_for_noin (node: any, output: any, noin: boolean) {
 
 export const suppress = node => walk(node, (node: any) => {
   if (!(is_ast_symbol(node))) return
-  var d = node.definition?.()
+  const d = node.definition?.()
   if (!d) return
   if (is_ast_symbol_ref(node)) d.references.push(node)
   d.fixed = false
@@ -3216,7 +3216,7 @@ export function skip_string (node: any) {
 }
 
 export function needsParens (output: any) {
-  var p = output.parent()
+  const p = output.parent()
   // !(a = false) → true
   if (is_ast_unary(p)) { return true }
   // 1 + (a = 2) + 3 → 6, side effect setting a = 2
@@ -3232,9 +3232,9 @@ export function needsParens (output: any) {
   return undefined
 }
 export function next_mangled (scope: any, options: any) {
-  var ext = scope.enclosed
+  const ext = scope.enclosed
   out: while (true) {
-    var m = base54(++scope.cname)
+    const m = base54(++scope.cname)
     if (RESERVED_WORDS.has(m)) continue // skip over "do"
 
     // https://github.com/mishoo/UglifyJS2/issues/242 -- do not
@@ -3298,7 +3298,7 @@ export function safe_to_read (tw: TreeWalker, def) {
   if (def.single_use == 'm') return false
   if (tw.safe_ids[def.id]) {
     if (def.fixed == null) {
-      var orig = def.orig[0]
+      const orig = def.orig[0]
       if (is_ast_symbol_funarg(orig) || orig.name == 'arguments') return false
       def.fixed = make_node('AST_Undefined', orig)
     }
@@ -3322,7 +3322,7 @@ export function is_immutable (value) {
 }
 
 export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, depth) {
-  var parent = tw.parent(level)
+  const parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
     if (is_ast_class_expression(value)) return
@@ -3343,7 +3343,7 @@ export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, dept
         is_ast_sequence(parent) && node === parent.tail_node?.()) {
     mark_escaped(tw, d, scope, parent, parent, level + 1, depth)
   } else if (is_ast_object_key_val(parent) && node === parent.value) {
-    var obj = tw.parent(level + 1)
+    const obj = tw.parent(level + 1)
     mark_escaped(tw, d, scope, obj, obj, level + 2, depth)
   } else if (is_ast_prop_access(parent) && node === parent.expression) {
     value = read_property(value, parent.property)
@@ -3365,7 +3365,7 @@ export function mark_lambda (tw: TreeWalker, descend, compressor) {
     pop(tw)
     return
   }
-  var iife
+  let iife
   if (!this.name &&
         is_ast_call((iife = tw.parent())) &&
         iife.expression === this &&
@@ -3377,7 +3377,7 @@ export function mark_lambda (tw: TreeWalker, descend, compressor) {
     // So existing transformation rules can work on them.
     this.argnames.forEach((arg, i) => {
       if (!arg.definition) return
-      var d = arg.definition?.()
+      const d = arg.definition?.()
       // Avoid setting fixed when there's more than one origin for a variable value
       if (d.orig.length > 1) return
       if (d.fixed === undefined && (!this.uses_arguments || tw.has_directive('use strict'))) {
@@ -3397,13 +3397,13 @@ export function mark_lambda (tw: TreeWalker, descend, compressor) {
 }
 
 export function recursive_ref (compressor, def) {
-  var node
-  for (var i = 0; (node = compressor.parent(i)); i++) {
+  let node
+  for (let i = 0; (node = compressor.parent(i)); i++) {
     if (
       is_ast_lambda(node) ||
             is_ast_class(node)
     ) {
-      var name = node.name
+      const name = node.name
       if (name && name.definition?.() === def) break
     }
   }
@@ -3420,8 +3420,8 @@ export function to_node (value, orig) {
     })
   }
   if (value && typeof value === 'object') {
-    var props: any[] = []
-    for (var key in value) {
+    const props: any[] = []
+    for (const key in value) {
       if (HOP(value, key)) {
         props.push(make_node('AST_ObjectKeyVal', orig, {
           key: key,
@@ -3445,9 +3445,9 @@ export function basic_negation (exp) {
 }
 
 export function best (orig, alt, first_in_statement) {
-  var negated = basic_negation(orig)
+  const negated = basic_negation(orig)
   if (first_in_statement) {
-    var stat = make_node('AST_SimpleStatement', alt, {
+    const stat = make_node('AST_SimpleStatement', alt, {
       body: alt
     })
     return best_of_expression(negated, stat) === stat ? alt : negated
@@ -3465,13 +3465,13 @@ export function all_refs_local (scope) {
         result = false
         return walk_abort
       }
-      var def = node.definition?.()
+      const def = node.definition?.()
       if (
         member(def, this.enclosed) &&
                 !this.variables.has(def.name)
       ) {
         if (scope) {
-          var scope_def = scope.find_variable(node)
+          const scope_def = scope.find_variable(node)
           if (def.undeclared ? !scope_def : scope_def === def) {
             result = 'f'
             return true
@@ -3515,7 +3515,7 @@ export function is_object (node: any) {
 }
 
 export function within_array_or_object_literal (compressor) {
-  var node; var level = 0
+  let node; let level = 0
   while ((node = compressor.parent(level++))) {
     if (is_ast_statement(node)) return false
     if (is_ast_array(node) ||
@@ -3642,7 +3642,7 @@ export function find_scope (tw: TreeWalker) {
 }
 
 export function find_variable (compressor, name) {
-  var scope; var i = 0
+  let scope; let i = 0
   while ((scope = compressor.parent(i++))) {
     if (is_ast_scope(scope)) break
     if (is_ast_catch(scope) && scope.argname) {
@@ -3680,7 +3680,7 @@ export function is_reachable (self, defs) {
 
   return walk_parent(self, (node, info) => {
     if (is_ast_scope(node) && node !== self) {
-      var parent = info.parent()
+      const parent = info.parent()
       if (is_ast_call(parent) && parent.expression === node) return
       if (walk(node, find_ref)) {
         return walk_abort
@@ -3691,7 +3691,7 @@ export function is_reachable (self, defs) {
 }
 
 export function print (this: any, output: any, force_parens?: boolean) {
-  var self = this; var generator = self._codegen
+  const self = this; const generator = self._codegen
   if (is_ast_scope(self)) {
     output.active_scope = self
   } else if (!output.use_asm && is_ast_directive(self) && self.value == 'use asm') {
@@ -3773,7 +3773,7 @@ export function to_moz_block (node: any) {
 }
 
 export function to_moz_scope (type: string, node: any) {
-  var body = node.body.map(to_moz)
+  const body = node.body.map(to_moz)
   if (is_ast_simple_statement(node.body[0]) && is_ast_string((node.body[0]).body)) {
     body.unshift(to_moz(new AST_EmptyStatement(node.body[0])))
   }
@@ -3784,7 +3784,7 @@ export function to_moz_scope (type: string, node: any) {
 }
 
 export function To_Moz_FunctionExpression (M, parent) {
-  var is_generator = parent.is_generator !== undefined
+  const is_generator = parent.is_generator !== undefined
     ? parent.is_generator : M.is_generator
   return {
     type: 'FunctionExpression',
@@ -3811,7 +3811,7 @@ export const base54 = (() => {
     })
   }
   base54.consider = function (str: string, delta: number) {
-    for (var i = str.length; --i >= 0;) {
+    for (let i = str.length; --i >= 0;) {
       frequency.set(str[i], (frequency.get(str[i])) + delta) // TODO: check type
     }
   }
@@ -3824,7 +3824,7 @@ export const base54 = (() => {
   base54.reset = reset
   reset()
   function base54 (num: number) {
-    var ret = ''; var base = 54
+    let ret = ''; let base = 54
     num++
     do {
       num--
