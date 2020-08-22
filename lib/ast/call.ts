@@ -898,7 +898,10 @@ export default class AST_Call extends AST_Node {
             p1.left === p
   }
 
-  _codegen = callCodeGen
+  _codegen (self, output) {
+    return callCodeGen(self, output)
+  }
+
   static documentation = 'A function call expression'
   static propdoc = {
     expression: '[AST_Node] expression to invoke as function',

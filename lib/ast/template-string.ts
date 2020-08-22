@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { make_node, trim, first_in_statement, make_sequence, anySideEffect, return_true, pass_through, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
+import { make_node, trim, first_in_statement, make_sequence, anySideEffect, pass_through, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_TemplateString extends AST_Node {
@@ -83,7 +83,7 @@ export default class AST_TemplateString extends AST_Node {
     return this.segments[0].value
   }
 
-  is_string = return_true
+  is_string () { return true }
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this: any) {
       this.segments.forEach(function (seg) {

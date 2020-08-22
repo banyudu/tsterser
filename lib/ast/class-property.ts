@@ -34,31 +34,31 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     }
   }
 
-  drop_side_effect_free = function (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor) {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
     const value = this.static && this.value &&
-          this.value.drop_side_effect_free(compressor)
+              this.value.drop_side_effect_free(compressor)
 
     if (key && value) return make_sequence(this, [key, value])
     return key || value || null
   }
 
-  may_throw = function (compressor: Compressor) {
+  may_throw (compressor: Compressor) {
     return (
       this.computed_key() && this.key.may_throw(compressor) ||
-          this.static && this.value && this.value.may_throw(compressor)
+              this.static && this.value && this.value.may_throw(compressor)
     )
   }
 
-  has_side_effects = function (compressor: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
-          this.static && this.value && this.value.has_side_effects(compressor)
+              this.static && this.value && this.value.has_side_effects(compressor)
     )
   }
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       if (is_ast_node(this.key)) { this.key._walk(visitor) }
       if (is_ast_node(this.value)) { this.value._walk(visitor) }
@@ -74,11 +74,11 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     return !(is_ast_symbol_class_property(this.key))
   }
 
-  _size = function (): number {
+  _size (): number {
     return (
       static_size(this.static) +
-            (typeof this.key === 'string' ? this.key.length + 2 : 0) +
-            (this.value ? 1 : 0)
+                (typeof this.key === 'string' ? this.key.length + 2 : 0) +
+                (this.value ? 1 : 0)
     )
   }
 

@@ -5,7 +5,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Await extends AST_Node {
   expression: any
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
     })

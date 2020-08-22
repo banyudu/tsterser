@@ -32,15 +32,15 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return this
   }
 
-  drop_side_effect_free = function () {
+  drop_side_effect_free () {
     return this.computed_key() ? this.key : null
   }
 
-  may_throw = function (compressor: Compressor) {
+  may_throw (compressor: Compressor) {
     return this.computed_key() && this.key.may_throw(compressor)
   }
 
-  has_side_effects = function (compressor: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   }
 
@@ -48,7 +48,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return !(is_ast_symbol_method(this.key))
   }
 
-  _size = function (): number {
+  _size (): number {
     return static_size(this.static) + key_size(this.key) + lambda_modifiers(this)
   }
 
@@ -80,7 +80,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     let type
     if (self.is_generator && self.async) {
       type = 'async*'

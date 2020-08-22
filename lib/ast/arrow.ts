@@ -3,9 +3,7 @@ import {
   opt_AST_Lambda,
   basic_negation,
   init_scope_vars,
-  return_null,
   list_overhead,
-  return_false,
   lambda_modifiers,
   left_is_object,
   print_braced,
@@ -17,13 +15,13 @@ export default class AST_Arrow extends AST_Lambda {
     return opt_AST_Lambda(this, compressor)
   }
 
-  drop_side_effect_free = return_null
+  drop_side_effect_free () { return null }
   negate () {
     return basic_negation(this)
   }
 
-  _dot_throw = return_false
-  init_scope_vars = function () {
+  _dot_throw () { return false }
+  init_scope_vars () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
   }

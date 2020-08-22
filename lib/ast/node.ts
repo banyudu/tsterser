@@ -8,7 +8,6 @@ import { OPTIMIZED, has_flag, set_flag, unaryPrefix } from '../constants'
 
 import {
   string_template,
-  return_false,
   equivalent_to,
   is_strict,
   walk_parent,
@@ -126,7 +125,7 @@ export default class AST_Node extends AST {
     return equivalent_to(this, node)
   }
 
-  is_block_scope = return_false
+  is_block_scope () { return false }
   _clone (deep?: boolean) {
     if (deep) {
       const self = this.clone()
@@ -214,12 +213,14 @@ export default class AST_Node extends AST {
     return opt
   }
 
-  to_mozilla_ast = function (parent) {
+  to_mozilla_ast (parent) {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
     return set_moz_loc(this, this._to_mozilla_ast(parent))
   }
+
+  _to_mozilla_ast (parent) {}
 
   add_source_map (output: any) {}
   tail_node () { return this }

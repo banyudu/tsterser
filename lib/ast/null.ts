@@ -1,8 +1,8 @@
 import AST_Atom from './atom'
-import { return_true, To_Moz_Literal } from '../utils'
+import { To_Moz_Literal } from '../utils'
 
 export default class AST_Null extends AST_Atom {
-  _dot_throw = return_true
+  _dot_throw () { return true }
   value = null
   _size = () => 4
   _to_mozilla_ast (parent): any {

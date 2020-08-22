@@ -8,13 +8,11 @@ import {
   warn,
   make_node,
   is_undeclared_ref,
-  return_false,
   MAP,
   defaults,
   next_mangled,
   pass_through,
   list_overhead,
-  noop,
   to_moz_scope,
   display_body,
   redefined_catch_def,
@@ -118,7 +116,7 @@ export default class AST_Toplevel extends AST_Scope {
     }
   }
 
-  is_block_scope = return_false
+  is_block_scope () { return false }
   next_mangled (options: any) {
     let name
     const mangled_names = this.mangled_names
@@ -184,7 +182,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   shallow_cmp = pass_through
-  _size = function () {
+  _size () {
     return list_overhead(this.body)
   }
 
@@ -197,7 +195,7 @@ export default class AST_Toplevel extends AST_Scope {
     output.print('')
   }
 
-  add_source_map = noop
+  add_source_map () { }
   compute_char_frequency (options: any) {
     printMangleOptions = this._default_mangler_options(options)
     try {

@@ -5,7 +5,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Catch extends AST_Block {
   argname: any
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       if (this.argname) this.argname._walk(visitor)
       walk_body(this, visitor)
@@ -18,7 +18,7 @@ export default class AST_Catch extends AST_Block {
     if (this.argname) push(this.argname)
   }
 
-  _size = function (): number {
+  _size (): number {
     let size = 7 + list_overhead(this.body)
     if (this.argname) {
       size += 2
@@ -44,7 +44,7 @@ export default class AST_Catch extends AST_Block {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('catch')
     if (self.argname) {
       output.space()
@@ -56,7 +56,7 @@ export default class AST_Catch extends AST_Block {
     print_braced(self, output)
   }
 
-  add_source_map = function (output) { output.add_mapping(this.start) }
+  add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
   static propdoc = {
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'

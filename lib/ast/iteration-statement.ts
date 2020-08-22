@@ -1,5 +1,5 @@
 import AST_StatementWithBody from './statement-with-body'
-import { return_true, clone_block_scope } from '../utils'
+import { clone_block_scope } from '../utils'
 
 export default class AST_IterationStatement extends AST_StatementWithBody {
   block_scope: any
@@ -13,7 +13,7 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
     }
   }
 
-  is_block_scope = return_true
+  is_block_scope () { return true }
   clone = clone_block_scope
   static documentation = 'Internal class.  All loops inherit from it.'
   static propdoc = {

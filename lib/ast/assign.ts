@@ -8,7 +8,6 @@ import TreeWalker from '../tree-walker'
 import {
   is_reachable,
   make_node,
-  return_true,
   safe_to_assign,
   mark,
   is_modified,
@@ -121,7 +120,7 @@ export default class AST_Assign extends AST_Binary {
     return this.left.may_throw(compressor)
   }
 
-  has_side_effects = return_true
+  has_side_effects () { return true }
   is_string (compressor: Compressor) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   }

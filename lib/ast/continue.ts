@@ -2,7 +2,7 @@ import AST_LoopControl from './loop-control'
 import { to_moz } from '../utils'
 
 export default class AST_Continue extends AST_LoopControl {
-  _size = function () {
+  _size () {
     return this.label ? 9 : 8
   }
 
@@ -13,7 +13,7 @@ export default class AST_Continue extends AST_LoopControl {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     self._do_print(output, 'continue')
   }
 

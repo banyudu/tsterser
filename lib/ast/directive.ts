@@ -14,7 +14,7 @@ export default class AST_Directive extends AST_Statement {
   }
 
   shallow_cmp = mkshallow({ value: 'eq' })
-  _size = function (): number {
+  _size (): number {
     // TODO string encoding stuff
     return 2 + this.value.length
   }

@@ -1,8 +1,8 @@
 import AST_Constant from './constant'
-import { return_true, mkshallow, make_num } from '../utils'
+import { mkshallow, make_num } from '../utils'
 export default class AST_Number extends AST_Constant {
-  is_number = return_true
-  _size = function (): number {
+  is_number () { return true }
+  _size (): number {
     const { value } = this
     if (value === 0) return 1
     if (value > 0 && Math.floor(value) === value) {
@@ -15,7 +15,7 @@ export default class AST_Number extends AST_Constant {
     value: 'eq'
   })
 
-  needs_parens = function (output: any) {
+  needs_parens (output: any) {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()
@@ -26,7 +26,7 @@ export default class AST_Number extends AST_Constant {
     return undefined
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     if ((output.option('keep_numbers') || output.use_asm) && self.start && self.start.raw != null) {
       output.print(self.start.raw)
     } else {

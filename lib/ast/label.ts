@@ -1,5 +1,4 @@
 import AST_Symbol from './symbol'
-import { return_false } from '../utils'
 
 export default class AST_Label extends AST_Symbol {
   thedef: any
@@ -7,8 +6,8 @@ export default class AST_Label extends AST_Symbol {
   mangled_name: any
 
   // labels are always mangleable
-  unmangleable = return_false
-  initialize = function () {
+  unmangleable () { return false }
+  initialize () {
     this.references = []
     this.thedef = this
   }

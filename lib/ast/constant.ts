@@ -1,20 +1,20 @@
 import AST_Node from './node'
-import { return_false, return_null, return_true, To_Moz_Literal } from '../utils'
+import { To_Moz_Literal } from '../utils'
 
 export default class AST_Constant extends AST_Node {
   value: any
   literal: any
 
-  drop_side_effect_free = return_null
-  may_throw = return_false
-  has_side_effects = return_false
-  _eval = function (_arg: any) {
+  drop_side_effect_free () { return null }
+  may_throw () { return false }
+  has_side_effects () { return false }
+  _eval (_arg: any) {
     return this.getValue()
   }
 
-  is_constant_expression = return_true
-  _dot_throw = return_false
-  getValue = function () {
+  is_constant_expression () { return true }
+  _dot_throw () { return false }
+  getValue () {
     return this.value
   }
 
@@ -22,11 +22,11 @@ export default class AST_Constant extends AST_Node {
     return To_Moz_Literal(this)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print(self.getValue())
   }
 
-  add_source_map = function (output) { output.add_mapping(this.start) }
+  add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'Base class for all constants'
 
   static PROPS = AST_Node.PROPS

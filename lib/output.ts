@@ -493,7 +493,7 @@ class OutputStreamInner {
   }
 
   readonly: boolean
-  _comment_filter: any = return_false // Default case, throw all comments away
+  _comment_filter (comment: any) { return false } // Default case, throw all comments away
 
   colon () {
     this.print(':')

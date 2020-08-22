@@ -1,12 +1,12 @@
 import AST_Constant from './constant'
-import { return_true, mkshallow } from '../utils'
+import { mkshallow } from '../utils'
 
 export default class AST_String extends AST_Constant {
   value: any
   quote: any
 
-  is_string = return_true
-  _size = function (): number {
+  is_string () { return true }
+  _size (): number {
     return this.value.length + 2
   }
 
@@ -18,7 +18,7 @@ export default class AST_String extends AST_Constant {
     add(this.value)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print_string(self.getValue(), self.quote, output.in_directive)
   }
 

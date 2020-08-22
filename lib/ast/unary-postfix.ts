@@ -1,5 +1,4 @@
 import AST_Unary from './unary'
-import { return_false } from '../utils'
 
 export default class AST_UnaryPostfix extends AST_Unary {
   _prepend_comments_check (node) {
@@ -10,7 +9,7 @@ export default class AST_UnaryPostfix extends AST_Unary {
     return this.lift_sequences(compressor)
   }
 
-  _dot_throw = return_false
+  _dot_throw () { return false }
   _codegen (self, output) {
     self.expression.print(output)
     output.print(self.operator)

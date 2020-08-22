@@ -4,9 +4,7 @@ import TreeWalker from '../tree-walker'
 
 import {
   opt_AST_Lambda,
-  return_false,
   To_Moz_FunctionExpression,
-  return_this,
   all_refs_local,
   walk,
   mkshallow,
@@ -17,9 +15,8 @@ import {
   mark_lambda, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow
 } from '../utils'
 
-import {
-  walk_abort
-} from '../constants'
+import { walk_abort } from '../constants'
+import Compressor from '../compressor'
 
 export default class AST_Lambda extends AST_Scope {
   argnames: any
@@ -32,11 +29,15 @@ export default class AST_Lambda extends AST_Scope {
     return opt_AST_Lambda(this, compressor)
   }
 
-  may_throw = return_false
-  has_side_effects = return_false
-  _eval = return_this as any
+  may_throw () { return false }
+  has_side_effects () { return false }
+  _eval (compressor: Compressor) { return this }
   is_constant_expression = all_refs_local
-  reduce_vars = mark_lambda
+
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+    return mark_lambda.call(this, tw, descend, compressor)
+  }
+
   contains_this () {
     return walk(this, (node: any) => {
       if (is_ast_this(node)) return walk_abort
@@ -50,8 +51,8 @@ export default class AST_Lambda extends AST_Scope {
     })
   }
 
-  is_block_scope = return_false
-  init_scope_vars = function () {
+  is_block_scope () { return false }
+  init_scope_vars () {
     init_scope_vars.apply(this, arguments)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({

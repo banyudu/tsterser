@@ -1,5 +1,5 @@
 import AST_Call from './call'
-import { is_undeclared_ref, callCodeGen, return_this, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
+import { is_undeclared_ref, callCodeGen, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
   _optimize (compressor) {
@@ -11,7 +11,7 @@ export default class AST_New extends AST_Call {
     return this
   }
 
-  _eval = return_this
+  _eval () { return this }
   _size (): number {
     return 6 + list_overhead(this.args)
   }
@@ -33,7 +33,7 @@ export default class AST_New extends AST_Call {
     return undefined
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('new')
     output.space()
     callCodeGen(self, output)

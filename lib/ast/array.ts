@@ -6,7 +6,6 @@ import {
   literals_in_boolean_context,
   inline_array_like_spread,
   trim,
-  return_false,
   list_overhead,
   do_list,
   to_moz,
@@ -67,7 +66,7 @@ export default class AST_Array extends AST_Node {
     return this.elements.every((l) => l.is_constant_expression())
   }
 
-  _dot_throw = return_false
+  _dot_throw () { return false }
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       const elements = this.elements

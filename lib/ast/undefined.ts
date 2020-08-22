@@ -1,5 +1,5 @@
 import AST_Atom from './atom'
-import { find_variable, make_node, return_true, is_lhs, is_atomic } from '../utils'
+import { find_variable, make_node, is_lhs, is_atomic } from '../utils'
 import { set_flag, UNDEFINED } from '../constants'
 
 export default class AST_Undefined extends AST_Atom {
@@ -26,7 +26,7 @@ export default class AST_Undefined extends AST_Atom {
     })
   }
 
-  _dot_throw = return_true
+  _dot_throw () { return true }
   value = (function () {}())
   _size = () => 6 // "void 0"
   static documentation: 'The `undefined` value'

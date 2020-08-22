@@ -8,13 +8,13 @@ export default class AST_Symbol extends AST_Node {
   name: any
   scope: any
 
-  fixed_value = function () {
+  fixed_value () {
     const fixed = this.thedef.fixed
     if (!fixed || is_ast_node(fixed)) return fixed
     return fixed()
   }
 
-  mark_enclosed = function () {
+  mark_enclosed () {
     const def = this.definition()
     let s = this.scope
     while (s) {
@@ -24,25 +24,25 @@ export default class AST_Symbol extends AST_Node {
     }
   }
 
-  reference = function () {
+  reference () {
     this.definition().references.push(this)
     this.mark_enclosed()
   }
 
-  unmangleable = function (options: any) {
+  unmangleable (options: any) {
     const def = this.definition()
     return !def || def.unmangleable(options)
   }
 
-  unreferenced = function () {
+  unreferenced () {
     return !this.definition().references.length && !this.scope.pinned()
   }
 
-  definition = function () {
+  definition () {
     return this.thedef
   }
 
-  global = function () {
+  global () {
     return this.thedef.global
   }
 
@@ -64,16 +64,16 @@ export default class AST_Symbol extends AST_Node {
     }
   }
 
-  _do_print = function (output: any) {
+  _do_print (output: any) {
     const def = this.definition()
     output.print_name(def ? def.mangled_name || def.name : this.name)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     self._do_print(output)
   }
 
-  add_source_map = function (output) { output.add_mapping(this.start) }
+  add_source_map (output) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[string] name of this symbol',
     scope: '[AST_Scope/S] the current scope (not necessarily the definition scope)',

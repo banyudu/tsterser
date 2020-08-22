@@ -10,11 +10,11 @@ export default class AST_Const extends AST_Definitions {
     }
   }
 
-  _size = function (): number {
+  _size (): number {
     return def_size(6, this)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     self._do_print(output, 'const')
   }
 

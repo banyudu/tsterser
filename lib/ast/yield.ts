@@ -14,7 +14,7 @@ export default class AST_Yield extends AST_Node {
     return this
   }
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, this.expression && function () {
       this.expression._walk(visitor)
     })
@@ -41,7 +41,7 @@ export default class AST_Yield extends AST_Node {
     }
   }
 
-  needs_parens = function (output: any) {
+  needs_parens (output: any) {
     const p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
@@ -59,7 +59,7 @@ export default class AST_Yield extends AST_Node {
     return undefined
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     const star = self.is_star ? '*' : ''
     output.print('yield' + star)
     if (self.expression) {

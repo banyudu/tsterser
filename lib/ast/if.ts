@@ -183,7 +183,7 @@ export default class AST_If extends AST_StatementWithBody {
           this.alternative && this.alternative.has_side_effects(compressor)
   }
 
-  aborts = function () {
+  aborts () {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
   }
 

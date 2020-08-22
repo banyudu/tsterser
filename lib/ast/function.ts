@@ -3,12 +3,10 @@ import Compressor from '../compressor'
 import {
   opt_AST_Lambda,
   walk,
-  return_false,
   basic_negation,
   list_overhead,
   lambda_modifiers,
   first_in_statement,
-  return_null,
   next_mangled,
   To_Moz_FunctionExpression,
   make_node, is_ast_this, is_ast_symbol_funarg, is_ast_call
@@ -34,8 +32,8 @@ export default class AST_Function extends AST_Lambda {
     return self
   }
 
-  drop_side_effect_free = return_null
-  _eval = function (compressor: Compressor) {
+  drop_side_effect_free () { return null }
+  _eval (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       const fn: any = function () {}
       fn.node = this
@@ -51,7 +49,7 @@ export default class AST_Function extends AST_Lambda {
     return basic_negation(this)
   }
 
-  _dot_throw = return_false
+  _dot_throw () { return false }
   next_mangled (options: any, def: any) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;

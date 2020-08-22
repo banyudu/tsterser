@@ -42,18 +42,18 @@ export default class AST_Try extends AST_Block {
     return this
   }
 
-  may_throw = function (compressor: Compressor) {
+  may_throw (compressor: Compressor) {
     return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
-          this.bfinally && this.bfinally.may_throw(compressor)
+              this.bfinally && this.bfinally.may_throw(compressor)
   }
 
-  has_side_effects = function (compressor: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.body, compressor) ||
-          this.bcatch && this.bcatch.has_side_effects(compressor) ||
-          this.bfinally && this.bfinally.has_side_effects(compressor)
+              this.bcatch && this.bcatch.has_side_effects(compressor) ||
+              this.bfinally && this.bfinally.has_side_effects(compressor)
   }
 
-  reduce_vars = function (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     push(tw)
     walk_body(this, tw)
@@ -67,7 +67,7 @@ export default class AST_Try extends AST_Block {
     return true
   }
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       walk_body(this, visitor)
       if (this.bcatch) this.bcatch._walk(visitor)
@@ -82,7 +82,7 @@ export default class AST_Try extends AST_Block {
     while (i--) push(this.body[i])
   }
 
-  _size = function (): number {
+  _size (): number {
     return 3 + list_overhead(this.body)
   }
 
@@ -107,7 +107,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('try')
     output.space()
     print_braced(self, output)
@@ -121,7 +121,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  add_source_map = function (output) { output.add_mapping(this.start) }
+  add_source_map (output) { output.add_mapping(this.start) }
   static documentation = 'A `try` statement'
   static propdoc = {
     bcatch: '[AST_Catch?] the catch block, or null if not present',

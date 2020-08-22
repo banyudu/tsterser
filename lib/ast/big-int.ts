@@ -1,9 +1,9 @@
 import AST_Constant from './constant'
-import { return_this, mkshallow } from '../utils'
+import { mkshallow } from '../utils'
 
 export default class AST_BigInt extends AST_Constant {
-  _eval = return_this
-  _size = function (): number {
+  _eval () { return this }
+  _size (): number {
     return this.value.length
   }
 
@@ -14,11 +14,11 @@ export default class AST_BigInt extends AST_Constant {
     value: this.value
   } }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print(self.getValue() + 'n')
   }
 
-  needs_parens = function (output: any) {
+  needs_parens (output: any) {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()

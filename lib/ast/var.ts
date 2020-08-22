@@ -2,11 +2,11 @@ import AST_Definitions from './definitions'
 import { def_size } from '../utils'
 
 export default class AST_Var extends AST_Definitions {
-  _size = function (): number {
+  _size (): number {
     return def_size(4, this)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     self._do_print(output, 'var')
   }
 

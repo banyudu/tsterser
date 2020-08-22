@@ -18,7 +18,7 @@ export default class AST_NewTarget extends AST_Node {
     }
   }
 
-  _codegen = function (_self, output) {
+  _codegen (_self, output) {
     output.print('new.target')
   }
 

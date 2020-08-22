@@ -10,7 +10,7 @@ export default class AST_RegExp extends AST_Constant {
     return literals_in_boolean_context(this, compressor)
   }
 
-  _eval = function (compressor: any) {
+  _eval (compressor: any) {
     let evaluated = compressor.evaluated_regexps.get(this)
     if (evaluated === undefined) {
       try {
@@ -23,14 +23,14 @@ export default class AST_RegExp extends AST_Constant {
     return evaluated || this
   }
 
-  _size = function (): number {
+  _size (): number {
     return this.value.toString().length
   }
 
-  shallow_cmp = function (other) {
+  shallow_cmp (other) {
     return (
       this.value.flags === other.value.flags &&
-            this.value.source === other.value.source
+                this.value.source === other.value.source
     )
   }
 
@@ -45,16 +45,16 @@ export default class AST_RegExp extends AST_Constant {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     let { source, flags } = self.getValue()
     source = regexp_source_fix(source)
     flags = flags ? sort_regexp_flags(flags) : ''
     source = source.replace(r_slash_script, slash_script_replace)
-        output.print?.(output.to_utf8(`/${source}/${flags}`))
-        const parent = output.parent()
-        if (parent?._codegen_should_output_space?.(self)) {
-          output.print(' ')
-        }
+            output.print?.(output.to_utf8(`/${source}/${flags}`))
+            const parent = output.parent()
+            if (parent?._codegen_should_output_space?.(self)) {
+              output.print(' ')
+            }
   }
 
   static documentation = 'A regexp literal'

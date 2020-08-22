@@ -92,11 +92,11 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   shallow_cmp = mkshallow({ key: 'eq' })
-  _size = function (): number {
+  _size (): number {
     return key_size(this.key) + 1
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     function get_name (self: any) {
       const def = self.definition()
       return def ? def.mangled_name || def.name : self.name
@@ -104,17 +104,17 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
 
     const allowShortHand = output.option('shorthand')
     if (allowShortHand &&
-            is_ast_symbol(self.value) &&
-            is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
-            get_name(self.value) === self.key &&
-            !RESERVED_WORDS.has(self.key)
+                is_ast_symbol(self.value) &&
+                is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
+                get_name(self.value) === self.key &&
+                !RESERVED_WORDS.has(self.key)
     ) {
       print_property_name(self.key, self.quote, output)
     } else if (allowShortHand &&
-            is_ast_default_assign(self.value) &&
-            is_ast_symbol(self.value.left) &&
-            is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
-            get_name(self.value.left) === self.key
+                is_ast_default_assign(self.value) &&
+                is_ast_symbol(self.value.left) &&
+                is_identifier_string(self.key, (output.option('ecma') as unknown as number) >= 2015) &&
+                get_name(self.value.left) === self.key
     ) {
       print_property_name(self.key, self.quote, output)
       output.space()

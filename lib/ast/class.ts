@@ -4,11 +4,9 @@ import {
   make_sequence,
   anyMayThrow,
   anySideEffect,
-  return_this,
   all_refs_local,
   push,
   pop,
-  return_false,
   do_list,
   mkshallow,
   to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function
@@ -27,7 +25,7 @@ export default class AST_Class extends AST_Scope {
     return this
   }
 
-  drop_side_effect_free = function (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor) {
     const with_effects: any[] = []
     const trimmed_extends = this.extends && this.extends.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
@@ -39,20 +37,20 @@ export default class AST_Class extends AST_Scope {
     return make_sequence(this, with_effects)
   }
 
-  may_throw = function (compressor: Compressor) {
+  may_throw (compressor: Compressor) {
     if (this.extends && this.extends.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects = function (compressor) {
+  has_side_effects (compressor) {
     if (this.extends && this.extends.has_side_effects(compressor)) {
       return true
     }
     return anySideEffect(this.properties, compressor)
   }
 
-  _eval = return_this
-  is_constant_expression = function (scope) {
+  _eval () { return this }
+  is_constant_expression (scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
       return false
     }
@@ -69,7 +67,7 @@ export default class AST_Class extends AST_Scope {
     return all_refs_local.call(this, scope)
   }
 
-  reduce_vars = function (tw, descend) {
+  reduce_vars (tw, descend) {
     clear_flag(this, INLINED)
     push(tw)
     descend()
@@ -77,8 +75,8 @@ export default class AST_Class extends AST_Scope {
     return true
   }
 
-  is_block_scope = return_false
-  _walk = function (visitor: any) {
+  is_block_scope () { return false }
+  _walk (visitor: any) {
     return visitor._visit(this, function (this: any) {
       if (this.name) {
         this.name._walk(visitor)
@@ -97,10 +95,10 @@ export default class AST_Class extends AST_Scope {
     if (this.name) push(this.name)
   }
 
-  _size = function (): number {
+  _size (): number {
     return (
       (this.name ? 8 : 7) +
-            (this.extends ? 8 : 0)
+                (this.extends ? 8 : 0)
     )
   }
 
@@ -128,7 +126,7 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('class')
     output.space()
     if (self.name) {
@@ -138,9 +136,9 @@ export default class AST_Class extends AST_Scope {
     if (self.extends) {
       const parens = (
         !(is_ast_symbol_ref(self.extends)) &&
-                !(is_ast_prop_access(self.extends)) &&
-                !(is_ast_class_expression(self.extends)) &&
-                !(is_ast_function(self.extends))
+                    !(is_ast_prop_access(self.extends)) &&
+                    !(is_ast_class_expression(self.extends)) &&
+                    !(is_ast_function(self.extends))
       )
       output.print('extends')
       if (parens) {
@@ -169,7 +167,7 @@ export default class AST_Class extends AST_Scope {
     } else output.print('{}')
   }
 
-  add_source_map = function (output) { output.add_mapping(this.start) }
+  add_source_map (output) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
     extends: '[AST_Node]? optional parent class',

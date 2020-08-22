@@ -1,6 +1,6 @@
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
-import { push, pop, mkshallow, to_moz, make_node, noop, is_ast_break, is_ast_loop_control } from '../utils'
+import { push, pop, mkshallow, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
@@ -84,7 +84,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     (self.body).print(output)
   }
 
-  add_source_map = noop
+  add_source_map () { }
   static documentation: 'Statement with a label'
   static propdoc = {
     label: '[AST_Label] a label definition'

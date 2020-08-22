@@ -6,17 +6,17 @@ import TreeWalker from '../tree-walker'
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
 
 export default class AST_Case extends AST_SwitchBranch {
-  may_throw = function (compressor: Compressor) {
+  may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
-          anyMayThrow(this.body, compressor)
+              anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects = function (compressor: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
-          anySideEffect(this.body, compressor)
+              anySideEffect(this.body, compressor)
   }
 
-  reduce_vars = function (tw: TreeWalker) {
+  reduce_vars (tw: TreeWalker) {
     push(tw)
     this.expression.walk(tw)
     pop(tw)
@@ -26,7 +26,7 @@ export default class AST_Case extends AST_SwitchBranch {
     return true
   }
 
-  _walk = function (visitor: any) {
+  _walk (visitor: any) {
     return visitor._visit(this, function () {
       this.expression._walk(visitor)
       walk_body(this, visitor)
@@ -39,7 +39,7 @@ export default class AST_Case extends AST_SwitchBranch {
     push(this.expression)
   }
 
-  _size = function (): number {
+  _size (): number {
     return 5 + list_overhead(this.body)
   }
 
@@ -48,7 +48,7 @@ export default class AST_Case extends AST_SwitchBranch {
     self.body = do_list(self.body, tw)
   }
 
-  _codegen = function (self, output) {
+  _codegen (self, output) {
     output.print('case')
     output.space()
     self.expression.print(output)

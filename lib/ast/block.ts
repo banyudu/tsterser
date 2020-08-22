@@ -6,7 +6,6 @@ import {
   anySideEffect,
   anyMayThrow,
   reset_block_variables,
-  return_true,
   walk_body,
   clone_block_scope,
   list_overhead,
@@ -35,7 +34,7 @@ export default class AST_Block extends AST_Statement {
     reset_block_variables(compressor, this)
   }
 
-  is_block_scope = return_true
+  is_block_scope () { return true }
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function () {
       walk_body(this, visitor)
@@ -47,7 +46,10 @@ export default class AST_Block extends AST_Statement {
     while (i--) push(this.body[i])
   }
 
-  clone = clone_block_scope
+  clone (deep) {
+    return clone_block_scope.call(this, deep)
+  }
+
   _size () {
     return 2 + list_overhead(this.body)
   }

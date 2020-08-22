@@ -48,6 +48,7 @@ export default class AST_Scope extends AST_Block {
   uses_eval: any
   uses_with: any
   cname: any
+  _block_scope: boolean
 
   process_expression (insert, compressor?) {
     const self = this
@@ -701,7 +702,10 @@ export default class AST_Scope extends AST_Block {
     return self.transform(hoister)
   }
 
-  init_scope_vars = init_scope_vars
+  init_scope_vars (parent) {
+    return init_scope_vars.call(this, parent)
+  }
+
   var_names = function varNames (this: any): Set<string> | null {
     let var_names = this._var_name_cache
     if (!var_names) {
@@ -712,10 +716,10 @@ export default class AST_Scope extends AST_Block {
         this._added_var_names.forEach(name => { var_names?.add(name) })
       }
       this.enclosed.forEach(function (def: any) {
-              var_names?.add(def.name)
+                      var_names?.add(def.name)
       })
       this.variables.forEach(function (_, name: string) {
-              var_names?.add(name)
+                      var_names?.add(name)
       })
     }
     return var_names
@@ -770,7 +774,7 @@ export default class AST_Scope extends AST_Block {
     }
   }
 
-  is_block_scope = function () {
+  is_block_scope () {
     return this._block_scope || false
   }
 
@@ -814,7 +818,7 @@ export default class AST_Scope extends AST_Block {
     return self
   }
 
-  clone = function (deep: boolean) {
+  clone (deep: boolean) {
     const node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
