@@ -21,8 +21,8 @@ export default class AST_Arrow extends AST_Lambda {
   }
 
   _dot_throw () { return false }
-  init_scope_vars () {
-    init_scope_vars.apply(this, arguments)
+  init_scope_vars (...args) {
+    init_scope_vars.apply(this, args)
     this.uses_arguments = false
   }
 
