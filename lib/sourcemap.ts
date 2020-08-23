@@ -45,9 +45,10 @@
 
 import MOZ_SourceMap from 'source-map'
 import { defaults } from './utils'
+import { SourceMapOptions } from './types'
 
 // a small wrapper around fitzgen's source-map library
-function SourceMap (options) {
+export default function SourceMap (options: SourceMapOptions) {
   options = defaults(options, {
     file: null,
     root: null,
@@ -71,7 +72,7 @@ function SourceMap (options) {
     })
   }
 
-  function add (source, gen_line, gen_col, orig_line, orig_col, name) {
+  function add (source, gen_line: number, gen_col: number, orig_line: number, orig_col: number, name: string) {
     if (orig_map) {
       const info = orig_map.originalPositionFor({
         line: orig_line,
@@ -97,8 +98,4 @@ function SourceMap (options) {
     get: function () { return generator },
     toString: function () { return JSON.stringify(generator.toJSON()) }
   }
-}
-
-export {
-  SourceMap
 }

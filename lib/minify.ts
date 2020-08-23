@@ -5,7 +5,7 @@ import AST_Node from './ast/node'
 import { parse } from './parse'
 import { OutputStream } from './output'
 import Compressor from './compressor'
-import { SourceMap } from './sourcemap'
+import SourceMap from './sourcemap'
 import {
   mangle_properties,
   reserve_quoted_keys
