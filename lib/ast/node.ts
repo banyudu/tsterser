@@ -235,7 +235,7 @@ export default class AST_Node extends AST {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }
 
-  static from_mozilla_ast (node: AST_Node) {
+  public static from_mozilla_ast (node: AST_Node) {
     const save_stack = FROM_MOZ_STACK
     setFromMozStack([])
     const ast = from_moz(node)
