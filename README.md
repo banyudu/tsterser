@@ -27,7 +27,7 @@ Terser/Uglifyjs 是前端领域广泛使用的代码压缩工具，但其在代�
 - [x] 重构项目代码结构，从原来的一类方法写在一个文件中，改为一个类的所有方法在一个文件中
 - [x] 将AST相关类定义统一，梳理类定义，删除类工厂
 - [x] 将AST相关的类拆分成小文件，每个文件一个类，并解决循环依赖问题
-- [ ] 删除 instanceOf / isAst 操作，改为实例方法实现
+- [x] 删除 instanceOf / isAst 操作，改为实例方法实现
 - [ ] 添加类型信息
 - [ ] 消除any类型，启用noImplicitAny等校验
 
@@ -36,3 +36,5 @@ Terser/Uglifyjs 是前端领域广泛使用的代码压缩工具，但其在代�
 
 ## 贡献指南
 [贡献指南](./CONTRIBUTING.md)
+
+PS. 关于在此项目上中的复杂批量操作，应使用脚本批量修改，在过程中沉淀相关工具方法。参见： https://github.com/rusterser/transformer/tree/master/src/scripts
