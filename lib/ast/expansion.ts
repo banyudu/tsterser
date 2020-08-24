@@ -5,10 +5,10 @@ import { pass_through, to_moz_in_destructuring, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Expansion extends AST_Node {
-  expression: any
+  expression: AST_Node
 
-  to_fun_args (to_fun_args, croak): any {
-    this.expression = to_fun_args(this.expression)
+  to_fun_args (croak: Function): any {
+    this.expression = this.expression.to_fun_args(croak)
     return this
   }
 

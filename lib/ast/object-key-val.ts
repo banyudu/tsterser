@@ -8,10 +8,10 @@ import { is_identifier_string, RESERVED_WORDS } from '../parse'
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   quote: any
   key: any
-  value: any
+  value: AST_Node
 
-  to_fun_args (to_fun_args, croak): any {
-    this.value = to_fun_args(this.value)
+  to_fun_args (croak: Function): any {
+    this.value = this.value.to_fun_args(croak)
     return this
   }
 
@@ -71,10 +71,8 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
           (!(unsafe_methods instanceof RegExp) || unsafe_methods.test(this.key + ''))) {
       const key = this.key
       const value = this.value
-      const is_arrow_with_block = is_ast_arrow(value) &&
-              Array.isArray(value.body) &&
-              !value.contains_this()
-      if ((is_arrow_with_block || is_ast_function(value)) && !value.name) {
+      if (((is_ast_arrow(value) && Array.isArray(value.body) && !value.contains_this()) ||
+        is_ast_function(value)) && !value.name) {
         return make_node('AST_ConciseMethod', this, {
           async: value.async,
           is_generator: value.is_generator,

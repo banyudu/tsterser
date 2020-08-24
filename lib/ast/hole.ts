@@ -1,6 +1,6 @@
 import AST_Atom from './atom'
 export default class AST_Hole extends AST_Atom {
-  to_fun_args (to_fun_args, croak): any {
+  to_fun_args (croak: Function): any {
     return this
   }
 

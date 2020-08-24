@@ -60,7 +60,7 @@ export default class AST_PropAccess extends AST_Node {
     const arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     const expr = this.expression
     if (is_ast_object(expr)) {
-      const props = expr.properties
+      const props: any = expr.properties
       for (let i = props.length; --i >= 0;) {
         const prop = props[i]
         if ('' + (is_ast_concise_method(prop) ? prop.key.name : prop.key) == key) {

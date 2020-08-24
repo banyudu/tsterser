@@ -2132,7 +2132,7 @@ function parse ($TEXT: string, opt?: any) {
   }
 
   function to_fun_args (ex: AST_Node) {
-    return ex.to_fun_args(to_fun_args, croak)
+    return ex.to_fun_args(croak)
   }
 
   var expr_atom = function (allow_calls, allow_arrows?) {

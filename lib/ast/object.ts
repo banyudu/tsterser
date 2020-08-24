@@ -20,14 +20,14 @@ import {
 } from '../utils'
 
 export default class AST_Object extends AST_Node {
-  properties: any
+  properties: AST_Node[]
 
-  to_fun_args (to_fun_args, croak): any {
+  to_fun_args (croak: Function): any {
     return new AST_Destructuring({
       start: this.start,
       end: this.end,
       is_array: false,
-      names: this.properties.map(to_fun_args)
+      names: this.properties.map(item => item.to_fun_args(croak))
     })
   }
 
@@ -42,7 +42,7 @@ export default class AST_Object extends AST_Node {
       if (is_ast_expansion(prop)) {
         const expr = prop.expression
         if (is_ast_object(expr)) {
-          props.splice.apply(props, [i, 1].concat(prop.expression.properties))
+          props.splice.apply(props, [i, 1].concat(expr.properties as any) as any)
           // Step back one, as the property at i is now new.
           i--
         } else if (is_ast_constant(expr) &&
@@ -74,7 +74,7 @@ export default class AST_Object extends AST_Node {
     if (compressor.option('unsafe')) {
       const val = {}
       for (let i = 0, len = this.properties.length; i < len; i++) {
-        const prop = this.properties[i]
+        const prop: any = this.properties[i]
         if (is_ast_expansion(prop)) return this
         let key = prop.key
         if (is_ast_symbol(key)) {

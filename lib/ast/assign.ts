@@ -29,7 +29,7 @@ import {
 import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from '../constants'
 
 export default class AST_Assign extends AST_Binary {
-  to_fun_args (to_fun_args, croak): any {
+  to_fun_args (croak: Function): any {
     const insert_default = (ex) => {
       if (this.right) {
         return new AST_DefaultAssign({
@@ -42,7 +42,7 @@ export default class AST_Assign extends AST_Binary {
       }
       return ex
     }
-    return insert_default(to_fun_args(this.left))
+    return insert_default(this.left.to_fun_args(croak))
   }
 
   _optimize (compressor: Compressor) {

@@ -19,12 +19,12 @@ import {
 export default class AST_Array extends AST_Node {
   elements: AST_Node[]
 
-  to_fun_args (to_fun_args, croak): any {
+  to_fun_args (croak: Function): any {
     return new AST_Destructuring({
       start: this.start,
       end: this.end,
       is_array: true,
-      names: this.elements.map(to_fun_args)
+      names: this.elements.map(item => item.to_fun_args(croak))
     })
   }
 

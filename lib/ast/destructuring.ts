@@ -7,10 +7,10 @@ import { mkshallow, do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_as
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
   is_array: any
-  names: any[]
+  names: AST_Node[]
 
-  to_fun_args (to_fun_args, croak): any {
-    this.names = this.names.map(to_fun_args)
+  to_fun_args (croak: Function): any {
+    this.names = this.names.map(item => item.to_fun_args(croak))
     return this
   }
 

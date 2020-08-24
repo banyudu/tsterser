@@ -33,7 +33,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
 
-  to_fun_args (to_fun_args, croak): any {
+  to_fun_args (croak: Function): any {
     return new AST_SymbolFunarg({
       name: this.name,
       start: this.start,

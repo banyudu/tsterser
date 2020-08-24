@@ -659,12 +659,12 @@ export default class AST_Scope extends AST_Block {
                   !top_retain(def) &&
                   (value = sym.fixed_value()) === node.value &&
                   is_ast_object(value) &&
-                  value.properties.every(prop => typeof prop.key === 'string')
+                  value.properties.every((prop: any) => typeof prop.key === 'string')
         ) {
           descend(node, this)
           const defs = new Map()
           const assignments: any[] = []
-          value.properties.forEach(function (prop) {
+          value.properties.forEach(function (prop: any) {
             assignments.push(make_node('AST_VarDef', node, {
               name: make_sym(sym, prop.key, defs),
               value: prop.value

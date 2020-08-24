@@ -2920,8 +2920,11 @@ export function read_property (obj, key) {
     const props = obj.properties
     for (let i = props.length; --i >= 0;) {
       const prop = props[i]
-      if (!(is_ast_object_key_val(prop))) return
-      if (!value && props[i].key === key) value = props[i].value
+      if (is_ast_object_key_val(prop)) {
+        if (!value && prop.key === key) value = prop.value
+      } else {
+        return
+      }
     }
   }
   return is_ast_symbol_ref(value) && value.fixed_value() || value
