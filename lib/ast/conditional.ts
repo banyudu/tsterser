@@ -402,7 +402,7 @@ export default class AST_Conditional extends AST_Node {
     self.alternative = self.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'ConditionalExpression',
       test: to_moz(this.condition),

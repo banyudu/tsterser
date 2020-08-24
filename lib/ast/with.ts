@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import { pass_through, to_moz } from '../utils'
@@ -24,7 +25,7 @@ export default class AST_With extends AST_StatementWithBody {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'WithStatement',
       object: to_moz(this.expression),

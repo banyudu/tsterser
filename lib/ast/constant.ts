@@ -19,7 +19,7 @@ export default class AST_Constant extends AST_Node {
     return this.value
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return To_Moz_Literal(this)
   }
 

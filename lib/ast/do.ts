@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_DWLoop from './dw-loop'
 import Compressor from '../compressor'
@@ -70,7 +71,7 @@ export default class AST_Do extends AST_DWLoop {
     self.condition = self.condition.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'DoWhileStatement',
       test: to_moz(this.condition),

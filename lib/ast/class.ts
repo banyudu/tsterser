@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import Compressor from '../compressor'
@@ -114,7 +115,7 @@ export default class AST_Class extends AST_Scope {
     extends: 'exist'
   })
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,

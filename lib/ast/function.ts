@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Lambda from './lambda'
 import Compressor from '../compressor'
@@ -72,7 +73,7 @@ export default class AST_Function extends AST_Lambda {
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return To_Moz_FunctionExpression(this, parent)
   }
 

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
@@ -59,7 +60,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     async: 'eq'
   })
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     if (is_ast_object(parent)) {
       return {
         type: 'Property',

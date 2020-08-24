@@ -36,7 +36,7 @@ export default class AST_Expansion extends AST_Node {
     self.expression = self.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: to_moz_in_destructuring() ? 'RestElement' : 'SpreadElement',
       argument: to_moz(this.expression)

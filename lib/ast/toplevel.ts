@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import Compressor from '../compressor'
@@ -187,7 +188,7 @@ export default class AST_Toplevel extends AST_Scope {
     return list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return to_moz_scope('Program', this)
   }
 

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
@@ -59,7 +60,7 @@ export default class AST_Block extends AST_Statement {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)

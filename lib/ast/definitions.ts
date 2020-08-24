@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
@@ -90,7 +91,7 @@ export default class AST_Definitions extends AST_Statement {
     self.definitions = do_list(self.definitions, tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'VariableDeclaration',
       kind: 'var',

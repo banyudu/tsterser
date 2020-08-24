@@ -30,7 +30,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     self.template_string = self.template_string.transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'TaggedTemplateExpression',
       tag: to_moz(this.prefix),

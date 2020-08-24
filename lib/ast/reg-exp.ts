@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Constant from './constant'
@@ -36,7 +37,7 @@ export default class AST_RegExp extends AST_Constant {
     )
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     const pattern = this.value.source
     const flags = this.value.flags
     return {

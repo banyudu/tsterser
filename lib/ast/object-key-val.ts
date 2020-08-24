@@ -15,7 +15,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return insert_default(this)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key

@@ -213,14 +213,14 @@ export default class AST_Node extends AST {
     return opt
   }
 
-  to_mozilla_ast (parent) {
+  to_mozilla_ast (parent: AST_Node) {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
     return set_moz_loc(this, this._to_mozilla_ast(parent))
   }
 
-  _to_mozilla_ast (parent) {}
+  _to_mozilla_ast (parent: AST_Node) {}
 
   add_source_map (output: OutputStream) {}
   tail_node () { return this }

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Exit from './exit'
 import Compressor from '../compressor'
@@ -19,7 +20,7 @@ export default class AST_Return extends AST_Exit {
     return this.value ? 7 : 6
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'ReturnStatement',
       argument: to_moz(this.value)

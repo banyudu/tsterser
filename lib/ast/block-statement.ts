@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Block from './block'
@@ -21,7 +22,7 @@ export default class AST_BlockStatement extends AST_Block {
   }
 
   aborts = block_aborts
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)

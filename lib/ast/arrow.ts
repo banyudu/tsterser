@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Lambda from './lambda'
@@ -43,7 +44,7 @@ export default class AST_Arrow extends AST_Lambda {
     return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size())
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     const body = {
       type: 'BlockStatement',
       body: this.body.map(to_moz)

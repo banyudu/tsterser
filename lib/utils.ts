@@ -2739,7 +2739,7 @@ export function clone_block_scope (this, deep: boolean) {
   return clone
 }
 
-export function is_lhs (node, parent) {
+export function is_lhs (node, parent: AST_Node) {
   if (is_ast_unary(parent) && unary_side_effects.has(parent.operator)) return parent.expression
   if (is_ast_assign(parent) && parent.left === node) return node
 }
@@ -2755,7 +2755,7 @@ export function do_list (list: any[], tw: any) {
 // we shouldn't compress (1,func)(something) to
 // func(something) because that changes the meaning of
 // the func (becomes lexical instead of global).
-export function maintain_this_binding (parent, orig, val) {
+export function maintain_this_binding (parent: AST_Node, orig, val) {
   if (is_ast_unary_prefix(parent) && parent.operator == 'delete' ||
         is_ast_call(parent) && parent.expression === orig &&
             (is_ast_prop_access(val) || is_ast_symbol_ref(val) && val.name == 'eval')) {
@@ -2979,7 +2979,7 @@ export function make_node_from_constant (val, orig) {
   }
 }
 
-export function has_break_or_continue (loop, parent?) {
+export function has_break_or_continue (loop, parent?: AST_Node) {
   let found = false
   var tw = new TreeWalker(function (node: any) {
     if (found || is_ast_scope(node)) return true
@@ -3786,7 +3786,7 @@ export function to_moz_scope (type: string, node: any) {
   }
 }
 
-export function To_Moz_FunctionExpression (M, parent) {
+export function To_Moz_FunctionExpression (M, parent: any) {
   const is_generator = parent.is_generator !== undefined
     ? parent.is_generator : M.is_generator
   return {

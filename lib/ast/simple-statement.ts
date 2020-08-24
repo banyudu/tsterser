@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
@@ -47,7 +48,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(this.body) // TODO: check type

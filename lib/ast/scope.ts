@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import AST_Block from './block'
 import Compressor from '../compressor'
 import TreeTransformer from '../tree-transformer'
@@ -702,7 +703,7 @@ export default class AST_Scope extends AST_Block {
     return self.transform(hoister)
   }
 
-  init_scope_vars (parent) {
+  init_scope_vars (parent: AST_Node) {
     return init_scope_vars.call(this, parent)
   }
 

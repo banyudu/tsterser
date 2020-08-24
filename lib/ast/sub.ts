@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
@@ -11,7 +12,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this.expression === node
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),

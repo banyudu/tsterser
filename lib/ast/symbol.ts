@@ -57,7 +57,7 @@ export default class AST_Symbol extends AST_Node {
     name: 'eq'
   })
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     const def = this.definition()
     return {
       type: 'Identifier',

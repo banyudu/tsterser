@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Atom from './atom'
 import { make_node, To_Moz_Literal, is_ast_binary } from '../utils'
@@ -42,7 +43,7 @@ export default class AST_Boolean extends AST_Atom {
     return this
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return To_Moz_Literal(this)
   }
 

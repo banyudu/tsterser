@@ -768,7 +768,7 @@ export default class AST_Binary extends AST_Node {
     self.right = self.right.transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',

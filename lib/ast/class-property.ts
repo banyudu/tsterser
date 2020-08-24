@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
@@ -7,7 +8,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   quote: any
   static: any
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key

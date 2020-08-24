@@ -65,7 +65,7 @@ export default class AST_VarDef extends AST_Node {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'VariableDeclarator',
       id: to_moz(this.name),

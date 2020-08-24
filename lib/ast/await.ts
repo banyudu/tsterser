@@ -22,7 +22,7 @@ export default class AST_Await extends AST_Node {
     self.expression = self.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'AwaitExpression',
       argument: to_moz(this.expression)

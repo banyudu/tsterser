@@ -167,7 +167,7 @@ export default class AST_Switch extends AST_Block {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'SwitchStatement',
       discriminant: to_moz(this.expression),

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
@@ -110,7 +111,7 @@ export default class AST_For extends AST_IterationStatement {
     self.body = (self.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'ForStatement',
       init: to_moz(this.init),

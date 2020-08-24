@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
@@ -21,7 +22,7 @@ export default class AST_Directive extends AST_Statement {
     return 2 + this.value.length
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'ExpressionStatement',
       expression: {

@@ -91,7 +91,7 @@ export default class AST_PropAccess extends AST_Node {
   }
 
   shallow_cmp = pass_through as any
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),

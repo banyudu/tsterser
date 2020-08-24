@@ -62,7 +62,7 @@ export default class AST_ObjectProperty extends AST_Node {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     let key = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key

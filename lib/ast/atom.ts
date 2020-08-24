@@ -1,9 +1,10 @@
+import AST_Node from './node'
 import AST_Constant from './constant'
 import { pass_through } from '../utils'
 
 export default class AST_Atom extends AST_Constant {
   shallow_cmp = pass_through
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'Identifier',
       name: String(this.value)

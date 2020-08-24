@@ -1,10 +1,11 @@
+import AST_Node from './node'
 import AST_ForIn from './for-in'
 import { pass_through, to_moz } from '../utils'
 
 export default class AST_ForOf extends AST_ForIn {
   await: any
   shallow_cmp = pass_through
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'ForOfStatement',
       left: to_moz(this.init),

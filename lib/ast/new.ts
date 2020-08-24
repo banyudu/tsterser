@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Call from './call'
@@ -18,7 +19,7 @@ export default class AST_New extends AST_Call {
     return 6 + list_overhead(this.args)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'NewExpression',
       callee: to_moz(this.expression),

@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block from './block'
 import { walk_body, list_overhead, mkshallow, do_list, to_moz, to_moz_block, print_braced } from '../utils'
@@ -36,7 +37,7 @@ export default class AST_Catch extends AST_Block {
     self.body = do_list(self.body, tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'CatchClause',
       param: to_moz(this.argname),

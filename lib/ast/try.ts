@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block from './block'
 import Compressor from '../compressor'
@@ -98,7 +99,7 @@ export default class AST_Try extends AST_Block {
     if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
   }
 
-  _to_mozilla_ast (parent) {
+  _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'TryStatement',
       block: to_moz_block(this),

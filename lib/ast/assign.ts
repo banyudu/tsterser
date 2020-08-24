@@ -174,7 +174,7 @@ export default class AST_Assign extends AST_Binary {
           this.right._dot_throw(compressor)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'AssignmentExpression',
       operator: this.operator,

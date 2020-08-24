@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
@@ -228,7 +229,7 @@ export default class AST_If extends AST_StatementWithBody {
     if (self.alternative) self.alternative = self.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (parent): any {
+  _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'IfStatement',
       test: to_moz(this.condition),
