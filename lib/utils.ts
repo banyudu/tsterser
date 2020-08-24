@@ -1427,7 +1427,7 @@ export function best_of_string (a: string[]) {
   return best
 }
 
-export function literals_in_boolean_context (self, compressor: Compressor) {
+export function literals_in_boolean_context (self: AST_Node, compressor: Compressor) {
   if (compressor.in_boolean_context()) {
     return best_of(compressor, self, make_sequence(self, [
       self,
@@ -3002,7 +3002,7 @@ export function block_aborts (this) {
   return null
 }
 
-export function inline_array_like_spread (self, compressor: Compressor, elements) {
+export function inline_array_like_spread (self: AST_Node, compressor: Compressor, elements) {
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i]
     if (is_ast_expansion(el)) {
@@ -3038,7 +3038,7 @@ export function trim (nodes: any[], compressor: Compressor, first_in_statement?)
   return changed ? ret.length ? ret : null : nodes
 }
 
-export function print_braced_empty (self: any, output: OutputStream) {
+export function print_braced_empty (self: AST_Node, output: OutputStream) {
   output.print('{')
   output.with_indent(output.next_indent(), function () {
     output.append_comments(self, true)
@@ -3048,7 +3048,7 @@ export function print_braced_empty (self: any, output: OutputStream) {
 
 // ["p"]:1 ---> p:1
 // [42]:1 ---> 42:1
-export function lift_key (self, compressor: Compressor) {
+export function lift_key (self: AST_ObjectProperty, compressor: Compressor) {
   if (!compressor.option('computed_props')) return self
   // save a comparison in the typical case
   if (!(is_ast_constant(self.key))) return self
@@ -3131,11 +3131,11 @@ export function is_empty (thing) {
 }
 
 /* -----[ if ]----- */
-export function blockStateMentCodeGen (self, output: OutputStream) {
+export function blockStateMentCodeGen (self: AST_Block, output: OutputStream) {
   print_braced(self, output)
 }
 
-export function print_braced (self: any, output: OutputStream, allow_directives?: boolean) {
+export function print_braced (self: AST_Block, output: OutputStream, allow_directives?: boolean) {
   if ((self.body as any[]).length > 0) {
     output.with_block(function () {
       display_body((self.body as any[]), false, output, !!allow_directives)
@@ -3500,7 +3500,7 @@ export function is_iife_call (node: any) {
   return is_ast_function(node.expression) || is_iife_call(node.expression)
 }
 
-export function opt_AST_Lambda (self, compressor: Compressor) {
+export function opt_AST_Lambda (self: AST_Lambda, compressor: Compressor) {
   tighten_body(self.body, compressor)
   if (compressor.option('side_effects') &&
         self.body.length == 1 &&
@@ -3670,11 +3670,11 @@ export function scope_encloses_variables_in_this_scope (scope, pulled_scope) {
   return false
 }
 
-export function is_atomic (lhs, self) {
+export function is_atomic (lhs, self: AST_Node) {
   return is_ast_symbol_ref(lhs) || lhs.TYPE === self.TYPE
 }
 
-export function is_reachable (self, defs) {
+export function is_reachable (self: AST_Node, defs) {
   const find_ref = (node: any) => {
     if (is_ast_symbol_ref(node) && member(node.definition?.(), defs)) {
       return walk_abort
@@ -3754,7 +3754,7 @@ export function init_scope_vars (this, parent_scope: any) {
   this._var_name_cache = null
 }
 
-export function callCodeGen (self, output: OutputStream) {
+export function callCodeGen (self: AST_Call, output: OutputStream) {
   self.expression.print(output)
   if (is_ast_new(self) && self.args.length === 0) { return }
   if (is_ast_call(self.expression) || is_ast_lambda(self.expression)) {

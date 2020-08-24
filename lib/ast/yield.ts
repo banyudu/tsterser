@@ -31,7 +31,7 @@ export default class AST_Yield extends AST_Node {
     is_star: 'eq'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Yield, tw: TreeWalker) {
     if (self.expression) self.expression = self.expression.transform(tw)
   }
 
@@ -61,7 +61,7 @@ export default class AST_Yield extends AST_Node {
     return undefined
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Yield, output: OutputStream) {
     const star = self.is_star ? '*' : ''
     output.print('yield' + star)
     if (self.expression) {

@@ -70,7 +70,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
     static: 'eq'
   })
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_ObjectSetter, output: OutputStream) {
     self._print_getter_setter('set', output)
   }
 

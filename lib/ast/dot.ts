@@ -136,11 +136,11 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   shallow_cmp = mkshallow({ property: 'eq' })
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Dot, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Dot, output: OutputStream) {
     const expr = self.expression
     expr.print(output)
     const prop: string = self.property as string

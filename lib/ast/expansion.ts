@@ -32,7 +32,7 @@ export default class AST_Expansion extends AST_Node {
 
   _size = () => 3
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Expansion, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 
@@ -43,7 +43,7 @@ export default class AST_Expansion extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Expansion, output: OutputStream) {
     output.print('...')
     self.expression.print(output)
   }

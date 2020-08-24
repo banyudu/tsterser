@@ -59,7 +59,7 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Import, tw: TreeWalker) {
     if (self.imported_name) self.imported_name = self.imported_name.transform(tw)
     if (self.imported_names) do_list(self.imported_names, tw)
     self.module_name = self.module_name.transform(tw)
@@ -94,7 +94,7 @@ export default class AST_Import extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Import, output: OutputStream) {
     output.print('import')
     output.space()
     if (self.imported_name) {

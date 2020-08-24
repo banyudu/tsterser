@@ -871,7 +871,7 @@ export default class AST_Call extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Call, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.args = do_list(self.args, tw)
   }
@@ -898,7 +898,7 @@ export default class AST_Call extends AST_Node {
             p1.left === p
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Call, output: OutputStream) {
     return callCodeGen(self, output)
   }
 

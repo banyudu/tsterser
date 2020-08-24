@@ -19,7 +19,7 @@ export default class AST_With extends AST_StatementWithBody {
 
   _size = () => 6
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_With, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = (self.body).transform(tw)
   }
@@ -32,7 +32,7 @@ export default class AST_With extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_With, output: OutputStream) {
     output.print('with')
     output.space()
     output.with_parens(function () {

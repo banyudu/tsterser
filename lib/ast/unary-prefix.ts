@@ -130,7 +130,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == 'void'
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_UnaryPrefix, output: OutputStream) {
     const op = self.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||

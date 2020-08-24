@@ -25,12 +25,12 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_NameMapping, tw: TreeWalker) {
     self.foreign_name = self.foreign_name.transform(tw)
     self.name = self.name.transform(tw)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_NameMapping, output: OutputStream) {
     const is_import = is_ast_import(output.parent())
     const definition = self.name.definition()
     const names_are_different =

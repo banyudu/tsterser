@@ -87,7 +87,7 @@ export default class AST_Array extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Array, tw: TreeWalker) {
     self.elements = do_list(self.elements, tw)
   }
 
@@ -98,7 +98,7 @@ export default class AST_Array extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Array, output: OutputStream) {
     output.with_square(function () {
       const a = self.elements; const len = a.length
       if (len > 0) output.space()

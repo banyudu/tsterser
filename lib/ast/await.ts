@@ -18,7 +18,7 @@ export default class AST_Await extends AST_Node {
 
   _size = () => 6
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Await, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }
 
@@ -36,7 +36,7 @@ export default class AST_Await extends AST_Node {
             output.option('safari10') && is_ast_unary_prefix(p)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Await, output: OutputStream) {
     output.print('await')
     output.space()
     const e = self.expression

@@ -222,7 +222,7 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_If, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
     if (self.alternative) self.alternative = self.alternative.transform(tw)
@@ -237,7 +237,7 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_If, output: OutputStream) {
     output.print('if')
     output.space()
     output.with_parens(function () {
@@ -269,7 +269,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 }
 
-function make_then (self: any, output: OutputStream) {
+function make_then (self: AST_If, output: OutputStream) {
   let b: any = self.body
   if (output.option('braces') ||
         output.option('ie8') && is_ast_do(b)) { return make_block(b, output) }

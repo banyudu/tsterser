@@ -25,7 +25,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_PrefixedTemplateString, tw: TreeWalker) {
     self.prefix = self.prefix.transform(tw)
     self.template_string = self.template_string.transform(tw)
   }
@@ -38,7 +38,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_PrefixedTemplateString, output: OutputStream) {
     const tag = self.prefix
     const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||

@@ -46,7 +46,7 @@ export default class AST_Block extends AST_Statement {
     while (i--) push(this.body[i])
   }
 
-  clone (deep) {
+  clone (deep?: boolean) {
     return clone_block_scope.call(this, deep)
   }
 
@@ -55,7 +55,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   shallow_cmp = (other) => true
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Block, tw: TreeWalker) {
     self.body = do_list(self.body, tw)
   }
 

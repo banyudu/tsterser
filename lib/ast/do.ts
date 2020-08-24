@@ -65,7 +65,7 @@ export default class AST_Do extends AST_DWLoop {
 
   _size = () => 9
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Do, tw: TreeWalker) {
     self.body = (self.body).transform(tw)
     self.condition = self.condition.transform(tw)
   }
@@ -78,7 +78,7 @@ export default class AST_Do extends AST_DWLoop {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Do, output: OutputStream) {
     output.print('do')
     output.space()
     make_block(self.body, output)

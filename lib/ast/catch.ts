@@ -31,7 +31,7 @@ export default class AST_Catch extends AST_Block {
     argname: 'exist'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Catch, tw: TreeWalker) {
     if (self.argname) self.argname = self.argname.transform(tw)
     self.body = do_list(self.body, tw)
   }
@@ -45,7 +45,7 @@ export default class AST_Catch extends AST_Block {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Catch, output: OutputStream) {
     output.print('catch')
     if (self.argname) {
       output.space()

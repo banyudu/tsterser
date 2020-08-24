@@ -184,12 +184,12 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   _size = () => 2
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Sub, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.property = (self.property).transform(tw)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Sub, output: OutputStream) {
     self.expression.print(output)
     output.print('[');
     (self.property).print(output)

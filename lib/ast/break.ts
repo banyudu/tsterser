@@ -14,7 +14,7 @@ export default class AST_Break extends AST_LoopControl {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Break, output: OutputStream) {
     self._do_print(output, 'break')
   }
 

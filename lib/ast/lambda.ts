@@ -26,7 +26,7 @@ export default class AST_Lambda extends AST_Scope {
   is_generator: any
   async: any
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     return opt_AST_Lambda(this, compressor)
   }
 
@@ -101,7 +101,7 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Lambda, tw: TreeWalker) {
     if (self.name) self.name = self.name.transform(tw)
     self.argnames = do_list(self.argnames, tw)
     if (is_ast_node(self.body)) {
@@ -115,7 +115,7 @@ export default class AST_Lambda extends AST_Scope {
     return To_Moz_FunctionExpression(this, parent)
   }
 
-  _do_print (this: any, output: OutputStream, nokeyword: boolean) {
+  _do_print (this: any, output: OutputStream, nokeyword?: boolean) {
     const self = this
     if (!nokeyword) {
       if (self.async) {
@@ -147,7 +147,7 @@ export default class AST_Lambda extends AST_Scope {
     print_braced(self, output, true)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Lambda, output: OutputStream) {
     self._do_print(output)
   }
 

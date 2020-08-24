@@ -47,7 +47,7 @@ export default class AST_RegExp extends AST_Constant {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_RegExp, output: OutputStream) {
     let { source, flags } = self.getValue()
     source = regexp_source_fix(source)
     flags = flags ? sort_regexp_flags(flags) : ''

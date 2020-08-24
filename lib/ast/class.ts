@@ -103,7 +103,7 @@ export default class AST_Class extends AST_Scope {
     )
   }
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Class, tw: TreeWalker) {
     if (self.name) self.name = self.name.transform(tw)
     if (self.extends) self.extends = self.extends.transform(tw)
     self.properties = do_list(self.properties, tw)
@@ -127,7 +127,7 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Class, output: OutputStream) {
     output.print('class')
     output.space()
     if (self.name) {

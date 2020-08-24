@@ -128,7 +128,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Sequence, tw: TreeWalker) {
     const result = do_list(self.expressions, tw)
     self.expressions = result.length
       ? result
@@ -174,7 +174,7 @@ export default class AST_Sequence extends AST_Node {
     })
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Sequence, output: OutputStream) {
     self._do_print(output)
   }
 

@@ -11,7 +11,7 @@ export default class AST_Throw extends AST_Exit {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Throw, output: OutputStream) {
     self._do_print(output, 'throw')
   }
 

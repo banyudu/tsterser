@@ -92,7 +92,7 @@ export default class AST_Try extends AST_Block {
     bfinally: 'exist'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Try, tw: TreeWalker) {
     self.body = do_list(self.body, tw)
     if (self.bcatch) self.bcatch = self.bcatch.transform(tw)
     if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
@@ -108,7 +108,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Try, output: OutputStream) {
     output.print('try')
     output.space()
     print_braced(self, output)

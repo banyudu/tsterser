@@ -86,7 +86,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Definitions, tw: TreeWalker) {
     self.definitions = do_list(self.definitions, tw)
   }
 

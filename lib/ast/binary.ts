@@ -763,7 +763,7 @@ export default class AST_Binary extends AST_Node {
     return size
   }
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Binary, tw: TreeWalker) {
     self.left = self.left.transform(tw)
     self.right = self.right.transform(tw)
   }
@@ -817,7 +817,7 @@ export default class AST_Binary extends AST_Node {
     return undefined
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Binary, output: OutputStream) {
     const op = self.operator
     self.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */

@@ -103,7 +103,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_TemplateString, tw: TreeWalker) {
     self.segments = do_list(self.segments, tw)
   }
 
@@ -131,7 +131,7 @@ export default class AST_TemplateString extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_TemplateString, output: OutputStream) {
     const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')

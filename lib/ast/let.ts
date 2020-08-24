@@ -15,7 +15,7 @@ export default class AST_Let extends AST_Definitions {
     return def_size(4, this)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Let, output: OutputStream) {
     self._do_print(output, 'let')
   }
 

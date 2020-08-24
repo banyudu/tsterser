@@ -43,7 +43,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_SimpleStatement, tw: TreeWalker) {
     self.body = (self.body).transform(tw)
   }
 
@@ -54,7 +54,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_SimpleStatement, output: OutputStream) {
     (self.body).print(output)
     output.semicolon()
   }

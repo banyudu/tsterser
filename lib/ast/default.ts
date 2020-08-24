@@ -15,7 +15,7 @@ export default class AST_Default extends AST_SwitchBranch {
     return 8 + list_overhead(this.body)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Default, output: OutputStream) {
     output.print('default:')
     self._do_print_body(output)
   }

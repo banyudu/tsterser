@@ -66,7 +66,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp = mkshallow({ 'label.name': 'eq' })
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_LabeledStatement, tw: TreeWalker) {
     self.label = self.label.transform(tw)
     self.body = (self.body).transform(tw)
   }
@@ -79,7 +79,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_LabeledStatement, output: OutputStream) {
     self.label.print(output)
     output.colon();
     (self.body).print(output)

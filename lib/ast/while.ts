@@ -34,7 +34,7 @@ export default class AST_While extends AST_DWLoop {
 
   _size = () => 7
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_While, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)
   }
@@ -47,7 +47,7 @@ export default class AST_While extends AST_DWLoop {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_While, output: OutputStream) {
     output.print('while')
     output.space()
     output.with_parens(function () {

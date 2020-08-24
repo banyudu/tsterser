@@ -6,6 +6,8 @@ import TreeWalker from '../tree-walker'
 
 export default class AST_ForIn extends AST_IterationStatement {
   object: any
+  await: any
+
   reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
     reset_block_variables(compressor, this)
     suppress(this.init)
@@ -35,7 +37,7 @@ export default class AST_ForIn extends AST_IterationStatement {
 
   _size = () => 8
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_ForIn, tw: TreeWalker) {
     self.init = self.init?.transform(tw) || null
     self.object = self.object.transform(tw)
     self.body = (self.body).transform(tw)
@@ -50,7 +52,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_ForIn, output: OutputStream) {
     output.print('for')
     if (self.await) {
       output.space()

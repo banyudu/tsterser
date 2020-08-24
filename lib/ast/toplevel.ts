@@ -88,7 +88,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   drop_console () {
-    return this.transform(new TreeTransformer(function (self) {
+    return this.transform(new TreeTransformer(function (self: AST_Toplevel) {
       if (self.TYPE == 'Call') {
         const exp = self.expression
         if (is_ast_prop_access(exp)) {
@@ -191,7 +191,7 @@ export default class AST_Toplevel extends AST_Scope {
     return to_moz_scope('Program', this)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Toplevel, output: OutputStream) {
     display_body(self.body as any[], true, output, true)
     output.print('')
   }

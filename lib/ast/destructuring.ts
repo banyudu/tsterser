@@ -88,7 +88,7 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp = mkshallow({ is_array: 'eq' })
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Destructuring, tw: TreeWalker) {
     self.names = do_list(self.names, tw)
   }
 
@@ -105,7 +105,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Destructuring, output: OutputStream) {
     output.print(self.is_array ? '[' : '{')
     const len = self.names.length
     self.names.forEach(function (name, i) {

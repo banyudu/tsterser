@@ -27,7 +27,7 @@ export default class AST_Number extends AST_Constant {
     return undefined
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Number, output: OutputStream) {
     if ((output.option('keep_numbers') || output.use_asm) && self.start && self.start.raw != null) {
       output.print(self.start.raw)
     } else {

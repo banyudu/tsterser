@@ -103,7 +103,7 @@ export default class AST_For extends AST_IterationStatement {
     step: 'exist'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_For, tw: TreeWalker) {
     if (self.init) self.init = self.init.transform(tw)
     if (self.condition) self.condition = self.condition.transform(tw)
     if (self.step) self.step = self.step.transform(tw)
@@ -120,7 +120,7 @@ export default class AST_For extends AST_IterationStatement {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_For, output: OutputStream) {
     output.print('for')
     output.space()
     output.with_parens(function () {
@@ -166,7 +166,7 @@ export default class AST_For extends AST_IterationStatement {
   }
 }
 
-function if_break_in_loop (self, compressor: Compressor) {
+function if_break_in_loop (self: AST_For, compressor: Compressor) {
   const first = is_ast_block_statement(self.body) ? self.body.body[0] : self.body
   if (compressor.option('dead_code') && is_break(first)) {
     const body: any[] = []

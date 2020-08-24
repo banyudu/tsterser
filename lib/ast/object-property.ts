@@ -55,7 +55,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   shallow_cmp = pass_through as any
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_ObjectProperty, tw: TreeWalker) {
     if (is_ast_node(self.key)) {
       self.key = self.key.transform(tw)
     }

@@ -67,7 +67,7 @@ export default class AST_Export extends AST_Statement {
     is_default: 'eq'
   })
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Export, tw: TreeWalker) {
     if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)
     if (self.exported_value) self.exported_value = self.exported_value.transform(tw)
     if (self.exported_names) do_list(self.exported_names, tw)
@@ -101,7 +101,7 @@ export default class AST_Export extends AST_Statement {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Export, output: OutputStream) {
     output.print('export')
     output.space()
     if (self.is_default) {

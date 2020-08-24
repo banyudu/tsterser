@@ -74,7 +74,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     static: 'eq'
   })
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_ObjectGetter, output: OutputStream) {
     self._print_getter_setter('get', output)
   }
 

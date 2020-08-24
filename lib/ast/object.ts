@@ -128,7 +128,7 @@ export default class AST_Object extends AST_Node {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Object, tw: TreeWalker) {
     self.properties = do_list(self.properties, tw)
   }
 
@@ -145,7 +145,7 @@ export default class AST_Object extends AST_Node {
     return !output.has_parens() && first_in_statement(output)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Object, output: OutputStream) {
     if (self.properties.length > 0) {
       output.with_block(function () {
         self.properties.forEach(function (prop, i) {

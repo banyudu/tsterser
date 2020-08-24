@@ -23,7 +23,7 @@ export default class AST_Constant extends AST_Node {
     return To_Moz_Literal(this)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Constant, output: OutputStream) {
     output.print(self.getValue())
   }
 

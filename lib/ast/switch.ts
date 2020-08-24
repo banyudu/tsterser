@@ -162,7 +162,7 @@ export default class AST_Switch extends AST_Block {
   }
 
   shallow_cmp = pass_through
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Switch, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
   }
@@ -175,7 +175,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Switch, output: OutputStream) {
     output.print('switch')
     output.space()
     output.with_parens(function () {

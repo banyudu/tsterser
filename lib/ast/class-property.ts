@@ -87,7 +87,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     static: 'eq'
   })
 
-  _codegen = (self, output: OutputStream) => {
+  _codegen = (self: AST_ClassProperty, output: OutputStream) => {
     if (self.static) {
       output.print('static')
       output.space()

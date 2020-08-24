@@ -44,12 +44,12 @@ export default class AST_Case extends AST_SwitchBranch {
     return 5 + list_overhead(this.body)
   }
 
-  _transform (self, tw: TreeWalker) {
+  _transform (self: AST_Case, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)
   }
 
-  _codegen (self, output: OutputStream) {
+  _codegen (self: AST_Case, output: OutputStream) {
     output.print('case')
     output.space()
     self.expression.print(output)
