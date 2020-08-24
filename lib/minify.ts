@@ -3,7 +3,7 @@
 import { defaults, map_from_object, map_to_object, base54, HOP, is_ast_toplevel } from './utils'
 import AST_Node from './ast/node'
 import { parse } from './parse'
-import { OutputStream } from './output'
+import OutputStream from './output'
 import Compressor from './compressor'
 import SourceMap from './sourcemap'
 import {

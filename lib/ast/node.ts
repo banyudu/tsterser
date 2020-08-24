@@ -1,4 +1,4 @@
-import { OutputStream } from '../output'
+import OutputStream from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import AST from './_base'

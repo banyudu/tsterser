@@ -50,7 +50,7 @@ import {
   _NOINLINE
 } from '../constants'
 
-import { OutputStream } from '../output'
+import OutputStream from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
 

@@ -82,7 +82,7 @@ const quote_template = (str: string) => {
   return '`' + str.replace(/`/g, '\\`') + '`'
 }
 
-class OutputStreamInner {
+class OutputStream {
   options: any
 
   in_directive = false
@@ -730,8 +730,6 @@ class OutputStreamInner {
   }
 }
 
-function factory (opt?: any): any {
-  return new OutputStreamInner(opt)
+export default function factory (opt?: any): any {
+  return new OutputStream(opt)
 }
-
-export const OutputStream = factory
