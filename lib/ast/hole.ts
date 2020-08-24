@@ -1,7 +1,6 @@
-import AST_Node from './node'
 import AST_Atom from './atom'
 export default class AST_Hole extends AST_Atom {
-  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+  to_fun_args (to_fun_args, insert_default, croak): any {
     return this
   }
 

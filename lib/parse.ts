@@ -2144,7 +2144,7 @@ function parse ($TEXT: string, opt?: any) {
       }
       return ex
     }
-    return ex.to_fun_args(to_fun_args, insert_default, croak, default_seen_above)
+    return ex.to_fun_args(to_fun_args, insert_default, croak)
   }
 
   var expr_atom = function (allow_calls, allow_arrows?) {

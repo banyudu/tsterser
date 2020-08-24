@@ -22,7 +22,7 @@ import {
 export default class AST_Object extends AST_Node {
   properties: any
 
-  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+  to_fun_args (to_fun_args, insert_default, croak): any {
     return insert_default(new AST_Destructuring({
       start: this.start,
       end: this.end,

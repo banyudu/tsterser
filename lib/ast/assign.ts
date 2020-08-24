@@ -28,7 +28,7 @@ import {
 import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from '../constants'
 
 export default class AST_Assign extends AST_Binary {
-  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+  to_fun_args (to_fun_args, insert_default, croak): any {
     return insert_default(to_fun_args(this.left, undefined, undefined, this.right))
   }
 

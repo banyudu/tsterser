@@ -10,7 +10,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   key: any
   value: any
 
-  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+  to_fun_args (to_fun_args, insert_default, croak): any {
     this.value = to_fun_args(this.value, 0, [this.key])
     return insert_default(this)
   }

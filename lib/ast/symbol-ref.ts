@@ -1,4 +1,3 @@
-import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Symbol from './symbol'
 import TreeWalker from '../tree-walker'
@@ -34,7 +33,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
 
-  to_fun_args (to_fun_args, insert_default, croak, default_seen_above?: AST_Node): any {
+  to_fun_args (to_fun_args, insert_default, croak): any {
     return insert_default(new AST_SymbolFunarg({
       name: this.name,
       start: this.start,
