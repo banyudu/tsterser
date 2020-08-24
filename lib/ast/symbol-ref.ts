@@ -33,12 +33,12 @@ export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
 
-  to_fun_args (to_fun_args, insert_default, croak): any {
-    return insert_default(new AST_SymbolFunarg({
+  to_fun_args (to_fun_args, croak): any {
+    return new AST_SymbolFunarg({
       name: this.name,
       start: this.start,
       end: this.end
-    }))
+    })
   }
 
   _optimize (compressor: Compressor) {

@@ -22,13 +22,13 @@ import {
 export default class AST_Object extends AST_Node {
   properties: any
 
-  to_fun_args (to_fun_args, insert_default, croak): any {
-    return insert_default(new AST_Destructuring({
+  to_fun_args (to_fun_args, croak): any {
+    return new AST_Destructuring({
       start: this.start,
       end: this.end,
       is_array: false,
       names: this.properties.map(to_fun_args)
-    }))
+    })
   }
 
   _optimize (compressor: Compressor) {

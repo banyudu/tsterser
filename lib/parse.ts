@@ -2131,20 +2131,8 @@ function parse ($TEXT: string, opt?: any) {
     return ret
   }
 
-  function to_fun_args (ex: AST_Node, _?, __?, default_seen_above?: AST_Node) {
-    const insert_default = function (ex) {
-      if (default_seen_above) {
-        return new AST_DefaultAssign({
-          start: ex.start,
-          left: ex,
-          operator: '=',
-          right: default_seen_above,
-          end: default_seen_above.end
-        })
-      }
-      return ex
-    }
-    return ex.to_fun_args(to_fun_args, insert_default, croak)
+  function to_fun_args (ex: AST_Node) {
+    return ex.to_fun_args(to_fun_args, croak)
   }
 
   var expr_atom = function (allow_calls, allow_arrows?) {

@@ -7,9 +7,9 @@ import TreeWalker from '../tree-walker'
 export default class AST_Expansion extends AST_Node {
   expression: any
 
-  to_fun_args (to_fun_args, insert_default, croak): any {
+  to_fun_args (to_fun_args, croak): any {
     this.expression = to_fun_args(this.expression)
-    return insert_default(this)
+    return this
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement) {

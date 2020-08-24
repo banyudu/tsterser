@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import AST_DefaultAssign from './default-assign'
 import Compressor from '../compressor'
 import AST_Binary from './binary'
 import AST_Lambda from './lambda'
@@ -28,8 +29,20 @@ import {
 import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from '../constants'
 
 export default class AST_Assign extends AST_Binary {
-  to_fun_args (to_fun_args, insert_default, croak): any {
-    return insert_default(to_fun_args(this.left, undefined, undefined, this.right))
+  to_fun_args (to_fun_args, croak): any {
+    const insert_default = (ex) => {
+      if (this.right) {
+        return new AST_DefaultAssign({
+          start: ex.start,
+          left: ex,
+          operator: '=',
+          right: this.right,
+          end: this.right.end
+        })
+      }
+      return ex
+    }
+    return insert_default(to_fun_args(this.left))
   }
 
   _optimize (compressor: Compressor) {

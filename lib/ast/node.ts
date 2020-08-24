@@ -31,7 +31,7 @@ export default class AST_Node extends AST {
     return false
   }
 
-  to_fun_args (to_fun_args, insert_default, croak): any {
+  to_fun_args (to_fun_args, croak): any {
     croak('Invalid function parameter', this.start.line, this.start.col)
   }
 

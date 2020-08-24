@@ -3,8 +3,8 @@ import AST_Binary from './binary'
 import { make_node_from_constant, best_of_expression } from '../utils'
 
 export default class AST_DefaultAssign extends AST_Binary {
-  to_fun_args (to_fun_args, insert_default, croak): any {
-    this.left = to_fun_args(this.left, 0, [this.left])
+  to_fun_args (to_fun_args, croak): any {
+    this.left = to_fun_args(this.left)
     return this
   }
 

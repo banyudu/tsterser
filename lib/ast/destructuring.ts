@@ -9,9 +9,9 @@ export default class AST_Destructuring extends AST_Node {
   is_array: any
   names: any[]
 
-  to_fun_args (to_fun_args, insert_default, croak): any {
+  to_fun_args (to_fun_args, croak): any {
     this.names = this.names.map(to_fun_args)
-    return insert_default(this)
+    return this
   }
 
   _optimize (compressor: Compressor) {
