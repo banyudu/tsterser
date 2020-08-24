@@ -55,7 +55,7 @@ export default class AST_Binary extends AST_Node {
     return /^\w/.test(this.operator) && this.left === child
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self: any = this
     function reversible () {
       return self.left.is_constant() ||

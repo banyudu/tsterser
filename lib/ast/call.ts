@@ -63,7 +63,7 @@ export default class AST_Call extends AST_Node {
     return this.TYPE == 'Call' && this.expression === node
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     const self: any = this
     const exp = self.expression
     let fn = exp

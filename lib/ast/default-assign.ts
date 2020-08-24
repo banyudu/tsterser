@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import AST_Node from './node'
 import AST_Binary from './binary'
 import { make_node_from_constant, best_of_expression } from '../utils'
@@ -8,7 +9,7 @@ export default class AST_DefaultAssign extends AST_Binary {
     return this
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self: any = this
     if (!compressor.option('evaluate')) {
       return self

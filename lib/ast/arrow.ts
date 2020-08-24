@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Lambda from './lambda'
 import {
@@ -12,7 +13,7 @@ import {
 } from '../utils'
 
 export default class AST_Arrow extends AST_Lambda {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     return opt_AST_Lambda(this, compressor)
   }
 

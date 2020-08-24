@@ -16,7 +16,7 @@ export default class TreeWalker {
     this.directives = Object.create(null)
   }
 
-  _visit (node: any, descend?: Function) {
+  _visit (node: AST_Node, descend?: Function) {
     this.push(node)
     const ret = this.visit(node, descend ? function () {
       descend.call(node)
@@ -32,7 +32,7 @@ export default class TreeWalker {
     return this.stack[this.stack.length - 2 - (n || 0)]
   }
 
-  push (node: any) {
+  push (node: AST_Node) {
     if (is_ast_lambda(node)) {
       this.directives = Object.create(this.directives)
     } else if (is_ast_directive(node) && !this.directives[node.value]) {
@@ -53,11 +53,11 @@ export default class TreeWalker {
     }
   }
 
-  self () {
+  self (): any {
     return this.stack[this.stack.length - 1]
   }
 
-  find_parent (type: any) {
+  find_parent<T extends AST_Node> (type: new () => T) {
     const stack = this.stack
     for (let i = stack.length; --i >= 0;) {
       const x = stack[i]

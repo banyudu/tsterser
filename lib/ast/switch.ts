@@ -27,7 +27,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     const self = this
     if (!compressor.option('switches')) return self
     let branch

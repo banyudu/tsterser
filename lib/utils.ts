@@ -560,11 +560,11 @@ export function has_annotation (node: any, annotation: number) {
   return node._annotations & annotation
 }
 
-export function warn (compressor, node: AST_Node) {
+export function warn (compressor: Compressor, node: AST_Node) {
   compressor.warn('global_defs ' + node.print_to_string() + ' redefined [{file}:{line},{col}]', node.start)
 }
 
-export function is_strict (compressor) {
+export function is_strict (compressor: Compressor) {
   const optPureGettters = compressor.option('pure_getters')
   return typeof optPureGettters === 'string' && optPureGettters.includes('strict')
 }
@@ -1427,7 +1427,7 @@ export function best_of_string (a: string[]) {
   return best
 }
 
-export function literals_in_boolean_context (self, compressor) {
+export function literals_in_boolean_context (self, compressor: Compressor) {
   if (compressor.in_boolean_context()) {
     return best_of(compressor, self, make_sequence(self, [
       self,
@@ -1454,7 +1454,7 @@ export function merge_sequence (array, node) {
   return array
 }
 
-export function best_of (compressor, ast1, ast2) {
+export function best_of (compressor: Compressor, ast1, ast2) {
   return (first_in_statement(compressor) ? best_of_statement : best_of_expression)(ast1, ast2)
 }
 
@@ -1497,7 +1497,7 @@ export function best_of_expression (ast1, ast2) {
   return ast1.size() > ast2.size() ? ast2 : ast1
 }
 
-export function is_undefined (node, compressor?) {
+export function is_undefined (node, compressor?: Compressor) {
   return has_flag(node, UNDEFINED) ||
         is_ast_undefined(node) ||
         is_ast_unary_prefix(node) &&
@@ -1524,7 +1524,7 @@ export function make_block (stmt: any, output: OutputStream) {
 }
 
 // Tighten a bunch of statements together. Used whenever there is a block.
-export function tighten_body (statements, compressor) {
+export function tighten_body (statements, compressor: Compressor) {
   let in_loop, in_try
   let scope = compressor.find_parent(AST_Scope).get_defun_scope()
   find_loop_scope_try()
@@ -1574,7 +1574,7 @@ export function tighten_body (statements, compressor) {
   // to fold assignment into the site for compression.
   // Will not attempt to collapse assignments into or past code blocks
   // which are not sequentially executed, e.g. loops and conditionals.
-  function collapse (statements, compressor) {
+  function collapse (statements, compressor: Compressor) {
     if (scope.pinned()) return statements
     let args
     const candidates: any[] = []
@@ -2190,7 +2190,7 @@ export function tighten_body (statements, compressor) {
     }
   }
 
-  function handle_if_return (statements, compressor) {
+  function handle_if_return (statements, compressor: Compressor) {
     const self = compressor.self()
     const multiple_if_returns = has_multiple_if_returns(statements)
     const in_lambda = is_ast_lambda(self)
@@ -2387,7 +2387,7 @@ export function tighten_body (statements, compressor) {
     }
   }
 
-  function eliminate_dead_code (statements, compressor) {
+  function eliminate_dead_code (statements, compressor: Compressor) {
     let has_quit
     const self = compressor.self()
     for (var i = 0, n = 0, len = statements.length; i < len; i++) {
@@ -2428,7 +2428,7 @@ export function tighten_body (statements, compressor) {
     )
   }
 
-  function sequencesize (statements, compressor) {
+  function sequencesize (statements, compressor: Compressor) {
     if (statements.length < 2) return
     let seq: any[] = []; let n = 0
     function push_seq () {
@@ -2473,7 +2473,7 @@ export function tighten_body (statements, compressor) {
     return stat
   }
 
-  function sequencesize_2 (statements: any[], compressor) {
+  function sequencesize_2 (statements: any[], compressor: Compressor) {
     function cons_seq (right) {
       n--
       CHANGED = true
@@ -2676,21 +2676,21 @@ export function tighten_body (statements, compressor) {
   }
 }
 
-export function anyMayThrow (list, compressor) {
+export function anyMayThrow (list, compressor: Compressor) {
   for (let i = list.length; --i >= 0;) {
     if (list[i].may_throw(compressor)) { return true }
   }
   return false
 }
 
-export function anySideEffect (list, compressor) {
+export function anySideEffect (list, compressor: Compressor) {
   for (let i = list.length; --i >= 0;) {
     if (list[i].has_side_effects(compressor)) { return true }
   }
   return false
 }
 
-export function reset_block_variables (compressor, node) {
+export function reset_block_variables (compressor: Compressor, node) {
   if (node.block_scope) {
     node.block_scope.variables.forEach((def) => {
       reset_def(compressor, def)
@@ -2698,7 +2698,7 @@ export function reset_block_variables (compressor, node) {
   }
 }
 
-export function reset_def (compressor, def) {
+export function reset_def (compressor: Compressor, def) {
   def.assignments = 0
   def.chained = false
   def.direct_access = false
@@ -2793,7 +2793,7 @@ export function is_ref_of (ref, type) {
   }
 }
 
-export function is_modified (compressor, tw, node, value, level, immutable?) {
+export function is_modified (compressor: Compressor, tw, node, value, level, immutable?) {
   const parent = tw.parent(level)
   const lhs = is_lhs(node, parent)
   if (lhs) return lhs
@@ -2851,7 +2851,7 @@ function loop_body (x) {
   return x
 }
 
-export function extract_declarations_from_unreachable_code (compressor, stat, target) {
+export function extract_declarations_from_unreachable_code (compressor: Compressor, stat, target) {
   if (!(is_ast_defun(stat))) {
     compressor.warn('Dropping unreachable code [{file}:{line},{col}]', stat.start)
   }
@@ -3002,7 +3002,7 @@ export function block_aborts (this) {
   return null
 }
 
-export function inline_array_like_spread (self, compressor, elements) {
+export function inline_array_like_spread (self, compressor: Compressor, elements) {
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i]
     if (is_ast_expansion(el)) {
@@ -3048,7 +3048,7 @@ export function print_braced_empty (self: any, output: OutputStream) {
 
 // ["p"]:1 ---> p:1
 // [42]:1 ---> 42:1
-export function lift_key (self, compressor) {
+export function lift_key (self, compressor: Compressor) {
   if (!compressor.option('computed_props')) return self
   // save a comparison in the typical case
   if (!(is_ast_constant(self.key))) return self
@@ -3113,7 +3113,7 @@ export function is_undeclared_ref (node: any): node is AST_SymbolRef {
   return is_ast_symbol_ref(node) && node.definition?.().undeclared
 }
 
-export function safe_to_flatten (value, compressor) {
+export function safe_to_flatten (value, compressor: Compressor) {
   if (is_ast_symbol_ref(value)) {
     value = value.fixed_value()
   }
@@ -3260,7 +3260,7 @@ export function next_mangled (scope: any, options: any) {
   }
 }
 
-export function reset_variables (tw: TreeWalker, compressor, node) {
+export function reset_variables (tw: TreeWalker, compressor: Compressor, node) {
   node.variables.forEach(function (def) {
     reset_def(compressor, def)
     if (def.fixed === null) {
@@ -3310,7 +3310,7 @@ export function safe_to_read (tw: TreeWalker, def) {
   return is_ast_defun(def.fixed)
 }
 
-export function ref_once (tw: TreeWalker, compressor, def) {
+export function ref_once (tw: TreeWalker, compressor: Compressor, def) {
   return compressor.option('unused') &&
         !def.scope.pinned() &&
         def.references.length - def.recursive_refs == 1 &&
@@ -3359,7 +3359,7 @@ export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, dept
   d.direct_access = true
 }
 
-export function mark_lambda (this, tw: TreeWalker, descend, compressor) {
+export function mark_lambda (this, tw: TreeWalker, descend, compressor: Compressor) {
   clear_flag(this, INLINED)
   push(tw)
   reset_variables(tw, compressor, this)
@@ -3399,7 +3399,7 @@ export function mark_lambda (this, tw: TreeWalker, descend, compressor) {
   return true
 }
 
-export function recursive_ref (compressor, def) {
+export function recursive_ref (compressor: TreeWalker, def) {
   let node
   for (let i = 0; (node = compressor.parent(i)); i++) {
     if (
@@ -3500,7 +3500,7 @@ export function is_iife_call (node: any) {
   return is_ast_function(node.expression) || is_iife_call(node.expression)
 }
 
-export function opt_AST_Lambda (self, compressor) {
+export function opt_AST_Lambda (self, compressor: Compressor) {
   tighten_body(self.body, compressor)
   if (compressor.option('side_effects') &&
         self.body.length == 1 &&
@@ -3517,7 +3517,7 @@ export function is_object (node: any) {
         is_ast_class(node)
 }
 
-export function within_array_or_object_literal (compressor) {
+export function within_array_or_object_literal (compressor: Compressor) {
   let node; let level = 0
   while ((node = compressor.parent(level++))) {
     if (is_ast_statement(node)) return false
@@ -3543,7 +3543,7 @@ export function is_nullish (node: any) {
   )
 }
 
-export function is_nullish_check (check, check_subject, compressor) {
+export function is_nullish_check (check, check_subject, compressor: Compressor) {
   if (check_subject.may_throw(compressor)) return false
 
   let nullish_side
@@ -3627,7 +3627,7 @@ export function is_nullish_check (check, check_subject, compressor) {
 }
 
 // TODO this only works with AST_Defun, shouldn't it work for other ways of defining functions?
-export function retain_top_func (fn, compressor) {
+export function retain_top_func (fn, compressor: Compressor) {
   return compressor.top_retain &&
         is_ast_defun(fn) &&
         has_flag(fn, TOP) &&
@@ -3644,7 +3644,7 @@ export function find_scope (tw: TreeWalker) {
   }
 }
 
-export function find_variable (compressor, name) {
+export function find_variable (compressor: Compressor, name) {
   let scope; let i = 0
   while ((scope = compressor.parent(i++))) {
     if (is_ast_scope(scope)) break

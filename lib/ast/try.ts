@@ -27,7 +27,7 @@ export default class AST_Try extends AST_Block {
   bfinally: any
   bcatch: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     tighten_body(this.body, compressor)
     if (this.bcatch && this.bfinally && this.bfinally.body.every(is_empty)) this.bfinally = null
     if (compressor.option('dead_code') && this.body.every(is_empty)) {

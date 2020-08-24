@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Constant from './constant'
 import { regexp_source_fix, sort_regexp_flags, literals_in_boolean_context } from '../utils'
@@ -7,11 +8,11 @@ const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
   value: any
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     return literals_in_boolean_context(this, compressor)
   }
 
-  _eval (compressor: any) {
+  _eval (compressor: Compressor) {
     let evaluated = compressor.evaluated_regexps.get(this)
     if (evaluated === undefined) {
       try {

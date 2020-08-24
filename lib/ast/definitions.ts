@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Definitions extends AST_Statement {
   definitions: any[]
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
     return this
   }

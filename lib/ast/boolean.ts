@@ -1,8 +1,9 @@
+import Compressor from '../compressor'
 import AST_Atom from './atom'
 import { make_node, To_Moz_Literal, is_ast_binary } from '../utils'
 
 export default class AST_Boolean extends AST_Atom {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (compressor.in_boolean_context()) {
       return make_node('AST_Number', this, {
         value: +this.value

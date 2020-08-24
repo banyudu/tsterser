@@ -20,7 +20,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let expr = this.expression
     let prop = this.property
     let property: any

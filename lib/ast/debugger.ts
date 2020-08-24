@@ -1,9 +1,10 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { make_node, pass_through } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', this) }
     return this
   }

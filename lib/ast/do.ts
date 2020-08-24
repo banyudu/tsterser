@@ -5,7 +5,7 @@ import { make_node, pass_through, to_moz, push, pop, make_block, reset_block_var
 import TreeWalker from '../tree-walker'
 
 export default class AST_Do extends AST_DWLoop {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (!compressor.option('loops')) return this
     const cond = this.condition.tail_node().evaluate(compressor)
     if (!(is_ast_node(cond))) {

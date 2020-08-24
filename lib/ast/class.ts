@@ -20,7 +20,7 @@ export default class AST_Class extends AST_Scope {
   properties: any
   name: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return this
@@ -43,7 +43,7 @@ export default class AST_Class extends AST_Scope {
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor) {
+  has_side_effects (compressor: Compressor) {
     if (this.extends?.has_side_effects(compressor)) {
       return true
     }

@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
@@ -13,7 +14,7 @@ export default class AST_Destructuring extends AST_Node {
     return insert_default(this)
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
           !this.is_array &&
@@ -35,7 +36,7 @@ export default class AST_Destructuring extends AST_Node {
     }
     return this
 
-    function is_destructuring_export_decl (compressor) {
+    function is_destructuring_export_decl (compressor: Compressor) {
       const ancestors = [/^VarDef$/, /^(Const|Let|Var)$/, /^Export$/]
       for (let a = 0, p = 0, len = ancestors.length; a < len; p++) {
         const parent = compressor.parent(p)
@@ -49,7 +50,7 @@ export default class AST_Destructuring extends AST_Node {
       return true
     }
 
-    function should_retain (compressor, def) {
+    function should_retain (compressor: Compressor, def) {
       if (def.references.length) return true
       if (!def.global) return false
       if (compressor.toplevel.vars) {

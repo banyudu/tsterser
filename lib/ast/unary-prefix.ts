@@ -9,7 +9,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == '!' && this.expression === context
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self = this
     let e = self.expression
     if (self.operator == 'delete' &&

@@ -4,7 +4,7 @@ import Compressor from '../compressor'
 import { is_undefined, to_moz } from '../utils'
 
 export default class AST_Return extends AST_Exit {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (this.value && is_undefined(this.value, compressor)) {
       this.value = null
     }

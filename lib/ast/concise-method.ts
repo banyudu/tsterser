@@ -9,7 +9,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   static: any
   quote: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     lift_key(this, compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&

@@ -25,7 +25,7 @@ export default class AST_If extends AST_StatementWithBody {
     return this.condition === context
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self = this
     if (is_empty(self.alternative)) self.alternative = null
 

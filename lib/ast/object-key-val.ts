@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import AST_ObjectProperty from './object-property'
@@ -57,7 +58,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     lift_key(this, compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}

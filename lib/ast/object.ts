@@ -31,7 +31,7 @@ export default class AST_Object extends AST_Node {
     }))
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     const optimized = literals_in_boolean_context(this, compressor)
     if (optimized !== this) {
       return optimized

@@ -13,7 +13,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (is_ast_break(this.body) &&
           compressor.loopcontrol_target(this.body) === this.body) {
       return make_node('AST_EmptyStatement', this)

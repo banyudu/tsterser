@@ -55,7 +55,7 @@ export default class AST_PropAccess extends AST_Node {
     return this
   }
 
-  flatten_object (key, compressor) {
+  flatten_object (key, compressor: Compressor) {
     if (!compressor.option('properties')) return
     const arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     const expr = this.expression

@@ -1,9 +1,10 @@
+import Compressor from '../compressor'
 import AST_Atom from './atom'
 import { find_variable, make_node, is_lhs, is_atomic } from '../utils'
 import { set_flag, UNDEFINED } from '../constants'
 
 export default class AST_Undefined extends AST_Atom {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (compressor.option('unsafe_undefined')) {
       const undef = find_variable(compressor, 'undefined')
       if (undef) {

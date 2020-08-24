@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { directives } from '../constants'
@@ -6,7 +7,7 @@ import { make_node, mkshallow } from '../utils'
 export default class AST_Directive extends AST_Statement {
   value: any
   quote: any
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (compressor.option('directives') &&
           (!directives.has(this.value) || compressor.has_directive(this.value) !== this)) {
       return make_node('AST_EmptyStatement', this)

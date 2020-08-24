@@ -252,7 +252,7 @@ export default class Compressor extends TreeWalker {
     }
   }
 
-  warn (text: string, props: AnyObject<any>) {
+  warn (text: string, props?: AnyObject<any>) {
     if (this.options.warnings) {
       // only emit unique warnings
       const message = string_template(text, props)

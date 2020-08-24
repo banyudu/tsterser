@@ -11,7 +11,7 @@ export default class AST_ObjectProperty extends AST_Node {
 
   computed_key () { return false }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     return lift_key(this, compressor)
   }
 

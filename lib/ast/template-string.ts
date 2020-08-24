@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_TemplateString extends AST_Node {
   segments: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (!compressor.option('evaluate') ||
       is_ast_prefixed_template_string(compressor.parent())) { return this }
 

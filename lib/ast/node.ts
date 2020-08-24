@@ -64,7 +64,7 @@ export default class AST_Node extends AST {
     return false
   }
 
-  _optimize (compressor?: any) {
+  _optimize (compressor?: Compressor) {
     return this
   }
 
@@ -74,7 +74,7 @@ export default class AST_Node extends AST {
 
   may_throw (compressor: Compressor) { return true }
   has_side_effects (compressor: Compressor) { return true }
-  _eval (compressor?: any, depth?: number): any { return this }
+  _eval (compressor?: Compressor, depth?: number): any { return this }
   is_constant_expression (scope?: any) { return false }
   negate (compressor: Compressor, first_in_statement?: any) {
     return basic_negation(this)
@@ -85,7 +85,7 @@ export default class AST_Node extends AST {
   is_number (compressor: Compressor) { return false }
   is_boolean () { return false }
   reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {}
-  _dot_throw (compressor) { return is_strict(compressor) }
+  _dot_throw (compressor: Compressor) { return is_strict(compressor) }
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
   // then its value is returned; otherwise the element itself
@@ -156,7 +156,7 @@ export default class AST_Node extends AST {
 
   _children_backwards (push: Function) {}
   _size (info: any) { return 0 }
-  size (compressor, stack) {
+  size (compressor: Compressor, stack) {
     let size = 0
     walk_parent(this, (node, info) => {
       size += node?._size(info) || 0

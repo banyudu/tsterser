@@ -32,7 +32,7 @@ export default class AST_Assign extends AST_Binary {
     return insert_default(to_fun_args(this.left, undefined, undefined, this.right))
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self: any = this
     let def
     if (compressor.option('dead_code') &&

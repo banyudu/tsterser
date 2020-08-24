@@ -23,7 +23,7 @@ export default class AST_For extends AST_IterationStatement {
     return this.condition === context
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (!compressor.option('loops')) return this
     if (compressor.option('side_effects') && this.init) {
       this.init = this.init.drop_side_effect_free(compressor)
@@ -166,7 +166,7 @@ export default class AST_For extends AST_IterationStatement {
   }
 }
 
-function if_break_in_loop (self, compressor) {
+function if_break_in_loop (self, compressor: Compressor) {
   const first = is_ast_block_statement(self.body) ? self.body.body[0] : self.body
   if (compressor.option('dead_code') && is_break(first)) {
     const body: any[] = []

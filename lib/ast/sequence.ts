@@ -25,7 +25,7 @@ export default class AST_Sequence extends AST_Node {
     return this.expressions[0] === node
   }
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     let self: any = this
     if (!compressor.option('side_effects')) return self
     const expressions: any[] = []

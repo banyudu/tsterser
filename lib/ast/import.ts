@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import { list_overhead, do_list, to_moz, mkshallow } from '../utils'
@@ -8,7 +9,7 @@ export default class AST_Import extends AST_Node {
   module_name: any
   imported_names: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     return this
   }
 

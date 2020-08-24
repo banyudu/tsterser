@@ -1,7 +1,8 @@
+import Compressor from '../compressor'
 import AST_SymbolRef from './symbol-ref'
 
 export default class AST_SymbolExport extends AST_SymbolRef {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     return this
   }
 

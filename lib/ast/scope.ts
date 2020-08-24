@@ -50,7 +50,7 @@ export default class AST_Scope extends AST_Block {
   cname: any
   _block_scope: boolean
 
-  process_expression (insert, compressor?) {
+  process_expression (insert, compressor?: Compressor) {
     const self = this
     var tt = new TreeTransformer(function (node: any) {
       if (insert && is_ast_simple_statement(node)) {

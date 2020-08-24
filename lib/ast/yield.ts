@@ -1,3 +1,4 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import { is_undefined, mkshallow, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
@@ -8,7 +9,7 @@ export default class AST_Yield extends AST_Node {
   is_star: boolean
   expression: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
       this.expression = null
     }

@@ -17,7 +17,7 @@ import { walk_abort } from '../constants'
 export default class AST_Function extends AST_Lambda {
   name: any
 
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     const self = opt_AST_Lambda(this, compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&

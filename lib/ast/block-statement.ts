@@ -1,9 +1,10 @@
+import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Block from './block'
 import { tighten_body, can_be_evicted_from_block, block_aborts, to_moz, make_node, blockStateMentCodeGen, is_ast_if, is_ast_const, is_ast_let, is_ast_class } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
-  _optimize (compressor) {
+  _optimize (compressor: Compressor) {
     tighten_body(this.body, compressor)
     switch (this.body.length) {
       case 1:
