@@ -1,3 +1,4 @@
+import { OutputStream } from './output'
 /***********************************************************************
 
   A JavaScript tokenizer / parser / beautifier / compressor.
@@ -1504,7 +1505,7 @@ export function is_undefined (node, compressor?) {
             !node.expression.has_side_effects(compressor)
 }
 
-export function force_statement (stat: any, output: any) {
+export function force_statement (stat: any, output: OutputStream) {
   if (output.option('braces')) {
     make_block(stat, output)
   } else {
@@ -1512,7 +1513,7 @@ export function force_statement (stat: any, output: any) {
   }
 }
 
-export function make_block (stmt: any, output: any) {
+export function make_block (stmt: any, output: OutputStream) {
   if (!stmt || is_ast_empty_statement(stmt)) { output.print('{}') } else if (is_ast_block_statement(stmt)) { stmt.print?.(output) } else {
     output.with_block(function () {
       output.indent()
@@ -3037,7 +3038,7 @@ export function trim (nodes: any[], compressor: Compressor, first_in_statement?)
   return changed ? ret.length ? ret : null : nodes
 }
 
-export function print_braced_empty (self: any, output: any) {
+export function print_braced_empty (self: any, output: OutputStream) {
   output.print('{')
   output.with_indent(output.next_indent(), function () {
     output.append_comments(self, true)
@@ -3071,7 +3072,7 @@ export function lift_key (self, compressor) {
   return self
 }
 
-export function print_property_name (key: string, quote: string, output: any) {
+export function print_property_name (key: string, quote: string, output: OutputStream) {
   if (output.option('quote_keys')) {
     return output.print_string(key)
   }
@@ -3130,11 +3131,11 @@ export function is_empty (thing) {
 }
 
 /* -----[ if ]----- */
-export function blockStateMentCodeGen (self, output) {
+export function blockStateMentCodeGen (self, output: OutputStream) {
   print_braced(self, output)
 }
 
-export function print_braced (self: any, output: any, allow_directives?: boolean) {
+export function print_braced (self: any, output: OutputStream, allow_directives?: boolean) {
   if ((self.body as any[]).length > 0) {
     output.with_block(function () {
       display_body((self.body as any[]), false, output, !!allow_directives)
@@ -3142,11 +3143,11 @@ export function print_braced (self: any, output: any, allow_directives?: boolean
   } else print_braced_empty(self, output)
 }
 
-export function display_body (body: any[], is_toplevel: boolean, output: any, allow_directives: boolean) {
+export function display_body (body: any[], is_toplevel: boolean, output: OutputStream, allow_directives: boolean) {
   const last = body.length - 1
   output.in_directive = allow_directives
   body.forEach(function (stmt, i) {
-    if (output.in_directive === true && !(is_ast_directive(stmt) ||
+    if (output.in_directive && !(is_ast_directive(stmt) ||
             is_ast_empty_statement(stmt) ||
             (is_ast_simple_statement(stmt) && is_ast_string(stmt.body))
     )) {
@@ -3160,7 +3161,7 @@ export function display_body (body: any[], is_toplevel: boolean, output: any, al
         if (is_toplevel) output.newline()
       }
     }
-    if (output.in_directive === true &&
+    if (output.in_directive &&
             is_ast_simple_statement(stmt) &&
             is_ast_string(stmt.body)
     ) {
@@ -3170,7 +3171,7 @@ export function display_body (body: any[], is_toplevel: boolean, output: any, al
   output.in_directive = false
 }
 
-export function parenthesize_for_noin (node: any, output: any, noin: boolean) {
+export function parenthesize_for_noin (node: any, output: OutputStream, noin: boolean) {
   let parens = false
   // need to take some precautions here:
   //    https://github.com/mishoo/UglifyJS2/issues/60
@@ -3217,7 +3218,7 @@ export function skip_string (node: any) {
   }
 }
 
-export function needsParens (this, output: any) {
+export function needsParens (this, output: OutputStream) {
   const p = output.parent()
   // !(a = false) → true
   if (is_ast_unary(p)) { return true }
@@ -3692,7 +3693,7 @@ export function is_reachable (self, defs) {
   })
 }
 
-export function print (this: any, output: any, force_parens?: boolean) {
+export function print (this: any, output: OutputStream, force_parens?: boolean) {
   const self = this; const generator = self._codegen
   if (is_ast_scope(self)) {
     output.active_scope = self
@@ -3753,7 +3754,7 @@ export function init_scope_vars (this, parent_scope: any) {
   this._var_name_cache = null
 }
 
-export function callCodeGen (self, output) {
+export function callCodeGen (self, output: OutputStream) {
   self.expression.print(output)
   if (is_ast_new(self) && self.args.length === 0) { return }
   if (is_ast_call(self.expression) || is_ast_lambda(self.expression)) {

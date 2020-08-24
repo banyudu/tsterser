@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, mkshallow, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
@@ -80,7 +81,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     let type
     if (self.is_generator && self.async) {
       type = 'async*'

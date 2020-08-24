@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, pass_through, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
@@ -130,7 +131,7 @@ export default class AST_TemplateString extends AST_Node {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')
@@ -148,7 +149,7 @@ export default class AST_TemplateString extends AST_Node {
     output.print('`')
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A template string literal'
   static propdoc = {
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'

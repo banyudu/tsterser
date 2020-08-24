@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_DWLoop from './dw-loop'
 import Compressor from '../compressor'
 import { make_node, pass_through, to_moz, push, pop, make_block, reset_block_variables, has_break_or_continue, is_ast_node } from '../utils'
@@ -77,7 +78,7 @@ export default class AST_Do extends AST_DWLoop {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('do')
     output.space()
     make_block(self.body, output)

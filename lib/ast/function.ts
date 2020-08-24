@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Lambda from './lambda'
 import Compressor from '../compressor'
 import {
@@ -77,7 +78,7 @@ export default class AST_Function extends AST_Lambda {
 
   // a function expression needs parens around it when it's provably
   // the first token to appear in a statement.
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     if (!output.has_parens() && first_in_statement(output)) {
       return true
     }

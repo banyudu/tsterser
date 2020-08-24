@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { pass_through } from '../utils'
 
@@ -10,7 +11,7 @@ export default class AST_EmptyStatement extends AST_Statement {
   }
 
   _size = () => 1
-  _codegen (_self, output) {
+  _codegen (_self, output: OutputStream) {
     output.semicolon()
   }
 

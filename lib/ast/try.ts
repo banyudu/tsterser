@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Block from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
@@ -107,7 +108,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('try')
     output.space()
     print_braced(self, output)
@@ -121,7 +122,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `try` statement'
   static propdoc = {
     bcatch: '[AST_Catch?] the catch block, or null if not present',

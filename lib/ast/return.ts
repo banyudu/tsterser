@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Exit from './exit'
 import Compressor from '../compressor'
 import { is_undefined, to_moz } from '../utils'
@@ -25,7 +26,7 @@ export default class AST_Return extends AST_Exit {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output, 'return')
   }
 

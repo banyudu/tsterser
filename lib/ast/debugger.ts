@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { make_node, pass_through } from '../utils'
 
@@ -13,12 +14,12 @@ export default class AST_Debugger extends AST_Statement {
     return { type: 'DebuggerStatement' }
   }
 
-  _codegen (_self, output) {
+  _codegen (_self, output: OutputStream) {
     output.print('debugger')
     output.semicolon()
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Represents a debugger statement'
 
   static PROPS = AST_Statement.PROPS

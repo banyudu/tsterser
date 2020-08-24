@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { push_uniq, mkshallow, is_ast_node } from '../utils'
 
@@ -64,16 +65,16 @@ export default class AST_Symbol extends AST_Node {
     }
   }
 
-  _do_print (output: any) {
+  _do_print (output: OutputStream) {
     const def = this.definition()
     output.print_name(def ? def.mangled_name || def.name : this.name)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[string] name of this symbol',
     scope: '[AST_Scope/S] the current scope (not necessarily the definition scope)',

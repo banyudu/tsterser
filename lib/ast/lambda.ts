@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
 import TreeWalker from '../tree-walker'
@@ -114,7 +115,7 @@ export default class AST_Lambda extends AST_Scope {
     return To_Moz_FunctionExpression(this, parent)
   }
 
-  _do_print (this: any, output: any, nokeyword: boolean) {
+  _do_print (this: any, output: OutputStream, nokeyword: boolean) {
     const self = this
     if (!nokeyword) {
       if (self.async) {
@@ -146,11 +147,11 @@ export default class AST_Lambda extends AST_Scope {
     print_braced(self, output, true)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Base class for functions'
   static propdoc = {
     name: '[AST_SymbolDeclaration?] the name of this function',

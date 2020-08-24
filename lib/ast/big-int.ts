@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Constant from './constant'
 import { mkshallow } from '../utils'
 
@@ -14,11 +15,11 @@ export default class AST_BigInt extends AST_Constant {
     value: this.value
   } }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print(self.getValue() + 'n')
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()

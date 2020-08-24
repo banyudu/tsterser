@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Unary from './unary'
 
 export default class AST_UnaryPostfix extends AST_Unary {
@@ -10,7 +11,7 @@ export default class AST_UnaryPostfix extends AST_Unary {
   }
 
   _dot_throw () { return false }
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self.expression.print(output)
     output.print(self.operator)
   }

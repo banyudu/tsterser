@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_This from './this'
 import { pass_through } from '../utils'
 
@@ -8,7 +9,7 @@ export default class AST_Super extends AST_This {
     return { type: 'Super' }
   }
 
-  _codegen (_self, output) {
+  _codegen (_self, output: OutputStream) {
     output.print('super')
   }
 

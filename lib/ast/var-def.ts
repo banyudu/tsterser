@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
@@ -72,7 +73,7 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self.name.print(output)
     if (self.value) {
       output.space()

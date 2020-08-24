@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
@@ -139,7 +140,7 @@ export default class AST_Dot extends AST_PropAccess {
     self.expression = self.expression.transform(tw)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const expr = self.expression
     expr.print(output)
     const prop: string = self.property as string

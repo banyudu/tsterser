@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
 import { make_node, pass_through, to_moz } from '../utils'
@@ -53,7 +54,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     (self.body).print(output)
     output.semicolon()
   }

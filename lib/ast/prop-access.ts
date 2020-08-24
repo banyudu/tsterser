@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten, is_ast_node, is_ast_object, is_ast_object_key_val, is_ast_new, is_ast_scope, is_ast_dot, is_ast_concise_method, is_ast_call, is_ast_accessor, is_ast_symbol_method } from '../utils'
@@ -99,7 +100,7 @@ export default class AST_PropAccess extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     if (is_ast_new(p) && p.expression === this) {
       // i.e. new (foo.bar().baz)

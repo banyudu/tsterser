@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import AST_ObjectProperty from './object-property'
 import { to_moz, lift_key, make_node, mkshallow, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_class, is_ast_default_assign } from '../utils'
@@ -96,7 +97,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return key_size(this.key) + 1
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     function get_name (self: any) {
       const def = self.definition()
       return def ? def.mangled_name || def.name : self.name

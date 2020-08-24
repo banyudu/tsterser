@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
 import { suppress, reset_block_variables, push, pop, to_moz, pass_through, is_ast_for_of } from '../utils'
@@ -49,7 +50,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('for')
     if (self.await) {
       output.space()

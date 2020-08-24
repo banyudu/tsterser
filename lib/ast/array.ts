@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
@@ -97,7 +98,7 @@ export default class AST_Array extends AST_Node {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.with_square(function () {
       const a = self.elements; const len = a.length
       if (len > 0) output.space()
@@ -113,7 +114,7 @@ export default class AST_Array extends AST_Node {
     })
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An array literal'
   static propdoc = {
     elements: '[AST_Node*] array of elements'

@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Exit from './exit'
 import { to_moz } from '../utils'
 
@@ -10,7 +11,7 @@ export default class AST_Throw extends AST_Exit {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output, 'throw')
   }
 

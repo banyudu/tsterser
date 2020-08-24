@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, mkshallow, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
@@ -73,11 +74,11 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     static: 'eq'
   })
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._print_getter_setter('get', output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start, this.key.name) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
   static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static getter (classes only)'

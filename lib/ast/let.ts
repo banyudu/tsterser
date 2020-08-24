@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Definitions from './definitions'
 import { def_size, to_moz } from '../utils'
 
@@ -14,7 +15,7 @@ export default class AST_Let extends AST_Definitions {
     return def_size(4, this)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output, 'let')
   }
 

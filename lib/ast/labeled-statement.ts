@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
 import { push, pop, mkshallow, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
@@ -78,7 +79,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self.label.print(output)
     output.colon();
     (self.body).print(output)

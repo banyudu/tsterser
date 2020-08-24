@@ -1,4 +1,4 @@
-import OutputStream from '../output'
+import GetOutputStream, { OutputStream } from '../output'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import AST from './_base'
@@ -189,18 +189,18 @@ export default class AST_Node extends AST {
     throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
   }
 
-  print (output: any, force_parens?: boolean) {
+  print (output: OutputStream, force_parens?: boolean) {
     return this._print(output, force_parens)
   }
 
   _print = print
   print_to_string (options?: any) {
-    const output = OutputStream(options)
+    const output = GetOutputStream(options)
     this.print(output)
     return output.get()
   }
 
-  needs_parens (output: any) { return false }
+  needs_parens (output: OutputStream) { return false }
   optimize (compressor: Compressor) {
     if (!this._optimize) {
       throw new Error('optimize not defined')
@@ -222,7 +222,7 @@ export default class AST_Node extends AST {
 
   _to_mozilla_ast (parent) {}
 
-  add_source_map (output: any) {}
+  add_source_map (output: OutputStream) {}
   tail_node () { return this }
   static documentation = 'Base class of all AST nodes'
   static propdoc = {

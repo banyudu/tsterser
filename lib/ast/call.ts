@@ -50,7 +50,7 @@ import {
   _NOINLINE
 } from '../constants'
 
-import OutputStream from '../output'
+import GetOutputStream, { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
 
@@ -373,7 +373,7 @@ export default class AST_Call extends AST_Node {
               return walk_abort
             }
           })
-          const code2 = OutputStream()
+          const code2 = GetOutputStream()
           blockStateMentCodeGen.call(fun, fun, code2)
           self.args = [
             make_node('AST_String', self, {
@@ -884,7 +884,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent(); let p1
     if (is_ast_new(p) && p.expression === this ||
             is_ast_export(p) && p.is_default && is_ast_function(this.expression)) { return true }
@@ -898,7 +898,7 @@ export default class AST_Call extends AST_Node {
             p1.left === p
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     return callCodeGen(self, output)
   }
 

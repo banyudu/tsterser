@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
@@ -140,11 +141,11 @@ export default class AST_Object extends AST_Node {
 
   // same goes for an object literal, because otherwise it would be
   // interpreted as a block of code.
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     return !output.has_parens() && first_in_statement(output)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     if (self.properties.length > 0) {
       output.with_block(function () {
         self.properties.forEach(function (prop, i) {
@@ -160,7 +161,7 @@ export default class AST_Object extends AST_Node {
     } else print_braced_empty(self, output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An object literal'
   static propdoc = {
     properties: '[AST_ObjectProperty*] array of properties'

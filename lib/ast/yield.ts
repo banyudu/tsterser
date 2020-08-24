@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { is_undefined, mkshallow, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -41,7 +42,7 @@ export default class AST_Yield extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
@@ -59,7 +60,7 @@ export default class AST_Yield extends AST_Node {
     return undefined
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const star = self.is_star ? '*' : ''
     output.print('yield' + star)
     if (self.expression) {

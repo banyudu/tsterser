@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Jump from './jump'
 import { pass_through } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -19,7 +20,7 @@ export default class AST_LoopControl extends AST_Jump {
     if (self.label) self.label = self.label.transform(tw)
   }
 
-  _do_print (output: any, kind: string) {
+  _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     if (this.label) {
       output.space()

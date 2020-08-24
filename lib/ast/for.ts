@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
 
@@ -119,7 +120,7 @@ export default class AST_For extends AST_IterationStatement {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('for')
     output.space()
     output.with_parens(function () {

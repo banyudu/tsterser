@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { directives } from '../constants'
 import { make_node, mkshallow } from '../utils'
@@ -31,12 +32,12 @@ export default class AST_Directive extends AST_Statement {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print_string(self.value, self.quote)
     output.semicolon()
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Represents a directive, like "use strict";'
   static propdoc = {
     value: "[string] The value of this directive as a plain string (it's not an AST_String!)",

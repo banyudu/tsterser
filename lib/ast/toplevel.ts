@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import Compressor from '../compressor'
 import SymbolDef from '../symbol-def'
@@ -190,7 +191,7 @@ export default class AST_Toplevel extends AST_Scope {
     return to_moz_scope('Program', this)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     display_body(self.body as any[], true, output, true)
     output.print('')
   }

@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Constant from './constant'
 import { regexp_source_fix, sort_regexp_flags, literals_in_boolean_context } from '../utils'
 
@@ -45,7 +46,7 @@ export default class AST_RegExp extends AST_Constant {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     let { source, flags } = self.getValue()
     source = regexp_source_fix(source)
     flags = flags ? sort_regexp_flags(flags) : ''

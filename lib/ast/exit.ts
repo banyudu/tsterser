@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Jump from './jump'
 import TreeWalker from '../tree-walker'
 
@@ -22,7 +23,7 @@ export default class AST_Exit extends AST_Jump {
     if (self.value) self.value = self.value.transform(tw)
   }
 
-  _do_print (output: any, kind: string) {
+  _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     if (this.value) {
       output.space()

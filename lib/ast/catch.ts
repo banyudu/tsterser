@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Block from './block'
 import { walk_body, list_overhead, mkshallow, do_list, to_moz, to_moz_block, print_braced } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -44,7 +45,7 @@ export default class AST_Catch extends AST_Block {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('catch')
     if (self.argname) {
       output.space()
@@ -56,7 +57,7 @@ export default class AST_Catch extends AST_Block {
     print_braced(self, output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
   static propdoc = {
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'

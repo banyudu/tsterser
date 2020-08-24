@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import Compressor from '../compressor'
 import {
@@ -126,7 +127,7 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('class')
     output.space()
     if (self.name) {
@@ -167,7 +168,7 @@ export default class AST_Class extends AST_Scope {
     } else output.print('{}')
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
     extends: '[AST_Node]? optional parent class',

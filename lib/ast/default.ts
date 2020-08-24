@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_SwitchBranch from './switch-branch'
 import { push, pop, list_overhead } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -14,7 +15,7 @@ export default class AST_Default extends AST_SwitchBranch {
     return 8 + list_overhead(this.body)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('default:')
     self._do_print_body(output)
   }

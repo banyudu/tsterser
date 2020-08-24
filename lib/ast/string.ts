@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Constant from './constant'
 import { mkshallow } from '../utils'
 
@@ -18,7 +19,7 @@ export default class AST_String extends AST_Constant {
     add(this.value)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print_string(self.getValue(), self.quote, output.in_directive)
   }
 

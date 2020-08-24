@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Unary from './unary'
 import Compressor from '../compressor'
 import { unary_bool, non_converting_unary } from '../constants'
@@ -129,7 +130,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == 'void'
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const op = self.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||

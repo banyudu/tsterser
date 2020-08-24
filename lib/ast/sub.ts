@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence, is_ast_symbol_ref, is_ast_lambda, is_ast_arrow, is_ast_number, is_ast_symbol_funarg, is_ast_array, is_ast_expansion, is_ast_hole } from '../utils'
@@ -188,7 +189,7 @@ export default class AST_Sub extends AST_PropAccess {
     self.property = (self.property).transform(tw)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self.expression.print(output)
     output.print('[');
     (self.property).print(output)

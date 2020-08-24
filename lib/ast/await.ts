@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { pass_through, to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unary_prefix, is_ast_unary, is_ast_constant } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -28,14 +29,14 @@ export default class AST_Await extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this ||
             is_ast_call(p) && p.expression === this ||
             output.option('safari10') && is_ast_unary_prefix(p)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('await')
     output.space()
     const e = self.expression

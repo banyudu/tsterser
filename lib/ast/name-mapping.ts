@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { pass_through, is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -29,7 +30,7 @@ export default class AST_NameMapping extends AST_Node {
     self.name = self.name.transform(tw)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const is_import = is_ast_import(output.parent())
     const definition = self.name.definition()
     const names_are_different =

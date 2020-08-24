@@ -56,6 +56,7 @@ import {
   get_full_char,
   is_identifier_char
 } from './parse'
+import { AST_Token } from './ast'
 
 const EXPECT_DIRECTIVE = /^$|[;{][\s\n]*$/
 const CODE_LINE_BREAK = 10
@@ -82,7 +83,7 @@ const quote_template = (str: string) => {
   return '`' + str.replace(/`/g, '\\`') + '`'
 }
 
-class OutputStream {
+export class OutputStream {
   options: any
 
   in_directive = false
@@ -96,14 +97,14 @@ class OutputStream {
   private _need_space = false
   private _newline_insert = -1
   private _last = ''
-  private _mapping_token: false | string
+  private _mapping_token: AST_Token | false
   private _mapping_name: string
   private _indentation = 0
   private _current_col = 0
   private _current_line = 1
   private _current_pos = 0
   private _OUTPUT = ''
-  private readonly printed_comments: Set<any[]> = new Set()
+  readonly printed_comments: Set<any[]> = new Set()
 
   with_parens (cont: () => any) {
     this.print('(')
@@ -299,7 +300,7 @@ class OutputStream {
 
   print_name (name: string) { this.print(this._make_name(name)) }
 
-  encode_string (str: string, quote: string) {
+  encode_string (str: string, quote?: string) {
     let ret = this.make_string(str, quote)
     if (this.options.inline_script) {
       ret = ret.replace(/<\x2f(script)([>/\t\n\f\r ])/gi, '<\\/$1$2')
@@ -314,7 +315,7 @@ class OutputStream {
     this.print(';')
   }
 
-  print_string (str: string, quote: string, escape_directive: boolean) {
+  print_string (str: string, quote?: string, escape_directive?: boolean) {
     const encoded = this.encode_string(str, quote)
     if (escape_directive && !encoded.includes('\\')) {
     // Insert semicolons to break directive prologue
@@ -372,7 +373,7 @@ class OutputStream {
     return cont()
   }
 
-  make_string (str: string, quote: string) {
+  make_string (str: string, quote?: string) {
     let dq = 0; let sq = 0
     str = str.replace(/[\\\b\f\n\r\v\t\x22\x27\u2028\u2029\0\ufeff]/g,
       (s, i) => {
@@ -646,7 +647,7 @@ class OutputStream {
     return ret
   }
 
-  add_mapping (token: string, name: string) {
+  add_mapping (token: AST_Token, name?: string) {
     if (this._mappings) {
       this._mapping_token = token
       this._mapping_name = name

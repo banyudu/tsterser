@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
 import {
@@ -236,7 +237,7 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('if')
     output.space()
     output.with_parens(function () {
@@ -268,7 +269,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 }
 
-function make_then (self: any, output: any) {
+function make_then (self: any, output: OutputStream) {
   let b: any = self.body
   if (output.option('braces') ||
         output.option('ie8') && is_ast_do(b)) { return make_block(b, output) }

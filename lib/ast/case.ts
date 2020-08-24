@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_SwitchBranch from './switch-branch'
 import Compressor from '../compressor'
 import AST_Block from './block'
@@ -48,7 +49,7 @@ export default class AST_Case extends AST_SwitchBranch {
     self.body = do_list(self.body, tw)
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('case')
     output.space()
     self.expression.print(output)

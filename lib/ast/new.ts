@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Call from './call'
 import { is_undeclared_ref, callCodeGen, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
@@ -24,7 +25,7 @@ export default class AST_New extends AST_Call {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     if (this.args.length === 0 &&
             (is_ast_prop_access(p) || // (new Date).getTime(), (new Date)["getTime"]()
@@ -33,13 +34,13 @@ export default class AST_New extends AST_Call {
     return undefined
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('new')
     output.space()
     callCodeGen(self, output)
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
   static PROPS = AST_Call.PROPS

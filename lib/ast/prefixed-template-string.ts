@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { pass_through, to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -36,7 +37,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const tag = self.prefix
     const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||

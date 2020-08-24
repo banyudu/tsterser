@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { mkshallow } from '../utils'
 
@@ -12,7 +13,7 @@ export default class AST_TemplateSegment extends AST_Node {
     return this.value.length
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A segment of a template string literal'
   static propdoc = {
     value: 'Content of the segment',

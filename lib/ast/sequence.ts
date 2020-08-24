@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Number from './number'
@@ -141,7 +142,7 @@ export default class AST_Sequence extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     return is_ast_call(p) || // (foo, bar)() or foo(1, (2, 3), 4)
             is_ast_unary(p) || // !(foo, bar, baz)
@@ -160,7 +161,7 @@ export default class AST_Sequence extends AST_Node {
             is_ast_export(p) // export default (foo, bar)
   }
 
-  _do_print (this: any, output: any) {
+  _do_print (this: any, output: OutputStream) {
     this.expressions.forEach(function (node, index) {
       if (index > 0) {
         output.comma()
@@ -173,7 +174,7 @@ export default class AST_Sequence extends AST_Node {
     })
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self._do_print(output)
   }
 

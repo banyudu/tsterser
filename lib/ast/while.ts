@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_DWLoop from './dw-loop'
 import Compressor from '../compressor'
 import { make_node, reset_block_variables, push, pop, pass_through, to_moz } from '../utils'
@@ -46,7 +47,7 @@ export default class AST_While extends AST_DWLoop {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('while')
     output.space()
     output.with_parens(function () {

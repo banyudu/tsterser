@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { string_template } from '../utils'
 import Compressor from '../compressor'
@@ -14,7 +15,7 @@ export default class AST_Statement extends AST_Node {
     throw new Error('Cannot negate a statement')
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     (self.body).print(output)
     output.semicolon()
   }

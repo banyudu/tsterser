@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Constant from './constant'
 import { mkshallow, make_num } from '../utils'
 export default class AST_Number extends AST_Constant {
@@ -15,7 +16,7 @@ export default class AST_Number extends AST_Constant {
     value: 'eq'
   })
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()
@@ -26,7 +27,7 @@ export default class AST_Number extends AST_Constant {
     return undefined
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     if ((output.option('keep_numbers') || output.use_asm) && self.start && self.start.raw != null) {
       output.print(self.start.raw)
     } else {

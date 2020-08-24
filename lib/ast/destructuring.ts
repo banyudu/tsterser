@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
 import { mkshallow, do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
@@ -103,7 +104,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print(self.is_array ? '[' : '{')
     const len = self.names.length
     self.names.forEach(function (name, i) {

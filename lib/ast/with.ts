@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import { pass_through, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -31,7 +32,7 @@ export default class AST_With extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('with')
     output.space()
     output.with_parens(function () {

@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { lift_key, make_sequence, to_moz, pass_through, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
@@ -100,7 +101,7 @@ export default class AST_ObjectProperty extends AST_Node {
     }
   }
 
-  _print_getter_setter (this: any, type: string, output: any) {
+  _print_getter_setter (this: any, type: string, output: OutputStream) {
     const self = this
     if (self.static) {
       output.print('static')
@@ -120,7 +121,7 @@ export default class AST_ObjectProperty extends AST_Node {
     self.value._do_print(output, true)
   }
 
-  add_source_map (output) { output.add_mapping(this.start, this.key) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key) }
   static documentation = 'Base class for literal object properties'
   static propdoc = {
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',

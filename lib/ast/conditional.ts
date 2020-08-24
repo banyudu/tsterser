@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import {
@@ -411,7 +412,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   needs_parens = needsParens
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     self.condition.print(output)
     output.space()
     output.print('?')

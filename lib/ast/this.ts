@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Symbol from './symbol'
 import { pass_through } from '../utils'
 
@@ -11,7 +12,7 @@ export default class AST_This extends AST_Symbol {
     return { type: 'ThisExpression' }
   }
 
-  _codegen (_self, output) {
+  _codegen (_self, output: OutputStream) {
     output.print('this')
   }
 

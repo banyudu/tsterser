@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
@@ -97,7 +98,7 @@ export default class AST_Definitions extends AST_Statement {
     }
   }
 
-  _do_print (this: any, output: any, kind: string) {
+  _do_print (this: any, output: OutputStream, kind: string) {
     output.print(kind)
     output.space()
     this.definitions.forEach(function (def, i) {
@@ -110,7 +111,7 @@ export default class AST_Definitions extends AST_Statement {
     if (output_semicolon) { output.semicolon() }
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
   static propdoc = {
     definitions: '[AST_VarDef*] array of variable definitions'

@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import { pass_through } from '../utils'
 
@@ -18,7 +19,7 @@ export default class AST_NewTarget extends AST_Node {
     }
   }
 
-  _codegen (_self, output) {
+  _codegen (_self, output: OutputStream) {
     output.print('new.target')
   }
 

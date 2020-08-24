@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Block from './block'
 import Compressor from '../compressor'
 import AST_Node from './node'
@@ -174,7 +175,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     output.print('switch')
     output.space()
     output.with_parens(function () {
@@ -194,7 +195,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  add_source_map (output) { output.add_mapping(this.start) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `switch` statement'
   static propdoc = {
     expression: '[AST_Node] the `switch` “discriminant”'

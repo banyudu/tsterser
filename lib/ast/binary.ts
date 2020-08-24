@@ -1,3 +1,4 @@
+import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_With from './with'
@@ -788,7 +789,7 @@ export default class AST_Binary extends AST_Node {
     }
   }
 
-  needs_parens (output: any) {
+  needs_parens (output: OutputStream) {
     const p = output.parent()
     // (foo && bar)()
     if (is_ast_call(p) && p.expression === this) { return true }
@@ -816,7 +817,7 @@ export default class AST_Binary extends AST_Node {
     return undefined
   }
 
-  _codegen (self, output) {
+  _codegen (self, output: OutputStream) {
     const op = self.operator
     self.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */
