@@ -23,7 +23,7 @@ export default class AST_Conditional extends AST_Node {
   consequent: any
   condition: any
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.condition === node
   }
 
@@ -252,7 +252,7 @@ export default class AST_Conditional extends AST_Node {
 
     return self
 
-    function booleanize (node: any) {
+    function booleanize (node: AST_Node) {
       if (node.is_boolean()) return node
       // !!expression
       return make_node('AST_UnaryPrefix', node, {
@@ -262,7 +262,7 @@ export default class AST_Conditional extends AST_Node {
     }
 
     // AST_True or !0
-    function is_true (node: any) {
+    function is_true (node: AST_Node) {
       return is_ast_true(node) ||
               in_bool &&
                   is_ast_constant(node) &&
@@ -273,7 +273,7 @@ export default class AST_Conditional extends AST_Node {
                   !node.expression.getValue())
     }
     // AST_False or !1
-    function is_false (node: any) {
+    function is_false (node: AST_Node) {
       return is_ast_false(node) ||
               in_bool &&
                   is_ast_constant(node) &&

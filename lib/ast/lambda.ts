@@ -41,7 +41,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   contains_this () {
-    return walk(this, (node: any) => {
+    return walk(this, (node: AST_Node) => {
       if (is_ast_this(node)) return walk_abort
       if (
         node !== this &&

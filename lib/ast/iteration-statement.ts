@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import AST_StatementWithBody from './statement-with-body'
 import { clone_block_scope } from '../utils'
 
@@ -7,7 +8,7 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
   condition: any
   step: any
 
-  get_loopcontrol_target (node: any) {
+  get_loopcontrol_target (node: AST_Node) {
     if (!node.label) {
       return this
     }

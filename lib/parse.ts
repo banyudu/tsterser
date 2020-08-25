@@ -1,4 +1,3 @@
-
 /***********************************************************************
 
   A JavaScript tokenizer / parser / beautifier / compressor.
@@ -2982,7 +2981,7 @@ function parse ($TEXT: string, opt?: any) {
     return is_ast_prop_access(expr) || is_ast_symbol_ref(expr)
   }
 
-  function to_destructuring (node: any) {
+  function to_destructuring (node: AST_Node) {
     if (is_ast_object(node)) {
       node = new AST_Destructuring({
         start: node.start,

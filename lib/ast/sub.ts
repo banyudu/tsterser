@@ -8,7 +8,7 @@ import { is_basic_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Sub extends AST_PropAccess {
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
 

@@ -8,7 +8,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_LabeledStatement extends AST_StatementWithBody {
   label: any
 
-  get_loopcontrol_target (node: any) {
+  get_loopcontrol_target (node: AST_Node) {
     if (node.label && this.label.name == node.label.name) {
       return this.body
     }
@@ -54,7 +54,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     if (deep) {
       const label = node.label
       const def = this.label
-      node.walk(new TreeWalker(function (node: any) {
+      node.walk(new TreeWalker(function (node: AST_Node) {
         if (is_ast_loop_control(node) &&
                     node.label && node.label.thedef === def) {
           node.label.thedef = label

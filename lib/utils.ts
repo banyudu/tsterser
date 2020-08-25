@@ -518,7 +518,7 @@ function sort_regexp_flags (flags: string) {
   return out
 }
 
-function set_annotation (node: any, annotation: number) {
+function set_annotation (node: AST_Node, annotation: number) {
   node._annotations |= annotation
 }
 
@@ -556,7 +556,7 @@ export function convert_to_predicate (obj) {
   return out
 }
 
-export function has_annotation (node: any, annotation: number) {
+export function has_annotation (node: AST_Node, annotation: number) {
   return node._annotations & annotation
 }
 
@@ -662,7 +662,7 @@ export function set_moz_loc (mynode: AST_Node, moznode) {
 
 export let FROM_MOZ_STACK = []
 
-export function from_moz (node) {
+export function from_moz (node: AST_Node) {
     FROM_MOZ_STACK?.push(node)
     const ret = node != null ? MOZ_TO_ME[node.type](node) : null
     FROM_MOZ_STACK?.pop()
@@ -1350,7 +1350,7 @@ export const mkshallow = (props) => {
   }
 }
 
-export function to_moz (node: any | null) {
+export function to_moz (node: AST_Node) {
   if (TO_MOZ_STACK === null) { TO_MOZ_STACK = [] }
   TO_MOZ_STACK.push(node)
   const ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
@@ -1445,7 +1445,7 @@ export function make_sequence (orig, expressions: AST_Node[]) {
   })
 }
 
-export function merge_sequence (array, node) {
+export function merge_sequence (array, node: AST_Node) {
   if (is_ast_sequence(node)) {
     array.push(...node.expressions)
   } else {
@@ -1497,7 +1497,7 @@ export function best_of_expression (ast1, ast2) {
   return ast1.size() > ast2.size() ? ast2 : ast1
 }
 
-export function is_undefined (node, compressor?: Compressor) {
+export function is_undefined (node: AST_Node, compressor?: Compressor) {
   return has_flag(node, UNDEFINED) ||
         is_ast_undefined(node) ||
         is_ast_unary_prefix(node) &&
@@ -1579,7 +1579,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     let args
     const candidates: any[] = []
     let stat_index = statements.length
-    var scanner = new TreeTransformer(function (node: any) {
+    var scanner = new TreeTransformer(function (node: AST_Node) {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
       if (!hit) {
@@ -1694,12 +1694,12 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         if (is_ast_scope(node)) abort = true
       }
       return handle_custom_scan_order(node)
-    }, function (node: any) {
+    }, function (node: AST_Node) {
       if (abort) return
       if (stop_after === node) abort = true
       if (stop_if_hit === node) stop_if_hit = null
     })
-    var multi_replacer = new TreeTransformer(function (node: any) {
+    var multi_replacer = new TreeTransformer(function (node: AST_Node) {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
       if (!hit) {
@@ -1783,7 +1783,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       }
     }
 
-    function handle_custom_scan_order (node: any) {
+    function handle_custom_scan_order (node: AST_Node) {
       // Skip (non-executed) functions
       if (is_ast_scope(node)) return node
 
@@ -1820,7 +1820,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
 
     function has_overlapping_symbol (fn, arg, fn_strict) {
       let found = false; let scan_this = !(is_ast_arrow(fn))
-      arg.walk(new TreeWalker(function (node: any, descend) {
+      arg.walk(new TreeWalker(function (node: AST_Node, descend) {
         if (found) return true
         if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
           let s = node.definition?.().scope
@@ -1981,7 +1981,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       hit_stack.pop()
     }
 
-    function find_stop (node, level, write_only?) {
+    function find_stop (node: AST_Node, level, write_only?) {
       const parent = scanner.parent(level)
       if (is_ast_assign(parent)) {
         if (write_only &&
@@ -2063,7 +2063,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     function get_lvalues (expr) {
       const lvalues = new Map()
       if (is_ast_unary(expr)) return lvalues
-      var tw = new TreeWalker(function (node: any) {
+      var tw = new TreeWalker(function (node: AST_Node) {
         let sym = node
         while (is_ast_prop_access(sym)) sym = sym.expression
         if (is_ast_symbol_ref(sym) || is_ast_this(sym)) {
@@ -2091,7 +2091,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         return true
       }
       let found = false
-      return statements[stat_index].transform(new TreeTransformer(function (node, descend: Function, in_list) {
+      return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list) {
         if (found) return node
         if (node === expr || node.body === expr) {
           found = true
@@ -2103,7 +2103,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           }
           return in_list ? MAP.skip : null
         }
-      }, function (node: any) {
+      }, function (node: AST_Node) {
         if (is_ast_sequence(node)) {
           switch (node.expressions.length) {
             case 0: return null
@@ -2153,7 +2153,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       })
     }
 
-    function side_effects_external (node, lhs?) {
+    function side_effects_external (node: AST_Node, lhs?) {
       if (is_ast_assign(node)) return side_effects_external(node.left, true)
       if (is_ast_unary(node)) return side_effects_external(node.expression, true)
       if (is_ast_var_def(node)) return node.value && side_effects_external(node.value)
@@ -2356,7 +2356,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       })
     }
 
-    function as_statement_array_with_return (node, ab) {
+    function as_statement_array_with_return (node: AST_Node, ab) {
       const body = as_statement_array(node).slice(0, -1)
       if (ab.value) {
         body.push(make_node('AST_SimpleStatement', ab.value, {
@@ -2422,7 +2422,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     }
   }
 
-  function declarations_only (node: any) {
+  function declarations_only (node: AST_Node) {
     return node.definitions.every((var_def) =>
       !var_def.value
     )
@@ -2488,7 +2488,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           stat.value = cons_seq(stat.value || make_node('AST_Undefined', stat).transform(compressor))
         } else if (is_ast_for(stat)) {
           if (!(is_ast_definitions(stat.init))) {
-            const abort = walk(prev.body, (node: any) => {
+            const abort = walk(prev.body, (node: AST_Node) => {
               if (is_ast_scope(node)) return true
               if (
                 is_ast_binary(node) &&
@@ -2572,9 +2572,9 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       if (is_ast_node(prop)) break
       prop = '' + prop
       const diff = compressor.option('ecma') < 2015 &&
-                compressor.has_directive('use strict') ? function (node: any) {
+                compressor.has_directive('use strict') ? function (node: AST_Node) {
           return node.key != prop && (node.key && node.key.name != prop)
-        } : function (node: any) {
+        } : function (node: AST_Node) {
           return node.key && node.key.name != prop
         }
       if (!def.value.properties.every(diff)) break
@@ -2690,7 +2690,7 @@ export function anySideEffect (list, compressor: Compressor) {
   return false
 }
 
-export function reset_block_variables (compressor: Compressor, node) {
+export function reset_block_variables (compressor: Compressor, node: AST_Block | AST_IterationStatement) {
   if (node.block_scope) {
     node.block_scope.variables.forEach((def) => {
       reset_def(compressor, def)
@@ -2716,13 +2716,13 @@ export function reset_def (compressor: Compressor, def) {
   }
 }
 
-export function is_identifier_atom (node: any | null) {
+export function is_identifier_atom (node: AST_Node) {
   return is_ast_infinity(node) ||
         is_ast_na_n(node) ||
         is_ast_undefined(node)
 }
 
-export function walk_body (node: any, visitor: TreeWalker) {
+export function walk_body (node: AST_Node, visitor: TreeWalker) {
   const body = node.body
   for (let i = 0, len = body.length; i < len; i++) {
     body[i]._walk(visitor)
@@ -2739,7 +2739,7 @@ export function clone_block_scope (this, deep: boolean) {
   return clone
 }
 
-export function is_lhs (node, parent: AST_Node) {
+export function is_lhs (node: AST_Node, parent: AST_Node) {
   if (is_ast_unary(parent) && unary_side_effects.has(parent.operator)) return parent.expression
   if (is_ast_assign(parent) && parent.left === node) return node
 }
@@ -2747,7 +2747,7 @@ export function is_lhs (node, parent: AST_Node) {
 export const list_overhead = (array) => array.length && array.length - 1
 
 export function do_list (list: any[], tw: any) {
-  return MAP(list, function (node: any) {
+  return MAP(list, function (node: AST_Node) {
     return node.transform(tw, true)
   })
 }
@@ -2793,7 +2793,7 @@ export function is_ref_of (ref, type) {
   }
 }
 
-export function is_modified (compressor: Compressor, tw, node, value, level, immutable?) {
+export function is_modified (compressor: Compressor, tw, node: AST_Node, value, level, immutable?) {
   const parent = tw.parent(level)
   const lhs = is_lhs(node, parent)
   if (lhs) return lhs
@@ -2820,7 +2820,7 @@ export function is_modified (compressor: Compressor, tw, node, value, level, imm
   }
 }
 
-export function can_be_evicted_from_block (node: any) {
+export function can_be_evicted_from_block (node: AST_Node) {
   return !(
     is_ast_def_class(node) ||
         is_ast_defun(node) ||
@@ -2855,7 +2855,7 @@ export function extract_declarations_from_unreachable_code (compressor: Compress
   if (!(is_ast_defun(stat))) {
     compressor.warn('Dropping unreachable code [{file}:{line},{col}]', stat.start)
   }
-  walk(stat, (node: any) => {
+  walk(stat, (node: AST_Node) => {
     if (is_ast_var(node)) {
       compressor.warn('Declarations in unreachable code! [{file}:{line},{col}]', node.start)
       node.remove_initializers()
@@ -2891,7 +2891,7 @@ export function extract_declarations_from_unreachable_code (compressor: Compress
  * Iteration can be stopped and continued by passing the `to_visit` argument,
  * which is given to the callback in the second argument.
  **/
-export function walk (node: any, cb: Function, to_visit = [node]) {
+export function walk (node: AST_Node, cb: Function, to_visit = [node]) {
   const push = to_visit.push.bind(to_visit)
   while (to_visit.length) {
     const node = to_visit.pop()
@@ -2984,7 +2984,7 @@ export function make_node_from_constant (val, orig) {
 
 export function has_break_or_continue (loop, parent?: AST_Node) {
   let found = false
-  var tw = new TreeWalker(function (node: any) {
+  var tw = new TreeWalker(function (node: AST_Node) {
     if (found || is_ast_scope(node)) return true
     if (is_ast_loop_control(node) && tw.loopcontrol_target(node) === loop) {
       return (found = true)
@@ -3112,7 +3112,7 @@ export const def_size = (size, def) => size + list_overhead(def.definitions)
 export const lambda_modifiers = func =>
   (func.is_generator ? 1 : 0) + (func.async ? 6 : 0)
 
-export function is_undeclared_ref (node: any): node is AST_SymbolRef {
+export function is_undeclared_ref (node: AST_Node): node is AST_SymbolRef {
   return is_ast_symbol_ref(node) && node.definition?.().undeclared
 }
 
@@ -3174,12 +3174,12 @@ export function display_body (body: any[], is_toplevel: boolean, output: OutputS
   output.in_directive = false
 }
 
-export function parenthesize_for_noin (node: any, output: OutputStream, noin: boolean) {
+export function parenthesize_for_noin (node: AST_Node, output: OutputStream, noin: boolean) {
   let parens = false
   // need to take some precautions here:
   //    https://github.com/mishoo/UglifyJS2/issues/60
   if (noin) {
-    parens = walk(node, (node: any) => {
+    parens = walk(node, (node: AST_Node) => {
       if (is_ast_scope(node)) return true
       if (is_ast_binary(node) && node.operator == 'in') {
         return walk_abort // makes walk() return true
@@ -3190,7 +3190,7 @@ export function parenthesize_for_noin (node: any, output: OutputStream, noin: bo
   node.print(output, parens)
 }
 
-export const suppress = node => walk(node, (node: any) => {
+export const suppress = (node: AST_Node) => walk(node, (node: AST_Node) => {
   if (!(is_ast_symbol(node))) return
   const d = node.definition?.()
   if (!d) return
@@ -3210,7 +3210,7 @@ export function redefined_catch_def (def: any) {
 
 /* -----[ utils ]----- */
 
-export function skip_string (node: any) {
+export function skip_string (node: AST_Node) {
   if (is_ast_string(node)) {
     base54.consider(node.value, -1)
   } else if (is_ast_conditional(node)) {
@@ -3263,7 +3263,7 @@ export function next_mangled (scope: AST_Scope, options: any) {
   }
 }
 
-export function reset_variables (tw: TreeWalker, compressor: Compressor, node) {
+export function reset_variables (tw: TreeWalker, compressor: Compressor, node: AST_Accessor | AST_Toplevel) {
   node.variables.forEach(function (def) {
     reset_def(compressor, def)
     if (def.fixed === null) {
@@ -3327,7 +3327,7 @@ export function is_immutable (value) {
         is_ast_this(value)
 }
 
-export function mark_escaped (tw: TreeWalker, d, scope: AST_Scope, node, value, level, depth: number) {
+export function mark_escaped (tw: TreeWalker, d, scope: AST_Scope, node: AST_Node, value, level, depth: number) {
   const parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
@@ -3465,7 +3465,7 @@ export function best (orig, alt, first_in_statement) {
 // determine if expression is constant
 export function all_refs_local (this, scope: AST_Scope) {
   let result: any = true
-  walk(this, (node: any) => {
+  walk(this, (node: AST_Node) => {
     if (is_ast_symbol_ref(node)) {
       if (has_flag(this, INLINED)) {
         result = false
@@ -3496,7 +3496,7 @@ export function all_refs_local (this, scope: AST_Scope) {
   return result
 }
 
-export function is_iife_call (node: any) {
+export function is_iife_call (node: AST_Node) {
   // Used to determine whether the node can benefit from negation.
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
@@ -3513,7 +3513,7 @@ export function opt_AST_Lambda (self: AST_Lambda, compressor: Compressor) {
   return self
 }
 
-export function is_object (node: any) {
+export function is_object (node: AST_Node) {
   return is_ast_array(node) ||
         is_ast_lambda(node) ||
         is_ast_object(node) ||
@@ -3533,7 +3533,7 @@ export function within_array_or_object_literal (compressor: Compressor) {
   return false
 }
 
-export function is_nullish (node: any) {
+export function is_nullish (node: AST_Node) {
   let fixed
   return (
     is_ast_null(node) ||
@@ -3678,13 +3678,13 @@ export function is_atomic (lhs, self: AST_Node) {
 }
 
 export function is_reachable (self: AST_Node, defs) {
-  const find_ref = (node: any) => {
+  const find_ref = (node: AST_Node) => {
     if (is_ast_symbol_ref(node) && member(node.definition?.(), defs)) {
       return walk_abort
     }
   }
 
-  return walk_parent(self, (node, info) => {
+  return walk_parent(self, (node: AST_Node, info) => {
     if (is_ast_scope(node) && node !== self) {
       const parent = info.parent()
       if (is_ast_call(parent) && parent.expression === node) return
@@ -3734,7 +3734,7 @@ export function print (this: any, output: OutputStream, force_parens?: boolean) 
 }
 
 // Returns whether the leftmost item in the expression is an object
-export function left_is_object (node: any): boolean {
+export function left_is_object (node: AST_Node): boolean {
   if (is_ast_object(node)) return true
   if (is_ast_sequence(node)) return left_is_object(node.expressions[0])
   if (node.TYPE === 'Call') return left_is_object(node.expression)
@@ -3771,14 +3771,14 @@ export function callCodeGen (self: AST_Call, output: OutputStream) {
   })
 }
 
-export function to_moz_block (node: any) {
+export function to_moz_block (node: AST_Node) {
   return {
     type: 'BlockStatement',
     body: node.body.map(to_moz)
   }
 }
 
-export function to_moz_scope (type: string, node: any) {
+export function to_moz_scope (type: string, node: AST_Node) {
   const body = node.body.map(to_moz)
   if (is_ast_simple_statement(node.body[0]) && is_ast_string((node.body[0]).body)) {
     body.unshift(to_moz(new AST_EmptyStatement(node.body[0])))

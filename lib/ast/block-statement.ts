@@ -39,7 +39,7 @@ export default class AST_BlockStatement extends AST_Block {
   }
 }
 
-function can_be_extracted_from_if_block (node: any) {
+function can_be_extracted_from_if_block (node: AST_Node) {
   return !(
     is_ast_const(node) ||
         is_ast_let(node) ||

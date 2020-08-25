@@ -1,9 +1,10 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Unary from './unary'
 
 export default class AST_UnaryPostfix extends AST_Unary {
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return true
   }
 

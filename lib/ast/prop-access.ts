@@ -109,7 +109,7 @@ export default class AST_PropAccess extends AST_Node {
       // parens around it too, otherwise the call will be
       // interpreted as passing the arguments to the upper New
       // expression.
-      return walk(this, (node: any) => {
+      return walk(this, (node: AST_Node) => {
         if (is_ast_scope(node)) return true
         if (is_ast_call(node)) {
           return walk_abort // makes walk() return true.

@@ -27,8 +27,19 @@ export default class AST_Node extends AST {
   end: AST_Token
   expression: AST_Node
   label?: any
+  type: string
+  left: AST_Node
+  value: any
+  right: AST_Node
+  _annotations: number
+  body: any
+  key: any
+  definitions: any
+  scope: any
+  name: any
+  block_scope: AST_Scope | null
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return false
   }
 
@@ -81,7 +92,7 @@ export default class AST_Node extends AST {
     return basic_negation(this)
   }
 
-  _find_defs (compressor: Compressor, suffix) {}
+  _find_defs (compressor: Compressor, suffix): any {}
   is_string (compressor: Compressor) { return false }
   is_number (compressor: Compressor) { return false }
   is_boolean () { return false }
@@ -159,7 +170,7 @@ export default class AST_Node extends AST {
   _size (info: any) { return 0 }
   size (compressor: Compressor, stack) {
     let size = 0
-    walk_parent(this, (node, info) => {
+    walk_parent(this, (node: AST_Node, info) => {
       size += node?._size(info) || 0
     }, stack || (compressor?.stack))
 

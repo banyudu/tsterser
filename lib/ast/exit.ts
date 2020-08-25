@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Jump from './jump'
 import TreeWalker from '../tree-walker'
@@ -5,7 +6,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Exit extends AST_Jump {
   value: any
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return true
   }
 

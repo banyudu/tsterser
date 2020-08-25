@@ -41,7 +41,7 @@ export default class AST_Binary extends AST_Node {
   operator: string
   right: AST_Node
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.left === node
   }
 

@@ -21,7 +21,7 @@ import {
 export default class AST_Sequence extends AST_Node {
   expressions: any
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.expressions[0] === node
   }
 
@@ -162,7 +162,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   _do_print (this: any, output: OutputStream) {
-    this.expressions.forEach(function (node, index) {
+    this.expressions.forEach(function (node: AST_Node, index) {
       if (index > 0) {
         output.comma()
         if (output.should_break()) {

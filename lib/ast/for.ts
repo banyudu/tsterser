@@ -215,7 +215,7 @@ function if_break_in_loop (self: AST_For, compressor: Compressor) {
   }
   return self
 
-  function is_break (node: any | null) {
+  function is_break (node: AST_Node) {
     return is_ast_break(node) &&
             compressor.loopcontrol_target(node) === compressor.self()
   }

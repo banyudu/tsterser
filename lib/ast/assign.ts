@@ -89,7 +89,7 @@ export default class AST_Assign extends AST_Binary {
     }
     return self
 
-    function in_try (level, node) {
+    function in_try (level, node: AST_Node) {
       const right = self.right
       self.right = make_node('AST_Null', right)
       const may_throw = node.may_throw(compressor)

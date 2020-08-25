@@ -46,7 +46,7 @@ export default class AST_Toplevel extends AST_Scope {
   resolve_defines (this, compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
-    return this.transform(new TreeTransformer(function (this, node: any) {
+    return this.transform(new TreeTransformer(function (this, node: AST_Node) {
       const def = node._find_defs(compressor, '')
       if (!def) return
       let level = 0; let child = node; let parent
@@ -67,7 +67,7 @@ export default class AST_Toplevel extends AST_Scope {
     const self = this
     const reduce_vars = compressor.option('reduce_vars')
 
-    const preparation = new TreeWalker(function (node: any, descend) {
+    const preparation = new TreeWalker(function (node: AST_Node, descend) {
       clear_flag(node, CLEAR_BETWEEN_PASSES)
       if (reduce_vars) {
         if (compressor.top_retain &&
@@ -106,7 +106,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  def_global (node: any) {
+  def_global (node: AST_Node) {
     const globals = this.globals; const name = node.name
     if (globals.has(name)) {
       return globals.get(name)
@@ -156,7 +156,7 @@ export default class AST_Toplevel extends AST_Scope {
     const body = this.body
     const _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
     let wrapped_tl = parse(_wrapped_tl)
-    wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: any) {
+    wrapped_tl = wrapped_tl.transform(new TreeTransformer(function (node: AST_Node) {
       if (is_ast_directive(node) && node.value == '$ORIG') {
         return MAP.splice(body)
       }
@@ -176,7 +176,7 @@ export default class AST_Toplevel extends AST_Scope {
       '){"$ORIG"})(',
       args_values.slice(index + 1),
       ')'
-    ].join('')).transform(new TreeTransformer(function (node: any) {
+    ].join('')).transform(new TreeTransformer(function (node: AST_Node) {
       if (is_ast_directive(node) && node.value == '$ORIG') {
         return MAP.splice(body)
       }
@@ -216,7 +216,7 @@ export default class AST_Toplevel extends AST_Scope {
     const avoid = this.find_colliding_names(options)
     let cname = 0
     this.globals.forEach(rename)
-    this.walk(new TreeWalker(function (node: any) {
+    this.walk(new TreeWalker(function (node: AST_Node) {
       if (is_ast_scope(node)) node.variables.forEach(rename)
       if (is_ast_symbol_catch(node)) rename(node.definition())
     }))
@@ -249,7 +249,7 @@ export default class AST_Toplevel extends AST_Scope {
     const avoid = new Set()
       options.reserved?.forEach(to_avoid)
       this.globals.forEach(add_def)
-      this.walk(new TreeWalker(function (node: any) {
+      this.walk(new TreeWalker(function (node: AST_Node) {
         if (is_ast_scope(node)) node.variables.forEach(add_def)
         if (is_ast_symbol_catch(node)) add_def(node.definition())
       }))
@@ -291,7 +291,7 @@ export default class AST_Toplevel extends AST_Scope {
       }
     }
 
-    const tw = new TreeWalker(function (node: any, descend) {
+    const tw = new TreeWalker(function (node: AST_Node, descend) {
       if (is_ast_labeled_statement(node)) {
         // lname is incremented when we get to the AST_Label
         const save_nesting = lname

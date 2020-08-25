@@ -95,7 +95,7 @@ function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
     push_uniq(reserved, name)
   }
 
-  ast.walk(new TreeWalker(function (node: any) {
+  ast.walk(new TreeWalker(function (node: AST_Node) {
     if (is_ast_object_key_val(node) && node.quote) {
       add(node.key)
     } else if (is_ast_object_property(node) && node.quote) {
@@ -107,7 +107,7 @@ function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
 }
 
 function addStrings (node: AST_Node, add: Function) {
-  node.walk(new TreeWalker(function (node: any) {
+  node.walk(new TreeWalker(function (node: AST_Node) {
     node.addStrings(add)
     return true
   }))
@@ -157,7 +157,7 @@ function mangle_properties (ast: AST_Node, options: any) {
   const keep_quoted_strict = options.keep_quoted === 'strict'
 
   // step 1: find candidates to mangle
-  ast.walk(new TreeWalker(function (node: any) {
+  ast.walk(new TreeWalker(function (node: AST_Node) {
     if (is_ast_object_key_val(node)) {
       if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
@@ -193,7 +193,7 @@ function mangle_properties (ast: AST_Node, options: any) {
   }))
 
   // step 2: transform the tree, renaming properties
-  return ast.transform(new TreeTransformer(function (node: any) {
+  return ast.transform(new TreeTransformer(function (node: AST_Node) {
     if (is_ast_object_key_val(node)) {
       if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
@@ -271,8 +271,8 @@ function mangle_properties (ast: AST_Node, options: any) {
     return mangled
   }
 
-  function mangleStrings (node: any) {
-    return node.transform(new TreeTransformer(function (node: any) {
+  function mangleStrings (node: AST_Node) {
+    return node.transform(new TreeTransformer(function (node: AST_Node) {
       if (is_ast_sequence(node)) {
         const last = node.expressions.length - 1
         node.expressions[last] = mangleStrings(node.expressions[last])

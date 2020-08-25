@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import Compressor from '../compressor'
 import AST_Symbol from './symbol'
 import TreeWalker from '../tree-walker'
@@ -128,7 +129,7 @@ export default class AST_SymbolRef extends AST_Symbol {
             fixed.name = name
             lambda_def = fixed.def_function(name)
           }
-          walk(fixed, (node: any) => {
+          walk(fixed, (node: AST_Node) => {
             if (is_ast_symbol_ref(node) && node.definition?.() === defun_def) {
               node.thedef = lambda_def
               lambda_def.references.push(node)
@@ -187,7 +188,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return this
 
     function has_symbol_ref (value) {
-      return walk(value, (node: any) => {
+      return walk(value, (node: AST_Node) => {
         if (is_ast_symbol_ref(node)) return walk_abort
       })
     }

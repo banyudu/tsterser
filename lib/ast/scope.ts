@@ -54,7 +54,7 @@ export default class AST_Scope extends AST_Block {
 
   process_expression (insert, compressor?: Compressor) {
     const self = this
-    var tt = new TreeTransformer(function (node: any) {
+    var tt = new TreeTransformer(function (node: AST_Node) {
       if (insert && is_ast_simple_statement(node)) {
         return make_node('AST_Return', node, {
           value: node.body
@@ -105,7 +105,7 @@ export default class AST_Scope extends AST_Block {
     if (self.pinned()) return
     const drop_funcs = !(is_ast_toplevel(self)) || compressor.toplevel.funcs
     const drop_vars = !(is_ast_toplevel(self)) || compressor.toplevel.vars
-    const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: any) {
+    const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: AST_Node) {
       if (is_ast_assign(node) &&
               (has_flag(node, WRITE_ONLY) || node.operator == '=')
       ) {
@@ -129,7 +129,7 @@ export default class AST_Scope extends AST_Block {
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
     let scope: any = this
-    var tw = new TreeWalker(function (node: any, descend) {
+    var tw = new TreeWalker(function (node: AST_Node, descend) {
       if (is_ast_lambda(node) && node.uses_arguments && !tw.has_directive('use strict')) {
         node.argnames.forEach(function (argname) {
           if (!(is_ast_symbol_declaration(argname))) return
@@ -178,7 +178,7 @@ export default class AST_Scope extends AST_Block {
             map_add(var_defs_by_id, def.name.definition?.().id, def)
           }
           if (in_export || !drop_vars) {
-            walk(def.name, (node: any) => {
+            walk(def.name, (node: AST_Node) => {
               if (is_ast_symbol_declaration(node)) {
                 const def = node.definition?.()
                 if (
@@ -224,7 +224,7 @@ export default class AST_Scope extends AST_Block {
     })
     // pass 3: we should drop declarations not in_use
     var tt = new TreeTransformer(
-      function before (this, node, descend: Function, in_list) {
+      function before (this, node: AST_Node, descend: Function, in_list) {
         const parent = tt.parent()
         let def
         if (drop_vars) {
@@ -459,7 +459,7 @@ export default class AST_Scope extends AST_Block {
 
     self.transform(tt)
 
-    function scan_ref_scoped (node, descend: Function) {
+    function scan_ref_scoped (node: AST_Node, descend: Function) {
       let node_def
       const sym = assign_as_unused(node)
       if (is_ast_symbol_ref(sym) &&
@@ -511,7 +511,7 @@ export default class AST_Scope extends AST_Block {
       const vars = new Map(); let vars_found = 0; let var_decl = 0
       // let's count var_decl first, we seem to waste a lot of
       // space if we hoist `var` when there's only one.
-      walk(self, (node: any) => {
+      walk(self, (node: AST_Node) => {
         if (is_ast_scope(node) && node !== self) { return true }
         if (is_ast_var(node)) {
           ++var_decl
@@ -520,7 +520,7 @@ export default class AST_Scope extends AST_Block {
       })
       hoist_vars = hoist_vars && var_decl > 1
       var tt = new TreeTransformer(
-        function before (node: any) {
+        function before (node: AST_Node) {
           if (node !== self) {
             if (is_ast_directive(node)) {
               dirs.push(node)
@@ -644,7 +644,7 @@ export default class AST_Scope extends AST_Block {
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     const top_retain = is_ast_toplevel(self) && compressor.top_retain || return_false
     const defs_by_id = new Map()
-    var hoister = new TreeTransformer(function (this, node: any, descend: Function) {
+    var hoister = new TreeTransformer(function (this, node: AST_Node, descend: Function) {
       if (is_ast_definitions(node) &&
               is_ast_export(hoister.parent())) return node
       if (is_ast_var_def(node)) {
@@ -852,7 +852,7 @@ export default class AST_Scope extends AST_Block {
     let defun: any = null
     let in_destructuring: any = null
     const for_scopes: any[] = []
-    var tw = new TreeWalker((node, descend) => {
+    var tw = new TreeWalker((node: AST_Node, descend) => {
       if (node.is_block_scope()) {
         const save_scope = scope
         node.block_scope = scope = new AST_Scope(node)
@@ -1026,7 +1026,7 @@ export default class AST_Scope extends AST_Block {
       this.globals = new Map()
     }
 
-    tw = new TreeWalker((node: any) => {
+    tw = new TreeWalker((node: AST_Node) => {
       if (is_ast_loop_control(node) && node.label) {
         node.label.thedef.references.push(node) // TODO: check type
         return true
@@ -1069,7 +1069,7 @@ export default class AST_Scope extends AST_Block {
 
     // pass 3: work around IE8 and Safari catch scope bugs
     if (options.ie8 || options.safari10) {
-      walk(this, (node: any) => {
+      walk(this, (node: AST_Node) => {
         if (is_ast_symbol_catch(node)) {
           const name = node.name
           const refs = node.thedef.references

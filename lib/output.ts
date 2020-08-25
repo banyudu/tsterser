@@ -55,6 +55,7 @@ import {
   is_identifier_char
 } from './parse'
 import { AST_Token } from './ast'
+import { Comment } from './types'
 
 const EXPECT_DIRECTIVE = /^$|[;{][\s\n]*$/
 const CODE_LINE_BREAK = 10
@@ -102,7 +103,7 @@ export class OutputStream {
   private _current_line = 1
   private _current_pos = 0
   private _OUTPUT = ''
-  readonly printed_comments: Set<any[]> = new Set()
+  readonly printed_comments: Set<Comment[] | Comment> = new Set()
 
   with_parens (cont: () => any) {
     this.print('(')
@@ -235,7 +236,7 @@ export class OutputStream {
     }
   }
 
-  append_comments (node: any, tail?: boolean) {
+  append_comments (node: AST_Node, tail?: boolean) {
     if (!this.readonly && this._comment_filter !== return_false) {
       const self = this
       const token = node.end
@@ -522,7 +523,7 @@ export class OutputStream {
     return this.stack[this.stack.length - 2 - (n || 0)]
   }
 
-  prepend_comments (node: any) {
+  prepend_comments (node: AST_Node) {
     if (!this.readonly) {
       const self = this
       const start = node.start
@@ -550,7 +551,7 @@ export class OutputStream {
       printed_comments.add(comments)
 
       if (return_with_value) {
-        var tw = new TreeWalker((node: any) => {
+        var tw = new TreeWalker((node: AST_Node) => {
           const parent: AST_Node = tw.parent()
           if (parent?._prepend_comments_check(node)) {
             if (!node.start) return undefined

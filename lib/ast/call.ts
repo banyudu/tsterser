@@ -59,7 +59,7 @@ export default class AST_Call extends AST_Node {
   args: AST_Node[]
   _annotations: number
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.TYPE == 'Call' && this.expression === node
   }
 
@@ -367,7 +367,7 @@ export default class AST_Call extends AST_Node {
           ast.compute_char_frequency(mangle)
           ast.mangle_names(mangle)
           let fun
-          walk(ast, (node: any) => {
+          walk(ast, (node: AST_Node) => {
             if (is_func_expr(node)) {
               fun = node
               return walk_abort
@@ -562,7 +562,7 @@ export default class AST_Call extends AST_Node {
 
     function can_inject_args_values () {
       const arg_vals_outer_refs = new Set()
-      const value_walker = (node: any) => {
+      const value_walker = (node: AST_Node) => {
         if (is_ast_scope(node)) {
           const scope_outer_refs = new Set()
           node.enclosed.forEach(function (def) {

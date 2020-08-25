@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
@@ -9,7 +10,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Dot extends AST_PropAccess {
   quote: any
 
-  _prepend_comments_check (node) {
+  _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
 

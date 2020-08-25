@@ -78,7 +78,7 @@ export default class AST_Destructuring extends AST_Node {
 
   all_symbols () {
     const out: any[] = []
-    this.walk(new TreeWalker(function (node: any) {
+    this.walk(new TreeWalker(function (node: AST_Node) {
       if (is_ast_symbol(node)) {
         out.push(node)
       }

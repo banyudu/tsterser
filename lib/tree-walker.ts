@@ -78,7 +78,7 @@ export default class TreeWalker {
     }
   }
 
-  loopcontrol_target (node: any): any | undefined {
+  loopcontrol_target (node: AST_Node): any | undefined {
     const stack = this.stack
     for (let i = stack.length; --i >= 0;) {
       const x = stack[i]

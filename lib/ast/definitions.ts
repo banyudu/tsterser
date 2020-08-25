@@ -59,7 +59,7 @@ export default class AST_Definitions extends AST_Statement {
         def.value = null
         decls.push(def)
       } else {
-        walk(def.name, (node: any) => {
+        walk(def.name, (node: AST_Node) => {
           if (is_ast_symbol_declaration(node)) {
             decls.push(make_node('AST_VarDef', def, {
               name: node,
