@@ -653,7 +653,7 @@ export default class AST_Call extends AST_Node {
       return !in_loop || in_loop.length == 0 || !is_reachable(fn, in_loop)
     }
 
-    function append_var (decls, expressions, name, value) {
+    function append_var (decls, expressions: AST_Node[], name, value) {
       const def = name.definition?.()
       scope.variables.set(name.name, def)
       scope.enclosed.push(def)
@@ -675,7 +675,7 @@ export default class AST_Call extends AST_Node {
       }
     }
 
-    function flatten_args (decls, expressions) {
+    function flatten_args (decls, expressions: AST_Node[]) {
       const len = fn.argnames.length
       for (var i = self.args.length; --i >= len;) {
         expressions.push(self.args[i])
@@ -696,7 +696,7 @@ export default class AST_Call extends AST_Node {
       expressions.reverse()
     }
 
-    function flatten_vars (decls, expressions) {
+    function flatten_vars (decls, expressions: AST_Node[]) {
       let pos = expressions.length
       for (let i = 0, lines = fn.body.length; i < lines; i++) {
         const stat = fn.body[i]
