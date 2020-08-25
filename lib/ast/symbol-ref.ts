@@ -236,7 +236,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     if (HOP(defines, name)) return to_node(defines[name], this)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     const d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&

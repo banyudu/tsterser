@@ -10,7 +10,7 @@ export default class AST_While extends AST_DWLoop {
     return compressor.option('loops') ? make_node('AST_For', this, this).optimize(compressor) : this
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this

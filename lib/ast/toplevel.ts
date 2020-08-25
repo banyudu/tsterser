@@ -35,7 +35,7 @@ export default class AST_Toplevel extends AST_Scope {
   globals: any
   mangled_names: any
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     this.globals.forEach(function (def) {
       reset_def(compressor, def)
     })

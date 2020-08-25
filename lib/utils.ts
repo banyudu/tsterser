@@ -2091,7 +2091,7 @@ export function tighten_body (statements, compressor: Compressor) {
         return true
       }
       let found = false
-      return statements[stat_index].transform(new TreeTransformer(function (node, descend, in_list) {
+      return statements[stat_index].transform(new TreeTransformer(function (node, descend: Function, in_list) {
         if (found) return node
         if (node === expr || node.body === expr) {
           found = true
@@ -3362,7 +3362,7 @@ export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, dept
   d.direct_access = true
 }
 
-export function mark_lambda (this, tw: TreeWalker, descend, compressor: Compressor) {
+export function mark_lambda (this, tw: TreeWalker, descend: Function, compressor: Compressor) {
   clear_flag(this, INLINED)
   push(tw)
   reset_variables(tw, compressor, this)

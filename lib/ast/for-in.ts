@@ -9,7 +9,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   object: any
   await: any
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     suppress(this.init)
     this.object.walk(tw)

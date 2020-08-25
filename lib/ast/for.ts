@@ -61,7 +61,7 @@ export default class AST_For extends AST_IterationStatement {
     return if_break_in_loop(this, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     if (this.init) this.init.walk(tw)
     const saved_loop = tw.in_loop

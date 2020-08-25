@@ -55,7 +55,7 @@ export default class AST_Try extends AST_Block {
               this.bfinally?.has_side_effects(compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     push(tw)
     walk_body(this, tw)

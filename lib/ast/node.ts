@@ -84,7 +84,7 @@ export default class AST_Node extends AST {
   is_string (compressor: Compressor) { return false }
   is_number (compressor: Compressor) { return false }
   is_boolean () { return false }
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {}
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {}
   _dot_throw (compressor: Compressor) { return is_strict(compressor) }
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,

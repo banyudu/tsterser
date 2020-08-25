@@ -69,7 +69,7 @@ export default class AST_Class extends AST_Scope {
     return all_refs_local.call(this, scope)
   }
 
-  reduce_vars (tw, descend) {
+  reduce_vars (tw, descend: Function) {
     clear_flag(this, INLINED)
     push(tw)
     descend()

@@ -682,7 +682,7 @@ export default class AST_Binary extends AST_Node {
               this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)

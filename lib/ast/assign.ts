@@ -147,7 +147,7 @@ export default class AST_Assign extends AST_Binary {
     return this.operator == '=' && this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     const node = this
     if (is_ast_destructuring(node.left)) {
       suppress(node.left)

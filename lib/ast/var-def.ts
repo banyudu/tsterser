@@ -17,7 +17,7 @@ export default class AST_VarDef extends AST_Node {
     return this.value
   }
 
-  reduce_vars (tw: TreeWalker, descend) {
+  reduce_vars (tw: TreeWalker, descend: Function) {
     const node = this
     if (is_ast_destructuring(node.name)) {
       suppress(node.name)

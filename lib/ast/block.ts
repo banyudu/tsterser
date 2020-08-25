@@ -31,7 +31,7 @@ export default class AST_Block extends AST_Statement {
     return anySideEffect(this.body, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
   }
 

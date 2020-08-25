@@ -36,7 +36,7 @@ export default class AST_Do extends AST_DWLoop {
     return this
   }
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this

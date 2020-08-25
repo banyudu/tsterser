@@ -36,7 +36,7 @@ export default class AST_Lambda extends AST_Scope {
   _eval (compressor: Compressor) { return this }
   is_constant_expression = all_refs_local
 
-  reduce_vars (tw: TreeWalker, descend, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     return mark_lambda.call(this, tw, descend, compressor)
   }
 
