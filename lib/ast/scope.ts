@@ -739,7 +739,7 @@ export default class AST_Scope extends AST_Block {
   }
 
   // TODO create function that asks if we can inline
-  add_child_scope (scope: any) {
+  add_child_scope (scope: AST_Scope) {
     // `scope` is going to be moved into wherever the compressor is
     // right now. Update the required scopes' information
 

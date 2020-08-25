@@ -1808,7 +1808,7 @@ export function tighten_body (statements, compressor: Compressor) {
       }
     }
 
-    function redefined_within_scope (def, scope) {
+    function redefined_within_scope (def, scope: AST_Scope) {
       if (def.global) return false
       let cur_scope = def.scope
       while (cur_scope && cur_scope !== scope) {
@@ -3237,7 +3237,7 @@ export function needsParens (this, output: OutputStream) {
   if (is_ast_assign(this) && is_ast_destructuring(this.left) && this.left.is_array === false) { return true }
   return undefined
 }
-export function next_mangled (scope: any, options: any) {
+export function next_mangled (scope: AST_Scope, options: any) {
   const ext = scope.enclosed
   out: while (true) {
     const m = base54(++scope.cname)
@@ -3276,7 +3276,7 @@ export function reset_variables (tw: TreeWalker, compressor: Compressor, node) {
   })
 }
 
-export function safe_to_assign (tw: TreeWalker, def, scope, value) {
+export function safe_to_assign (tw: TreeWalker, def, scope: AST_Scope, value) {
   if (def.fixed === undefined) return true
   let def_safe_ids
   if (def.fixed === null &&
@@ -3327,7 +3327,7 @@ export function is_immutable (value) {
         is_ast_this(value)
 }
 
-export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, depth: number) {
+export function mark_escaped (tw: TreeWalker, d, scope: AST_Scope, node, value, level, depth: number) {
   const parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
@@ -3463,7 +3463,7 @@ export function best (orig, alt, first_in_statement) {
 
 /* -----[ boolean/negation helpers ]----- */
 // determine if expression is constant
-export function all_refs_local (this, scope) {
+export function all_refs_local (this, scope: AST_Scope) {
   let result: any = true
   walk(this, (node: any) => {
     if (is_ast_symbol_ref(node)) {
@@ -3659,7 +3659,7 @@ export function find_variable (compressor: Compressor, name) {
   return scope.find_variable(name)
 }
 
-export function scope_encloses_variables_in_this_scope (scope, pulled_scope) {
+export function scope_encloses_variables_in_this_scope (scope: AST_Scope, pulled_scope) {
   for (const enclosed of pulled_scope.enclosed) {
     if (pulled_scope.variables.has(enclosed.name)) {
       continue

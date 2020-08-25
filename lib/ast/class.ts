@@ -52,7 +52,7 @@ export default class AST_Class extends AST_Scope {
   }
 
   _eval () { return this }
-  is_constant_expression (scope) {
+  is_constant_expression (scope: AST_Scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
       return false
     }
