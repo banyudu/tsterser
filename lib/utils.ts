@@ -1524,7 +1524,7 @@ export function make_block (stmt: any, output: OutputStream) {
 }
 
 // Tighten a bunch of statements together. Used whenever there is a block.
-export function tighten_body (statements, compressor: Compressor) {
+export function tighten_body (statements: AST_Statement[], compressor: Compressor) {
   let in_loop, in_try
   let scope = compressor.find_parent(AST_Scope).get_defun_scope()
   find_loop_scope_try()
@@ -1574,7 +1574,7 @@ export function tighten_body (statements, compressor: Compressor) {
   // to fold assignment into the site for compression.
   // Will not attempt to collapse assignments into or past code blocks
   // which are not sequentially executed, e.g. loops and conditionals.
-  function collapse (statements, compressor: Compressor) {
+  function collapse (statements: AST_Statement[], compressor: Compressor) {
     if (scope.pinned()) return statements
     let args
     const candidates: any[] = []
@@ -2166,7 +2166,7 @@ export function tighten_body (statements, compressor: Compressor) {
     }
   }
 
-  function eliminate_spurious_blocks (statements) {
+  function eliminate_spurious_blocks (statements: AST_Statement[]) {
     const seen_dirs: any[] = []
     for (let i = 0; i < statements.length;) {
       const stat = statements[i]
@@ -2190,12 +2190,12 @@ export function tighten_body (statements, compressor: Compressor) {
     }
   }
 
-  function handle_if_return (statements, compressor: Compressor) {
+  function handle_if_return (statements: AST_Statement[], compressor: Compressor) {
     const self = compressor.self()
     const multiple_if_returns = has_multiple_if_returns(statements)
     const in_lambda = is_ast_lambda(self)
     for (var i = statements.length; --i >= 0;) {
-      let stat = statements[i]
+      let stat: any = statements[i]
       const j = next_index(i)
       const next = statements[j]
 
@@ -2317,7 +2317,7 @@ export function tighten_body (statements, compressor: Compressor) {
       }
     }
 
-    function has_multiple_if_returns (statements) {
+    function has_multiple_if_returns (statements: AST_Statement[]) {
       let n = 0
       for (let i = statements.length; --i >= 0;) {
         const stat = statements[i]
@@ -2387,7 +2387,7 @@ export function tighten_body (statements, compressor: Compressor) {
     }
   }
 
-  function eliminate_dead_code (statements, compressor: Compressor) {
+  function eliminate_dead_code (statements: AST_Statement[], compressor: Compressor) {
     let has_quit
     const self = compressor.self()
     for (var i = 0, n = 0, len = statements.length; i < len; i++) {
@@ -2428,7 +2428,7 @@ export function tighten_body (statements, compressor: Compressor) {
     )
   }
 
-  function sequencesize (statements, compressor: Compressor) {
+  function sequencesize (statements: AST_Statement[], compressor: Compressor) {
     if (statements.length < 2) return
     let seq: any[] = []; let n = 0
     function push_seq () {
@@ -2597,11 +2597,11 @@ export function tighten_body (statements, compressor: Compressor) {
     return trimmed && exprs
   }
 
-  function join_consecutive_vars (statements) {
+  function join_consecutive_vars (statements: AST_Statement[]) {
     let defs
     for (var i = 0, j = -1, len = statements.length; i < len; i++) {
       var stat = statements[i]
-      var prev = statements[j]
+      var prev: any = statements[j]
       if (is_ast_definitions(stat)) {
         if (prev && prev.TYPE == stat.TYPE) {
           prev.definitions = prev.definitions.concat(stat.definitions)
