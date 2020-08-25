@@ -1,3 +1,4 @@
+
 /***********************************************************************
 
   A JavaScript tokenizer / parser / beautifier / compressor.
@@ -42,8 +43,7 @@
 
  ***********************************************************************/
 
-'use strict'
-
+import AST_Symbol from './ast/symbol'
 import {
   characters,
   defaults,
@@ -2774,7 +2774,7 @@ function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function _verify_symbol (sym) {
+  function _verify_symbol (sym: AST_Symbol) {
     const name = sym.name
     if (is_in_generator() && name == 'yield') {
       token_error(sym.start, 'Yield cannot be used as identifier inside generators')

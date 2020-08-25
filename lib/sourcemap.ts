@@ -41,8 +41,6 @@
 
  ***********************************************************************/
 
-'use strict'
-
 import MOZ_SourceMap from 'source-map'
 import { defaults } from './utils'
 import { SourceMapOptions } from './types'

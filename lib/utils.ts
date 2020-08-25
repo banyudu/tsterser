@@ -2140,7 +2140,7 @@ export function tighten_body (statements, compressor: Compressor) {
       return false
     }
 
-    function may_modify (sym) {
+    function may_modify (sym: AST_Symbol) {
       if (!sym.definition) return true // AST_Destructuring
       const def = sym.definition?.()
       if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
@@ -3293,7 +3293,7 @@ export function safe_to_assign (tw: TreeWalker, def, scope, value) {
   if (is_ast_defun(def.fixed)) {
     return is_ast_node(value) && def.fixed.parent_scope === scope
   }
-  return def.orig.every((sym) => {
+  return def.orig.every((sym: AST_Symbol) => {
     return !(is_ast_symbol_const(sym) ||
             is_ast_symbol_defun(sym) ||
             is_ast_symbol_lambda(sym))

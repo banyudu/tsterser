@@ -1,3 +1,4 @@
+import AST_Symbol from './symbol'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope from './scope'
@@ -234,10 +235,10 @@ export default class AST_Toplevel extends AST_Scope {
       if (options.reserved?.has(def.name)) return
       const redefinition = redefined_catch_def(def)
       const name = def.name = redefinition ? redefinition.name : next_name()
-      def.orig.forEach(function (sym) {
+      def.orig.forEach(function (sym: AST_Symbol) {
         sym.name = name
       })
-      def.references.forEach(function (sym) {
+      def.references.forEach(function (sym: AST_Symbol) {
         sym.name = name
       })
     }

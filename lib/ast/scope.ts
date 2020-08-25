@@ -1,3 +1,4 @@
+import AST_Symbol from './symbol'
 import AST_Node from './node'
 import AST_Block from './block'
 import Compressor from '../compressor'
@@ -445,7 +446,7 @@ export default class AST_Scope extends AST_Block {
           return node
         }
 
-        function template (sym) {
+        function template (sym: AST_Symbol) {
           return {
             name: sym.name,
             file: sym.start.file,
@@ -689,7 +690,7 @@ export default class AST_Scope extends AST_Block {
         }
       }
 
-      function make_sym (sym: any | any, key: string, defs: Map<string, any>) {
+      function make_sym (sym: AST_Symbol, key: string, defs: Map<string, any>) {
         const new_var = make_node(sym.constructor.name, sym, {
           name: self.make_var_name(sym.name + '_' + key),
           scope: self
@@ -955,7 +956,7 @@ export default class AST_Scope extends AST_Block {
         } else {
           def = defun.def_variable(node, (node as any).TYPE == 'SymbolVar' ? null : undefined)
         }
-        if (!def.orig.every((sym) => {
+        if (!def.orig.every((sym: AST_Symbol) => {
           if (sym === node) return true
           if (is_ast_symbol_block_declaration(node)) {
             return is_ast_symbol_lambda(sym)

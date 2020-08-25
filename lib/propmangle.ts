@@ -41,9 +41,6 @@
 
  ***********************************************************************/
 
-'use strict'
-/* global global, self */
-
 import { defaults, base54, push_uniq, is_ast_object_key_val, is_ast_sequence, is_ast_object_property, is_ast_string, is_ast_sub, is_ast_dot, is_ast_conditional, is_ast_call } from './utils'
 import TreeWalker from './tree-walker'
 import { domprops } from '../tools/domprops'
