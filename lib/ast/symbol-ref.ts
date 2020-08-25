@@ -207,7 +207,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     const fixed = this.fixed_value()
     if (!fixed) return this
     let value

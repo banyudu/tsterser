@@ -84,7 +84,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return self
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     let e = this.expression
     // Function would be evaluated to an array and so typeof would
     // incorrectly return 'object'. Hence making is a special case.

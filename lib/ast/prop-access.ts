@@ -12,7 +12,7 @@ export default class AST_PropAccess extends AST_Node {
     return this.expression === child
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       let key = this.property
       if (is_ast_node(key)) {

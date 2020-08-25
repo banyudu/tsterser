@@ -777,7 +777,7 @@ export default class AST_Call extends AST_Node {
     return anySideEffect(this.args, compressor)
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     const exp = this.expression
     if (compressor.option('unsafe') && is_ast_prop_access(exp)) {
       let key = exp.property

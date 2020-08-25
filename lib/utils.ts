@@ -3327,7 +3327,7 @@ export function is_immutable (value) {
         is_ast_this(value)
 }
 
-export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, depth) {
+export function mark_escaped (tw: TreeWalker, d, scope, node, value, level, depth: number) {
   const parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return

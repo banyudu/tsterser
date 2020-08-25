@@ -70,7 +70,7 @@ export default class AST_Object extends AST_Node {
     return anySideEffect(this.properties, compressor)
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       const val = {}
       for (let i = 0, len = this.properties.length; i < len; i++) {

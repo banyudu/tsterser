@@ -586,7 +586,7 @@ export default class AST_Binary extends AST_Node {
           this.right.has_side_effects(compressor)
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     if (!non_converting_binary.has(this.operator)) depth++
     const left = this.left._eval(compressor, depth)
     if (left === this.left) return this

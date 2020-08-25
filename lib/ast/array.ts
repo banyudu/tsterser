@@ -49,7 +49,7 @@ export default class AST_Array extends AST_Node {
     return anySideEffect(this.elements, compressor)
   }
 
-  _eval (compressor: Compressor, depth) {
+  _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       const elements: any[] = []
       for (let i = 0, len = this.elements.length; i < len; i++) {
