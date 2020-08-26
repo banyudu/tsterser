@@ -736,7 +736,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | false) {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
         let exprs = this.args.slice()

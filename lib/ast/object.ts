@@ -56,7 +56,7 @@ export default class AST_Object extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | false) {
     const values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
