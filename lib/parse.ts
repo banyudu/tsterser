@@ -42,6 +42,7 @@
 
  ***********************************************************************/
 
+import { Comment } from './types'
 import AST_Symbol from './ast/symbol'
 import {
   characters,
@@ -1063,7 +1064,7 @@ function parse ($TEXT: string, opt?: any) {
   function expect (punc) { return expect_token('punc', punc) }
 
   function has_newline_before (token) {
-    return token.nlb || !token.comments_before.every((comment) => !comment.nlb)
+    return token.nlb || !token.comments_before.every((comment: Comment) => !comment.nlb)
   }
 
   function can_insert_semicolon () {

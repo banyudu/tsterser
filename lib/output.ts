@@ -64,7 +64,7 @@ const CODE_SPACE = 32
 const r_annotation = /[@#]__(PURE|INLINE|NOINLINE)__/g
 const requireSemicolonChars = makePredicate('( [ + * / - , . `')
 
-function is_some_comments (comment: any) {
+function is_some_comments (comment: Comment) {
   // multiline comment
   return (
     (comment.type === 'comment2' || comment.type === 'comment1') &&
@@ -493,7 +493,7 @@ export class OutputStream {
   }
 
   readonly: boolean
-  _comment_filter (comment: any) { return false } // Default case, throw all comments away
+  _comment_filter (comment: Comment) { return false } // Default case, throw all comments away
 
   colon () {
     this.print(':')
@@ -714,11 +714,11 @@ export class OutputStream {
         )
       }
       if (comments instanceof RegExp) {
-        this._comment_filter = (comment: any) => {
+        this._comment_filter = (comment: Comment) => {
           return comment.type != 'comment5' && (comments as RegExp).test(comment.value)
         }
       } else if (typeof comments === 'function') {
-        this._comment_filter = (comment: any) => {
+        this._comment_filter = (comment: Comment) => {
           return comment.type != 'comment5' && (comments as Function)(this, comment)
         }
       } else if (comments === 'some') {
