@@ -80,7 +80,7 @@ export default class AST_Node extends AST {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | false): AST_Node {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {
     return this
   }
 
@@ -88,7 +88,7 @@ export default class AST_Node extends AST {
   has_side_effects (compressor: Compressor) { return true }
   _eval (compressor?: Compressor, depth?: number): any { return this }
   is_constant_expression (scope?: AST_Scope) { return false }
-  negate (compressor: Compressor, first_in_statement?: Function | false) {
+  negate (compressor: Compressor, first_in_statement?: Function | boolean) {
     return basic_negation(this)
   }
 

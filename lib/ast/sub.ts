@@ -151,7 +151,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | false) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
