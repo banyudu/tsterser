@@ -1,3 +1,4 @@
+import AST_VarDef from './var-def'
 import AST_Symbol from './symbol'
 import AST_Node from './node'
 import AST_Block from './block'
@@ -118,7 +119,7 @@ export default class AST_Scope extends AST_Block {
     const in_use_ids = new Map()
     const fixed_ids = new Map()
     if (is_ast_toplevel(self) && compressor.top_retain) {
-      self.variables.forEach(function (def) {
+      self.variables.forEach(function (def: SymbolDef) {
         if (compressor.top_retain?.(def) && !in_use_ids.has(def.id)) {
           in_use_ids.set(def.id, def)
         }
@@ -173,7 +174,7 @@ export default class AST_Scope extends AST_Block {
       }
       if (is_ast_definitions(node) && scope === self) {
         const in_export = is_ast_export(tw.parent())
-        node.definitions.forEach(function (def) {
+        node.definitions.forEach(function (def: AST_VarDef) {
           if (is_ast_symbol_var(def.name)) {
             map_add(var_defs_by_id, def.name.definition?.().id, def)
           }
@@ -214,7 +215,7 @@ export default class AST_Scope extends AST_Block {
     // initialization code to figure out if it uses other
     // symbols (that may not be in_use).
     tw = new TreeWalker(scan_ref_scoped)
-    in_use_ids.forEach(function (def) {
+    in_use_ids.forEach(function (def: SymbolDef) {
       const init = initializations.get(def.id)
       if (init) {
         init.forEach(function (init) {
@@ -306,7 +307,7 @@ export default class AST_Scope extends AST_Block {
           // side effects, we can cascade the init. code
           // into the next one, or next statement.
           let side_effects: any[] = []
-          node.definitions.forEach(function (def) {
+          node.definitions.forEach(function (def: AST_VarDef) {
             if (def.value) def.value = def.value.transform(tt)
             const is_destructure = is_ast_destructuring(def.name)
             const sym = is_destructure
@@ -533,7 +534,7 @@ export default class AST_Scope extends AST_Block {
               return make_node('AST_EmptyStatement', node)
             }
             if (hoist_vars && is_ast_var(node)) {
-              node.definitions.forEach(function (def) {
+              node.definitions.forEach(function (def: AST_VarDef) {
                 if (is_ast_destructuring(def.name)) return
                 vars.set(def.name.name, def)
                 ++vars_found
@@ -565,7 +566,7 @@ export default class AST_Scope extends AST_Block {
         let defs: any[] = []
         const is_lambda = is_ast_lambda(self)
         const args_as_names = is_lambda ? (self as any).args_as_names() : null
-        vars.forEach((def, name) => {
+        vars.forEach((def: AST_VarDef, name) => {
           if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
             vars.delete(name)
           } else {
@@ -717,7 +718,7 @@ export default class AST_Scope extends AST_Block {
       if (this._added_var_names) {
         this._added_var_names.forEach(name => { var_names?.add(name) })
       }
-      this.enclosed.forEach(function (def: any) {
+      this.enclosed.forEach(function (def: AST_VarDef) {
                       var_names?.add(def.name)
       })
       this.variables.forEach(function (_, name: string) {
@@ -808,7 +809,7 @@ export default class AST_Scope extends AST_Block {
     return (symbol.thedef = def)
   }
 
-  next_mangled (options: any, def: any) {
+  next_mangled (options: any, def: SymbolDef) {
     return next_mangled(this, options)
   }
 
@@ -1003,7 +1004,7 @@ export default class AST_Scope extends AST_Block {
     })
     this.walk(tw)
 
-    function mark_export (def: any, level: number) {
+    function mark_export (def: SymbolDef, level: number) {
       if (in_destructuring) {
         let i = 0
         do {
@@ -1094,7 +1095,7 @@ export default class AST_Scope extends AST_Block {
     // https://bugs.webkit.org/show_bug.cgi?id=171041
     if (options.safari10) {
       for (const scope of for_scopes) {
-                scope.parent_scope?.variables.forEach(function (def) {
+                scope.parent_scope?.variables.forEach(function (def: AST_VarDef) {
                   push_uniq(scope.enclosed, def)
                 })
       }

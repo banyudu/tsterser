@@ -1,3 +1,4 @@
+import AST_VarDef from './var-def'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
@@ -6,7 +7,7 @@ import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to
 import TreeWalker from '../tree-walker'
 
 export default class AST_Definitions extends AST_Statement {
-  definitions: any[]
+  definitions: AST_VarDef[]
 
   _optimize (compressor: Compressor) {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
@@ -54,7 +55,7 @@ export default class AST_Definitions extends AST_Statement {
 
   remove_initializers () {
     const decls: any[] = []
-    this.definitions.forEach(function (def) {
+    this.definitions.forEach(function (def: AST_VarDef) {
       if (is_ast_symbol_declaration(def.name)) {
         def.value = null
         decls.push(def)
@@ -102,7 +103,7 @@ export default class AST_Definitions extends AST_Statement {
   _do_print (this: any, output: OutputStream, kind: string) {
     output.print(kind)
     output.space()
-    this.definitions.forEach(function (def, i) {
+    this.definitions.forEach(function (def: AST_VarDef, i) {
       if (i) output.comma()
       def.print(output)
     })

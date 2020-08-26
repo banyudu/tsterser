@@ -1,3 +1,4 @@
+import AST_VarDef from './var-def'
 import AST_Node from './node'
 import AST_Hole from './hole'
 import AST_Array from './array'
@@ -564,7 +565,7 @@ export default class AST_Call extends AST_Node {
       const value_walker = (node: AST_Node) => {
         if (is_ast_scope(node)) {
           const scope_outer_refs = new Set()
-          node.enclosed.forEach(function (def) {
+          node.enclosed.forEach(function (def: AST_VarDef) {
             scope_outer_refs.add(def.name)
           })
           node.variables.forEach(function (name) {

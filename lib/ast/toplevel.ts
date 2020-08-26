@@ -36,7 +36,7 @@ export default class AST_Toplevel extends AST_Scope {
   mangled_names: any
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
-    this.globals.forEach(function (def) {
+    this.globals.forEach(function (def: SymbolDef) {
       reset_def(compressor, def)
     })
     reset_variables(tw, compressor, this)
@@ -228,7 +228,7 @@ export default class AST_Toplevel extends AST_Scope {
       return name
     }
 
-    function rename (def: any) {
+    function rename (def: SymbolDef) {
       if (def.global && options.cache) return
       if (def.unmangleable(options)) return
       if (options.reserved?.has(def.name)) return
@@ -258,7 +258,7 @@ export default class AST_Toplevel extends AST_Scope {
         avoid.add(name)
       }
 
-      function add_def (def: any) {
+      function add_def (def: SymbolDef) {
         let name = def.name
         if (def.global && cache && cache.has(name)) name = cache.get(name) as string
         else if (!def.unmangleable(options)) return
@@ -335,14 +335,14 @@ export default class AST_Toplevel extends AST_Scope {
       unmangleable_names = new Set()
       // Collect a set of short names which are unmangleable,
       // for use in avoiding collisions in next_mangled.
-      to_mangle.forEach(def => {
+      to_mangle.forEach((def: SymbolDef) => {
         if (def.name.length < 6 && def.unmangleable(options)) {
                   unmangleable_names?.add(def.name)
         }
       })
     }
 
-    to_mangle.forEach(def => { def.mangle(options) })
+    to_mangle.forEach((def: SymbolDef) => { def.mangle(options) })
 
     function_defs = null
     unmangleable_names = null

@@ -14,6 +14,7 @@ import {
   make_node, is_ast_this, is_ast_symbol_funarg, is_ast_call
 } from '../utils'
 import { walk_abort } from '../constants'
+import SymbolDef from '../symbol-def'
 
 export default class AST_Function extends AST_Lambda {
   name: any
@@ -52,7 +53,7 @@ export default class AST_Function extends AST_Lambda {
   }
 
   _dot_throw () { return false }
-  next_mangled (options: any, def: any) {
+  next_mangled (options: any, def: SymbolDef) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name

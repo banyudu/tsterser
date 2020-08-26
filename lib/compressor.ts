@@ -1,3 +1,4 @@
+import AST_VarDef from './ast/var-def'
 /***********************************************************************
 
   A JavaScript tokenizer / parser / beautifier / compressor.
@@ -54,6 +55,7 @@ import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
 import TreeWalker from './tree-walker'
+import SymbolDef from './symbol-def'
 
 export default class Compressor extends TreeWalker {
   options: any
@@ -144,7 +146,7 @@ export default class Compressor extends TreeWalker {
     }
     let top_retain = this.options.top_retain
     if (top_retain instanceof RegExp) {
-      this.top_retain = function (def) {
+      this.top_retain = function (def: AST_VarDef) {
         return (top_retain as RegExp).test(def.name)
       }
     } else if (typeof top_retain === 'function') {
@@ -153,7 +155,7 @@ export default class Compressor extends TreeWalker {
       if (typeof top_retain === 'string') {
         top_retain = top_retain.split(/,/)
       }
-      this.top_retain = function (def) {
+      this.top_retain = function (def: AST_VarDef) {
         return (top_retain as string[]).includes(def.name)
       }
     }
@@ -179,7 +181,7 @@ export default class Compressor extends TreeWalker {
     return this.options[key]
   }
 
-  exposed (def: any) {
+  exposed (def: SymbolDef) {
     if (def.export) return true
     if (def.global) {
       for (let i = 0, len = def.orig.length; i < len; i++) {

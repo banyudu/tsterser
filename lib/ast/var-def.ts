@@ -7,13 +7,15 @@ import TreeWalker from '../tree-walker'
 export default class AST_VarDef extends AST_Node {
   name: any
   value: any
+  eliminated: number
+  replaced: number
 
   may_throw (compressor: Compressor) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects () {
+  has_side_effects (compressor: Compressor) {
     return this.value
   }
 

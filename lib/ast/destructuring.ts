@@ -3,6 +3,7 @@ import { OutputStream } from '../output'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
 import { do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
+import SymbolDef from '../symbol-def'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
@@ -50,7 +51,7 @@ export default class AST_Destructuring extends AST_Node {
       return true
     }
 
-    function should_retain (compressor: Compressor, def) {
+    function should_retain (compressor: Compressor, def: SymbolDef) {
       if (def.references.length) return true
       if (!def.global) return false
       if (compressor.toplevel.vars) {

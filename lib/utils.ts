@@ -184,6 +184,7 @@ import TreeWalker from './tree-walker'
 
 import { is_basic_identifier_string, is_identifier_string, RESERVED_WORDS } from './parse'
 import Compressor from './compressor'
+import SymbolDef from './symbol-def'
 
 const AST_DICT = {
   AST_Accessor,
@@ -477,7 +478,7 @@ function map_to_object (map: Map<any, any>) {
   return obj
 }
 
-function HOP (obj: AnyObject, prop: string) {
+function HOP (obj: AnyObject, prop: string | number) {
   return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
@@ -577,7 +578,7 @@ export function pop (tw: TreeWalker) {
   tw.safe_ids = Object.getPrototypeOf(tw.safe_ids)
 }
 
-export function mark (tw: TreeWalker, def, safe) {
+export function mark (tw: TreeWalker, def: SymbolDef, safe) {
   tw.safe_ids[def.id] = safe
 }
 
@@ -1808,7 +1809,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       }
     }
 
-    function redefined_within_scope (def, scope: AST_Scope) {
+    function redefined_within_scope (def: SymbolDef, scope: AST_Scope) {
       if (def.global) return false
       let cur_scope = def.scope
       while (cur_scope && cur_scope !== scope) {
@@ -2692,13 +2693,13 @@ export function anySideEffect (list, compressor: Compressor) {
 
 export function reset_block_variables (compressor: Compressor, node: AST_Block | AST_IterationStatement) {
   if (node.block_scope) {
-    node.block_scope.variables.forEach((def) => {
+    node.block_scope.variables.forEach((def: SymbolDef) => {
       reset_def(compressor, def)
     })
   }
 }
 
-export function reset_def (compressor: Compressor, def) {
+export function reset_def (compressor: Compressor, def: SymbolDef) {
   def.assignments = 0
   def.chained = false
   def.direct_access = false
@@ -3106,7 +3107,7 @@ export const key_size = key =>
 export const static_size = is_static => is_static ? 7 : 0
 
 /* #__INLINE__ */
-export const def_size = (size, def) => size + list_overhead(def.definitions)
+export const def_size = (size, def: AST_Definitions) => size + list_overhead(def.definitions)
 
 /* #__INLINE__ */
 export const lambda_modifiers = func =>
@@ -3198,7 +3199,7 @@ export const suppress = (node: AST_Node) => walk(node, (node: AST_Node) => {
   d.fixed = false
 })
 
-export function redefined_catch_def (def: any) {
+export function redefined_catch_def (def: SymbolDef) {
   if (is_ast_symbol_catch(def.orig[0]) &&
         def.scope.is_block_scope()
   ) {
@@ -3264,7 +3265,7 @@ export function next_mangled (scope: AST_Scope, options: any) {
 }
 
 export function reset_variables (tw: TreeWalker, compressor: Compressor, node: AST_Accessor | AST_Toplevel) {
-  node.variables.forEach(function (def) {
+  node.variables.forEach(function (def: SymbolDef) {
     reset_def(compressor, def)
     if (def.fixed === null) {
       tw.defs_to_safe_ids.set(def.id, tw.safe_ids)
@@ -3276,7 +3277,7 @@ export function reset_variables (tw: TreeWalker, compressor: Compressor, node: A
   })
 }
 
-export function safe_to_assign (tw: TreeWalker, def, scope: AST_Scope, value) {
+export function safe_to_assign (tw: TreeWalker, def: SymbolDef, scope: AST_Scope, value) {
   if (def.fixed === undefined) return true
   let def_safe_ids
   if (def.fixed === null &&
@@ -3300,7 +3301,7 @@ export function safe_to_assign (tw: TreeWalker, def, scope: AST_Scope, value) {
   })
 }
 
-export function safe_to_read (tw: TreeWalker, def) {
+export function safe_to_read (tw: TreeWalker, def: SymbolDef) {
   if (def.single_use == 'm') return false
   if (tw.safe_ids[def.id]) {
     if (def.fixed == null) {
@@ -3313,7 +3314,7 @@ export function safe_to_read (tw: TreeWalker, def) {
   return is_ast_defun(def.fixed)
 }
 
-export function ref_once (tw: TreeWalker, compressor: Compressor, def) {
+export function ref_once (tw: TreeWalker, compressor: Compressor, def: SymbolDef) {
   return compressor.option('unused') &&
         !def.scope.pinned() &&
         def.references.length - def.recursive_refs == 1 &&
@@ -3402,7 +3403,7 @@ export function mark_lambda (this, tw: TreeWalker, descend: Function, compressor
   return true
 }
 
-export function recursive_ref (compressor: TreeWalker, def) {
+export function recursive_ref (compressor: TreeWalker, def: AST_VarDef) {
   let node
   for (let i = 0; (node = compressor.parent(i)); i++) {
     if (
