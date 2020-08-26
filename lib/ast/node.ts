@@ -197,8 +197,27 @@ export default class AST_Node extends AST {
 
   _transform (self: AST_Node, tw: TreeWalker) {}
 
+  shallow_cmp_props: any = undefined
+
   shallow_cmp (other?: any): any {
-    throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
+    if (this.shallow_cmp_props === undefined) {
+      throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
+    }
+    for (const key in this.shallow_cmp_props) {
+      if (this.shallow_cmp_props[key] === 'eq') {
+        if (this[key] !== other[key]) {
+          return false
+        }
+      } else if (this.shallow_cmp_props[key] === 'exist') {
+        // return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
+        if ((this[key] != null || other[key] != null) && (this[key] == null || this[key] !== other[key])) {
+          return false
+        }
+      } else {
+        throw new Error(`mkshallow: Unexpected instruction: ${this.shallow_cmp_props[key]}`)
+      }
+    }
+    return true
   }
 
   print (output: OutputStream, force_parens?: boolean) {
