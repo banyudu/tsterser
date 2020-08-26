@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { push_uniq, mkshallow, is_ast_node } from '../utils'
+import { push_uniq, is_ast_node } from '../utils'
 
 let mangle_options
 
@@ -53,9 +53,9 @@ export default class AST_Symbol extends AST_Node {
       : 2
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     name: 'eq'
-  })
+  }
 
   _to_mozilla_ast (parent: AST_Node) {
     const def = this.definition()

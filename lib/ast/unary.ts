@@ -3,7 +3,7 @@ import AST_Node from './node'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
-import { is_iife_call, safe_to_assign, make_node, mkshallow, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
+import { is_iife_call, safe_to_assign, make_node, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
 
 export default class AST_Unary extends AST_Node {
   operator: any
@@ -102,7 +102,7 @@ export default class AST_Unary extends AST_Node {
     return this.operator.length
   }
 
-  shallow_cmp = mkshallow({ operator: 'eq' })
+  shallow_cmp_props: any = { operator: 'eq' }
   _transform (self: AST_Unary, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }

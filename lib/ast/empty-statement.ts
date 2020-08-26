@@ -1,11 +1,10 @@
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
-import { pass_through } from '../utils'
 
 export default class AST_EmptyStatement extends AST_Statement {
   may_throw () { return false }
   has_side_effects () { return false }
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _to_mozilla_ast (): any {
     return { type: 'EmptyStatement' }
   }

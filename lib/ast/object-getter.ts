@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
-import { to_moz, key_size, static_size, mkshallow, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
+import { to_moz, key_size, static_size, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
 
 export default class AST_ObjectGetter extends AST_ObjectProperty {
   static: any
@@ -71,9 +71,9 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     return 5 + static_size(this.static) + key_size(this.key)
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     static: 'eq'
-  })
+  }
 
   _codegen (self: AST_ObjectGetter, output: OutputStream) {
     self._print_getter_setter('get', output)

@@ -1,7 +1,7 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { is_undefined, mkshallow, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
+import { is_undefined, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Yield extends AST_Node {
@@ -27,9 +27,9 @@ export default class AST_Yield extends AST_Node {
   }
 
   _size = () => 6
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     is_star: 'eq'
-  })
+  }
 
   _transform (self: AST_Yield, tw: TreeWalker) {
     if (self.expression) self.expression = self.expression.transform(tw)

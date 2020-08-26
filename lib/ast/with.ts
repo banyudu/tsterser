@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
-import { pass_through, to_moz } from '../utils'
+import { to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_With extends AST_StatementWithBody {
@@ -19,7 +19,7 @@ export default class AST_With extends AST_StatementWithBody {
   }
 
   _size = () => 6
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_With, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = (self.body).transform(tw)

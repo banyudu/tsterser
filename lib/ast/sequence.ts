@@ -9,7 +9,6 @@ import {
   merge_sequence,
   anyMayThrow,
   anySideEffect,
-  pass_through,
   to_moz,
   do_list,
   make_sequence,
@@ -127,7 +126,7 @@ export default class AST_Sequence extends AST_Node {
     return list_overhead(this.expressions)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Sequence, tw: TreeWalker) {
     const result = do_list(self.expressions, tw)
     self.expressions = result.length

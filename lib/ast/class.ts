@@ -2,17 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope from './scope'
 import Compressor from '../compressor'
-import {
-  make_sequence,
-  anyMayThrow,
-  anySideEffect,
-  all_refs_local,
-  push,
-  pop,
-  do_list,
-  mkshallow,
-  to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function
-} from '../utils'
+import { make_sequence, anyMayThrow, anySideEffect, all_refs_local, push, pop, do_list, to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function } from '../utils'
 import { clear_flag, INLINED } from '../constants'
 import TreeWalker from '../tree-walker'
 
@@ -110,10 +100,10 @@ export default class AST_Class extends AST_Scope {
     self.properties = do_list(self.properties, tw)
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     name: 'exist',
     extends: 'exist'
-  })
+  }
 
   _to_mozilla_ast (parent: AST_Node) {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'

@@ -1,6 +1,5 @@
 import { OutputStream } from '../output'
 import AST_Jump from './jump'
-import { pass_through } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_LoopControl extends AST_Jump {
@@ -15,7 +14,7 @@ export default class AST_LoopControl extends AST_Jump {
     if (this.label) push(this.label)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_LoopControl, tw: TreeWalker) {
     if (self.label) self.label = self.label.transform(tw)
   }

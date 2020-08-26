@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
-import { make_node, pass_through, to_moz } from '../utils'
+import { make_node, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_SimpleStatement extends AST_Statement {
@@ -43,7 +43,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     push(this.body)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_SimpleStatement, tw: TreeWalker) {
     self.body = (self.body).transform(tw)
   }

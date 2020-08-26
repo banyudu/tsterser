@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { mkshallow } from '../utils'
+import '../utils'
 
 export default class AST_TemplateSegment extends AST_Node {
   value: any
@@ -8,7 +8,7 @@ export default class AST_TemplateSegment extends AST_Node {
 
   drop_side_effect_free () { return null }
   has_side_effects () { return false }
-  shallow_cmp = mkshallow({ value: 'eq' })
+  shallow_cmp_props: any = { value: 'eq' }
   _size (): number {
     return this.value.length
   }

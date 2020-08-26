@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { make_node, trim, first_in_statement, make_sequence, anySideEffect, pass_through, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
+import { make_node, trim, first_in_statement, make_sequence, anySideEffect, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_TemplateString extends AST_Node {
@@ -102,7 +102,7 @@ export default class AST_TemplateString extends AST_Node {
     return 2 + (Math.floor(this.segments.length / 2) * 3) /* "${}" */
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_TemplateString, tw: TreeWalker) {
     self.segments = do_list(self.segments, tw)
   }

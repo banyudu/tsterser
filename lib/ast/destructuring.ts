@@ -2,7 +2,7 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
-import { mkshallow, do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
+import { do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
@@ -87,7 +87,7 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   _size = () => 2
-  shallow_cmp = mkshallow({ is_array: 'eq' })
+  shallow_cmp_props: any = { is_array: 'eq' }
   _transform (self: AST_Destructuring, tw: TreeWalker) {
     self.names = do_list(self.names, tw)
   }

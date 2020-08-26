@@ -1,7 +1,7 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { pass_through, to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
+import { to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
@@ -24,7 +24,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     push(this.prefix)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_PrefixedTemplateString, tw: TreeWalker) {
     self.prefix = self.prefix.transform(tw)
     self.template_string = self.template_string.transform(tw)

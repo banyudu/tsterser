@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
-import { push, pop, mkshallow, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
+import { push, pop, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
@@ -66,7 +66,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   }
 
   _size = () => 2
-  shallow_cmp = mkshallow({ 'label.name': 'eq' })
+  shallow_cmp_props: any = { 'label.name': 'eq' }
   _transform (self: AST_LabeledStatement, tw: TreeWalker) {
     self.label = self.label.transform(tw)
     self.body = (self.body).transform(tw)

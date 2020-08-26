@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { suppress, safe_to_assign, mark, mkshallow, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
+import { suppress, safe_to_assign, mark, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_VarDef extends AST_Node {
@@ -56,9 +56,9 @@ export default class AST_VarDef extends AST_Node {
     return this.value ? 1 : 0
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     value: 'exist'
-  })
+  }
 
   _transform (self: AST_VarDef, tw: TreeWalker) {
     self.name = self.name.transform(tw)

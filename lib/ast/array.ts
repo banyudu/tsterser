@@ -10,7 +10,6 @@ import {
   list_overhead,
   do_list,
   to_moz,
-  pass_through,
   make_sequence,
   anyMayThrow,
   anySideEffect, is_ast_hole
@@ -86,7 +85,7 @@ export default class AST_Array extends AST_Node {
     return 2 + list_overhead(this.elements)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Array, tw: TreeWalker) {
     self.elements = do_list(self.elements, tw)
   }

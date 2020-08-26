@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty from './object-property'
 import Compressor from '../compressor'
-import { to_moz, key_size, static_size, mkshallow, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
+import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
   async: any
@@ -54,11 +54,11 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return static_size(this.static) + key_size(this.key) + lambda_modifiers(this)
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     static: 'eq',
     is_generator: 'eq',
     async: 'eq'
-  })
+  }
 
   _to_mozilla_ast (parent: AST_Node) {
     if (is_ast_object(parent)) {

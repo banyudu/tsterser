@@ -23,7 +23,6 @@ import {
   do_list,
   to_moz,
   list_overhead,
-  pass_through,
   callCodeGen,
   regexp_source_fix,
   make_node_from_constant,
@@ -870,7 +869,7 @@ export default class AST_Call extends AST_Node {
     return 2 + list_overhead(this.args)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Call, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.args = do_list(self.args, tw)

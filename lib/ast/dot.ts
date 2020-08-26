@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_PropAccess from './prop-access'
 import Compressor from '../compressor'
-import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, mkshallow, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
+import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
@@ -136,7 +136,7 @@ export default class AST_Dot extends AST_PropAccess {
     return this.property.length + 1
   }
 
-  shallow_cmp = mkshallow({ property: 'eq' })
+  shallow_cmp_props: any = { property: 'eq' }
   _transform (self: AST_Dot, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
   }

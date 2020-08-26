@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import Compressor from '../compressor'
-import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, pass_through, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
+import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Definitions extends AST_Statement {
@@ -86,7 +86,7 @@ export default class AST_Definitions extends AST_Statement {
     while (i--) push(this.definitions[i])
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Definitions, tw: TreeWalker) {
     self.definitions = do_list(self.definitions, tw)
   }

@@ -3,20 +3,7 @@ import { OutputStream } from '../output'
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
 
-import {
-  make_node_from_constant,
-  best_of_expression,
-  extract_declarations_from_unreachable_code,
-  parenthesize_for_noin,
-  reset_block_variables,
-  has_break_or_continue,
-  as_statement_array,
-  push,
-  pop,
-  to_moz,
-  mkshallow,
-  make_node, is_ast_node, is_ast_definitions, is_ast_block_statement, is_ast_break, is_ast_statement, is_ast_if
-} from '../utils'
+import { make_node_from_constant, best_of_expression, extract_declarations_from_unreachable_code, parenthesize_for_noin, reset_block_variables, has_break_or_continue, as_statement_array, push, pop, to_moz, make_node, is_ast_node, is_ast_definitions, is_ast_block_statement, is_ast_break, is_ast_statement, is_ast_if } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_For extends AST_IterationStatement {
@@ -98,11 +85,11 @@ export default class AST_For extends AST_IterationStatement {
   }
 
   _size = () => 8
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     init: 'exist',
     condition: 'exist',
     step: 'exist'
-  })
+  }
 
   _transform (self: AST_For, tw: TreeWalker) {
     if (self.init) self.init = self.init.transform(tw)

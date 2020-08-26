@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { pass_through, is_ast_import } from '../utils'
+import { is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_NameMapping extends AST_Node {
@@ -24,7 +24,7 @@ export default class AST_NameMapping extends AST_Node {
     return this.name ? 4 : 0
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_NameMapping, tw: TreeWalker) {
     self.foreign_name = self.foreign_name.transform(tw)
     self.name = self.name.transform(tw)

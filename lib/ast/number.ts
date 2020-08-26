@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Constant from './constant'
-import { mkshallow, make_num } from '../utils'
+import { make_num } from '../utils'
 export default class AST_Number extends AST_Constant {
   is_number () { return true }
   _size (): number {
@@ -12,9 +12,9 @@ export default class AST_Number extends AST_Constant {
     return value.toString().length
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     value: 'eq'
-  })
+  }
 
   needs_parens (output: OutputStream) {
     const p = output.parent()

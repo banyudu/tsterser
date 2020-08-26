@@ -14,7 +14,6 @@ import {
   MAP,
   defaults,
   next_mangled,
-  pass_through,
   list_overhead,
   to_moz_scope,
   display_body,
@@ -184,7 +183,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _size () {
     return list_overhead(this.body)
   }

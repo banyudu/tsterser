@@ -11,7 +11,6 @@ import {
   pop,
   is_nullish_check,
   to_moz,
-  pass_through,
   needsParens,
   maintain_this_binding, is_ast_sequence, is_ast_true, is_ast_false, is_ast_expansion, is_ast_symbol_ref, is_ast_constant, is_ast_unary_prefix, is_ast_assign, is_ast_call, is_ast_conditional, is_ast_binary
 } from '../utils'
@@ -395,7 +394,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   _size = () => 3
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Conditional, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.consequent = self.consequent.transform(tw)

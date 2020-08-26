@@ -55,7 +55,7 @@ export default class AST_Block extends AST_Statement {
     return 2 + list_overhead(this.body)
   }
 
-  shallow_cmp = (other) => true
+  shallow_cmp_props: any = {}
   _transform (self: AST_Block, tw: TreeWalker) {
     self.body = do_list(self.body, tw)
   }

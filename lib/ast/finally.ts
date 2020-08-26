@@ -1,10 +1,10 @@
 import { OutputStream } from '../output'
 import AST_Block from './block'
-import { pass_through, list_overhead, print_braced } from '../utils'
+import { list_overhead, print_braced } from '../utils'
 
 export default class AST_Finally extends AST_Block {
   argname: any
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _size (): number {
     return 7 + list_overhead(this.body)
   }

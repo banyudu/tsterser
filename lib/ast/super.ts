@@ -1,10 +1,9 @@
 import { OutputStream } from '../output'
 import AST_This from './this'
-import { pass_through } from '../utils'
 
 export default class AST_Super extends AST_This {
   _size = () => 5
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _to_mozilla_ast (): any {
     return { type: 'Super' }
   }

@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Constant from './constant'
-import { mkshallow } from '../utils'
+import '../utils'
 
 export default class AST_BigInt extends AST_Constant {
   _eval () { return this }
@@ -9,7 +9,7 @@ export default class AST_BigInt extends AST_Constant {
     return this.value.length
   }
 
-  shallow_cmp = mkshallow({ value: 'eq' })
+  shallow_cmp_props: any = { value: 'eq' }
 
   _to_mozilla_ast (parent: AST_Node): any { return {
     type: 'BigIntLiteral',

@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_IterationStatement from './iteration-statement'
 import Compressor from '../compressor'
-import { suppress, reset_block_variables, push, pop, to_moz, pass_through, is_ast_for_of } from '../utils'
+import { suppress, reset_block_variables, push, pop, to_moz, is_ast_for_of } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ForIn extends AST_IterationStatement {
@@ -37,7 +37,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   }
 
   _size = () => 8
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_ForIn, tw: TreeWalker) {
     self.init = self.init?.transform(tw) || null
     self.object = self.object.transform(tw)

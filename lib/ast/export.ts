@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
-import { to_moz, mkshallow, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
+import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Export extends AST_Statement {
@@ -60,13 +60,13 @@ export default class AST_Export extends AST_Statement {
     return size
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     exported_definition: 'exist',
     exported_value: 'exist',
     exported_names: 'exist',
     module_name: 'eq',
     is_default: 'eq'
-  })
+  }
 
   _transform (self: AST_Export, tw: TreeWalker) {
     if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)

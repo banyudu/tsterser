@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_DWLoop from './dw-loop'
 import Compressor from '../compressor'
-import { make_node, reset_block_variables, push, pop, pass_through, to_moz } from '../utils'
+import { make_node, reset_block_variables, push, pop, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_While extends AST_DWLoop {
@@ -34,7 +34,7 @@ export default class AST_While extends AST_DWLoop {
   }
 
   _size = () => 7
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_While, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)
     self.body = (self.body).transform(tw)

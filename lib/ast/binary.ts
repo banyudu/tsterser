@@ -5,24 +5,7 @@ import AST_With from './with'
 import { PRECEDENCE } from '../parse'
 import TreeWalker from '../tree-walker'
 
-import {
-  is_undefined,
-  make_node,
-  first_in_statement,
-  best_of,
-  make_sequence,
-  maintain_this_binding,
-  is_object,
-  best,
-  mkshallow,
-  push,
-  pop,
-  to_moz,
-  basic_negation,
-  to_moz_in_destructuring,
-  make_node_from_constant,
-  is_nullish, is_ast_binary, is_ast_sequence, is_ast_unary, is_ast_call, is_ast_unary_postfix, is_ast_string, is_ast_unary_prefix, is_ast_symbol_ref, is_ast_prop_access, is_ast_null, is_ast_assign, is_ast_node, is_ast_constant, is_ast_template_string
-} from '../utils'
+import { is_undefined, make_node, first_in_statement, best_of, make_sequence, maintain_this_binding, is_object, best, push, pop, to_moz, basic_negation, to_moz_in_destructuring, make_node_from_constant, is_nullish, is_ast_binary, is_ast_sequence, is_ast_unary, is_ast_call, is_ast_unary_postfix, is_ast_string, is_ast_unary_prefix, is_ast_symbol_ref, is_ast_prop_access, is_ast_null, is_ast_assign, is_ast_node, is_ast_constant, is_ast_template_string } from '../utils'
 
 import {
   has_flag,
@@ -742,7 +725,7 @@ export default class AST_Binary extends AST_Node {
     push(this.left)
   }
 
-  shallow_cmp = mkshallow({ operator: 'eq' })
+  shallow_cmp_props: any = { operator: 'eq' }
   _size (info): number {
     if (this.operator === 'in') return 4
 

@@ -1,12 +1,12 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block from './block'
-import { to_moz, pass_through, block_aborts } from '../utils'
+import { to_moz, block_aborts } from '../utils'
 
 export default class AST_SwitchBranch extends AST_Block {
   aborts = block_aborts
   is_block_scope () { return false }
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'SwitchCase',

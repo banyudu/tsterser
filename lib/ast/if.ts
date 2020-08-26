@@ -2,20 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody from './statement-with-body'
 import Compressor from '../compressor'
-import {
-  make_node_from_constant,
-  best_of_expression,
-  make_node,
-  force_statement,
-  make_block,
-  aborts,
-  to_moz,
-  is_empty,
-  mkshallow,
-  push,
-  pop,
-  extract_declarations_from_unreachable_code, is_ast_node, is_ast_if, is_ast_do, is_ast_statement_with_body, is_ast_simple_statement, is_ast_binary, is_ast_empty_statement, is_ast_exit
-} from '../utils'
+import { make_node_from_constant, best_of_expression, make_node, force_statement, make_block, aborts, to_moz, is_empty, push, pop, extract_declarations_from_unreachable_code, is_ast_node, is_ast_if, is_ast_do, is_ast_statement_with_body, is_ast_simple_statement, is_ast_binary, is_ast_empty_statement, is_ast_exit } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_If extends AST_StatementWithBody {
@@ -219,9 +206,9 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   _size = () => 4
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     alternative: 'exist'
-  })
+  }
 
   _transform (self: AST_If, tw: TreeWalker) {
     self.condition = self.condition.transform(tw)

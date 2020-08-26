@@ -3,24 +3,7 @@ import { OutputStream } from '../output'
 import AST_Block from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
-import {
-  tighten_body,
-  extract_declarations_from_unreachable_code,
-  make_node,
-  is_empty,
-  anySideEffect,
-  anyMayThrow,
-  reset_block_variables,
-  push,
-  walk_body,
-  pop,
-  list_overhead,
-  do_list,
-  print_braced,
-  to_moz_block,
-  to_moz,
-  mkshallow
-} from '../utils'
+import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
 
 /* -----[ EXCEPTIONS ]----- */
 
@@ -88,10 +71,10 @@ export default class AST_Try extends AST_Block {
     return 3 + list_overhead(this.body)
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     bcatch: 'exist',
     bfinally: 'exist'
-  })
+  }
 
   _transform (self: AST_Try, tw: TreeWalker) {
     self.body = do_list(self.body, tw)

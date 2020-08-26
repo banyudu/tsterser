@@ -12,7 +12,6 @@ import {
   anySideEffect,
   is_strict,
   list_overhead,
-  pass_through,
   do_list,
   to_moz,
   first_in_statement,
@@ -127,7 +126,7 @@ export default class AST_Object extends AST_Node {
     return base + list_overhead(this.properties)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Object, tw: TreeWalker) {
     self.properties = do_list(self.properties, tw)
   }

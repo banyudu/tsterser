@@ -1,7 +1,7 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import { list_overhead, do_list, to_moz, mkshallow } from '../utils'
+import { list_overhead, do_list, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Import extends AST_Node {
@@ -54,10 +54,10 @@ export default class AST_Import extends AST_Node {
     return size
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     imported_name: 'exist',
     imported_names: 'exist'
-  })
+  }
 
   _transform (self: AST_Import, tw: TreeWalker) {
     if (self.imported_name) self.imported_name = self.imported_name.transform(tw)

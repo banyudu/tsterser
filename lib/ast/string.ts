@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Constant from './constant'
-import { mkshallow } from '../utils'
+import '../utils'
 
 export default class AST_String extends AST_Constant {
   value: any
@@ -11,9 +11,9 @@ export default class AST_String extends AST_Constant {
     return this.value.length + 2
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     value: 'eq'
-  })
+  }
 
   addStrings (add: Function) {
     add(this.value)

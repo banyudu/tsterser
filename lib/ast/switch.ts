@@ -12,7 +12,6 @@ import {
   print_braced_empty,
   make_node,
   anySideEffect,
-  pass_through,
   walk_body,
   do_list,
   to_moz,
@@ -161,7 +160,7 @@ export default class AST_Switch extends AST_Block {
     return 8 + list_overhead(this.body)
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _transform (self: AST_Switch, tw: TreeWalker) {
     self.expression = self.expression.transform(tw)
     self.body = do_list(self.body, tw)

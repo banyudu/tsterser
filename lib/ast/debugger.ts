@@ -1,7 +1,7 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
-import { make_node, pass_through } from '../utils'
+import { make_node } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
   _optimize (compressor: Compressor) {
@@ -9,7 +9,7 @@ export default class AST_Debugger extends AST_Statement {
     return this
   }
 
-  shallow_cmp = pass_through
+  shallow_cmp_props: any = {}
   _size = () => 8
   _to_mozilla_ast (): any {
     return { type: 'DebuggerStatement' }

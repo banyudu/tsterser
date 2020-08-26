@@ -3,7 +3,7 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { directives } from '../constants'
-import { make_node, mkshallow } from '../utils'
+import { make_node } from '../utils'
 
 export default class AST_Directive extends AST_Statement {
   value: any
@@ -16,7 +16,7 @@ export default class AST_Directive extends AST_Statement {
     return this
   }
 
-  shallow_cmp = mkshallow({ value: 'eq' })
+  shallow_cmp_props: any = { value: 'eq' }
   _size (): number {
     // TODO string encoding stuff
     return 2 + this.value.length

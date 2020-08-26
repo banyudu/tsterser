@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block from './block'
-import { walk_body, list_overhead, mkshallow, do_list, to_moz, to_moz_block, print_braced } from '../utils'
+import { walk_body, list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Catch extends AST_Block {
@@ -28,9 +28,9 @@ export default class AST_Catch extends AST_Block {
     return size
   }
 
-  shallow_cmp = mkshallow({
+  shallow_cmp_props: any = {
     argname: 'exist'
-  })
+  }
 
   _transform (self: AST_Catch, tw: TreeWalker) {
     if (self.argname) self.argname = self.argname.transform(tw)

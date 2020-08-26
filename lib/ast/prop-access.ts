@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { is_undeclared_ref, HOP, make_node, make_sequence, pass_through, to_moz, walk, safe_to_flatten, is_ast_node, is_ast_object, is_ast_object_key_val, is_ast_new, is_ast_scope, is_ast_dot, is_ast_concise_method, is_ast_call, is_ast_accessor, is_ast_symbol_method } from '../utils'
+import { is_undeclared_ref, HOP, make_node, make_sequence, to_moz, walk, safe_to_flatten, is_ast_node, is_ast_object, is_ast_object_key_val, is_ast_new, is_ast_scope, is_ast_dot, is_ast_concise_method, is_ast_call, is_ast_accessor, is_ast_symbol_method } from '../utils'
 import { static_values, global_objs, walk_abort } from '../constants'
 
 export default class AST_PropAccess extends AST_Node {
@@ -90,7 +90,7 @@ export default class AST_PropAccess extends AST_Node {
     }
   }
 
-  shallow_cmp = pass_through as any
+  shallow_cmp_props: any = {}
   _to_mozilla_ast (parent: AST_Node) {
     return {
       type: 'MemberExpression',
