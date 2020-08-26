@@ -12,7 +12,7 @@ export default class AST_Expansion extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
 

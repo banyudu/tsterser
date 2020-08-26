@@ -544,7 +544,7 @@ export default class AST_Binary extends AST_Node {
     return self
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
     const right = this.right.drop_side_effect_free(compressor)
     if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
     if (lazy_op.has(this.operator)) {
@@ -615,7 +615,7 @@ export default class AST_Binary extends AST_Node {
           this.right.is_constant_expression()
   }
 
-  negate (compressor: Compressor, first_in_statement) {
+  negate (compressor: Compressor, first_in_statement: Function | undefined) {
     const self = this.clone(); const op = this.operator
     if (compressor.option('unsafe_comps')) {
       switch (op) {

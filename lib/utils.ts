@@ -3026,7 +3026,7 @@ export function inline_array_like_spread (self: AST_Node, compressor: Compressor
 // Returns an array of expressions with side-effects or null
 // if all elements were dropped. Note: original array may be
 // returned if nothing changed.
-export function trim (nodes: any[], compressor: Compressor, first_in_statement?) {
+export function trim (nodes: any[], compressor: Compressor, first_in_statement?: Function | undefined) {
   const len = nodes.length
   if (!len) return null
   const ret: any[] = []; let changed = false
@@ -3035,7 +3035,7 @@ export function trim (nodes: any[], compressor: Compressor, first_in_statement?)
     changed = (node !== nodes[i]) || changed
     if (node) {
       ret.push(node)
-      first_in_statement = false
+      first_in_statement = undefined
     }
   }
   return changed ? ret.length ? ret : null : nodes
@@ -3450,7 +3450,7 @@ export function basic_negation (exp) {
   })
 }
 
-export function best (orig, alt, first_in_statement) {
+export function best (orig, alt, first_in_statement: Function | undefined) {
   const negated = basic_negation(orig)
   if (first_in_statement) {
     const stat = make_node('AST_SimpleStatement', alt, {

@@ -8,7 +8,7 @@ import { is_iife_call, safe_to_assign, make_node, mark, make_sequence, to_moz, i
 export default class AST_Unary extends AST_Node {
   operator: any
   expression: any
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
         set_flag(this, WRITE_ONLY)

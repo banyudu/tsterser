@@ -35,7 +35,7 @@ export default class AST_Array extends AST_Node {
     return inline_array_like_spread(this, compressor, this.elements)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
     const values = trim(this.elements, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }

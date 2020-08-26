@@ -77,7 +77,7 @@ export default class AST_Dot extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | undefined) {
     if (this.expression.may_throw_on_access(compressor)) return this
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }

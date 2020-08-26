@@ -344,7 +344,7 @@ export default class AST_Conditional extends AST_Node {
     return value === node ? this : value
   }
 
-  negate (compressor: Compressor, first_in_statement) {
+  negate (compressor: Compressor, first_in_statement: Function | undefined) {
     const self = this.clone()
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
