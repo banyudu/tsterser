@@ -20,7 +20,6 @@ import {
   make_node_from_constant,
   best_of_expression,
   safe_to_read,
-  return_this,
   within_array_or_object_literal,
   recursive_ref,
   is_modified,
@@ -215,7 +214,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     if (HOP(fixed, '_eval')) {
       value = fixed._eval(compressor)
     } else {
-      this._eval = return_this
+      this._eval = () => this
       value = fixed._eval(compressor, depth)
       delete this._eval
       if (value === fixed) return this

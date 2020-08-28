@@ -44,8 +44,7 @@
 import {
   defaults,
   makePredicate,
-  return_false,
-  return_true, is_ast_statement, is_ast_exit
+  is_ast_statement, is_ast_exit
 } from './utils'
 import AST_Node from './ast/node'
 import TreeWalker from './tree-walker'
@@ -237,7 +236,7 @@ export class OutputStream {
   }
 
   append_comments (node: AST_Node, tail?: boolean) {
-    if (!this.readonly && this._comment_filter !== return_false) {
+    if (!this.readonly && this._comment_filter !== (() => false)) {
       const self = this
       const token = node.end
       if (!token) return
@@ -724,7 +723,7 @@ export class OutputStream {
       } else if (comments === 'some') {
         this._comment_filter = is_some_comments
       } else { // NOTE includes "all" option
-        this._comment_filter = return_true
+        this._comment_filter = () => true
       }
     }
   }

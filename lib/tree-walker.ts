@@ -1,4 +1,4 @@
-import { noop, is_ast_lambda, is_ast_directive, is_ast_class } from './utils'
+import { is_ast_lambda, is_ast_directive, is_ast_class } from './utils'
 import AST_Node from './ast/node'
 import AST_Scope from './ast/scope'
 
@@ -20,7 +20,7 @@ export default class TreeWalker {
     this.push(node)
     const ret = this.visit(node, descend ? function () {
       descend.call(node)
-    } : noop)
+    } : () => {})
     if (!ret && descend) {
       descend.call(node)
     }

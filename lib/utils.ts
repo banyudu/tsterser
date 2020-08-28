@@ -306,11 +306,11 @@ class Last {
   }
 }
 
-function characters (str: string) {
+export function characters (str: string) {
   return str.split('')
 }
 
-function member<T> (name: T, array: T[]) {
+export function member<T> (name: T, array: T[]) {
   return array.includes(name)
 }
 
@@ -325,7 +325,7 @@ export class DefaultsError extends Error {
   }
 }
 
-function defaults (args: any, defs: AnyObject, croak?: boolean): typeof args {
+export function defaults (args: any, defs: AnyObject, croak?: boolean): typeof args {
   if (args === true) { args = {} }
   const ret = args || {}
   if (croak) {
@@ -349,13 +349,7 @@ function defaults (args: any, defs: AnyObject, croak?: boolean): typeof args {
   return ret
 }
 
-function noop () {}
-function return_false () { return false }
-function return_true () { return true }
-function return_this (this) { return this }
-function return_null () { return null }
-
-const MAP = (function () {
+export const MAP = (function () {
   function MAP (a: any[] | AnyObject, f: Function, backwards?: boolean) {
     const ret: any[] = []; const top: any[] = []; let i: string | number
     function doit () {
@@ -398,7 +392,7 @@ const MAP = (function () {
   return MAP
 })()
 
-function make_node (ctor: string, orig?: any, props?: any) {
+export function make_node (ctor: string, orig?: any, props?: any) {
   if (!props) props = {}
   if (orig) {
     if (!props.start) props.start = orig.start
@@ -407,23 +401,23 @@ function make_node (ctor: string, orig?: any, props?: any) {
   return new AST_DICT[ctor](props)
 }
 
-function push_uniq<T> (array: T[], el: T) {
+export function push_uniq<T> (array: T[], el: T) {
   if (!array.includes(el)) { array.push(el) }
 }
 
-function string_template (text: string, props?: AnyObject) {
+export function string_template (text: string, props?: AnyObject) {
   return text.replace(/{(.+?)}/g, function (_, p) {
     return props?.[p]
   })
 }
 
-function remove<T = any> (array: T[], el: T) {
+export function remove<T = any> (array: T[], el: T) {
   for (let i = array.length; --i >= 0;) {
     if (array[i] === el) array.splice(i, 1)
   }
 }
 
-function mergeSort<T> (array: T[], cmp: (a: T, b: T) => number): T[] {
+export function mergeSort<T> (array: T[], cmp: (a: T, b: T) => number): T[] {
   if (array.length < 2) return array.slice()
   function merge (a: T[], b: T[]) {
     const r: T[] = []; let ai = 0; let bi = 0; let i = 0
@@ -446,13 +440,13 @@ function mergeSort<T> (array: T[], cmp: (a: T, b: T) => number): T[] {
   return _ms(array)
 }
 
-function makePredicate (words: string | string[]) {
+export function makePredicate (words: string | string[]) {
   if (!Array.isArray(words)) words = words.split(' ')
 
   return new Set(words)
 }
 
-function map_add (map: Map<string, any[]>, key: string, value: any) {
+export function map_add (map: Map<string, any[]>, key: string, value: any) {
   if (map.has(key)) {
         map.get(key)?.push(value)
   } else {
@@ -460,7 +454,7 @@ function map_add (map: Map<string, any[]>, key: string, value: any) {
   }
 }
 
-function map_from_object (obj: AnyObject) {
+export function map_from_object (obj: AnyObject) {
   const map = new Map()
   for (const key in obj) {
     if (HOP(obj, key) && key.charAt(0) === '$') {
@@ -470,7 +464,7 @@ function map_from_object (obj: AnyObject) {
   return map
 }
 
-function map_to_object (map: Map<any, any>) {
+export function map_to_object (map: Map<any, any>) {
   const obj = Object.create(null)
   map.forEach(function (value, key) {
     obj['$' + key] = value
@@ -478,11 +472,11 @@ function map_to_object (map: Map<any, any>) {
   return obj
 }
 
-function HOP (obj: AnyObject, prop: string | number) {
+export function HOP (obj: AnyObject, prop: string | number) {
   return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-function keep_name (keep_setting: boolean | RegExp | undefined, name: string) {
+export function keep_name (keep_setting: boolean | RegExp | undefined, name: string) {
   return keep_setting === true ||
         (keep_setting instanceof RegExp && keep_setting.test(name))
 }
@@ -493,7 +487,8 @@ const lineTerminatorEscape: AnyObject<string> = {
   '\u2028': 'u2028',
   '\u2029': 'u2029'
 }
-function regexp_source_fix (source: string) {
+
+export function regexp_source_fix (source: string) {
   // V8 does not escape line terminators in regexp patterns in node 12
   return source.replace(/[\n\r\u2028\u2029]/g, function (match, offset) {
     const escaped = source[offset - 1] == '\\' &&
@@ -502,8 +497,10 @@ function regexp_source_fix (source: string) {
     return (escaped ? '' : '\\') + lineTerminatorEscape[match]
   })
 }
+
 const all_flags = 'gimuy'
-function sort_regexp_flags (flags: string) {
+
+export function sort_regexp_flags (flags: string) {
   const existing_flags = new Set(flags.split(''))
   let out = ''
   for (const flag of all_flags) {
@@ -519,34 +516,8 @@ function sort_regexp_flags (flags: string) {
   return out
 }
 
-function set_annotation (node: AST_Node, annotation: number) {
+export function set_annotation (node: AST_Node, annotation: number) {
   node._annotations |= annotation
-}
-
-export {
-  characters,
-  defaults,
-  HOP,
-  keep_name,
-  make_node,
-  makePredicate,
-  map_add,
-  map_from_object,
-  map_to_object,
-  MAP,
-  member,
-  mergeSort,
-  noop,
-  push_uniq,
-  regexp_source_fix,
-  remove,
-  return_false,
-  return_null,
-  return_this,
-  return_true,
-  sort_regexp_flags,
-  string_template,
-  set_annotation
 }
 
 export function convert_to_predicate (obj) {

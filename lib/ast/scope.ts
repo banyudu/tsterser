@@ -11,7 +11,6 @@ import { js_error } from '../parse'
 
 import {
   make_node,
-  return_false,
   keep_name,
   walk,
   MAP,
@@ -106,7 +105,7 @@ export default class AST_Scope extends AST_Block {
     if (self.pinned()) return
     const drop_funcs = !(is_ast_toplevel(self)) || compressor.toplevel.funcs
     const drop_vars = !(is_ast_toplevel(self)) || compressor.toplevel.vars
-    const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? return_false : function (node: AST_Node) {
+    const assign_as_unused = typeof optUnused === 'string' && optUnused.includes('keep_assign') ? () => false : function (node: AST_Node) {
       if (is_ast_assign(node) &&
               (has_flag(node, WRITE_ONLY) || node.operator == '=')
       ) {
@@ -643,7 +642,7 @@ export default class AST_Scope extends AST_Block {
   hoist_properties (compressor: Compressor) {
     const self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
-    const top_retain = is_ast_toplevel(self) && compressor.top_retain || return_false
+    const top_retain = is_ast_toplevel(self) && compressor.top_retain || (() => false)
     const defs_by_id = new Map()
     var hoister = new TreeTransformer(function (this, node: AST_Node, descend: Function) {
       if (is_ast_definitions(node) &&

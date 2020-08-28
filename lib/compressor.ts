@@ -45,7 +45,6 @@ import AST_VarDef from './ast/var-def'
 import {
   defaults,
   HOP,
-  return_true,
   walk,
   string_template, is_ast_symbol_defun, is_ast_scope
 } from './utils'
@@ -142,7 +141,7 @@ export default class Compressor extends TreeWalker {
     } else {
       this.pure_funcs = pure_funcs ? function (node: AST_Node) {
         return !pure_funcs?.includes(node.expression.print_to_string())
-      } : return_true
+      } : () => true
     }
     let top_retain = this.options.top_retain
     if (top_retain instanceof RegExp) {
