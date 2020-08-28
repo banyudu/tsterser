@@ -261,7 +261,15 @@ export default class AST_Node extends AST {
     end: '[AST_Token] The last token of this node'
   } as any
 
-  static warn_function = null
+  static warn_function = function (warning: any) {
+    if (AST_Node.enable_warnings) {
+      AST_Node.warnings.push(warning)
+    }
+  }
+
+  static warnings = []
+  static enable_warnings = false
+
   static warn (txt, props?) {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }

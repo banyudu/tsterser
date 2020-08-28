@@ -55,7 +55,7 @@ function cache_to_json (cache: any) {
 }
 
 export function minify (files: any, options: any): any {
-  const warn_function = AST_Node.warn_function
+  const enable_warnings = AST_Node.enable_warnings
   try {
     options = defaults(options, {
       compress: {},
@@ -134,11 +134,8 @@ export function minify (files: any, options: any): any {
         url: null
       }, true)
     }
-    const warnings: any[] = []
-    if (options.warnings && !AST_Node.warn_function) {
-      AST_Node.warn_function = function (warning: any) {
-        warnings.push(warning)
-      }
+    if (options.warnings && !AST_Node.enable_warnings) {
+      AST_Node.enable_warnings = true
     }
     if (timings) timings.parse = Date.now()
     let toplevel
@@ -259,13 +256,13 @@ export function minify (files: any, options: any): any {
         total: 1e-3 * (timings.end - timings.start)
       }
     }
-    if (warnings.length) {
-      result.warnings = warnings
+    if (AST_Node.warnings.length) {
+      result.warnings = AST_Node.warnings
     }
     return result
   } catch (ex) {
     return { error: ex }
   } finally {
-    AST_Node.warn_function = warn_function
+    AST_Node.enable_warnings = enable_warnings
   }
 }
