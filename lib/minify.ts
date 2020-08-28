@@ -11,9 +11,10 @@ import {
   reserve_quoted_keys
 } from './propmangle'
 
-const to_ascii = typeof atob === 'undefined' ? function (b64: string) {
+export const to_ascii = typeof atob === 'undefined' ? function (b64: string) {
   return Buffer.from(b64, 'base64').toString()
 } : atob
+
 const to_base64 = typeof btoa === 'undefined' ? function (str: string) {
   return Buffer.from(str).toString('base64')
 } : btoa
@@ -53,7 +54,7 @@ function cache_to_json (cache: any) {
   }
 }
 
-function minify (files: any, options: any): any {
+export function minify (files: any, options: any): any {
   const warn_function = AST_Node.warn_function
   try {
     options = defaults(options, {
@@ -267,9 +268,4 @@ function minify (files: any, options: any): any {
   } finally {
     AST_Node.warn_function = warn_function
   }
-}
-
-export {
-  minify,
-  to_ascii
 }

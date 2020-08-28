@@ -90,7 +90,7 @@ function find_builtins (reserved: Set<string | undefined>) {
   }
 }
 
-function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
+export function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
   function add (name: string) {
     push_uniq(reserved, name)
   }
@@ -113,7 +113,7 @@ function addStrings (node: AST_Node, add: Function) {
   }))
 }
 
-function mangle_properties (ast: AST_Node, options: any) {
+export function mangle_properties (ast: AST_Node, options: any) {
   options = defaults(options, {
     builtins: false,
     cache: null,
@@ -285,9 +285,4 @@ function mangle_properties (ast: AST_Node, options: any) {
       return node
     }))
   }
-}
-
-export {
-  reserve_quoted_keys,
-  mangle_properties
 }
