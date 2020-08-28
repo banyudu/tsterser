@@ -691,7 +691,7 @@ export default class AST_Scope extends AST_Block {
       }
 
       function make_sym (sym: AST_Symbol, key: string, defs: Map<string, any>) {
-        const new_var = make_node(sym.constructor.name, sym, {
+        const new_var = make_node(sym.constructor.name as any, sym, {
           name: self.make_var_name(sym.name + '_' + key),
           scope: self
         })

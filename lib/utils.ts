@@ -392,13 +392,12 @@ export const MAP = (function () {
   return MAP
 })()
 
-export function make_node (ctor: string, orig?: any, props?: any) {
-  if (!props) props = {}
-  if (orig) {
-    if (!props.start) props.start = orig.start
-    if (!props.end) props.end = orig.end
-  }
-  return new AST_DICT[ctor](props)
+export function make_node (ctorName: keyof typeof AST_DICT, orig?: any, props?: any): any {
+  return make_ast_node(AST_DICT[ctorName] as any, orig, props)
+}
+
+export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: any, props?: any): T {
+  return new CTOR(Object.assign({}, props, { start: props?.start || orig?.start, end: props?.end || orig?.end }))
 }
 
 export function push_uniq<T> (array: T[], el: T) {
@@ -520,7 +519,7 @@ export function set_annotation (node: AST_Node, annotation: number) {
   node._annotations |= annotation
 }
 
-export function convert_to_predicate (obj) {
+export function convert_to_predicate (obj: {[x: string]: string | string[]}) {
   const out = new Map()
   for (const key of Object.keys(obj)) {
     out.set(key, makePredicate(obj[key]))
@@ -3389,7 +3388,7 @@ export function recursive_ref (compressor: TreeWalker, def: AST_VarDef) {
 }
 
 export function to_node (value, orig) {
-  if (is_ast_node(value)) return make_node(value.constructor.name, orig, value)
+  if (is_ast_node(value)) return make_node(value.constructor.name as any, orig, value)
   if (Array.isArray(value)) {
     return make_node('AST_Array', orig, {
       elements: value.map(function (value) {

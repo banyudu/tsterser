@@ -325,7 +325,7 @@ export function is_identifier_string (str: string, allow_surrogates: boolean) {
   return !!match && match[0].length === str.length
 }
 
-function parse_js_number (num: string, allow_e = true) {
+function parse_js_number (num: string, allow_e = true): number {
   if (!allow_e && num.includes('e')) {
     return NaN
   }
@@ -343,6 +343,7 @@ function parse_js_number (num: string, allow_e = true) {
     const val = parseFloat(num)
     if (String(val) == num) return val
   }
+  return NaN
 }
 
 export class JS_Parse_Error extends Error {

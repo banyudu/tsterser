@@ -118,7 +118,7 @@ export default class AST_If extends AST_StatementWithBody {
     if (is_ast_exit(self.body) &&
           is_ast_exit(self.alternative) &&
           self.body.TYPE == self.alternative.TYPE) {
-      return make_node(self.body.constructor?.name, self, {
+      return make_node(self.body.constructor?.name as any, self, {
         value: make_node('AST_Conditional', self, {
           condition: self.condition,
           consequent: self.body.value || make_node('AST_Undefined', self.body),
