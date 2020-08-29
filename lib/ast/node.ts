@@ -21,6 +21,7 @@ import {
 } from '../utils'
 
 import Compressor from '../compressor'
+import { MozillaAst } from '../types'
 
 export default class AST_Node extends AST {
   start: AST_Token
@@ -244,14 +245,14 @@ export default class AST_Node extends AST {
     return opt
   }
 
-  to_mozilla_ast (parent: AST_Node) {
+  to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
     return set_moz_loc(this, this._to_mozilla_ast(parent))
   }
 
-  _to_mozilla_ast (parent: AST_Node) {}
+  _to_mozilla_ast (parent: AST_Node): any {}
 
   add_source_map (output: OutputStream) {}
   tail_node () { return this }
@@ -274,7 +275,7 @@ export default class AST_Node extends AST {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }
 
-  public static from_mozilla_ast (node: AST_Node) {
+  public static from_mozilla_ast (node: MozillaAst) {
     const save_stack = FROM_MOZ_STACK
     setFromMozStack([])
     const ast = from_moz(node)

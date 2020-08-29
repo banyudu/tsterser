@@ -9,7 +9,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   static: any
 
   _to_mozilla_ast (parent: AST_Node) {
-    let key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }

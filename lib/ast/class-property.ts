@@ -5,11 +5,11 @@ import Compressor from '../compressor'
 import { to_moz, print_property_name, static_size, make_sequence, is_ast_node, is_ast_symbol_class_property, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
-  quote: any
-  static: any
+  quote: string
+  static: boolean
 
   _to_mozilla_ast (parent: AST_Node) {
-    let key = is_ast_node(this.key) ? to_moz(this.key) : {
+    let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
     }

@@ -166,3 +166,65 @@ export enum OutputQuoteStyle {
   AlwaysDouble = 2,
   AlwaysOriginal = 3
 }
+
+export interface MozillaAst {
+  loc: any
+  range: [number, number]
+  start: MozillaAst
+  superClass: MozillaAst
+  prefix?: boolean
+  arguments: MozillaAst[]
+  callee: MozillaAst
+  operator: string
+  param: MozillaAst
+  delegate: boolean
+  await: boolean
+  update: MozillaAst
+  cases: MozillaAst[]
+  discriminant: MozillaAst
+  init: MozillaAst
+  label: MozillaAst
+  exported: MozillaAst
+  alternate: MozillaAst
+  imported: MozillaAst
+  meta: MozillaAst
+  local: MozillaAst
+  specifiers: MozillaAst[]
+  test: MozillaAst
+  declarations: MozillaAst[]
+  regex: any
+  raw: any
+  declaration: MozillaAst
+  source: MozillaAst
+  method: boolean
+  consequent: MozillaAst[] | MozillaAst
+  type: string
+  body: MozillaAst | MozillaAst[]
+  elements: MozillaAst[]
+  properties: MozillaAst[]
+  left: MozillaAst
+  right: MozillaAst
+  argument: MozillaAst
+  expressions: MozillaAst[]
+  value: any
+  quasis: MozillaAst[]
+  quasi: MozillaAst
+  tag: MozillaAst
+  id: MozillaAst
+  params: MozillaAst[]
+  generator: boolean
+  async: boolean
+  expression: MozillaAst
+  handlers: MozillaAst[]
+  guardedHandlers: any[]
+  block: MozillaAst
+  key: MozillaAst
+  handler: MozillaAst
+  kind: string
+  computed: boolean
+  name: any
+  finalizer: MozillaAst
+  property: MozillaAst
+  object: MozillaAst
+  static: boolean
+}
