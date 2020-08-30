@@ -46,7 +46,7 @@ export default class AST_Exit extends AST_Jump {
   }
 
   static PROPS = AST_Jump.PROPS.concat(['value'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.value = args.value
   }

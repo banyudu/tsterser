@@ -29,7 +29,4 @@ export default class AST_DefaultAssign extends AST_Binary {
   static documentation = 'A default assignment expression like in `(a = 3) => a`'
 
   static PROPS = AST_Binary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

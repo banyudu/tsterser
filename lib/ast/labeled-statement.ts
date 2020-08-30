@@ -93,7 +93,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   } as any
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.label = args.label
   }

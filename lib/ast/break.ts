@@ -22,7 +22,4 @@ export default class AST_Break extends AST_LoopControl {
   static documentation = 'A `break` statement'
 
   static PROPS = AST_LoopControl.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

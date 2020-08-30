@@ -171,7 +171,7 @@ export default class AST_Class extends AST_Scope {
   static documentation = 'An ES6 class'
 
   static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.name = args.name
     this.extends = args.extends

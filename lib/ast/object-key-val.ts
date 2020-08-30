@@ -140,7 +140,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.quote = args.quote
   }

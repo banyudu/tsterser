@@ -200,7 +200,4 @@ export default class AST_Assign extends AST_Binary {
   static documentation = 'An assignment expression — `a = b + 5`'
 
   static PROPS = AST_Binary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

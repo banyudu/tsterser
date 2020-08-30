@@ -28,7 +28,4 @@ export default class AST_SwitchBranch extends AST_Block {
   static documentation = 'Base class for `switch` branches'
 
   static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

@@ -34,9 +34,6 @@ export default class AST_BlockStatement extends AST_Block {
   static documentation = 'A block statement'
 
   static PROPS = AST_Block.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }
 
 function can_be_extracted_from_if_block (node: AST_Node) {

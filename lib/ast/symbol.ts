@@ -84,7 +84,7 @@ export default class AST_Symbol extends AST_Node {
   static documentation = 'Base class for all symbols'
 
   static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.scope = args.scope
     this.name = args.name

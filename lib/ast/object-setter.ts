@@ -84,7 +84,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   static documentation = 'An object setter property'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.quote = args.quote
     this.static = args.static

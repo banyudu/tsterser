@@ -23,7 +23,4 @@ export default class AST_Statement extends AST_Node {
   static documentation = 'Base class of all statements'
 
   static PROPS = AST_Node.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

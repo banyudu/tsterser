@@ -23,7 +23,4 @@ export default class AST_Const extends AST_Definitions {
   static documentation = 'A `const` statement'
 
   static PROPS = AST_Definitions.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

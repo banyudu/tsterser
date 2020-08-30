@@ -8,7 +8,4 @@ export default class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
   static documentation = 'Symbol naming the exception in catch'
 
   static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

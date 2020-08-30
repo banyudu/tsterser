@@ -22,7 +22,7 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
   } as any
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.block_scope = args.block_scope
   }

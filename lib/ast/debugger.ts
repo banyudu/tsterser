@@ -24,7 +24,4 @@ export default class AST_Debugger extends AST_Statement {
   static documentation = 'Represents a debugger statement'
 
   static PROPS = AST_Statement.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

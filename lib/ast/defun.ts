@@ -22,7 +22,4 @@ export default class AST_Defun extends AST_Lambda {
   static documentation = 'A function definition'
 
   static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

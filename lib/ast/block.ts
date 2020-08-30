@@ -74,7 +74,7 @@ export default class AST_Block extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.body = args.body
     this.block_scope = args.block_scope

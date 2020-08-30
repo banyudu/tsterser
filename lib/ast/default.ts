@@ -23,7 +23,4 @@ export default class AST_Default extends AST_SwitchBranch {
   static documentation = 'A `default` switch branch'
 
   static PROPS = AST_SwitchBranch.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

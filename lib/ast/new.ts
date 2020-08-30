@@ -46,7 +46,4 @@ export default class AST_New extends AST_Call {
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
   static PROPS = AST_Call.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

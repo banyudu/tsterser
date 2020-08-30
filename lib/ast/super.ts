@@ -15,8 +15,4 @@ export default class AST_Super extends AST_This {
   static documentation: 'The `super` symbol'
 
   static PROPS = AST_This.PROPS
-
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

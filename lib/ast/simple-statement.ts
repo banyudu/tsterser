@@ -66,7 +66,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.body = args.body
   }

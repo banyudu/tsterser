@@ -187,7 +187,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expressions'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.expressions = args.expressions
   }

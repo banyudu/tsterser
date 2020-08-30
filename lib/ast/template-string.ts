@@ -157,7 +157,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['segments'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.segments = args.segments
   }

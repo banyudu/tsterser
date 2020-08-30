@@ -110,7 +110,4 @@ export default class AST_Function extends AST_Lambda {
   static documentation = 'A function expression'
 
   static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

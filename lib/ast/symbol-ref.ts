@@ -309,7 +309,4 @@ export default class AST_SymbolRef extends AST_Symbol {
   static documentation = 'Reference to some symbol (not definition/declaration)'
 
   static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

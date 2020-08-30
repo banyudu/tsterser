@@ -4,7 +4,4 @@ export default class AST_SymbolConst extends AST_SymbolBlockDeclaration {
   static documentation = 'A constant declaration'
 
   static PROPS = AST_SymbolBlockDeclaration.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

@@ -14,7 +14,7 @@ export default class AST_DWLoop extends AST_IterationStatement {
     return this.condition === context
   }
 
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.condition = args.condition
   }

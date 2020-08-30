@@ -117,7 +117,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   }
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['static', 'quote'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.static = args.static
     this.quote = args.quote

@@ -66,7 +66,7 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['foreign_name', 'name'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.foreign_name = args.foreign_name
     this.name = args.name

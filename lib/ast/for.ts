@@ -146,7 +146,7 @@ export default class AST_For extends AST_IterationStatement {
   } as any
 
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.init = args.init
     this.condition = args.condition

@@ -11,7 +11,4 @@ export default class AST_SymbolClassProperty extends AST_Symbol {
   static documentation = 'Symbol for a class property'
 
   static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

@@ -127,7 +127,7 @@ export default class AST_PropAccess extends AST_Node {
   } as any
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.expression = args.expression
     this.property = args.property

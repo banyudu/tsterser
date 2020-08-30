@@ -98,7 +98,7 @@ export default class AST_VarDef extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['name', 'value'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.name = args.name
     this.value = args.value

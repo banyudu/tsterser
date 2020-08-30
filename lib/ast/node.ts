@@ -291,7 +291,7 @@ export default class AST_Node extends AST {
 
   static PROPS = ['start', 'end']
 
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super()
     this.start = args?.start
     this.end = args?.end

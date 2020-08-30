@@ -54,7 +54,7 @@ export default class AST_Expansion extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.expression = args.expression
   }

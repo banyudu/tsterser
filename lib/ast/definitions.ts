@@ -120,7 +120,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['definitions'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.definitions = args.definitions
   }

@@ -34,7 +34,4 @@ export default class AST_Return extends AST_Exit {
   static documentation: 'A `return` statement'
 
   static PROPS = AST_Exit.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

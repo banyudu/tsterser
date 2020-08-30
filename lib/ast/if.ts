@@ -251,7 +251,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.condition = args.condition
     this.alternative = args.alternative

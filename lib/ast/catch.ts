@@ -69,7 +69,7 @@ export default class AST_Catch extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.argname = args.argname
   }

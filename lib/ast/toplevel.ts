@@ -362,7 +362,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['globals'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.globals = args.globals
   }

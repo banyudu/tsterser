@@ -18,8 +18,4 @@ export default class AST_This extends AST_Symbol {
   static documentation = 'The `this` symbol'
 
   static PROPS = AST_Symbol.PROPS
-
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

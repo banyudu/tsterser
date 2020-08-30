@@ -115,7 +115,7 @@ export default class AST_Try extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.bcatch = args.bcatch
     this.bfinally = args.bfinally

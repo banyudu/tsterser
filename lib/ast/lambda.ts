@@ -156,7 +156,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.name = args.name
     this.argnames = args.argnames

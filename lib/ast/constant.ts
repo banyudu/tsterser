@@ -31,8 +31,4 @@ export default class AST_Constant extends AST_Node {
   static documentation = 'Base class for all constants'
 
   static PROPS = AST_Node.PROPS
-
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

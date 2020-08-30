@@ -19,7 +19,7 @@ export default class AST_Label extends AST_Symbol {
   }
 
   static PROPS = AST_Symbol.PROPS.concat(['references'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.references = args.references
     this.initialize()

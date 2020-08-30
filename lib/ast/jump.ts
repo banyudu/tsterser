@@ -8,7 +8,4 @@ export default class AST_Jump extends AST_Statement {
   static documentation = "Base class for “jumps” (for now that's `return`, `throw`, `break` and `continue`)"
 
   static PROPS = AST_Statement.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

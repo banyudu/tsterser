@@ -18,7 +18,4 @@ export default class AST_SymbolMethod extends AST_Symbol {
   }
 
   static PROPS = AST_Symbol.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

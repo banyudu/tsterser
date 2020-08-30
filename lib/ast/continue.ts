@@ -22,7 +22,4 @@ export default class AST_Continue extends AST_LoopControl {
   static documentation = 'A `continue` statement'
 
   static PROPS = AST_LoopControl.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

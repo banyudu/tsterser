@@ -428,7 +428,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.condition = args.condition
     this.consequent = args.consequent

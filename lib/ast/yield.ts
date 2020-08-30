@@ -77,7 +77,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.expression = args.expression
     this.is_star = args.is_star

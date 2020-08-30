@@ -21,7 +21,7 @@ export default class AST_TemplateSegment extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['value', 'raw'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.value = args.value
     this.raw = args.raw

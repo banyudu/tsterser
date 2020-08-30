@@ -9,7 +9,4 @@ export default class AST_SymbolExport extends AST_SymbolRef {
   static documentation = 'Symbol referring to a name to export'
 
   static PROPS = AST_SymbolRef.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

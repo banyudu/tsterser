@@ -145,7 +145,4 @@ export default class AST_UnaryPrefix extends AST_Unary {
   static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
 
   static PROPS = AST_Unary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

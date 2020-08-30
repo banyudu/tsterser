@@ -62,7 +62,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.template_string = args.template_string
     this.prefix = args.prefix

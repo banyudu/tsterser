@@ -21,7 +21,4 @@ export default class AST_UnaryPostfix extends AST_Unary {
   static documentation = 'Unary postfix expression, i.e. `i++`'
 
   static PROPS = AST_Unary.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

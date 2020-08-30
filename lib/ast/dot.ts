@@ -172,7 +172,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   static PROPS = AST_PropAccess.PROPS.concat(['quote'])
-  constructor (args?) { // eslint-disable-line
+  constructor (args?) {
     super(args)
     this.quote = args.quote
   }
