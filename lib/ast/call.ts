@@ -225,17 +225,23 @@ export default class AST_Call extends AST_Node {
             break
           case 'join':
             if (is_ast_array(exp.expression)) {
-              EXIT: {
-                let separator
-                if (self.args.length > 0) {
-                  separator = self.args[0].evaluate(compressor)
-                  if (separator === self.args[0]) break EXIT // not a constant
+              let shouldBreak = false
+              let separator
+              if (self.args.length > 0) {
+                separator = self.args[0].evaluate(compressor)
+                if (separator === self.args[0]) { // not a constant
+                  shouldBreak = true
                 }
+              }
+              if (!shouldBreak) {
                 const elements: any[] = []
                 const consts: any[] = []
                 for (let i = 0, len = exp.expression.elements.length; i < len; i++) {
                   const el = exp.expression.elements[i]
-                  if (is_ast_expansion(el)) break EXIT
+                  if (is_ast_expansion(el)) {
+                    shouldBreak = true
+                    break
+                  }
                   const value = el.evaluate(compressor)
                   if (value !== el) {
                     consts.push(value)
@@ -249,45 +255,47 @@ export default class AST_Call extends AST_Node {
                     elements.push(el)
                   }
                 }
-                if (consts.length > 0) {
-                  elements.push(make_node('AST_String', self, {
-                    value: consts.join(separator)
-                  }))
-                }
-                if (elements.length == 0) return make_node('AST_String', self, { value: '' })
-                if (elements.length == 1) {
-                  if (elements[0].is_string(compressor)) {
-                    return elements[0]
+                if (!shouldBreak) {
+                  if (consts.length > 0) {
+                    elements.push(make_node('AST_String', self, {
+                      value: consts.join(separator)
+                    }))
                   }
-                  return make_node('AST_Binary', elements[0], {
-                    operator: '+',
-                    left: make_node('AST_String', self, { value: '' }),
-                    right: elements[0]
-                  })
-                }
-                if (separator == '') {
-                  let first
-                  if (elements[0].is_string(compressor) ||
-                          elements[1].is_string(compressor)) {
-                    first = elements.shift()
-                  } else {
-                    first = make_node('AST_String', self, { value: '' })
-                  }
-                  return elements.reduce(function (prev, el) {
-                    return make_node('AST_Binary', el, {
+                  if (elements.length == 0) return make_node('AST_String', self, { value: '' })
+                  if (elements.length == 1) {
+                    if (elements[0].is_string(compressor)) {
+                      return elements[0]
+                    }
+                    return make_node('AST_Binary', elements[0], {
                       operator: '+',
-                      left: prev,
-                      right: el
+                      left: make_node('AST_String', self, { value: '' }),
+                      right: elements[0]
                     })
-                  }, first).optimize(compressor)
+                  }
+                  if (separator == '') {
+                    let first
+                    if (elements[0].is_string(compressor) ||
+                            elements[1].is_string(compressor)) {
+                      first = elements.shift()
+                    } else {
+                      first = make_node('AST_String', self, { value: '' })
+                    }
+                    return elements.reduce(function (prev, el) {
+                      return make_node('AST_Binary', el, {
+                        operator: '+',
+                        left: prev,
+                        right: el
+                      })
+                    }, first).optimize(compressor)
+                  }
+                  // need this awkward cloning to not affect original element
+                  // best_of will decide which one to get through.
+                  const node = self.clone()
+                  node.expression = node.expression.clone()
+                  node.expression.expression = node.expression.expression.clone()
+                  node.expression.expression.elements = elements
+                  return best_of(compressor, self, node)
                 }
-                // need this awkward cloning to not affect original element
-                // best_of will decide which one to get through.
-                const node = self.clone()
-                node.expression = node.expression.clone()
-                node.expression.expression = node.expression.expression.clone()
-                node.expression.expression.elements = elements
-                return best_of(compressor, self, node)
               }
             }
             break

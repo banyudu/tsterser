@@ -3184,7 +3184,7 @@ export function needsParens (this, output: OutputStream) {
 }
 export function next_mangled (scope: AST_Scope, options: any) {
   const ext = scope.enclosed
-  out: while (true) {
+  while (true) {
     const m = base54(++scope.cname)
     if (RESERVED_WORDS.has(m)) continue // skip over "do"
 
@@ -3194,16 +3194,21 @@ export function next_mangled (scope: AST_Scope, options: any) {
 
     // Functions with short names might collide with base54 output
     // and therefore cause collisions when keep_fnames is true.
-    if (unmangleable_names?.has(m)) continue out
+    if (unmangleable_names?.has(m)) continue
 
     // we must ensure that the mangled name does not shadow a name
     // from some parent scope that is referenced in this or in
     // inner scopes.
+    let shouldContinue = false
     for (let i = ext.length; --i >= 0;) {
       const def = ext[i]
       const name = def.mangled_name || (def.unmangleable(options) && def.name)
-      if (m == name) continue out
+      if (m == name) {
+        shouldContinue = true
+        break
+      }
     }
+    if (shouldContinue) continue
     return m
   }
 }

@@ -51,7 +51,7 @@ export default class AST_Sub extends AST_PropAccess {
       }
     }
     let fn
-    OPT_ARGUMENTS: if (compressor.option('arguments') &&
+    if (compressor.option('arguments') &&
           is_ast_symbol_ref(expr) &&
           expr.name == 'arguments' &&
           expr.definition?.().orig.length == 1 &&
@@ -62,37 +62,42 @@ export default class AST_Sub extends AST_PropAccess {
       const index = prop.getValue()
       const params = new Set()
       const argnames = fn.argnames
+      let shouldBreak = false
       for (let n = 0; n < argnames.length; n++) {
         if (!(is_ast_symbol_funarg(argnames[n]))) {
-          break OPT_ARGUMENTS // destructuring parameter - bail
+          shouldBreak = true
+          break // destructuring parameter - bail
         }
         const param = argnames[n].name
         if (params.has(param)) {
-          break OPT_ARGUMENTS // duplicate parameter - bail
+          shouldBreak = true
+          break // duplicate parameter - bail
         }
         params.add(param)
       }
-      let argname: any = fn.argnames[index]
-      if (argname && compressor.has_directive('use strict')) {
-        const def = argname.definition?.()
-        if (!compressor.option('reduce_vars') || def.assignments || def.orig.length > 1) {
-          argname = null
+      if (!shouldBreak) {
+        let argname: any = fn.argnames[index]
+        if (argname && compressor.has_directive('use strict')) {
+          const def = argname.definition?.()
+          if (!compressor.option('reduce_vars') || def.assignments || def.orig.length > 1) {
+            argname = null
+          }
+        } else if (!argname && !compressor.option('keep_fargs') && index < fn.argnames.length + 5) {
+          while (index >= fn.argnames.length) {
+            argname = make_node('AST_SymbolFunarg', fn, {
+              name: fn.make_var_name('argument_' + fn.argnames.length),
+              scope: fn
+            })
+            fn.argnames.push(argname)
+            fn.enclosed.push(fn.def_variable(argname))
+          }
         }
-      } else if (!argname && !compressor.option('keep_fargs') && index < fn.argnames.length + 5) {
-        while (index >= fn.argnames.length) {
-          argname = make_node('AST_SymbolFunarg', fn, {
-            name: fn.make_var_name('argument_' + fn.argnames.length),
-            scope: fn
-          })
-          fn.argnames.push(argname)
-          fn.enclosed.push(fn.def_variable(argname))
+        if (argname) {
+          const sym = make_node('AST_SymbolRef', this, argname)
+          sym.reference({})
+          clear_flag(argname, UNUSED)
+          return sym
         }
-      }
-      if (argname) {
-        const sym = make_node('AST_SymbolRef', this, argname)
-        sym.reference({})
-        clear_flag(argname, UNUSED)
-        return sym
       }
     }
     if (is_lhs(this, compressor.parent())) return this
@@ -108,7 +113,7 @@ export default class AST_Sub extends AST_PropAccess {
       let index = prop.getValue()
       const elements = expr.elements
       let retValue = elements[index]
-      FLATTEN: if (safe_to_flatten(retValue, compressor)) {
+      if (safe_to_flatten(retValue, compressor)) {
         let flatten = true
         const values: any[] = []
         for (var i = elements.length; --i > index;) {
@@ -118,28 +123,35 @@ export default class AST_Sub extends AST_PropAccess {
             if (flatten && value.has_side_effects(compressor)) flatten = false
           }
         }
-        if (is_ast_expansion(retValue)) break FLATTEN
-        retValue = is_ast_hole(retValue) ? make_node('AST_Undefined', retValue) : retValue
-        if (!flatten) values.unshift(retValue)
-        while (--i >= 0) {
-          let value = elements[i]
-          if (is_ast_expansion(value)) break FLATTEN
-          value = value.drop_side_effect_free(compressor)
-          if (value) values.unshift(value)
-          else index--
-        }
-        if (flatten) {
-          values.push(retValue)
-          return make_sequence(this, values).optimize(compressor)
-        } else {
-          return make_node('AST_Sub', this, {
-            expression: make_node('AST_Array', expr, {
-              elements: values
-            }),
-            property: make_node('AST_Number', prop, {
-              value: index
-            })
-          })
+        if (!is_ast_expansion(retValue)) {
+          retValue = is_ast_hole(retValue) ? make_node('AST_Undefined', retValue) : retValue
+          if (!flatten) values.unshift(retValue)
+          let shouldBreak = false
+          while (--i >= 0) {
+            let value = elements[i]
+            if (is_ast_expansion(value)) {
+              shouldBreak = true
+              break
+            }
+            value = value.drop_side_effect_free(compressor)
+            if (value) values.unshift(value)
+            else index--
+          }
+          if (!shouldBreak) {
+            if (flatten) {
+              values.push(retValue)
+              return make_sequence(this, values).optimize(compressor)
+            } else {
+              return make_node('AST_Sub', this, {
+                expression: make_node('AST_Array', expr, {
+                  elements: values
+                }),
+                property: make_node('AST_Number', prop, {
+                  value: index
+                })
+              })
+            }
+          }
         }
       }
     }

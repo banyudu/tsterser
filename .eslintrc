@@ -11,7 +11,6 @@
         "no-mixed-operators": "warn",
         "@typescript-eslint/restrict-plus-operands": "off",
         "new-cap": "warn",
-        "no-labels": "warn",
         "no-fallthrough": "warn",
         "@typescript-eslint/brace-style": "warn",
         "@typescript-eslint/no-this-alias": "warn",
