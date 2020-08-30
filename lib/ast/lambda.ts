@@ -146,7 +146,7 @@ export default class AST_Lambda extends AST_Scope {
   static propdoc = {
     name: '[AST_SymbolDeclaration?] the name of this function',
     argnames: '[AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign*] array of function arguments, destructurings, or expanding arguments',
-    uses_arguments: '[boolean/S] tells whether this function accesses the arguments array',
+    uses_arguments: '[boolean] tells whether this function accesses the arguments array',
     is_generator: '[boolean] is this a generator method',
     async: '[boolean] is this method async'
   }

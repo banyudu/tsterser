@@ -358,7 +358,7 @@ export default class AST_Toplevel extends AST_Scope {
 
   static documentation = 'The toplevel scope'
   static propdoc = {
-    globals: '[Map/S] a map of name -> SymbolDef for all undeclared names'
+    globals: '[Map] a map of name -> SymbolDef for all undeclared names'
   }
 
   static PROPS = AST_Scope.PROPS.concat(['globals'])

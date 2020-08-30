@@ -123,7 +123,7 @@ export default class AST_Destructuring extends AST_Node {
   static documentation = 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names'
   static propdoc = {
     names: '[AST_Node*] Array of properties or elements',
-    is_array: '[Boolean] Whether the destructuring represents an object or array'
+    is_array: '[boolean] Whether the destructuring represents an object or array'
   }
 
   static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])

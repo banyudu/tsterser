@@ -153,7 +153,7 @@ export default class AST_Export extends AST_Statement {
     exported_value: '[AST_Node?] An exported value',
     exported_names: '[AST_NameMapping*?] List of exported names',
     module_name: '[AST_String?] Name of the file to load exports from',
-    is_default: '[Boolean] Whether this is the default exported value of this module'
+    is_default: '[boolean] Whether this is the default exported value of this module'
   }
 
   static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])

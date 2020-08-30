@@ -77,8 +77,8 @@ export default class AST_Symbol extends AST_Node {
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[string] name of this symbol',
-    scope: '[AST_Scope/S] the current scope (not necessarily the definition scope)',
-    thedef: '[SymbolDef/S] the definition of this symbol'
+    scope: '[AST_Scope] the current scope (not necessarily the definition scope)',
+    thedef: '[SymbolDef] the definition of this symbol'
   } as any
 
   static documentation = 'Base class for all symbols'

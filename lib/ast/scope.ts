@@ -1111,13 +1111,13 @@ export default class AST_Scope extends AST_Block {
 
   static documentation = 'Base class for all statements introducing a lexical scope'
   static propdoc = {
-    variables: '[Map/S] a map of name -> SymbolDef for all variables/functions defined in this scope',
-    functions: '[Map/S] like `variables`, but only lists function declarations',
-    uses_with: '[boolean/S] tells whether this scope uses the `with` statement',
-    uses_eval: '[boolean/S] tells whether this scope contains a direct call to the global `eval`',
-    parent_scope: '[AST_Scope?/S] link to the parent scope',
-    enclosed: '[SymbolDef*/S] a list of all symbol definitions that are accessed from this scope or any subscopes',
-    cname: '[integer/S] current index for mangling variables (used internally by the mangler)'
+    variables: '[Map] a map of name -> SymbolDef for all variables/functions defined in this scope',
+    functions: '[Map] like `variables`, but only lists function declarations',
+    uses_with: '[boolean] tells whether this scope uses the `with` statement',
+    uses_eval: '[boolean] tells whether this scope contains a direct call to the global `eval`',
+    parent_scope: '[AST_Scope?] link to the parent scope',
+    enclosed: '[SymbolDef*] a list of all symbol definitions that are accessed from this scope or any subscopes',
+    cname: '[integer] current index for mangling variables (used internally by the mangler)'
   } as any
 
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])

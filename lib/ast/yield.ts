@@ -73,7 +73,7 @@ export default class AST_Yield extends AST_Node {
   static documentation = 'A `yield` statement'
   static propdoc = {
     expression: '[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false',
-    is_star: '[Boolean] Whether this is a yield or yield* statement'
+    is_star: '[boolean] Whether this is a yield or yield* statement'
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
