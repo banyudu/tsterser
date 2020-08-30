@@ -1,6 +1,6 @@
 /* eslint-env browser, es6, node */
 
-import { defaults, map_from_object, map_to_object, base54, HOP, is_ast_toplevel } from './utils'
+import { defaults, base54, HOP, is_ast_toplevel } from './utils'
 import AST_Node from './ast/node'
 import { parse } from './parse'
 import OutputStream from './output'
@@ -39,6 +39,16 @@ function set_shorthand (name: string, options: any, keys: string[]) {
   }
 }
 
+function map_from_object (obj: AnyObject) {
+  const map = new Map()
+  for (const key in obj) {
+    if (HOP(obj, key) && key.charAt(0) === '$') {
+      map.set(key.substr(1), obj[key])
+    }
+  }
+  return map
+}
+
 function init_cache (cache: AnyObject | false | undefined) {
   if (!cache) return
   if (!('props' in cache)) {
@@ -46,6 +56,14 @@ function init_cache (cache: AnyObject | false | undefined) {
   } else if (!(cache.props instanceof Map)) {
     cache.props = map_from_object(cache.props)
   }
+}
+
+function map_to_object (map: Map<any, any>) {
+  const obj = Object.create(null)
+  map.forEach(function (value, key) {
+    obj['$' + key] = value
+  })
+  return obj
 }
 
 function cache_to_json (cache: any) {

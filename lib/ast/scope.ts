@@ -27,7 +27,7 @@ import {
   string_template,
   is_empty,
   defaults,
-  map_add, is_ast_simple_statement, is_ast_toplevel, is_ast_symbol_declaration, is_ast_symbol_ref, is_ast_scope, is_ast_var, is_ast_symbol, is_ast_defun, is_ast_function, is_ast_catch, is_ast_symbol_block_declaration, is_ast_export, is_ast_loop_control, is_ast_symbol_catch, is_ast_return, is_ast_assign, is_ast_directive, is_ast_definitions, is_ast_for, is_ast_for_in, is_ast_symbol_lambda, is_ast_class, is_ast_switch, is_ast_destructuring, is_ast_symbol_let, is_ast_def_class, is_ast_call, is_ast_lambda, is_ast_unary, is_ast_var_def, is_ast_labeled_statement, is_ast_symbol_const, is_ast_name_mapping, is_ast_block, is_ast_object, is_ast_with, is_ast_symbol_export, is_ast_if, is_ast_prop_access, is_ast_label, is_ast_symbol_defun, is_ast_symbol_class, is_ast_symbol_import, is_ast_symbol_def_class, is_ast_symbol_var, is_ast_symbol_funarg, is_ast_label_ref, is_ast_import, is_ast_sequence, is_ast_empty_statement, is_ast_block_statement, is_ast_class_expression, is_ast_accessor, is_ast_expansion, is_ast_default_assign
+  is_ast_simple_statement, is_ast_toplevel, is_ast_symbol_declaration, is_ast_symbol_ref, is_ast_scope, is_ast_var, is_ast_symbol, is_ast_defun, is_ast_function, is_ast_catch, is_ast_symbol_block_declaration, is_ast_export, is_ast_loop_control, is_ast_symbol_catch, is_ast_return, is_ast_assign, is_ast_directive, is_ast_definitions, is_ast_for, is_ast_for_in, is_ast_symbol_lambda, is_ast_class, is_ast_switch, is_ast_destructuring, is_ast_symbol_let, is_ast_def_class, is_ast_call, is_ast_lambda, is_ast_unary, is_ast_var_def, is_ast_labeled_statement, is_ast_symbol_const, is_ast_name_mapping, is_ast_block, is_ast_object, is_ast_with, is_ast_symbol_export, is_ast_if, is_ast_prop_access, is_ast_label, is_ast_symbol_defun, is_ast_symbol_class, is_ast_symbol_import, is_ast_symbol_def_class, is_ast_symbol_var, is_ast_symbol_funarg, is_ast_label_ref, is_ast_import, is_ast_sequence, is_ast_empty_statement, is_ast_block_statement, is_ast_class_expression, is_ast_accessor, is_ast_expansion, is_ast_default_assign
 } from '../utils'
 
 import {
@@ -38,6 +38,14 @@ import {
   MASK_EXPORT_DONT_MANGLE,
   WRITE_ONLY
 } from '../constants'
+
+function map_add (map: Map<string, any[]>, key: string, value: any) {
+  if (map.has(key)) {
+        map.get(key)?.push(value)
+  } else {
+    map.set(key, [value])
+  }
+}
 
 export default class AST_Scope extends AST_Block {
   functions: any

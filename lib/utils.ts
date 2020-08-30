@@ -446,32 +446,6 @@ export function makePredicate (words: string | string[]) {
   return new Set(words)
 }
 
-export function map_add (map: Map<string, any[]>, key: string, value: any) {
-  if (map.has(key)) {
-        map.get(key)?.push(value)
-  } else {
-    map.set(key, [value])
-  }
-}
-
-export function map_from_object (obj: AnyObject) {
-  const map = new Map()
-  for (const key in obj) {
-    if (HOP(obj, key) && key.charAt(0) === '$') {
-      map.set(key.substr(1), obj[key])
-    }
-  }
-  return map
-}
-
-export function map_to_object (map: Map<any, any>) {
-  const obj = Object.create(null)
-  map.forEach(function (value, key) {
-    obj['$' + key] = value
-  })
-  return obj
-}
-
 export function HOP (obj: AnyObject, prop: string | number) {
   return Object.prototype.hasOwnProperty.call(obj, prop)
 }
@@ -1299,8 +1273,6 @@ function From_Moz_Class (M: MozillaAst) {
 export function setFromMozStack (val) {
   FROM_MOZ_STACK = val
 }
-
-export const pass_through = () => true
 
 // Creates a shallow compare function
 export const mkshallow = (props) => {

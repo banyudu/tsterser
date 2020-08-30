@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
-import { lift_key, make_sequence, to_moz, pass_through, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
+import { lift_key, make_sequence, to_moz, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ObjectProperty extends AST_Node {
@@ -54,7 +54,10 @@ export default class AST_ObjectProperty extends AST_Node {
     if (is_ast_node(this.key)) push(this.key)
   }
 
-  shallow_cmp = pass_through as any
+  shallow_cmp () {
+    return true
+  }
+
   _transform (self: AST_ObjectProperty, tw: TreeWalker) {
     if (is_ast_node(self.key)) {
       self.key = self.key.transform(tw)
