@@ -20,7 +20,4 @@ export default class AST_Accessor extends AST_Lambda {
   static documentation = 'A setter/getter function.  The `name` property is always null.'
 
   static PROPS = AST_Lambda.PROPS
-  constructor (args?) { // eslint-disable-line
-    super(args)
-  }
 }

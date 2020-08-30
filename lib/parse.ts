@@ -1062,7 +1062,7 @@ export function parse ($TEXT: string, opt?: any) {
     token_error(S.token, 'Unexpected token ' + S.token?.type + ' «' + S.token?.value + '»' + ', expected ' + type + ' «' + val + '»')
   }
 
-  function expect (punc) { return expect_token('punc', punc) }
+  function expect (punc: string) { return expect_token('punc', punc) }
 
   function has_newline_before (token) {
     return token.nlb || !token.comments_before.every((comment: Comment) => !comment.nlb)

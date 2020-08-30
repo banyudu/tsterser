@@ -41,19 +41,12 @@
 
  ***********************************************************************/
 
-import {
-  defaults,
-  makePredicate,
-  is_ast_statement, is_ast_exit
-} from './utils'
+import { defaults, makePredicate, is_ast_statement, is_ast_exit } from './utils'
 import AST_Node from './ast/node'
 import TreeWalker from './tree-walker'
-import {
-  get_full_char_code,
-  get_full_char,
-  is_identifier_char
-} from './parse'
-import { AST_Token } from './ast'
+import { get_full_char_code, get_full_char, is_identifier_char } from './parse'
+import AST_Token from './ast/token'
+import AST_Scope from './ast/scope'
 import { Comment } from './types'
 
 const EXPECT_DIRECTIVE = /^$|[;{][\s\n]*$/
@@ -85,8 +78,8 @@ export class OutputStream {
   options: any
 
   in_directive = false
-  use_asm = null
-  active_scope = null
+  use_asm: AST_Scope | null = null
+  active_scope: AST_Scope | null = null
   private _has_parens = false
   private _might_need_space = false
   private _might_need_semicolon = false
