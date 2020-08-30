@@ -1,8 +1,9 @@
 import AST_Symbol from './symbol'
+import { AST_LoopControl } from '.'
 
 export default class AST_Label extends AST_Symbol {
   thedef: any
-  references: any
+  references: AST_LoopControl[]
   mangled_name: any
 
   // labels are always mangleable

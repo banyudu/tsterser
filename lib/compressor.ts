@@ -146,7 +146,7 @@ export default class Compressor extends TreeWalker {
     let top_retain = this.options.top_retain
     if (top_retain instanceof RegExp) {
       this.top_retain = function (def: AST_VarDef) {
-        return (top_retain as RegExp).test(def.name)
+        return (top_retain as RegExp).test(def.name as any)
       }
     } else if (typeof top_retain === 'function') {
       this.top_retain = top_retain
@@ -155,7 +155,7 @@ export default class Compressor extends TreeWalker {
         top_retain = top_retain.split(/,/)
       }
       this.top_retain = function (def: AST_VarDef) {
-        return (top_retain as string[]).includes(def.name)
+        return (top_retain as string[]).includes(def.name as any)
       }
     }
     if (this.options.module) {

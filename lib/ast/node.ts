@@ -168,8 +168,8 @@ export default class AST_Node extends AST {
   }
 
   _children_backwards (push: Function) {}
-  _size (info: any) { return 0 }
-  size (compressor: Compressor, stack) {
+  _size (info?: any) { return 0 }
+  size (compressor?: Compressor, stack?) {
     let size = 0
     walk_parent(this, (node: AST_Node, info) => {
       size += node?._size(info) || 0
@@ -255,7 +255,7 @@ export default class AST_Node extends AST {
   _to_mozilla_ast (parent: AST_Node): any {}
 
   add_source_map (output: OutputStream) {}
-  tail_node () { return this }
+  tail_node (): AST_Node { return this }
   static documentation = 'Base class of all AST nodes'
   static propdoc = {
     start: '[AST_Token] The first token of this node',

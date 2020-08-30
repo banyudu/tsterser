@@ -237,7 +237,7 @@ export default class AST_Scope extends AST_Block {
         let def
         if (drop_vars) {
           const sym = assign_as_unused(node)
-          if (is_ast_symbol_ref(sym)) {
+          if (sym instanceof AST_Node && is_ast_symbol_ref(sym)) {
             def = sym.definition?.()
             const in_use = in_use_ids.has(def.id)
             if (is_ast_assign(node)) {
@@ -265,7 +265,7 @@ export default class AST_Scope extends AST_Block {
         if (is_ast_lambda(node) && !(is_ast_accessor(node))) {
           let trim = !compressor.option('keep_fargs')
           for (let a = node.argnames, i = a.length; --i >= 0;) {
-            let sym = a[i]
+            let sym: any = a[i]
             if (is_ast_expansion(sym)) {
               sym = sym.expression
             }
@@ -316,13 +316,12 @@ export default class AST_Scope extends AST_Block {
           let side_effects: any[] = []
           node.definitions.forEach(function (def: AST_VarDef) {
             if (def.value) def.value = def.value.transform(tt)
-            const is_destructure = is_ast_destructuring(def.name)
-            const sym = is_destructure
+            const sym = is_ast_destructuring(def.name)
               ? new SymbolDef(null, { name: '<destructure>' }) /* fake SymbolDef */
               : def.name.definition?.()
             if (drop_block && sym.global) return tail.push(def)
             if (!(drop_vars || drop_block) ||
-                          is_destructure &&
+                is_ast_destructuring(def.name) &&
                               (def.name.names.length ||
                                   def.name.is_array ||
                                   compressor.option('pure_getters') != true) ||
@@ -377,10 +376,10 @@ export default class AST_Scope extends AST_Block {
             } else {
               const value = def.value?.drop_side_effect_free(compressor)
               if (value) {
-                if (!is_destructure) compressor.warn('Side effects in initialization of unused variable {name} [{file}:{line},{col}]', template(def.name))
+                if (!is_ast_destructuring(def.name)) compressor.warn('Side effects in initialization of unused variable {name} [{file}:{line},{col}]', template(def.name))
                 side_effects.push(value)
               } else {
-                if (!is_destructure) compressor[def.name.unreferenced() ? 'warn' : 'info']('Dropping unused variable {name} [{file}:{line},{col}]', template(def.name))
+                if (!is_ast_destructuring(def.name)) compressor[def.name.unreferenced() ? 'warn' : 'info']('Dropping unused variable {name} [{file}:{line},{col}]', template(def.name))
               }
               sym.eliminated++
             }
@@ -470,7 +469,7 @@ export default class AST_Scope extends AST_Block {
     function scan_ref_scoped (node: AST_Node, descend: Function) {
       let node_def
       const sym = assign_as_unused(node)
-      if (is_ast_symbol_ref(sym) &&
+      if (sym instanceof AST_Node && is_ast_symbol_ref(sym) &&
               !is_ref_of(node.left, AST_SymbolBlockDeclaration) &&
               self.variables.get(sym.name) === (node_def = sym.definition?.())
       ) {
@@ -659,14 +658,14 @@ export default class AST_Scope extends AST_Block {
         const sym = node.name
         let def
         let value
-        if (sym.scope === self &&
+        if (sym.scope === self && is_ast_symbol(sym) &&
                   (def = sym.definition?.()).escaped != 1 &&
                   !def.assignments &&
                   !def.direct_access &&
                   !def.single_use &&
                   !compressor.exposed(def) &&
                   !top_retain(def) &&
-                  (value = sym.fixed_value()) === node.value &&
+                  (value = (sym as any).fixed_value()) === node.value &&
                   is_ast_object(value) &&
                   value.properties.every((prop: any) => typeof prop.key === 'string')
         ) {
@@ -675,7 +674,7 @@ export default class AST_Scope extends AST_Block {
           const assignments: any[] = []
           value.properties.forEach(function (prop: any) {
             assignments.push(make_node('AST_VarDef', node, {
-              name: make_sym(sym, prop.key, defs),
+              name: make_sym(sym as any, prop.key, defs),
               value: prop.value
             }))
           })

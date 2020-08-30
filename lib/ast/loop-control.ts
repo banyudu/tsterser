@@ -1,9 +1,10 @@
 import { OutputStream } from '../output'
 import AST_Jump from './jump'
 import TreeWalker from '../tree-walker'
+import { AST_LabelRef } from '.'
 
 export default class AST_LoopControl extends AST_Jump {
-  label: any
+  label: AST_LabelRef | undefined
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, this.label && function (this) {
       this.label._walk(visitor)

@@ -44,7 +44,7 @@ export default class AST_Definitions extends AST_Statement {
         })
         a.push(var_)
       }
-      def = def.name.definition?.()
+      def = (def.name as any).definition?.()
       def.eliminated++
       def.replaced--
       return a

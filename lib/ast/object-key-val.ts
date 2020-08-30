@@ -6,7 +6,7 @@ import { to_moz, lift_key, make_node, print_property_name, key_size, is_ast_node
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
-  quote: any
+  quote: string
   key: any
   value: AST_Node
 

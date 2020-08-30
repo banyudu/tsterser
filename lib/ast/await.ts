@@ -4,7 +4,7 @@ import { to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unar
 import TreeWalker from '../tree-walker'
 
 export default class AST_Await extends AST_Node {
-  expression: any
+  expression: AST_Node
 
   _walk (visitor: any) {
     return visitor._visit(this, function (this) {

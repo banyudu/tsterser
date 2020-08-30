@@ -1,13 +1,16 @@
+import AST_String from './string'
+import AST_SymbolImport from './symbol-import'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import { list_overhead, do_list, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
+import { AST_NameMapping } from '.'
 
 export default class AST_Import extends AST_Node {
-  imported_name: any
-  module_name: any
-  imported_names: any
+  imported_name: AST_SymbolImport
+  module_name: AST_String
+  imported_names: AST_NameMapping[]
 
   _optimize (compressor: Compressor) {
     return this

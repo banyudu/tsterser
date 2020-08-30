@@ -5,10 +5,10 @@ import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
-  async: any
-  is_generator: any
-  static: any
-  quote: any
+  async: boolean
+  is_generator: boolean
+  static: boolean
+  quote: string|undefined
 
   _optimize (compressor: Compressor) {
     lift_key(this, compressor)

@@ -3,8 +3,8 @@ import AST_Constant from './constant'
 import '../utils'
 
 export default class AST_String extends AST_Constant {
-  value: any
-  quote: any
+  value: string
+  quote: string
 
   is_string () { return true }
   _size (): number {

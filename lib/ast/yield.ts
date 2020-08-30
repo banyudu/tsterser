@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 export default class AST_Yield extends AST_Node {
   value: any
   is_star: boolean
-  expression: any
+  expression: AST_Node | undefined
 
   _optimize (compressor: Compressor) {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {

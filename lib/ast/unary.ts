@@ -6,8 +6,8 @@ import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../
 import { is_iife_call, safe_to_assign, make_node, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
 
 export default class AST_Unary extends AST_Node {
-  operator: any
-  expression: any
+  operator: string
+  expression: AST_Node
   drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {

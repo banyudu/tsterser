@@ -1,3 +1,6 @@
+import AST_PropAccess from './prop-access'
+import AST_SymbolRef from './symbol-ref'
+import AST_TemplateString from './template-string'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
@@ -5,8 +8,8 @@ import { to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequen
 import TreeWalker from '../tree-walker'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
-  template_string: any
-  prefix: any
+  template_string: AST_TemplateString
+  prefix: AST_SymbolRef|AST_PropAccess
 
   _optimize (compressor: Compressor) {
     return this

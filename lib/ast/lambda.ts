@@ -1,3 +1,5 @@
+import AST_Expansion from './expansion'
+import AST_Destructuring from './destructuring'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope from './scope'
@@ -8,13 +10,14 @@ import { opt_AST_Lambda, To_Moz_FunctionExpression, all_refs_local, walk, do_lis
 
 import { walk_abort } from '../constants'
 import Compressor from '../compressor'
+import { AST_DefaultAssign, AST_SymbolDeclaration } from '.'
 
 export default class AST_Lambda extends AST_Scope {
-  argnames: any
-  uses_arguments: any
-  name: any
-  is_generator: any
-  async: any
+  argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
+  uses_arguments: boolean
+  name: AST_SymbolDeclaration | undefined
+  is_generator: boolean
+  async: boolean
 
   _optimize (compressor: Compressor): any {
     return opt_AST_Lambda(this, compressor)
@@ -56,8 +59,9 @@ export default class AST_Lambda extends AST_Scope {
   args_as_names () {
     const out: any[] = []
     for (let i = 0; i < this.argnames.length; i++) {
-      if (is_ast_destructuring(this.argnames[i])) {
-        out.push(...this.argnames[i].all_symbols())
+      const arg = this.argnames[i]
+      if (is_ast_destructuring(arg)) {
+        out.push(...arg.all_symbols())
       } else {
         out.push(this.argnames[i])
       }

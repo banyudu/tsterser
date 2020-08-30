@@ -4,7 +4,7 @@ import AST_Jump from './jump'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Exit extends AST_Jump {
-  value: any
+  value: AST_Node | undefined
 
   _prepend_comments_check (node: AST_Node) {
     return true

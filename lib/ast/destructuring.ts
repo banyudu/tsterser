@@ -7,7 +7,7 @@ import SymbolDef from '../symbol-def'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
-  is_array: any
+  is_array: boolean
   names: AST_Node[]
 
   to_fun_args (croak: Function): any {

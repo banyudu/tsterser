@@ -18,7 +18,7 @@ import {
 } from '../utils'
 
 export default class AST_Sequence extends AST_Node {
-  expressions: any
+  expressions: AST_Node[]
 
   _prepend_comments_check (node: AST_Node) {
     return this.expressions[0] === node

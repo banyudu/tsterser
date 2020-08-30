@@ -1600,7 +1600,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           return make_node('AST_UnaryPrefix', candidate, candidate)
         }
         if (is_ast_var_def(candidate)) {
-          const def = candidate.name.definition?.()
+          const def = (candidate.name as any).definition?.()
           const value = candidate.value
           if (def.references.length - def.replaced == 1 && !compressor.exposed(def)) {
             def.replaced++
@@ -1630,7 +1630,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
                 is_ast_symbol_ref(node) &&
                     (lvalues.get(node.name) || side_effects && may_modify(node)) ||
                 is_ast_var_def(node) && node.value &&
-                    (lvalues.has(node.name.name) || side_effects && may_modify(node.name)) ||
+                    (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
                 (sym = is_lhs(node.left, node)) &&
                     (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
                 may_throw &&
@@ -1812,7 +1812,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
           // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
           // Might be doing the exact same thing.
-          const def = sym.definition?.()
+          const def = (sym as any).definition?.()
           const is_reassigned = def && def.orig.length > 1
           if (is_reassigned) continue
           args.unshift(make_node('AST_VarDef', sym, {
@@ -3179,7 +3179,7 @@ export function needsParens (this, output: OutputStream) {
   // (a = foo)["prop"] —or— (a = foo).prop
   if (p?._needs_parens(this)) { return true }
   // ({a, b} = {a: 1, b: 2}), a destructuring assignment
-  if (is_ast_assign(this) && is_ast_destructuring(this.left) && this.left.is_array === false) { return true }
+  if (is_ast_assign(this) && is_ast_destructuring(this.left) && !this.left.is_array) { return true }
   return undefined
 }
 export function next_mangled (scope: AST_Scope, options: any) {
@@ -3597,7 +3597,7 @@ export function find_variable (compressor: Compressor, name) {
   while ((scope = compressor.parent(i++))) {
     if (is_ast_scope(scope)) break
     if (is_ast_catch(scope) && scope.argname) {
-      scope = scope.argname.definition?.().scope
+      scope = (scope.argname as any).definition?.().scope
       break
     }
   }

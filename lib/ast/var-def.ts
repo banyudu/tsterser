@@ -1,3 +1,7 @@
+import AST_SymbolVar from './symbol-var'
+import AST_SymbolLet from './symbol-let'
+import AST_SymbolConst from './symbol-const'
+import AST_Destructuring from './destructuring'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import Compressor from '../compressor'
@@ -5,8 +9,8 @@ import { suppress, safe_to_assign, mark, to_moz, parenthesize_for_noin, is_ast_d
 import TreeWalker from '../tree-walker'
 
 export default class AST_VarDef extends AST_Node {
-  name: any
-  value: any
+  name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
+  value: AST_Node | undefined
   eliminated: number
   replaced: number
 
@@ -16,7 +20,7 @@ export default class AST_VarDef extends AST_Node {
   }
 
   has_side_effects (compressor: Compressor) {
-    return this.value
+    return this.value as any
   }
 
   reduce_vars (tw: TreeWalker, descend: Function) {

@@ -32,7 +32,7 @@ export let unmangleable_names: Set<any> | null = null
 
 export default class AST_Toplevel extends AST_Scope {
   variables: any
-  globals: any
+  globals: Map<any, any>
   mangled_names: any
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
@@ -313,7 +313,7 @@ export default class AST_Toplevel extends AST_Scope {
               !node.value.name &&
               keep_name(options.keep_fnames, node.name.name)
       ) {
-        function_defs.add(node.name.definition?.().id)
+        function_defs.add((node.name as any).definition?.().id)
         return
       }
       if (is_ast_label(node)) {

@@ -1,11 +1,12 @@
 import { OutputStream } from '../output'
 import AST_Node from './node'
+import AST_TemplateSegment from './template-segment'
 import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_TemplateString extends AST_Node {
-  segments: any
+  segments: AST_TemplateSegment[]
 
   _optimize (compressor: Compressor) {
     if (!compressor.option('evaluate') ||

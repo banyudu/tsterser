@@ -8,6 +8,7 @@ export default class AST_ObjectProperty extends AST_Node {
   key: any
   value: any
   quote: any
+  static: boolean
 
   computed_key () { return false }
 
@@ -15,7 +16,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return lift_key(this, compressor)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean) {
     const computed_key = is_ast_object_key_val(this) && is_ast_node(this.key)
     const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)

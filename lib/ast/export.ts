@@ -1,15 +1,18 @@
+import AST_Definitions from './definitions'
+import AST_Defun from './defun'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement from './statement'
 import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import TreeWalker from '../tree-walker'
+import { AST_String, AST_DefClass, AST_NameMapping } from '.'
 
 export default class AST_Export extends AST_Statement {
-  is_default: any
-  module_name: any
-  exported_value: any
-  exported_definition: any
-  exported_names: any
+  is_default: boolean
+  module_name: AST_String | undefined
+  exported_value: AST_Node | undefined
+  exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
+  exported_names: Array<AST_NameMapping | undefined>
 
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this: any) {

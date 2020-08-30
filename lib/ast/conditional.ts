@@ -18,9 +18,9 @@ import {
 import TreeWalker from '../tree-walker'
 
 export default class AST_Conditional extends AST_Node {
-  alternative: any
-  consequent: any
-  condition: any
+  alternative: AST_Node
+  consequent: AST_Node
+  condition: AST_Node
 
   _prepend_comments_check (node: AST_Node) {
     return this.condition === node
@@ -105,14 +105,14 @@ export default class AST_Conditional extends AST_Node {
     }
     // x ? y(a) : y(b) --> y(x ? a : b)
     let arg_index
-    if (is_ast_call(consequent) &&
+    if (is_ast_call(consequent) && is_ast_call(alternative) &&
           alternative.TYPE === consequent.TYPE &&
           consequent.args.length > 0 &&
           consequent.args.length == alternative.args.length &&
           consequent.expression.equivalent_to(alternative.expression) &&
           !self.condition.has_side_effects(compressor) &&
           !consequent.expression.has_side_effects(compressor) &&
-          typeof (arg_index = single_arg_diff()) === 'number') {
+          typeof (arg_index = single_arg_diff(consequent.args, alternative.args)) === 'number') {
       const node = consequent.clone()
       node.args[arg_index] = make_node('AST_Conditional', self, {
         condition: self.condition,
@@ -283,9 +283,7 @@ export default class AST_Conditional extends AST_Node {
                   node.expression.getValue())
     }
 
-    function single_arg_diff () {
-      const a = consequent.args
-      const b = alternative.args
+    function single_arg_diff (a, b) {
       for (let i = 0, len = a.length; i < len; i++) {
         if (is_ast_expansion(a[i])) return
         if (!a[i].equivalent_to(b[i])) {

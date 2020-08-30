@@ -5,8 +5,8 @@ import Compressor from '../compressor'
 import { to_moz, key_size, static_size, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
 
 export default class AST_ObjectGetter extends AST_ObjectProperty {
-  static: any
-  quote: any
+  static: boolean
+  quote: string|undefined
 
   _to_mozilla_ast (parent: AST_Node) {
     let key: any = is_ast_node(this.key) ? to_moz(this.key) : {

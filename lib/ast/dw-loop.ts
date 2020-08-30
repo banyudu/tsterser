@@ -1,7 +1,8 @@
+import AST_Node from './node'
 import AST_IterationStatement from './iteration-statement'
 
 export default class AST_DWLoop extends AST_IterationStatement {
-  condition: any
+  condition: AST_Node
   static documentation = 'Base class for do/while statements'
   static propdoc = {
     condition: '[AST_Node] the loop condition.  Should not be instanceof AST_Statement'

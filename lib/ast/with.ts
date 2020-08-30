@@ -5,7 +5,7 @@ import { to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_With extends AST_StatementWithBody {
-  expression: any
+  expression: AST_Node
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       this.expression._walk(visitor)

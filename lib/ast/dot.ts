@@ -8,7 +8,7 @@ import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Dot extends AST_PropAccess {
-  quote: any
+  quote: string
 
   _prepend_comments_check (node: AST_Node) {
     return this.expression === node

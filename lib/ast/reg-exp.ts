@@ -8,7 +8,7 @@ const r_slash_script = /(<\s*\/\s*script)/i
 const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
-  value: any
+  value: RegExp
   _optimize (compressor: Compressor) {
     return literals_in_boolean_context(this, compressor)
   }

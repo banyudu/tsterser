@@ -1,11 +1,15 @@
+import AST_SymbolImport from './symbol-import'
+import AST_SymbolExport from './symbol-export'
+import AST_SymbolImportForeign from './symbol-import-foreign'
+import AST_SymbolExportForeign from './symbol-export-foreign'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import { is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_NameMapping extends AST_Node {
-  name: any
-  foreign_name: any
+  name: AST_SymbolExport|AST_SymbolImport
+  foreign_name: AST_SymbolExportForeign|AST_SymbolImportForeign
 
   _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {

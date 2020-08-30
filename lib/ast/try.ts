@@ -4,12 +4,13 @@ import AST_Block from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
+import { AST_Finally, AST_Catch } from '.'
 
 /* -----[ EXCEPTIONS ]----- */
 
 export default class AST_Try extends AST_Block {
-  bfinally: any
-  bcatch: any
+  bfinally: AST_Finally | undefined
+  bcatch: AST_Catch | undefined
 
   _optimize (compressor: Compressor) {
     tighten_body(this.body, compressor)
