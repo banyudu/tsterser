@@ -41,7 +41,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     }
   }
 
-  _codegen (this: AST_PrefixedTemplateString, output: OutputStream) {
+  _codegen (output: OutputStream) {
     const tag = this.prefix
     const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||

@@ -27,7 +27,7 @@ export default class AST_Return extends AST_Exit {
     }
   }
 
-  _codegen (this: AST_Return, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._do_print(output, 'return')
   }
 

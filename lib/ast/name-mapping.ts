@@ -34,7 +34,7 @@ export default class AST_NameMapping extends AST_Node {
     this.name = this.name.transform(tw)
   }
 
-  _codegen (this: AST_NameMapping, output: OutputStream) {
+  _codegen (output: OutputStream) {
     const is_import = is_ast_import(output.parent())
     const definition = this.name.definition()
     const names_are_different =

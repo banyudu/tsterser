@@ -173,7 +173,7 @@ export default class AST_Sequence extends AST_Node {
     })
   }
 
-  _codegen (this: AST_Sequence, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._do_print(output)
   }
 

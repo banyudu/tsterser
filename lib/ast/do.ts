@@ -79,7 +79,7 @@ export default class AST_Do extends AST_DWLoop {
     }
   }
 
-  _codegen (this: AST_Do, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('do')
     output.space()
     make_block(this.body, output)

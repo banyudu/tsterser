@@ -800,7 +800,7 @@ export default class AST_Binary extends AST_Node {
     return undefined
   }
 
-  _codegen (this: AST_Binary, output: OutputStream) {
+  _codegen (output: OutputStream) {
     const op = this.operator
     this.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */

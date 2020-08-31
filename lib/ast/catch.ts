@@ -50,7 +50,7 @@ export default class AST_Catch extends AST_Block {
     }
   }
 
-  _codegen (this: AST_Catch, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('catch')
     if (this.argname) {
       output.space()

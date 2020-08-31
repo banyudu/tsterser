@@ -132,7 +132,7 @@ export default class AST_TemplateString extends AST_Node {
     }
   }
 
-  _codegen (this: AST_TemplateString, output: OutputStream) {
+  _codegen (output: OutputStream) {
     const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')

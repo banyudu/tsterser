@@ -141,7 +141,7 @@ export default class AST_Dot extends AST_PropAccess {
     this.expression = this.expression.transform(tw)
   }
 
-  _codegen (this: AST_Dot, output: OutputStream) {
+  _codegen (output: OutputStream) {
     const expr = this.expression
     expr.print(output)
     const prop: string = this.property as string

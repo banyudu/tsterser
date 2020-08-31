@@ -36,7 +36,7 @@ export default class AST_New extends AST_Call {
     return undefined
   }
 
-  _codegen (this: AST_New, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('new')
     output.space()
     callCodeGen(this, output)

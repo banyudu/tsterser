@@ -174,7 +174,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _codegen (this: AST_Switch, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('switch')
     output.space()
     output.with_parens(() => {

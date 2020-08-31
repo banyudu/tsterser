@@ -120,7 +120,7 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen (this: AST_Class, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('class')
     output.space()
     if (this.name) {

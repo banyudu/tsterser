@@ -80,7 +80,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _codegen (this: AST_LabeledStatement, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this.label.print(output)
     output.colon();
     (this.body).print(output)

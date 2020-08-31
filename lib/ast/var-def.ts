@@ -79,7 +79,7 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  _codegen (this: AST_VarDef, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this.name.print(output)
     if (this.value) {
       output.space()

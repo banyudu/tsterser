@@ -71,7 +71,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
     static: 'eq'
   }
 
-  _codegen (this: AST_ObjectSetter, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._print_getter_setter('set', output)
   }
 

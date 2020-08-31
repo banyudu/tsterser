@@ -141,7 +141,7 @@ export default class AST_Lambda extends AST_Scope {
     print_braced(self, output, true)
   }
 
-  _codegen (this: AST_Lambda, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._do_print(output)
   }
 

@@ -43,7 +43,7 @@ export default class AST_Expansion extends AST_Node {
     }
   }
 
-  _codegen (this: AST_Expansion, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('...')
     this.expression.print(output)
   }

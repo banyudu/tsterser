@@ -48,7 +48,7 @@ export default class AST_While extends AST_DWLoop {
     }
   }
 
-  _codegen (this: AST_While, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('while')
     output.space()
     output.with_parens(() => {

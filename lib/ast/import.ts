@@ -97,7 +97,7 @@ export default class AST_Import extends AST_Node {
     }
   }
 
-  _codegen (this: AST_Import, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('import')
     output.space()
     if (this.imported_name) {

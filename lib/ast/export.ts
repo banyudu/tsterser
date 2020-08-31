@@ -105,7 +105,7 @@ export default class AST_Export extends AST_Statement {
     }
   }
 
-  _codegen (this: AST_Export, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('export')
     output.space()
     if (this.is_default) {

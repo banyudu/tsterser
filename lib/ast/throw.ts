@@ -12,7 +12,7 @@ export default class AST_Throw extends AST_Exit {
     }
   }
 
-  _codegen (this: AST_Throw, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._do_print(output, 'throw')
   }
 

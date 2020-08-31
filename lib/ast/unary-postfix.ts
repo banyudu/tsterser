@@ -13,7 +13,7 @@ export default class AST_UnaryPostfix extends AST_Unary {
   }
 
   _dot_throw () { return false }
-  _codegen (this: AST_UnaryPostfix, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this.expression.print(output)
     output.print(this.operator)
   }

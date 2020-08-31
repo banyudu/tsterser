@@ -144,7 +144,7 @@ export default class AST_Object extends AST_Node {
     return !output.has_parens() && first_in_statement(output)
   }
 
-  _codegen (this: AST_Object, output: OutputStream) {
+  _codegen (output: OutputStream) {
     if (this.properties.length > 0) {
       output.with_block(() => {
         this.properties.forEach(function (prop, i) {

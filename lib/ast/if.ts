@@ -226,7 +226,7 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  _codegen (this: AST_If, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('if')
     output.space()
     output.with_parens(() => {

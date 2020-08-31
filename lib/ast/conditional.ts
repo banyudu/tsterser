@@ -409,7 +409,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   needs_parens = needsParens
-  _codegen (this: AST_Conditional, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this.condition.print(output)
     output.space()
     output.print('?')

@@ -55,7 +55,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     }
   }
 
-  _codegen (this: AST_SimpleStatement, output: OutputStream) {
+  _codegen (output: OutputStream) {
     (this.body).print(output)
     output.semicolon()
   }

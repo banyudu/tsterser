@@ -19,7 +19,7 @@ export default class AST_String extends AST_Constant {
     add(this.value)
   }
 
-  _codegen (this: AST_String, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print_string(this.getValue(), this.quote, output.in_directive)
   }
 

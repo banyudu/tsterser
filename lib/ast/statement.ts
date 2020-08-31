@@ -15,7 +15,7 @@ export default class AST_Statement extends AST_Node {
     throw new Error('Cannot negate a statement')
   }
 
-  _codegen (this: AST_Statement, output: OutputStream) {
+  _codegen (output: OutputStream) {
     (this.body).print(output)
     output.semicolon()
   }

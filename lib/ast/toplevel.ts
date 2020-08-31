@@ -192,7 +192,7 @@ export default class AST_Toplevel extends AST_Scope {
     return to_moz_scope('Program', this)
   }
 
-  _codegen (this: AST_Toplevel, output: OutputStream) {
+  _codegen (output: OutputStream) {
     display_body(this.body as any[], true, output, true)
     output.print('')
   }

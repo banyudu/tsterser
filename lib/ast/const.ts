@@ -16,7 +16,7 @@ export default class AST_Const extends AST_Definitions {
     return def_size(6, this)
   }
 
-  _codegen (this: AST_Const, output: OutputStream) {
+  _codegen (output: OutputStream) {
     this._do_print(output, 'const')
   }
 

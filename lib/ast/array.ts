@@ -97,7 +97,7 @@ export default class AST_Array extends AST_Node {
     }
   }
 
-  _codegen (this: AST_Array, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.with_square(() => {
       const a = this.elements; const len = a.length
       if (len > 0) output.space()

@@ -106,7 +106,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  _codegen (this: AST_Destructuring, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print(this.is_array ? '[' : '{')
     const len = this.names.length
     this.names.forEach(function (name, i) {

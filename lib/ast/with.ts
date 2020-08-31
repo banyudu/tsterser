@@ -33,7 +33,7 @@ export default class AST_With extends AST_StatementWithBody {
     }
   }
 
-  _codegen (this: AST_With, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('with')
     output.space()
     output.with_parens(() => {

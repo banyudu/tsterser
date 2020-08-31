@@ -29,7 +29,7 @@ export default class AST_BlockStatement extends AST_Block {
     }
   }
 
-  _codegen (this: AST_BlockStatement, output: OutputStream) {
+  _codegen (output: OutputStream) {
     blockStateMentCodeGen(this, output)
   }
 

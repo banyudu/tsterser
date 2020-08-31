@@ -9,7 +9,7 @@ export default class AST_Finally extends AST_Block {
     return 7 + list_overhead(this.body)
   }
 
-  _codegen (this: AST_Finally, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('finally')
     output.space()
     print_braced(this, output)

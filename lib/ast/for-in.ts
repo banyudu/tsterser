@@ -53,7 +53,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     }
   }
 
-  _codegen (this: AST_ForIn, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('for')
     if (this.await) {
       output.space()

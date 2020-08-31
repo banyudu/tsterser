@@ -108,7 +108,7 @@ export default class AST_For extends AST_IterationStatement {
     }
   }
 
-  _codegen (this: AST_For, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('for')
     output.space()
     output.with_parens(() => {

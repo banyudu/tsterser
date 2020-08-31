@@ -49,7 +49,7 @@ export default class AST_Case extends AST_SwitchBranch {
     this.body = do_list(this.body, tw)
   }
 
-  _codegen (this: AST_Case, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('case')
     output.space()
     this.expression.print(output)
