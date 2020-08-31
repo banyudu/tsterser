@@ -1,13 +1,14 @@
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { To_Moz_Literal } from '../utils'
+import Compressor from '../compressor'
 
 export default class AST_Constant extends AST_Node {
   value: any
   literal: any
 
   drop_side_effect_free () { return null }
-  may_throw () { return false }
+  may_throw (compressor: Compressor) { return false }
   has_side_effects () { return false }
   _eval (_arg: any) {
     return this.getValue()

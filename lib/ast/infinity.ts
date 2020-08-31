@@ -1,5 +1,5 @@
 import Compressor from '../compressor'
-import AST_Atom from './atom'
+import AST_Atom, { AST_Atom_Props } from './atom'
 import { is_lhs, is_atomic, make_node, find_variable } from '../utils'
 
 export default class AST_Infinity extends AST_Atom {
@@ -29,4 +29,7 @@ export default class AST_Infinity extends AST_Atom {
   static documentation: 'The `Infinity` value'
 
   static PROPS = AST_Atom.PROPS
+}
+
+export interface AST_Infinity_Props extends AST_Atom_Props {
 }

@@ -26,4 +26,6 @@ export default class AST_ForOf extends AST_ForIn {
 
 export interface AST_ForOf_Props extends AST_ForIn_Props {
   await?: any | undefined
+  name?: any | undefined
+  init?: any | undefined
 }

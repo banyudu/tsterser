@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { push_uniq, is_ast_node } from '../utils'
 
 let mangle_options
@@ -84,10 +84,16 @@ export default class AST_Symbol extends AST_Node {
   static documentation = 'Base class for all symbols'
 
   static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
-  constructor (args?) {
+  constructor (args?: AST_Symbol_Props) {
     super(args)
     this.scope = args.scope
     this.name = args.name
     this.thedef = args.thedef
   }
+}
+
+export interface AST_Symbol_Props extends AST_Node_Props {
+  scope?: any | undefined
+  name?: any | undefined
+  thedef?: any | undefined
 }

@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 
 export default class AST_NewTarget extends AST_Node {
   _size = () => 10
@@ -25,4 +25,7 @@ export default class AST_NewTarget extends AST_Node {
   static documentation: 'A reference to new.target'
 
   static PROPS = AST_Node.PROPS
+}
+
+export interface AST_NewTarget_Props extends AST_Node_Props {
 }

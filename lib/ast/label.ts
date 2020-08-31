@@ -1,4 +1,4 @@
-import AST_Symbol from './symbol'
+import AST_Symbol, { AST_Symbol_Props } from './symbol'
 import { AST_LoopControl } from '.'
 
 export default class AST_Label extends AST_Symbol {
@@ -19,9 +19,13 @@ export default class AST_Label extends AST_Symbol {
   }
 
   static PROPS = AST_Symbol.PROPS.concat(['references'])
-  constructor (args?) {
+  constructor (args?: AST_Label_Props) {
     super(args)
     this.references = args.references
     this.initialize()
   }
+}
+
+export interface AST_Label_Props extends AST_Symbol_Props {
+  references?: AST_LoopControl[] | undefined
 }

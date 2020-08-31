@@ -1,4 +1,4 @@
-import AST_Atom from './atom'
+import AST_Atom, { AST_Atom_Props } from './atom'
 export default class AST_Hole extends AST_Atom {
   to_fun_args (croak: Function): any {
     return this
@@ -14,4 +14,7 @@ export default class AST_Hole extends AST_Atom {
   static documentation = 'A hole in an array'
 
   static PROPS = AST_Atom.PROPS
+}
+
+export interface AST_Hole_Props extends AST_Atom_Props {
 }

@@ -3,10 +3,10 @@ import Compressor from '../compressor'
 import { HOP, warn } from '../utils'
 
 export default class AST_SymbolDeclaration extends AST_Symbol {
-  init: any
+  init?: any
   thedef: any
 
-  may_throw () { return false }
+  may_throw (compressor: Compressor) { return false }
   has_side_effects () { return false }
   _find_defs (compressor: Compressor) {
     if (!this.global()) return

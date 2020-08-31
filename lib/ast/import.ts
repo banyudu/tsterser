@@ -2,7 +2,7 @@ import AST_String from './string'
 import AST_SymbolImport from './symbol-import'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { list_overhead, do_list, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 import { AST_NameMapping } from '.'
@@ -140,10 +140,16 @@ export default class AST_Import extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
-  constructor (args?) {
+  constructor (args?: AST_Import_Props) {
     super(args)
     this.imported_name = args.imported_name
     this.imported_names = args.imported_names
     this.module_name = args.module_name
   }
+}
+
+export interface AST_Import_Props extends AST_Node_Props {
+  imported_name?: AST_SymbolImport | undefined
+  imported_names?: AST_NameMapping[] | undefined
+  module_name?: AST_String | undefined
 }

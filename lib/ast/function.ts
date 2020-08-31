@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Lambda from './lambda'
+import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import Compressor from '../compressor'
 import {
   opt_AST_Lambda,
@@ -110,4 +110,7 @@ export default class AST_Function extends AST_Lambda {
   static documentation = 'A function expression'
 
   static PROPS = AST_Lambda.PROPS
+}
+
+export interface AST_Function_Props extends AST_Lambda_Props {
 }

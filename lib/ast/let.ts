@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Definitions from './definitions'
+import AST_Definitions, { AST_Definitions_Props } from './definitions'
 import { def_size, to_moz } from '../utils'
 
 export default class AST_Let extends AST_Definitions {
@@ -23,4 +23,7 @@ export default class AST_Let extends AST_Definitions {
   static documentation = 'A `let` statement'
 
   static PROPS = AST_Definitions.PROPS
+}
+
+export interface AST_Let_Props extends AST_Definitions_Props {
 }

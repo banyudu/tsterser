@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Call from './call'
+import AST_Call, { AST_Call_Props } from './call'
 import { is_undeclared_ref, callCodeGen, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
@@ -46,4 +46,7 @@ export default class AST_New extends AST_Call {
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
   static PROPS = AST_Call.PROPS
+}
+
+export interface AST_New_Props extends AST_Call_Props {
 }

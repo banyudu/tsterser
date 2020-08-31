@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_StatementWithBody from './statement-with-body'
+import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-with-body'
 import Compressor from '../compressor'
 import { make_node_from_constant, best_of_expression, make_node, force_statement, make_block, aborts, to_moz, is_empty, push, pop, extract_declarations_from_unreachable_code, is_ast_node, is_ast_if, is_ast_do, is_ast_statement_with_body, is_ast_simple_statement, is_ast_binary, is_ast_empty_statement, is_ast_exit } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -251,7 +251,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
-  constructor (args?) {
+  constructor (args?: AST_If_Props) {
     super(args)
     this.condition = args.condition
     this.alternative = args.alternative
@@ -282,4 +282,9 @@ function make_then (self: AST_If, output: OutputStream) {
     } else break
   }
   force_statement(self.body, output)
+}
+
+export interface AST_If_Props extends AST_StatementWithBody_Props {
+  condition?: AST_Node | undefined
+  alternative?: AST_Statement | undefined | undefined
 }

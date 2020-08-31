@@ -1,9 +1,10 @@
 import { OutputStream } from '../output'
 import AST_Symbol from './symbol'
+import Compressor from '../compressor'
 
 export default class AST_This extends AST_Symbol {
   drop_side_effect_free () { return null }
-  may_throw () { return false }
+  may_throw (compressor: Compressor) { return false }
   has_side_effects () { return false }
   _size = () => 4
   shallow_cmp_props: any = {}

@@ -23,7 +23,7 @@ export default class AST_Lambda extends AST_Scope {
     return opt_AST_Lambda(this, compressor)
   }
 
-  may_throw () { return false }
+  may_throw (compressor: Compressor) { return false }
   has_side_effects () { return false }
   _eval (compressor: Compressor) { return this }
   is_constant_expression = all_refs_local

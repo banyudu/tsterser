@@ -3,7 +3,7 @@ import AST_SymbolExport from './symbol-export'
 import AST_SymbolImportForeign from './symbol-import-foreign'
 import AST_SymbolExportForeign from './symbol-export-foreign'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -66,9 +66,14 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['foreign_name', 'name'])
-  constructor (args?) {
+  constructor (args?: AST_NameMapping_Props) {
     super(args)
     this.foreign_name = args.foreign_name
     this.name = args.name
   }
+}
+
+export interface AST_NameMapping_Props extends AST_Node_Props {
+  foreign_name?: AST_SymbolExportForeign|AST_SymbolImportForeign | undefined
+  name?: AST_SymbolExport|AST_SymbolImport | undefined
 }

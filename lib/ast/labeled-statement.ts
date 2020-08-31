@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_StatementWithBody from './statement-with-body'
+import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-with-body'
 import Compressor from '../compressor'
 import { push, pop, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -93,8 +93,12 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   } as any
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
-  constructor (args?) {
+  constructor (args?: AST_LabeledStatement_Props) {
     super(args)
     this.label = args.label
   }
+}
+
+export interface AST_LabeledStatement_Props extends AST_StatementWithBody_Props {
+  label?: any | undefined
 }

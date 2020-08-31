@@ -1,8 +1,9 @@
 import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
+import Compressor from '../compressor'
 
 export default class AST_EmptyStatement extends AST_Statement {
-  may_throw () { return false }
+  may_throw (compressor: Compressor) { return false }
   has_side_effects () { return false }
   shallow_cmp_props: any = {}
   _to_mozilla_ast (): any {
