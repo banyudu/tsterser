@@ -1,12 +1,16 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_IterationStatement from './iteration-statement'
+import AST_IterationStatement, { AST_IterationStatement_Props } from './iteration-statement'
 import Compressor from '../compressor'
 
 import { make_node_from_constant, best_of_expression, extract_declarations_from_unreachable_code, parenthesize_for_noin, reset_block_variables, has_break_or_continue, as_statement_array, push, pop, to_moz, make_node, is_ast_node, is_ast_definitions, is_ast_block_statement, is_ast_break, is_ast_statement, is_ast_if } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_For extends AST_IterationStatement {
+  step?: any | undefined
+  condition?: any | undefined
+  init?: any | undefined
+
   _in_boolean_context (context) {
     return this.condition === context
   }
@@ -146,7 +150,7 @@ export default class AST_For extends AST_IterationStatement {
   } as any
 
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
-  constructor (args?) {
+  constructor (args?: AST_For_Props) {
     super(args)
     this.init = args.init
     this.condition = args.condition
@@ -220,4 +224,10 @@ function if_break_in_loop (self: AST_For, compressor: Compressor) {
     }
     self = if_break_in_loop(self, compressor)
   }
+}
+
+export interface AST_For_Props extends AST_IterationStatement_Props {
+  init?: any | undefined
+  condition?: any | undefined
+  step?: any | undefined
 }

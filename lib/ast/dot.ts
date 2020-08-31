@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_PropAccess from './prop-access'
+import AST_PropAccess, { AST_PropAccess_Props } from './prop-access'
 import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
@@ -172,8 +172,12 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   static PROPS = AST_PropAccess.PROPS.concat(['quote'])
-  constructor (args?) {
+  constructor (args?: AST_Dot_Props) {
     super(args)
     this.quote = args.quote
   }
+}
+
+export interface AST_Dot_Props extends AST_PropAccess_Props {
+  quote?: string | undefined
 }

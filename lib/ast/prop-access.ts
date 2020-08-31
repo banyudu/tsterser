@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { is_undeclared_ref, HOP, make_node, make_sequence, to_moz, walk, safe_to_flatten, is_ast_node, is_ast_object, is_ast_object_key_val, is_ast_new, is_ast_scope, is_ast_dot, is_ast_concise_method, is_ast_call, is_ast_accessor, is_ast_symbol_method } from '../utils'
 import { static_values, global_objs, walk_abort } from '../constants'
@@ -127,9 +127,14 @@ export default class AST_PropAccess extends AST_Node {
   } as any
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
-  constructor (args?) {
+  constructor (args?: AST_PropAccess_Props) {
     super(args)
     this.expression = args.expression
     this.property = args.property
   }
+}
+
+export interface AST_PropAccess_Props extends AST_Node_Props {
+  expression?: any | undefined
+  property?: any | undefined
 }

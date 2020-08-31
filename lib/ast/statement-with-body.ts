@@ -1,8 +1,10 @@
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import { force_statement } from '../utils'
 
 export default class AST_StatementWithBody extends AST_Statement {
+  body: any | undefined
+
   _do_print_body (output: OutputStream) {
     force_statement(this.body, output)
   }
@@ -14,8 +16,12 @@ export default class AST_StatementWithBody extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args?) {
+  constructor (args: AST_StatementWithBody_Props) {
     super(args)
     this.body = args.body
   }
+}
+
+export interface AST_StatementWithBody_Props extends AST_Statement_Props {
+  body: any | undefined
 }

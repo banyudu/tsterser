@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 
 export default class AST_EmptyStatement extends AST_Statement {
   may_throw () { return false }
@@ -17,4 +17,7 @@ export default class AST_EmptyStatement extends AST_Statement {
   static documentation = 'The empty statement (empty block or simply a semicolon)'
 
   static PROPS = AST_Statement.PROPS
+}
+
+export interface AST_EmptyStatement_Props extends AST_Statement_Props {
 }

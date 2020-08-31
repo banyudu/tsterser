@@ -1,4 +1,4 @@
-import AST_Boolean from './boolean'
+import AST_Boolean, { AST_Boolean_Props } from './boolean'
 
 export default class AST_False extends AST_Boolean {
   is_boolean () { return true }
@@ -7,4 +7,7 @@ export default class AST_False extends AST_Boolean {
   static documentation = 'The `false` atom'
 
   static PROPS = AST_Boolean.PROPS
+}
+
+export interface AST_False_Props extends AST_Boolean_Props {
 }

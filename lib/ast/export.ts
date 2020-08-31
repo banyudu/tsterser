@@ -2,7 +2,7 @@ import AST_Definitions from './definitions'
 import AST_Defun from './defun'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import TreeWalker from '../tree-walker'
 import { AST_String, AST_DefClass, AST_NameMapping } from '.'
@@ -160,7 +160,7 @@ export default class AST_Export extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
-  constructor (args?) {
+  constructor (args?: AST_Export_Props) {
     super(args)
     this.exported_definition = args.exported_definition
     this.exported_value = args.exported_value
@@ -168,4 +168,12 @@ export default class AST_Export extends AST_Statement {
     this.exported_names = args.exported_names
     this.module_name = args.module_name
   }
+}
+
+export interface AST_Export_Props extends AST_Statement_Props {
+  exported_definition?: AST_Defun|AST_Definitions|AST_DefClass | undefined | undefined
+  exported_value?: AST_Node | undefined | undefined
+  is_default?: boolean | undefined
+  exported_names?: Array<AST_NameMapping | undefined> | undefined
+  module_name?: AST_String | undefined | undefined
 }

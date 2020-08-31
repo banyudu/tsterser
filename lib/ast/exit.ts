@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Jump from './jump'
+import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeWalker from '../tree-walker'
 
 export default class AST_Exit extends AST_Jump {
@@ -46,8 +46,12 @@ export default class AST_Exit extends AST_Jump {
   }
 
   static PROPS = AST_Jump.PROPS.concat(['value'])
-  constructor (args?) {
+  constructor (args?: AST_Exit_Props) {
     super(args)
     this.value = args.value
   }
+}
+
+export interface AST_Exit_Props extends AST_Jump_Props {
+  value?: AST_Node | undefined | undefined
 }

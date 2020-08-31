@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import AST_ForIn from './for-in'
+import AST_ForIn, { AST_ForIn_Props } from './for-in'
 import { to_moz } from '../utils'
 
 export default class AST_ForOf extends AST_ForIn {
@@ -18,8 +18,12 @@ export default class AST_ForOf extends AST_ForIn {
   static documentation = 'A `for ... of` statement'
 
   static PROPS = AST_ForIn.PROPS.concat(['await'])
-  constructor (args?) {
+  constructor (args?: AST_ForOf_Props) {
     super(args)
     this.await = args.await
   }
+}
+
+export interface AST_ForOf_Props extends AST_ForIn_Props {
+  await?: any | undefined
 }

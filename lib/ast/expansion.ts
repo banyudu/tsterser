@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { to_moz_in_destructuring, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -54,8 +54,12 @@ export default class AST_Expansion extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?) {
+  constructor (args?: AST_Expansion_Props) {
     super(args)
     this.expression = args.expression
   }
+}
+
+export interface AST_Expansion_Props extends AST_Node_Props {
+  expression?: AST_Node | undefined
 }

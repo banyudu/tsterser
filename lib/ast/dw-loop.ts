@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import AST_IterationStatement from './iteration-statement'
+import AST_IterationStatement, { AST_IterationStatement_Props } from './iteration-statement'
 
 export default class AST_DWLoop extends AST_IterationStatement {
   condition: AST_Node
@@ -14,8 +14,12 @@ export default class AST_DWLoop extends AST_IterationStatement {
     return this.condition === context
   }
 
-  constructor (args?) {
+  constructor (args?: AST_DWLoop_Props) {
     super(args)
     this.condition = args.condition
   }
+}
+
+export interface AST_DWLoop_Props extends AST_IterationStatement_Props {
+  condition?: AST_Node | undefined
 }

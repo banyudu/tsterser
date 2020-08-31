@@ -1,11 +1,12 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_IterationStatement from './iteration-statement'
+import AST_IterationStatement, { AST_IterationStatement_Props } from './iteration-statement'
 import Compressor from '../compressor'
 import { suppress, reset_block_variables, push, pop, to_moz, is_ast_for_of } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_ForIn extends AST_IterationStatement {
+  init?: any | undefined
   object: any
   await: any
 
@@ -78,9 +79,14 @@ export default class AST_ForIn extends AST_IterationStatement {
   } as any
 
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
-  constructor (args?) {
+  constructor (args?: AST_ForIn_Props) {
     super(args)
     this.init = args.init
     this.object = args.object
   }
+}
+
+export interface AST_ForIn_Props extends AST_IterationStatement_Props {
+  init?: any | undefined
+  object?: any | undefined
 }
