@@ -1,9 +1,11 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Constant from './constant'
+import AST_Constant, { AST_Constant_Props } from './constant'
 import '../utils'
 
 export default class AST_BigInt extends AST_Constant {
+  value: any | undefined
+
   _eval () { return this }
   _size (): number {
     return this.value.length
@@ -38,8 +40,12 @@ export default class AST_BigInt extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
-  constructor (args) {
+  constructor (args: AST_BigInt_Props) {
     super(args)
     this.value = args.value
   }
+}
+
+export interface AST_BigInt_Props extends AST_Constant_Props {
+  value: any | undefined
 }

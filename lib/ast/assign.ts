@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import AST_DefaultAssign from './default-assign'
 import Compressor from '../compressor'
-import AST_Binary from './binary'
+import AST_Binary, { AST_Binary_Props } from './binary'
 import AST_Lambda from './lambda'
 import AST_Scope from './scope'
 import TreeWalker from '../tree-walker'
@@ -200,4 +200,7 @@ export default class AST_Assign extends AST_Binary {
   static documentation = 'An assignment expression — `a = b + 5`'
 
   static PROPS = AST_Binary.PROPS
+}
+
+export interface AST_Assign_Props extends AST_Binary_Props {
 }

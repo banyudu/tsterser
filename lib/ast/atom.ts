@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import AST_Constant from './constant'
+import AST_Constant, { AST_Constant_Props } from './constant'
 
 export default class AST_Atom extends AST_Constant {
   shallow_cmp_props: any = {}
@@ -13,4 +13,7 @@ export default class AST_Atom extends AST_Constant {
   static documentation = 'Base class for atoms'
 
   static PROPS = AST_Constant.PROPS
+}
+
+export interface AST_Atom_Props extends AST_Constant_Props {
 }

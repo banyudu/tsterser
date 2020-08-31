@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { To_Moz_Literal } from '../utils'
 
 export default class AST_Constant extends AST_Node {
@@ -31,4 +31,7 @@ export default class AST_Constant extends AST_Node {
   static documentation = 'Base class for all constants'
 
   static PROPS = AST_Node.PROPS
+}
+
+export interface AST_Constant_Props extends AST_Node_Props {
 }

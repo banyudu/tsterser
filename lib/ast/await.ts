@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unary_prefix, is_ast_unary, is_ast_constant } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -58,8 +58,12 @@ export default class AST_Await extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?) {
+  constructor (args?: AST_Await_Props) {
     super(args)
     this.expression = args.expression
   }
+}
+
+export interface AST_Await_Props extends AST_Node_Props {
+  expression?: AST_Node | undefined
 }

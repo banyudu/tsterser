@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import AST_Atom from './atom'
+import AST_Atom, { AST_Atom_Props } from './atom'
 import { make_node, To_Moz_Literal, is_ast_binary } from '../utils'
 
 export default class AST_Boolean extends AST_Atom {
@@ -50,4 +50,7 @@ export default class AST_Boolean extends AST_Atom {
   static documentation = 'Base class for booleans'
 
   static PROPS = AST_Atom.PROPS
+}
+
+export interface AST_Boolean_Props extends AST_Atom_Props {
 }

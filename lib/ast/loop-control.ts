@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Jump from './jump'
+import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeWalker from '../tree-walker'
 import { AST_LabelRef } from '.'
 
@@ -35,8 +35,12 @@ export default class AST_LoopControl extends AST_Jump {
   }
 
   static PROPS = AST_Jump.PROPS.concat(['label'])
-  constructor (args?) {
+  constructor (args?: AST_LoopControl_Props) {
     super(args)
     this.label = args.label
   }
+}
+
+export interface AST_LoopControl_Props extends AST_Jump_Props {
+  label?: AST_LabelRef | undefined | undefined
 }
