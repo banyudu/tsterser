@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_With from './with'
 import { PRECEDENCE } from '../parse'
@@ -835,10 +835,16 @@ export default class AST_Binary extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
-  constructor (args) { // eslint-disable-line
+  constructor (args?: AST_Binary_Props) { // eslint-disable-line
     super(args)
     this.operator = args.operator
     this.left = args.left
     this.right = args.right
   }
+}
+
+export interface AST_Binary_Props extends AST_Node_Props {
+  operator?: string | undefined
+  left?: AST_Node | undefined
+  right?: AST_Node | undefined
 }

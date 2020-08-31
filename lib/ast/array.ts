@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
 import TreeWalker from '../tree-walker'
@@ -120,8 +120,12 @@ export default class AST_Array extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args) { // eslint-disable-line
+  constructor (args?: AST_Array_Props) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }
+}
+
+export interface AST_Array_Props extends AST_Node_Props {
+  elements?: AST_Node[] | undefined
 }

@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Lambda from './lambda'
+import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import {
   opt_AST_Lambda,
   basic_negation,
@@ -110,4 +110,7 @@ export default class AST_Arrow extends AST_Lambda {
   static documentation = 'An ES6 Arrow function ((a) => b)'
 
   static PROPS = AST_Lambda.PROPS
+}
+
+export interface AST_Arrow_Props extends AST_Lambda_Props {
 }

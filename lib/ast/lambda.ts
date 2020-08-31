@@ -2,7 +2,7 @@ import AST_Expansion from './expansion'
 import AST_Destructuring from './destructuring'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Scope from './scope'
+import AST_Scope, { AST_Scope_Props } from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
 import TreeWalker from '../tree-walker'
 
@@ -156,7 +156,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
-  constructor (args?) {
+  constructor (args?: AST_Lambda_Props) {
     super(args)
     this.name = args.name
     this.argnames = args.argnames
@@ -164,4 +164,12 @@ export default class AST_Lambda extends AST_Scope {
     this.is_generator = args.is_generator
     this.async = args.async
   }
+}
+
+export interface AST_Lambda_Props extends AST_Scope_Props {
+  name?: AST_SymbolDeclaration | undefined | undefined
+  argnames?: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign> | undefined
+  uses_arguments?: boolean | undefined
+  is_generator?: boolean | undefined
+  async?: boolean | undefined
 }
