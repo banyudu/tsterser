@@ -9,7 +9,7 @@ export default class AST_Constant extends AST_Node {
 
   drop_side_effect_free () { return null }
   may_throw (compressor: Compressor) { return false }
-  has_side_effects () { return false }
+  has_side_effects (compressor: Compressor) { return false }
   _eval (_arg: any) {
     return this.getValue()
   }

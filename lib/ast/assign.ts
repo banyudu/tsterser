@@ -133,7 +133,7 @@ export default class AST_Assign extends AST_Binary {
     return this.left.may_throw(compressor)
   }
 
-  has_side_effects () { return true }
+  has_side_effects (compressor: Compressor) { return true }
   is_string (compressor: Compressor) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   }

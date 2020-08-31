@@ -1,4 +1,5 @@
 import { OutputStream } from '../output'
+import Compressor from '../compressor'
 import AST_Node from './node'
 import '../utils'
 
@@ -7,7 +8,7 @@ export default class AST_TemplateSegment extends AST_Node {
   raw: any
 
   drop_side_effect_free () { return null }
-  has_side_effects () { return false }
+  has_side_effects (compressor: Compressor) { return false }
   shallow_cmp_props: any = { value: 'eq' }
   _size (): number {
     return this.value.length
