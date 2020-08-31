@@ -73,4 +73,5 @@ export default class AST_Case extends AST_SwitchBranch {
 
 export interface AST_Case_Props extends AST_SwitchBranch_Props {
   expression: any | undefined
+  start?: any | undefined
 }
