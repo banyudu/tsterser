@@ -62,10 +62,10 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   }
 
-  _transform (self: AST_Import, tw: TreeWalker) {
-    if (self.imported_name) self.imported_name = self.imported_name.transform(tw)
-    if (self.imported_names) do_list(self.imported_names, tw)
-    self.module_name = self.module_name.transform(tw)
+  _transform (this: AST_Import, tw: TreeWalker) {
+    if (this.imported_name) this.imported_name = this.imported_name.transform(tw)
+    if (this.imported_names) do_list(this.imported_names, tw)
+    this.module_name = this.module_name.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

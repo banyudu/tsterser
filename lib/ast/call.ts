@@ -879,9 +879,9 @@ export default class AST_Call extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Call, tw: TreeWalker) {
-    self.expression = self.expression.transform(tw)
-    self.args = do_list(self.args, tw)
+  _transform (this: AST_Call, tw: TreeWalker) {
+    this.expression = this.expression.transform(tw)
+    this.args = do_list(this.args, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

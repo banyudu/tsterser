@@ -20,9 +20,9 @@ export default class AST_With extends AST_StatementWithBody {
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (self: AST_With, tw: TreeWalker) {
-    self.expression = self.expression.transform(tw)
-    self.body = (self.body).transform(tw)
+  _transform (this: AST_With, tw: TreeWalker) {
+    this.expression = this.expression.transform(tw)
+    this.body = (this.body).transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

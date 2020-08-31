@@ -746,9 +746,9 @@ export default class AST_Binary extends AST_Node {
     return size
   }
 
-  _transform (self: AST_Binary, tw: TreeWalker) {
-    self.left = self.left.transform(tw)
-    self.right = self.right.transform(tw)
+  _transform (this: AST_Binary, tw: TreeWalker) {
+    this.left = this.left.transform(tw)
+    this.right = this.right.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

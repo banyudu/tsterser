@@ -89,8 +89,8 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp_props: any = { is_array: 'eq' }
-  _transform (self: AST_Destructuring, tw: TreeWalker) {
-    self.names = do_list(self.names, tw)
+  _transform (this: AST_Destructuring, tw: TreeWalker) {
+    this.names = do_list(this.names, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

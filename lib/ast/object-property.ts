@@ -59,11 +59,11 @@ export default class AST_ObjectProperty extends AST_Node {
     return true
   }
 
-  _transform (self: AST_ObjectProperty, tw: TreeWalker) {
-    if (is_ast_node(self.key)) {
-      self.key = self.key.transform(tw)
+  _transform (this: AST_ObjectProperty, tw: TreeWalker) {
+    if (is_ast_node(this.key)) {
+      this.key = this.key.transform(tw)
     }
-    if (self.value) self.value = self.value.transform(tw)
+    if (this.value) this.value = this.value.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

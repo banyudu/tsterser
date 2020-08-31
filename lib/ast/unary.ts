@@ -103,8 +103,8 @@ export default class AST_Unary extends AST_Node {
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _transform (self: AST_Unary, tw: TreeWalker) {
-    self.expression = self.expression.transform(tw)
+  _transform (this: AST_Unary, tw: TreeWalker) {
+    this.expression = this.expression.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

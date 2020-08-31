@@ -91,11 +91,11 @@ export default class AST_For extends AST_IterationStatement {
     step: 'exist'
   }
 
-  _transform (self: AST_For, tw: TreeWalker) {
-    if (self.init) self.init = self.init.transform(tw)
-    if (self.condition) self.condition = self.condition.transform(tw)
-    if (self.step) self.step = self.step.transform(tw)
-    self.body = (self.body).transform(tw)
+  _transform (this: AST_For, tw: TreeWalker) {
+    if (this.init) this.init = this.init.transform(tw)
+    if (this.condition) this.condition = this.condition.transform(tw)
+    if (this.step) this.step = this.step.transform(tw)
+    this.body = (this.body).transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

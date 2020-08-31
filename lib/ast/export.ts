@@ -71,11 +71,11 @@ export default class AST_Export extends AST_Statement {
     is_default: 'eq'
   }
 
-  _transform (self: AST_Export, tw: TreeWalker) {
-    if (self.exported_definition) self.exported_definition = self.exported_definition.transform(tw)
-    if (self.exported_value) self.exported_value = self.exported_value.transform(tw)
-    if (self.exported_names) do_list(self.exported_names, tw)
-    if (self.module_name) self.module_name = self.module_name.transform(tw)
+  _transform (this: AST_Export, tw: TreeWalker) {
+    if (this.exported_definition) this.exported_definition = this.exported_definition.transform(tw)
+    if (this.exported_value) this.exported_value = this.exported_value.transform(tw)
+    if (this.exported_names) do_list(this.exported_names, tw)
+    if (this.module_name) this.module_name = this.module_name.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

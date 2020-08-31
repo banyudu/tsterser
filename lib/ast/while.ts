@@ -35,9 +35,9 @@ export default class AST_While extends AST_DWLoop {
 
   _size = () => 7
   shallow_cmp_props: any = {}
-  _transform (self: AST_While, tw: TreeWalker) {
-    self.condition = self.condition.transform(tw)
-    self.body = (self.body).transform(tw)
+  _transform (this: AST_While, tw: TreeWalker) {
+    this.condition = this.condition.transform(tw)
+    this.body = (this.body).transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

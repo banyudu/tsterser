@@ -29,9 +29,9 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_NameMapping, tw: TreeWalker) {
-    self.foreign_name = self.foreign_name.transform(tw)
-    self.name = self.name.transform(tw)
+  _transform (this: AST_NameMapping, tw: TreeWalker) {
+    this.foreign_name = this.foreign_name.transform(tw)
+    this.name = this.name.transform(tw)
   }
 
   _codegen (self: AST_NameMapping, output: OutputStream) {

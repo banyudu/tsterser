@@ -77,10 +77,10 @@ export default class AST_Try extends AST_Block {
     bfinally: 'exist'
   }
 
-  _transform (self: AST_Try, tw: TreeWalker) {
-    self.body = do_list(self.body, tw)
-    if (self.bcatch) self.bcatch = self.bcatch.transform(tw)
-    if (self.bfinally) self.bfinally = self.bfinally.transform(tw)
+  _transform (this: AST_Try, tw: TreeWalker) {
+    this.body = do_list(this.body, tw)
+    if (this.bcatch) this.bcatch = this.bcatch.transform(tw)
+    if (this.bfinally) this.bfinally = this.bfinally.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

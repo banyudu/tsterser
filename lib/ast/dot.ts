@@ -137,8 +137,8 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   shallow_cmp_props: any = { property: 'eq' }
-  _transform (self: AST_Dot, tw: TreeWalker) {
-    self.expression = self.expression.transform(tw)
+  _transform (this: AST_Dot, tw: TreeWalker) {
+    this.expression = this.expression.transform(tw)
   }
 
   _codegen (self: AST_Dot, output: OutputStream) {

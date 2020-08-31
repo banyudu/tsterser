@@ -28,9 +28,9 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_PrefixedTemplateString, tw: TreeWalker) {
-    self.prefix = self.prefix.transform(tw)
-    self.template_string = self.template_string.transform(tw)
+  _transform (this: AST_PrefixedTemplateString, tw: TreeWalker) {
+    this.prefix = this.prefix.transform(tw)
+    this.template_string = this.template_string.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

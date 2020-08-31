@@ -96,10 +96,10 @@ export default class AST_Class extends AST_Scope {
     )
   }
 
-  _transform (self: AST_Class, tw: TreeWalker) {
-    if (self.name) self.name = self.name.transform(tw)
-    if (self.extends) self.extends = self.extends.transform(tw)
-    self.properties = do_list(self.properties, tw)
+  _transform (this: AST_Class, tw: TreeWalker) {
+    if (this.name) this.name = this.name.transform(tw)
+    if (this.extends) this.extends = this.extends.transform(tw)
+    this.properties = do_list(this.properties, tw)
   }
 
   shallow_cmp_props: any = {

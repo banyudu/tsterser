@@ -95,13 +95,13 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   }
 
-  _transform (self: AST_Lambda, tw: TreeWalker) {
-    if (self.name) self.name = self.name.transform(tw)
-    self.argnames = do_list(self.argnames, tw)
-    if (is_ast_node(self.body)) {
-      self.body = (self.body).transform(tw)
+  _transform (this: AST_Lambda, tw: TreeWalker) {
+    if (this.name) this.name = this.name.transform(tw)
+    this.argnames = do_list(this.argnames, tw)
+    if (is_ast_node(this.body)) {
+      this.body = (this.body).transform(tw)
     } else {
-      self.body = do_list(self.body, tw)
+      this.body = do_list(this.body, tw)
     }
   }
 

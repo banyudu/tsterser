@@ -16,8 +16,8 @@ export default class AST_LoopControl extends AST_Jump {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_LoopControl, tw: TreeWalker) {
-    if (self.label) self.label = self.label.transform(tw)
+  _transform (this: AST_LoopControl, tw: TreeWalker) {
+    if (this.label) this.label = this.label.transform(tw)
   }
 
   _do_print (output: OutputStream, kind: string) {

@@ -393,10 +393,10 @@ export default class AST_Conditional extends AST_Node {
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (self: AST_Conditional, tw: TreeWalker) {
-    self.condition = self.condition.transform(tw)
-    self.consequent = self.consequent.transform(tw)
-    self.alternative = self.alternative.transform(tw)
+  _transform (this: AST_Conditional, tw: TreeWalker) {
+    this.condition = this.condition.transform(tw)
+    this.consequent = this.consequent.transform(tw)
+    this.alternative = this.alternative.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

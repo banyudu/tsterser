@@ -161,9 +161,9 @@ export default class AST_Switch extends AST_Block {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Switch, tw: TreeWalker) {
-    self.expression = self.expression.transform(tw)
-    self.body = do_list(self.body, tw)
+  _transform (this: AST_Switch, tw: TreeWalker) {
+    this.expression = this.expression.transform(tw)
+    this.body = do_list(this.body, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

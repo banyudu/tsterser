@@ -66,9 +66,9 @@ export default class AST_VarDef extends AST_Node {
     value: 'exist'
   }
 
-  _transform (self: AST_VarDef, tw: TreeWalker) {
-    self.name = self.name.transform(tw)
-    if (self.value) self.value = self.value.transform(tw)
+  _transform (this: AST_VarDef, tw: TreeWalker) {
+    this.name = this.name.transform(tw)
+    if (this.value) this.value = this.value.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

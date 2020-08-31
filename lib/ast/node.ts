@@ -183,10 +183,10 @@ export default class AST_Node extends AST {
   transform (this: any, tw: any, in_list?: boolean) {
     let transformed: any | undefined
     tw.push(this)
-    if (tw.before) transformed = tw.before(this, this._transform, in_list)
+    if (tw.before) transformed = tw.before(this, (node: AST_Node, ...args) => this._transform(...args), in_list)
     if (transformed === undefined) {
       transformed = this
-      this._transform(transformed, tw)
+      this._transform(tw)
       if (tw.after) {
         const after_ret = tw.after(transformed, in_list)
         if (after_ret !== undefined) transformed = after_ret
@@ -196,7 +196,7 @@ export default class AST_Node extends AST {
     return transformed
   }
 
-  _transform (self: AST_Node, tw: TreeWalker) {}
+  _transform (this: AST_Node, tw: TreeWalker) {}
 
   shallow_cmp_props: any = undefined
 

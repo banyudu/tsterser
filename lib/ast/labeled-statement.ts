@@ -67,9 +67,9 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp_props: any = { 'label.name': 'eq' }
-  _transform (self: AST_LabeledStatement, tw: TreeWalker) {
-    self.label = self.label.transform(tw)
-    self.body = (self.body).transform(tw)
+  _transform (this: AST_LabeledStatement, tw: TreeWalker) {
+    this.label = this.label.transform(tw)
+    this.body = (this.body).transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

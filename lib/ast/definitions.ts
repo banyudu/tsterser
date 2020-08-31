@@ -88,8 +88,8 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Definitions, tw: TreeWalker) {
-    self.definitions = do_list(self.definitions, tw)
+  _transform (this: AST_Definitions, tw: TreeWalker) {
+    this.definitions = do_list(this.definitions, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

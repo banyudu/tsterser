@@ -127,8 +127,8 @@ export default class AST_Object extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Object, tw: TreeWalker) {
-    self.properties = do_list(self.properties, tw)
+  _transform (this: AST_Object, tw: TreeWalker) {
+    this.properties = do_list(this.properties, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node) {

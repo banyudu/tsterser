@@ -31,8 +31,8 @@ export default class AST_Yield extends AST_Node {
     is_star: 'eq'
   }
 
-  _transform (self: AST_Yield, tw: TreeWalker) {
-    if (self.expression) self.expression = self.expression.transform(tw)
+  _transform (this: AST_Yield, tw: TreeWalker) {
+    if (this.expression) this.expression = this.expression.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

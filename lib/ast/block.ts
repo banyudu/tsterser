@@ -56,8 +56,8 @@ export default class AST_Block extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Block, tw: TreeWalker) {
-    self.body = do_list(self.body, tw)
+  _transform (this: AST_Block, tw: TreeWalker) {
+    this.body = do_list(this.body, tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

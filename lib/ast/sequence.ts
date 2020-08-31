@@ -127,9 +127,9 @@ export default class AST_Sequence extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (self: AST_Sequence, tw: TreeWalker) {
-    const result = do_list(self.expressions, tw)
-    self.expressions = result.length
+  _transform (this: AST_Sequence, tw: TreeWalker) {
+    const result = do_list(this.expressions, tw)
+    this.expressions = result.length
       ? result
       : [new AST_Number({ value: 0 })]
   }
