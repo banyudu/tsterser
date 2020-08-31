@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Exit from './exit'
+import AST_Exit, { AST_Exit_Props } from './exit'
 import Compressor from '../compressor'
 import { is_undefined, to_moz } from '../utils'
 
@@ -34,4 +34,7 @@ export default class AST_Return extends AST_Exit {
   static documentation: 'A `return` statement'
 
   static PROPS = AST_Exit.PROPS
+}
+
+export interface AST_Return_Props extends AST_Exit_Props {
 }

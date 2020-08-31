@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Number from './number'
 import TreeWalker from '../tree-walker'
@@ -187,8 +187,12 @@ export default class AST_Sequence extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expressions'])
-  constructor (args?) {
+  constructor (args?: AST_Sequence_Props) {
     super(args)
     this.expressions = args.expressions
   }
+}
+
+export interface AST_Sequence_Props extends AST_Node_Props {
+  expressions?: AST_Node[] | undefined
 }

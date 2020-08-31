@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Constant from './constant'
+import AST_Constant, { AST_Constant_Props } from './constant'
 import { regexp_source_fix, sort_regexp_flags, literals_in_boolean_context } from '../utils'
 
 const r_slash_script = /(<\s*\/\s*script)/i
@@ -67,8 +67,12 @@ export default class AST_RegExp extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
-  constructor (args) {
+  constructor (args?: AST_RegExp_Props) {
     super(args)
     this.value = args.value
   }
+}
+
+export interface AST_RegExp_Props extends AST_Constant_Props {
+  value?: RegExp | undefined
 }

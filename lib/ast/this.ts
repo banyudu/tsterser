@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Symbol from './symbol'
+import AST_Symbol, { AST_Symbol_Props } from './symbol'
 import Compressor from '../compressor'
 
 export default class AST_This extends AST_Symbol {
@@ -19,4 +19,7 @@ export default class AST_This extends AST_Symbol {
   static documentation = 'The `this` symbol'
 
   static PROPS = AST_Symbol.PROPS
+}
+
+export interface AST_This_Props extends AST_Symbol_Props {
 }

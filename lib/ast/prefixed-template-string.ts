@@ -3,7 +3,7 @@ import AST_SymbolRef from './symbol-ref'
 import AST_TemplateString from './template-string'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -62,9 +62,14 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
-  constructor (args?) {
+  constructor (args?: AST_PrefixedTemplateString_Props) {
     super(args)
     this.template_string = args.template_string
     this.prefix = args.prefix
   }
+}
+
+export interface AST_PrefixedTemplateString_Props extends AST_Node_Props {
+  template_string?: AST_TemplateString | undefined
+  prefix?: AST_SymbolRef|AST_PropAccess | undefined
 }

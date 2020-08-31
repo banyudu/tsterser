@@ -5,7 +5,7 @@ import Compressor from '../compressor'
 
 export default class AST_Constant extends AST_Node {
   value: any
-  literal: any
+  literal?: any
 
   drop_side_effect_free () { return null }
   may_throw (compressor: Compressor) { return false }

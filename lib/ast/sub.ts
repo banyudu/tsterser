@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_PropAccess from './prop-access'
+import AST_PropAccess, { AST_PropAccess_Props } from './prop-access'
 import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence, is_ast_symbol_ref, is_ast_lambda, is_ast_arrow, is_ast_number, is_ast_symbol_funarg, is_ast_array, is_ast_expansion, is_ast_hole } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
@@ -212,4 +212,7 @@ export default class AST_Sub extends AST_PropAccess {
   static documentation = 'Index-style property access, i.e. `a["foo"]`'
 
   static PROPS = AST_PropAccess.PROPS
+}
+
+export interface AST_Sub_Props extends AST_PropAccess_Props {
 }

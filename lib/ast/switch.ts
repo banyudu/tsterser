@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Block from './block'
+import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
@@ -20,6 +20,8 @@ import {
 } from '../utils'
 
 export default class AST_Switch extends AST_Block {
+  expression: any | undefined
+
   get_loopcontrol_target (node: AST_Node) {
     if (is_ast_break(node) && !node.label) {
       return this
@@ -201,8 +203,12 @@ export default class AST_Switch extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args?) {
+  constructor (args: AST_Switch_Props) {
     super(args)
     this.expression = args.expression
   }
+}
+
+export interface AST_Switch_Props extends AST_Block_Props {
+  expression: any | undefined
 }

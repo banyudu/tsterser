@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_This from './this'
+import AST_This, { AST_This_Props } from './this'
 
 export default class AST_Super extends AST_This {
   _size = () => 5
@@ -15,4 +15,7 @@ export default class AST_Super extends AST_This {
   static documentation: 'The `super` symbol'
 
   static PROPS = AST_This.PROPS
+}
+
+export interface AST_Super_Props extends AST_This_Props {
 }

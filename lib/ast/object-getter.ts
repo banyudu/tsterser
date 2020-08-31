@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_ObjectProperty from './object-property'
+import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
 
@@ -88,9 +88,14 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
   static documentation = 'An object getter property'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
-  constructor (args?) {
+  constructor (args?: AST_ObjectGetter_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static
   }
+}
+
+export interface AST_ObjectGetter_Props extends AST_ObjectProperty_Props {
+  quote?: string|undefined | undefined
+  static?: boolean | undefined
 }

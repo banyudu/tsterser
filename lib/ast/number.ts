@@ -1,7 +1,10 @@
 import { OutputStream } from '../output'
-import AST_Constant from './constant'
+import AST_Constant, { AST_Constant_Props } from './constant'
 import { make_num } from '../utils'
 export default class AST_Number extends AST_Constant {
+  literal?: any | undefined
+  value: any | undefined
+
   is_number () { return true }
   _size (): number {
     const { value } = this
@@ -43,9 +46,14 @@ export default class AST_Number extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
 
-  constructor (args) {
+  constructor (args: AST_Number_Props) {
     super(args)
     this.value = args.value
     this.literal = args.literal
   }
+}
+
+export interface AST_Number_Props extends AST_Constant_Props {
+  value: any | undefined
+  literal?: any | undefined
 }

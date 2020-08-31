@@ -1,7 +1,7 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
-import AST_ObjectProperty from './object-property'
+import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import { to_moz, lift_key, make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_class, is_ast_default_assign } from '../utils'
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
 
@@ -140,8 +140,12 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
-  constructor (args?) {
+  constructor (args?: AST_ObjectKeyVal_Props) {
     super(args)
     this.quote = args.quote
   }
+}
+
+export interface AST_ObjectKeyVal_Props extends AST_ObjectProperty_Props {
+  quote?: string | undefined
 }

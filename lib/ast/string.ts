@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Constant from './constant'
+import AST_Constant, { AST_Constant_Props } from './constant'
 import '../utils'
 
 export default class AST_String extends AST_Constant {
@@ -31,9 +31,14 @@ export default class AST_String extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
 
-  constructor (args) {
+  constructor (args?: AST_String_Props) {
     super(args)
     this.value = args.value
     this.quote = args.quote
   }
+}
+
+export interface AST_String_Props extends AST_Constant_Props {
+  value?: string | undefined
+  quote?: string | undefined
 }

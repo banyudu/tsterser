@@ -1,11 +1,13 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
 export default class AST_SimpleStatement extends AST_Statement {
+  body: any | undefined
+
   _in_boolean_context (context) {
     return true
   }
@@ -66,8 +68,12 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args?) {
+  constructor (args: AST_SimpleStatement_Props) {
     super(args)
     this.body = args.body
   }
+}
+
+export interface AST_SimpleStatement_Props extends AST_Statement_Props {
+  body: any | undefined
 }
