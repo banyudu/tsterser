@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
-import AST_Symbol from './symbol'
+import AST_Symbol, { AST_Symbol_Props } from './symbol'
 import TreeWalker from '../tree-walker'
 import AST_SymbolFunarg from './symbol-funarg'
 import AST_With from './with'
@@ -309,4 +309,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   static documentation = 'Reference to some symbol (not definition/declaration)'
 
   static PROPS = AST_Symbol.PROPS
+}
+
+export interface AST_SymbolRef_Props extends AST_Symbol_Props {
 }

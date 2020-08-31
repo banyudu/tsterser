@@ -1,4 +1,4 @@
-import AST_Symbol from './symbol'
+import AST_Symbol, { AST_Symbol_Props } from './symbol'
 import Compressor from '../compressor'
 import { HOP, warn } from '../utils'
 
@@ -16,8 +16,12 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
   static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 
   static PROPS = AST_Symbol.PROPS.concat(['init'])
-  constructor (args?) {
+  constructor (args?: AST_SymbolDeclaration_Props) {
     super(args)
     this.init = args.init
   }
+}
+
+export interface AST_SymbolDeclaration_Props extends AST_Symbol_Props {
+  init?: any | undefined
 }
