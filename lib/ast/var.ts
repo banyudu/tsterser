@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Definitions from './definitions'
+import AST_Definitions, { AST_Definitions_Props } from './definitions'
 import { def_size } from '../utils'
 
 export default class AST_Var extends AST_Definitions {
@@ -14,4 +14,7 @@ export default class AST_Var extends AST_Definitions {
   static documentation = 'A `var` statement'
 
   static PROPS = AST_Definitions.PROPS
+}
+
+export interface AST_Var_Props extends AST_Definitions_Props {
 }

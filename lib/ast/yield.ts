@@ -1,6 +1,6 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { is_undefined, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -77,9 +77,14 @@ export default class AST_Yield extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
-  constructor (args?) {
+  constructor (args?: AST_Yield_Props) {
     super(args)
     this.expression = args.expression
     this.is_star = args.is_star
   }
+}
+
+export interface AST_Yield_Props extends AST_Node_Props {
+  expression?: AST_Node | undefined | undefined
+  is_star?: boolean | undefined
 }

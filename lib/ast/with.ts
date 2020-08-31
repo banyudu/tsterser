@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_StatementWithBody from './statement-with-body'
+import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-with-body'
 import { to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -49,8 +49,12 @@ export default class AST_With extends AST_StatementWithBody {
   }
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
-  constructor (args?) {
+  constructor (args?: AST_With_Props) {
     super(args)
     this.expression = args.expression
   }
+}
+
+export interface AST_With_Props extends AST_StatementWithBody_Props {
+  expression?: AST_Node | undefined
 }

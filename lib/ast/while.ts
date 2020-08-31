@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_DWLoop from './dw-loop'
+import AST_DWLoop, { AST_DWLoop_Props } from './dw-loop'
 import Compressor from '../compressor'
 import { make_node, reset_block_variables, push, pop, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -61,4 +61,7 @@ export default class AST_While extends AST_DWLoop {
   static documentation = 'A `while` statement'
 
   static PROPS = AST_DWLoop.PROPS
+}
+
+export interface AST_While_Props extends AST_DWLoop_Props {
 }
