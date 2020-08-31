@@ -606,7 +606,7 @@ export function set_moz_loc (mynode: AST_Node, moznode: MozillaAst): MozillaAst 
   return moznode
 }
 
-export let FROM_MOZ_STACK = []
+export let FROM_MOZ_STACK: MozillaAst[] = []
 
 export function from_moz (node: MozillaAst) {
     FROM_MOZ_STACK?.push(node)
@@ -1208,7 +1208,7 @@ export function my_start_token (moznode: any) {
   })
 }
 
-export function my_end_token (moznode) {
+export function my_end_token (moznode: MozillaAst) {
   const loc = moznode.loc
   const end = loc?.end
   const range = moznode.range
@@ -1243,7 +1243,7 @@ export function normalize_directives (body: any[]) {
   return body
 }
 
-export function raw_token (moznode) {
+export function raw_token (moznode: MozillaAst) {
   if (moznode.type == 'Literal') {
     return moznode.raw != null ? moznode.raw : moznode.value + ''
   }
@@ -1270,29 +1270,8 @@ function From_Moz_Class (M: MozillaAst) {
   })
 }
 
-export function setFromMozStack (val) {
+export function setFromMozStack (val: MozillaAst[]) {
   FROM_MOZ_STACK = val
-}
-
-// Creates a shallow compare function
-export const mkshallow = (props) => {
-  return function (this, other) {
-    for (const key in props) {
-      if (props[key] === 'eq') {
-        if (this[key] !== other[key]) {
-          return false
-        }
-      } else if (props[key] === 'exist') {
-        // return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
-        if ((this[key] != null || other[key] != null) && (this[key] == null || this[key] !== other[key])) {
-          return false
-        }
-      } else {
-        throw new Error(`mkshallow: Unexpected instruction: ${props[key]}`)
-      }
-    }
-    return true
-  }
 }
 
 export function to_moz (node: AST_Node): MozillaAst {

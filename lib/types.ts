@@ -227,4 +227,5 @@ export interface MozillaAst {
   property: MozillaAst
   object: MozillaAst
   static: boolean
+  end: any
 }
