@@ -88,7 +88,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_Definitions, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.definitions = do_list(this.definitions, tw)
   }
 

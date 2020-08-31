@@ -35,7 +35,7 @@ export default class AST_While extends AST_DWLoop {
 
   _size = () => 7
   shallow_cmp_props: any = {}
-  _transform (this: AST_While, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
   }

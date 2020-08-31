@@ -89,7 +89,7 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp_props: any = { is_array: 'eq' }
-  _transform (this: AST_Destructuring, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.names = do_list(this.names, tw)
   }
 

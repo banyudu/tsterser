@@ -77,7 +77,7 @@ export default class AST_Try extends AST_Block {
     bfinally: 'exist'
   }
 
-  _transform (this: AST_Try, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.body = do_list(this.body, tw)
     if (this.bcatch) this.bcatch = this.bcatch.transform(tw)
     if (this.bfinally) this.bfinally = this.bfinally.transform(tw)

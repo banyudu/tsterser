@@ -879,7 +879,7 @@ export default class AST_Call extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_Call, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.expression = this.expression.transform(tw)
     this.args = do_list(this.args, tw)
   }

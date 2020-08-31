@@ -746,7 +746,7 @@ export default class AST_Binary extends AST_Node {
     return size
   }
 
-  _transform (this: AST_Binary, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.left = this.left.transform(tw)
     this.right = this.right.transform(tw)
   }

@@ -71,7 +71,7 @@ export default class AST_Export extends AST_Statement {
     is_default: 'eq'
   }
 
-  _transform (this: AST_Export, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.exported_definition) this.exported_definition = this.exported_definition.transform(tw)
     if (this.exported_value) this.exported_value = this.exported_value.transform(tw)
     if (this.exported_names) do_list(this.exported_names, tw)

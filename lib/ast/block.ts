@@ -56,7 +56,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_Block, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.body = do_list(this.body, tw)
   }
 

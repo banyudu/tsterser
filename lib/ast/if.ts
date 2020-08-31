@@ -211,7 +211,7 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   }
 
-  _transform (this: AST_If, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
     if (this.alternative) this.alternative = this.alternative.transform(tw)

@@ -36,7 +36,7 @@ export default class AST_Catch extends AST_Block {
     argname: 'exist'
   }
 
-  _transform (this: AST_Catch, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.argname) this.argname = this.argname.transform(tw)
     this.body = do_list(this.body, tw)
   }

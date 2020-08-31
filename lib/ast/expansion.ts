@@ -32,7 +32,7 @@ export default class AST_Expansion extends AST_Node {
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (this: AST_Expansion, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.expression = this.expression.transform(tw)
   }
 

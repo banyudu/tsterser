@@ -86,7 +86,7 @@ export default class AST_Array extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_Array, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.elements = do_list(this.elements, tw)
   }
 

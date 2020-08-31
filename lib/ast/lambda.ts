@@ -95,7 +95,7 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   }
 
-  _transform (this: AST_Lambda, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.name) this.name = this.name.transform(tw)
     this.argnames = do_list(this.argnames, tw)
     if (is_ast_node(this.body)) {

@@ -103,7 +103,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _transform (this: AST_Unary, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.expression = this.expression.transform(tw)
   }
 

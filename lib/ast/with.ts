@@ -20,7 +20,7 @@ export default class AST_With extends AST_StatementWithBody {
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (this: AST_With, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.expression = this.expression.transform(tw)
     this.body = (this.body).transform(tw)
   }

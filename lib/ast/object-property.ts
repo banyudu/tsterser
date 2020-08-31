@@ -59,7 +59,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return true
   }
 
-  _transform (this: AST_ObjectProperty, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (is_ast_node(this.key)) {
       this.key = this.key.transform(tw)
     }

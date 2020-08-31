@@ -66,7 +66,7 @@ export default class AST_Do extends AST_DWLoop {
 
   _size = () => 9
   shallow_cmp_props: any = {}
-  _transform (this: AST_Do, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.body = (this.body).transform(tw)
     this.condition = this.condition.transform(tw)
   }

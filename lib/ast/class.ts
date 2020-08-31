@@ -96,7 +96,7 @@ export default class AST_Class extends AST_Scope {
     )
   }
 
-  _transform (this: AST_Class, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.name) this.name = this.name.transform(tw)
     if (this.extends) this.extends = this.extends.transform(tw)
     this.properties = do_list(this.properties, tw)

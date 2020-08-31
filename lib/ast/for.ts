@@ -91,7 +91,7 @@ export default class AST_For extends AST_IterationStatement {
     step: 'exist'
   }
 
-  _transform (this: AST_For, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.init) this.init = this.init.transform(tw)
     if (this.condition) this.condition = this.condition.transform(tw)
     if (this.step) this.step = this.step.transform(tw)

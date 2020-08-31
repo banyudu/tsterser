@@ -196,7 +196,7 @@ export default class AST_Node extends AST {
     return transformed
   }
 
-  _transform (this: AST_Node, tw: TreeWalker) {}
+  _transform (tw: TreeWalker) {}
 
   shallow_cmp_props: any = undefined
 

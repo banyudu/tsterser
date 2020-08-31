@@ -18,7 +18,7 @@ export default class AST_Await extends AST_Node {
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (this: AST_Await, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.expression = this.expression.transform(tw)
   }
 

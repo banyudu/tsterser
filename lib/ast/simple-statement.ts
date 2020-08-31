@@ -44,7 +44,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_SimpleStatement, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.body = (this.body).transform(tw)
   }
 

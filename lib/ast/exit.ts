@@ -20,7 +20,7 @@ export default class AST_Exit extends AST_Jump {
     if (this.value) push(this.value)
   }
 
-  _transform (this: AST_Exit, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.value) this.value = this.value.transform(tw)
   }
 

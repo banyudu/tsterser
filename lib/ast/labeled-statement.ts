@@ -67,7 +67,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp_props: any = { 'label.name': 'eq' }
-  _transform (this: AST_LabeledStatement, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.label = this.label.transform(tw)
     this.body = (this.body).transform(tw)
   }

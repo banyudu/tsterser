@@ -66,7 +66,7 @@ export default class AST_VarDef extends AST_Node {
     value: 'exist'
   }
 
-  _transform (this: AST_VarDef, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.name = this.name.transform(tw)
     if (this.value) this.value = this.value.transform(tw)
   }

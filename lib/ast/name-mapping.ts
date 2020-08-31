@@ -29,7 +29,7 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_NameMapping, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.foreign_name = this.foreign_name.transform(tw)
     this.name = this.name.transform(tw)
   }

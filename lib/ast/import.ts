@@ -62,7 +62,7 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   }
 
-  _transform (this: AST_Import, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     if (this.imported_name) this.imported_name = this.imported_name.transform(tw)
     if (this.imported_names) do_list(this.imported_names, tw)
     this.module_name = this.module_name.transform(tw)

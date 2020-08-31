@@ -104,7 +104,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (this: AST_TemplateString, tw: TreeWalker) {
+  _transform (tw: TreeWalker) {
     this.segments = do_list(this.segments, tw)
   }
 
