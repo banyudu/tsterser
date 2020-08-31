@@ -397,7 +397,7 @@ export function make_node (ctorName: keyof typeof AST_DICT, orig?: any, props?: 
   return make_ast_node(AST_DICT[ctorName] as any, orig, props)
 }
 
-export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: any, props?: any): T {
+export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: AST_Node, props?: any): T {
   return new CTOR(Object.assign({}, props, { start: props?.start || orig?.start, end: props?.end || orig?.end }))
 }
 
@@ -523,7 +523,7 @@ export function pop (tw: TreeWalker) {
   tw.safe_ids = Object.getPrototypeOf(tw.safe_ids)
 }
 
-export function mark (tw: TreeWalker, def: SymbolDef, safe) {
+export function mark (tw: TreeWalker, def: SymbolDef, safe: boolean) {
   tw.safe_ids[def.id] = safe
 }
 
@@ -1361,7 +1361,7 @@ export function literals_in_boolean_context (self: AST_Node, compressor: Compres
   return self
 }
 
-export function make_sequence (orig, expressions: AST_Node[]) {
+export function make_sequence (orig: AST_Node, expressions: AST_Node[]) {
   if (expressions.length == 1) return expressions[0]
   if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
   return make_node('AST_Sequence', orig, {
@@ -1369,7 +1369,7 @@ export function make_sequence (orig, expressions: AST_Node[]) {
   })
 }
 
-export function merge_sequence (array, node: AST_Node) {
+export function merge_sequence (array: AST_Node[], node: AST_Node) {
   if (is_ast_sequence(node)) {
     array.push(...node.expressions)
   } else {
@@ -1378,7 +1378,7 @@ export function merge_sequence (array, node: AST_Node) {
   return array
 }
 
-export function best_of (compressor: Compressor, ast1, ast2) {
+export function best_of (compressor: Compressor, ast1: AST_Node, ast2: AST_Node) {
   return (first_in_statement(compressor) ? best_of_statement : best_of_expression)(ast1, ast2)
 }
 
@@ -1417,7 +1417,7 @@ function best_of_statement (ast1: AST_Node, ast2: AST_Node) {
   ).body
 }
 
-export function best_of_expression (ast1, ast2) {
+export function best_of_expression (ast1: AST_Node, ast2: AST_Node) {
   return ast1.size() > ast2.size() ? ast2 : ast1
 }
 
@@ -1449,7 +1449,8 @@ export function make_block (stmt: any, output: OutputStream) {
 
 // Tighten a bunch of statements together. Used whenever there is a block.
 export function tighten_body (statements: AST_Statement[], compressor: Compressor) {
-  let in_loop, in_try
+  let in_loop: boolean
+  let in_try: boolean
   let scope = compressor.find_parent(AST_Scope).get_defun_scope()
   find_loop_scope_try()
   let CHANGED; let max_iter = 10
@@ -1831,7 +1832,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       }
     }
 
-    function extract_candidates (expr) {
+    function extract_candidates (expr: AST_Node) {
       hit_stack.push(expr)
       if (is_ast_assign(expr)) {
         if (!expr.left.has_side_effects(compressor)) {
@@ -1905,7 +1906,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       hit_stack.pop()
     }
 
-    function find_stop (node: AST_Node, level, write_only?) {
+    function find_stop (node: AST_Node, level: number, write_only?: boolean): AST_Node | null {
       const parent = scanner.parent(level)
       if (is_ast_assign(parent)) {
         if (write_only &&
@@ -2047,7 +2048,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
                         is_ast_assign(candidate) && candidate.operator != '='))
     }
 
-    function value_has_side_effects (expr) {
+    function value_has_side_effects (expr: AST_Node) {
       if (is_ast_unary(expr)) return unary_side_effects.has(expr.operator)
       return get_rvalue(expr).has_side_effects(compressor)
     }
@@ -2077,7 +2078,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       })
     }
 
-    function side_effects_external (node: AST_Node, lhs?) {
+    function side_effects_external (node: AST_Node, lhs?: boolean): boolean {
       if (is_ast_assign(node)) return side_effects_external(node.left, true)
       if (is_ast_unary(node)) return side_effects_external(node.expression, true)
       if (is_ast_var_def(node)) return node.value && side_effects_external(node.value)
