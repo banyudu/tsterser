@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import {
@@ -15,6 +15,7 @@ import {
 } from '../utils'
 
 export default class AST_Block extends AST_Statement {
+  body: any | undefined
   block_scope: any
   expression: any
 
@@ -74,9 +75,14 @@ export default class AST_Block extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
-  constructor (args?) {
+  constructor (args?: AST_Block_Props) {
     super(args)
     this.body = args.body
     this.block_scope = args.block_scope
   }
+}
+
+export interface AST_Block_Props extends AST_Statement_Props {
+  body?: any | undefined
+  block_scope?: any | undefined
 }

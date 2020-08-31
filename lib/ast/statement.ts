@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import { string_template } from '../utils'
 import Compressor from '../compressor'
 
@@ -23,4 +23,7 @@ export default class AST_Statement extends AST_Node {
   static documentation = 'Base class of all statements'
 
   static PROPS = AST_Node.PROPS
+}
+
+export interface AST_Statement_Props extends AST_Node_Props {
 }

@@ -1,7 +1,7 @@
 import AST_VarDef from './var-def'
 import AST_Symbol from './symbol'
 import AST_Node from './node'
-import AST_Block from './block'
+import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
@@ -1120,7 +1120,7 @@ export default class AST_Scope extends AST_Block {
   } as any
 
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
-  constructor (args?) {
+  constructor (args?: AST_Scope_Props) {
     super(args)
     this.variables = args.variables
     this.functions = args.functions
@@ -1131,4 +1131,15 @@ export default class AST_Scope extends AST_Block {
     this.cname = args.cname
     this._var_name_cache = args._var_name_cache
   }
+}
+
+export interface AST_Scope_Props extends AST_Block_Props {
+  variables?: any | undefined
+  functions?: any | undefined
+  uses_with?: any | undefined
+  uses_eval?: any | undefined
+  parent_scope?: any | undefined
+  enclosed?: any | undefined
+  cname?: any | undefined
+  _var_name_cache?: any | undefined
 }
