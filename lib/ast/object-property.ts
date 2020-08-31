@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { lift_key, make_sequence, to_moz, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -133,9 +133,14 @@ export default class AST_ObjectProperty extends AST_Node {
   } as any
 
   static PROPS = AST_Node.PROPS.concat(['key', 'value'])
-  constructor (args?) {
+  constructor (args?: AST_ObjectProperty_Props) {
     super(args)
     this.key = args.key
     this.value = args.value
   }
+}
+
+export interface AST_ObjectProperty_Props extends AST_Node_Props {
+  key?: any | undefined
+  value?: any | undefined
 }

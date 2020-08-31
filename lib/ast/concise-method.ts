@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_ObjectProperty from './object-property'
+import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
@@ -104,11 +104,18 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   static documentation = 'An ES6 concise method inside an object or class'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
-  constructor (args?) {
+  constructor (args?: AST_ConciseMethod_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static
     this.is_generator = args.is_generator
     this.async = args.async
   }
+}
+
+export interface AST_ConciseMethod_Props extends AST_ObjectProperty_Props {
+  quote?: string|undefined | undefined
+  static?: boolean | undefined
+  is_generator?: boolean | undefined
+  async?: boolean | undefined
 }

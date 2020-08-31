@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_ObjectProperty from './object-property'
+import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, print_property_name, static_size, make_sequence, is_ast_node, is_ast_symbol_class_property, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 
@@ -117,9 +117,14 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   }
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['static', 'quote'])
-  constructor (args?) {
+  constructor (args?: AST_ClassProperty_Props) {
     super(args)
     this.static = args.static
     this.quote = args.quote
   }
+}
+
+export interface AST_ClassProperty_Props extends AST_ObjectProperty_Props {
+  static?: boolean | undefined
+  quote?: string | undefined
 }

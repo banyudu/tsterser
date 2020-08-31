@@ -4,7 +4,7 @@ import AST_Destructuring from './destructuring'
 import AST_SymbolCatch from './symbol-catch'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Block from './block'
+import AST_Block, { AST_Block_Props } from './block'
 import { walk_body, list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -69,8 +69,12 @@ export default class AST_Catch extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?) {
+  constructor (args?: AST_Catch_Props) {
     super(args)
     this.argname = args.argname
   }
+}
+
+export interface AST_Catch_Props extends AST_Block_Props {
+  argname?: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign | undefined
 }

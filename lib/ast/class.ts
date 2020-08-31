@@ -1,7 +1,7 @@
 import AST_SymbolClass from './symbol-class'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Scope from './scope'
+import AST_Scope, { AST_Scope_Props } from './scope'
 import Compressor from '../compressor'
 import { make_sequence, anyMayThrow, anySideEffect, all_refs_local, push, pop, do_list, to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function } from '../utils'
 import { clear_flag, INLINED } from '../constants'
@@ -171,10 +171,16 @@ export default class AST_Class extends AST_Scope {
   static documentation = 'An ES6 class'
 
   static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
-  constructor (args?) {
+  constructor (args?: AST_Class_Props) {
     super(args)
     this.name = args.name
     this.extends = args.extends
     this.properties = args.properties
   }
+}
+
+export interface AST_Class_Props extends AST_Scope_Props {
+  name?: AST_SymbolClass|AST_SymbolDefClass | undefined | undefined
+  extends?: AST_Node | undefined
+  properties?: AST_ObjectProperty[] | undefined
 }

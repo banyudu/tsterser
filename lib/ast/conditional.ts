@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import {
   make_sequence,
@@ -428,10 +428,16 @@ export default class AST_Conditional extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
-  constructor (args?) {
+  constructor (args?: AST_Conditional_Props) {
     super(args)
     this.condition = args.condition
     this.consequent = args.consequent
     this.alternative = args.alternative
   }
+}
+
+export interface AST_Conditional_Props extends AST_Node_Props {
+  condition?: AST_Node | undefined
+  consequent?: AST_Node | undefined
+  alternative?: AST_Node | undefined
 }

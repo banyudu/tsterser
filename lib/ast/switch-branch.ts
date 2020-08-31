@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Block from './block'
+import AST_Block, { AST_Block_Props } from './block'
 import { to_moz, block_aborts } from '../utils'
 
 export default class AST_SwitchBranch extends AST_Block {
@@ -28,4 +28,7 @@ export default class AST_SwitchBranch extends AST_Block {
   static documentation = 'Base class for `switch` branches'
 
   static PROPS = AST_Block.PROPS
+}
+
+export interface AST_SwitchBranch_Props extends AST_Block_Props {
 }

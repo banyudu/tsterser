@@ -1,5 +1,5 @@
 import AST_VarDef from './var-def'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import AST_Hole from './hole'
 import AST_Array from './array'
 import Compressor from '../compressor'
@@ -918,10 +918,16 @@ export default class AST_Call extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args) { // eslint-disable-line
+  constructor (args?: AST_Call_Props) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args
     this._annotations = args._annotations || 0
   }
+}
+
+export interface AST_Call_Props extends AST_Node_Props {
+  expression?: AST_Node | undefined
+  args?: AST_Node[] | undefined
+  _annotations?: number | undefined
 }

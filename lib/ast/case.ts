@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_SwitchBranch from './switch-branch'
+import AST_SwitchBranch, { AST_SwitchBranch_Props } from './switch-branch'
 import Compressor from '../compressor'
 import AST_Block from './block'
 import TreeWalker from '../tree-walker'
@@ -7,6 +7,8 @@ import TreeWalker from '../tree-walker'
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
 
 export default class AST_Case extends AST_SwitchBranch {
+  expression: any | undefined
+
   may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
               anyMayThrow(this.body, compressor)
@@ -63,8 +65,12 @@ export default class AST_Case extends AST_SwitchBranch {
   }
 
   static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args?) {
+  constructor (args: AST_Case_Props) {
     super(args)
     this.expression = args.expression
   }
+}
+
+export interface AST_Case_Props extends AST_SwitchBranch_Props {
+  expression: any | undefined
 }
