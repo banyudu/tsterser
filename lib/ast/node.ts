@@ -180,10 +180,10 @@ export default class AST_Node extends AST {
     return size
   }
 
-  transform (this: any, tw: any, in_list?: boolean) {
+  transform (tw: any, in_list?: boolean) {
     let transformed: any | undefined
     tw.push(this)
-    if (tw.before) transformed = tw.before(this, (node: AST_Node, ...args) => this._transform(...args), in_list)
+    if (tw.before) transformed = tw.before(this, (_node: AST_Node, tw: TreeWalker) => this._transform(tw), in_list)
     if (transformed === undefined) {
       transformed = this
       this._transform(tw)

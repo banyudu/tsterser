@@ -100,7 +100,7 @@ export default class AST_Definitions extends AST_Statement {
     }
   }
 
-  _do_print (this: any, output: OutputStream, kind: string) {
+  _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     output.space()
     this.definitions.forEach(function (def: AST_VarDef, i) {

@@ -15,7 +15,7 @@ export default class AST_SwitchBranch extends AST_Block {
     }
   }
 
-  _do_print_body (this: any, output: OutputStream) {
+  _do_print_body (output: OutputStream) {
     output.newline()
     this.body.forEach(function (stmt) {
       output.indent()

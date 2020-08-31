@@ -715,11 +715,11 @@ export default class AST_Scope extends AST_Block {
     return init_scope_vars.call(this, parent)
   }
 
-  var_names = function varNames (this: any): Set<string> | null {
+  var_names (): Set<string> | null {
     let var_names = this._var_name_cache
     if (!var_names) {
       this._var_name_cache = var_names = new Set(
-        this.parent_scope ? varNames.call(this.parent_scope) : null
+        this.parent_scope ? this.parent_scope.var_names() : null
       )
       if (this._added_var_names) {
         this._added_var_names.forEach(name => { var_names?.add(name) })
@@ -793,7 +793,7 @@ export default class AST_Scope extends AST_Block {
           (this.parent_scope?.find_variable(name))
   }
 
-  def_function (this: any, symbol: any, init: boolean) {
+  def_function (symbol: any, init: boolean) {
     const def = this.def_variable(symbol, init)
     if (!def.init || is_ast_defun(def.init)) def.init = init
     this.functions.set(symbol.name, def)

@@ -3626,8 +3626,8 @@ export function is_reachable (self: AST_Node, defs) {
   })
 }
 
-export function print (this: any, output: OutputStream, force_parens?: boolean) {
-  const self = this; const generator = self._codegen.bind(self)
+export function print (this: AST_Node, output: OutputStream, force_parens?: boolean) {
+  const self: any = this; const generator = self._codegen.bind(self)
   if (is_ast_scope(self)) {
     output.active_scope = self
   } else if (!output.use_asm && is_ast_directive(self) && self.value == 'use asm') {

@@ -160,7 +160,7 @@ export default class AST_Sequence extends AST_Node {
             is_ast_export(p) // export default (foo, bar)
   }
 
-  _do_print (this: any, output: OutputStream) {
+  _do_print (output: OutputStream) {
     this.expressions.forEach(function (node: AST_Node, index) {
       if (index > 0) {
         output.comma()

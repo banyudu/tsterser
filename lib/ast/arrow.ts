@@ -62,7 +62,7 @@ export default class AST_Arrow extends AST_Lambda {
     return is_ast_prop_access(p) && p.expression === this
   }
 
-  _do_print (this: any, output: OutputStream) {
+  _do_print (output: OutputStream) {
     const self = this
     const parent = output.parent()
     const needs_parens = (is_ast_binary(parent) && !(is_ast_assign(parent))) ||

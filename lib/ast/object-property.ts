@@ -105,7 +105,7 @@ export default class AST_ObjectProperty extends AST_Node {
     }
   }
 
-  _print_getter_setter (this: any, type: string, output: OutputStream) {
+  _print_getter_setter (type: string, output: OutputStream) {
     const self = this
     if (self.static) {
       output.print('static')

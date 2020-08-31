@@ -96,7 +96,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return key_size(this.key) + 1
   }
 
-  _codegen (this: any, output: OutputStream) {
+  _codegen (output: OutputStream) {
     function get_name (self: any) {
       const def = self.definition()
       return def ? def.mangled_name || def.name : self.name
