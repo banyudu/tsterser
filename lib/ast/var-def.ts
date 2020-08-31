@@ -3,7 +3,7 @@ import AST_SymbolLet from './symbol-let'
 import AST_SymbolConst from './symbol-const'
 import AST_Destructuring from './destructuring'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { suppress, safe_to_assign, mark, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -98,9 +98,14 @@ export default class AST_VarDef extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['name', 'value'])
-  constructor (args?) {
+  constructor (args?: AST_VarDef_Props) {
     super(args)
     this.name = args.name
     this.value = args.value
   }
+}
+
+export interface AST_VarDef_Props extends AST_Node_Props {
+  name?: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar | undefined
+  value?: AST_Node | undefined | undefined
 }

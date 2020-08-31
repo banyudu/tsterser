@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
@@ -135,9 +135,14 @@ export default class AST_Unary extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
-  constructor (args?) {
+  constructor (args?: AST_Unary_Props) {
     super(args)
     this.operator = args.operator
     this.expression = args.expression
   }
+}
+
+export interface AST_Unary_Props extends AST_Node_Props {
+  operator?: string | undefined
+  expression?: AST_Node | undefined
 }

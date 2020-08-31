@@ -24,7 +24,7 @@ export default class AST_Token extends AST {
     return type === 'AST_Token'
   }
 
-  constructor (args?) {
+  constructor (args?: AST_Token_Props) {
     super()
 
     if (args) {
@@ -44,4 +44,22 @@ export default class AST_Token extends AST {
       this.end = args.end
     }
   }
+}
+
+export interface AST_Token_Props {
+  type?: string | undefined
+  value?: string | undefined
+  line?: number | undefined
+  col?: number | undefined
+  pos?: number | undefined
+  endline?: number | null | undefined
+  endpos?: number | null | undefined
+  nlb?: boolean | undefined
+  comments_before?: Comment[] | undefined
+  comments_after?: Comment[] | undefined
+  file?: string | undefined
+  raw?: string | undefined
+  quote?: string | undefined
+  end?: any | undefined
+  endcol?: number | null
 }

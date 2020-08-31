@@ -1,6 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Block from './block'
+import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
@@ -115,9 +115,14 @@ export default class AST_Try extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
-  constructor (args?) {
+  constructor (args?: AST_Try_Props) {
     super(args)
     this.bcatch = args.bcatch
     this.bfinally = args.bfinally
   }
+}
+
+export interface AST_Try_Props extends AST_Block_Props {
+  bcatch?: AST_Catch | undefined | undefined
+  bfinally?: AST_Finally | undefined | undefined
 }

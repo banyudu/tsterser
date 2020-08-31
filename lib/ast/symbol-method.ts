@@ -1,4 +1,4 @@
-import AST_Symbol from './symbol'
+import AST_Symbol, { AST_Symbol_Props } from './symbol'
 
 export default class AST_SymbolMethod extends AST_Symbol {
   static documentation = 'Symbol in an object defining a method'
@@ -18,4 +18,7 @@ export default class AST_SymbolMethod extends AST_Symbol {
   }
 
   static PROPS = AST_Symbol.PROPS
+}
+
+export interface AST_SymbolMethod_Props extends AST_Symbol_Props {
 }

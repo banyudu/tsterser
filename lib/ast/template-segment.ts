@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import Compressor from '../compressor'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import '../utils'
 
 export default class AST_TemplateSegment extends AST_Node {
@@ -22,9 +22,14 @@ export default class AST_TemplateSegment extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['value', 'raw'])
-  constructor (args?) {
+  constructor (args?: AST_TemplateSegment_Props) {
     super(args)
     this.value = args.value
     this.raw = args.raw
   }
+}
+
+export interface AST_TemplateSegment_Props extends AST_Node_Props {
+  value?: any | undefined
+  raw?: any | undefined
 }

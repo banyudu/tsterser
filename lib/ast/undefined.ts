@@ -1,5 +1,5 @@
 import Compressor from '../compressor'
-import AST_Atom from './atom'
+import AST_Atom, { AST_Atom_Props } from './atom'
 import { find_variable, make_node, is_lhs, is_atomic } from '../utils'
 import { set_flag, UNDEFINED } from '../constants'
 
@@ -33,4 +33,7 @@ export default class AST_Undefined extends AST_Atom {
   static documentation: 'The `undefined` value'
 
   static PROPS = AST_Atom.PROPS
+}
+
+export interface AST_Undefined_Props extends AST_Atom_Props {
 }

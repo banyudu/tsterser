@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Unary from './unary'
+import AST_Unary, { AST_Unary_Props } from './unary'
 
 export default class AST_UnaryPostfix extends AST_Unary {
   _prepend_comments_check (node: AST_Node) {
@@ -21,4 +21,7 @@ export default class AST_UnaryPostfix extends AST_Unary {
   static documentation = 'Unary postfix expression, i.e. `i++`'
 
   static PROPS = AST_Unary.PROPS
+}
+
+export interface AST_UnaryPostfix_Props extends AST_Unary_Props {
 }

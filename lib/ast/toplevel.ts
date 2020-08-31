@@ -1,7 +1,7 @@
 import AST_Symbol from './symbol'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Scope from './scope'
+import AST_Scope, { AST_Scope_Props } from './scope'
 import Compressor from '../compressor'
 import SymbolDef from '../symbol-def'
 import TreeWalker from '../tree-walker'
@@ -362,8 +362,12 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['globals'])
-  constructor (args?) {
+  constructor (args?: AST_Toplevel_Props) {
     super(args)
     this.globals = args.globals
   }
+}
+
+export interface AST_Toplevel_Props extends AST_Scope_Props {
+  globals?: Map<any, any> | undefined
 }

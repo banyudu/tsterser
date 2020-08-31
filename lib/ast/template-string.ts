@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import AST_TemplateSegment from './template-segment'
 import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
@@ -157,8 +157,12 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['segments'])
-  constructor (args?) {
+  constructor (args?: AST_TemplateString_Props) {
     super(args)
     this.segments = args.segments
   }
+}
+
+export interface AST_TemplateString_Props extends AST_Node_Props {
+  segments?: AST_TemplateSegment[] | undefined
 }
