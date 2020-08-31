@@ -8,7 +8,7 @@ export default class AST_Super extends AST_This {
     return { type: 'Super' }
   }
 
-  _codegen (_self, output: OutputStream) {
+  _codegen (this, output: OutputStream) {
     output.print('super')
   }
 

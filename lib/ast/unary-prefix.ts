@@ -130,16 +130,16 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == 'void'
   }
 
-  _codegen (self: AST_UnaryPrefix, output: OutputStream) {
-    const op = self.operator
+  _codegen (this: AST_UnaryPrefix, output: OutputStream) {
+    const op = this.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||
             (/[+-]$/.test(op) &&
-                is_ast_unary_prefix(self.expression) &&
-                /^[+-]/.test(self.expression.operator))) {
+                is_ast_unary_prefix(this.expression) &&
+                /^[+-]/.test(this.expression.operator))) {
       output.space()
     }
-    self.expression.print(output)
+    this.expression.print(output)
   }
 
   static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'

@@ -43,9 +43,9 @@ export default class AST_Expansion extends AST_Node {
     }
   }
 
-  _codegen (self: AST_Expansion, output: OutputStream) {
+  _codegen (this: AST_Expansion, output: OutputStream) {
     output.print('...')
-    self.expression.print(output)
+    this.expression.print(output)
   }
 
   static documentation = 'An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list'

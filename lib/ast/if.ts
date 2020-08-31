@@ -226,21 +226,21 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self: AST_If, output: OutputStream) {
+  _codegen (this: AST_If, output: OutputStream) {
     output.print('if')
     output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
+    output.with_parens(() => {
+      this.condition.print(output)
     })
     output.space()
-    if (self.alternative) {
-      make_then(self, output)
+    if (this.alternative) {
+      make_then(this, output)
       output.space()
       output.print('else')
       output.space()
-      if (is_ast_if(self.alternative)) { self.alternative.print(output) } else { force_statement(self.alternative, output) }
+      if (is_ast_if(this.alternative)) { this.alternative.print(output) } else { force_statement(this.alternative, output) }
     } else {
-      self._do_print_body(output)
+      this._do_print_body(output)
     }
   }
 

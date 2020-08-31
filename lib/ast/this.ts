@@ -11,7 +11,7 @@ export default class AST_This extends AST_Symbol {
     return { type: 'ThisExpression' }
   }
 
-  _codegen (_self, output: OutputStream) {
+  _codegen (this: AST_This, output: OutputStream) {
     output.print('this')
   }
 

@@ -105,46 +105,46 @@ export default class AST_Export extends AST_Statement {
     }
   }
 
-  _codegen (self: AST_Export, output: OutputStream) {
+  _codegen (this: AST_Export, output: OutputStream) {
     output.print('export')
     output.space()
-    if (self.is_default) {
+    if (this.is_default) {
       output.print('default')
       output.space()
     }
-    if (self.exported_names) {
-      if (self.exported_names.length === 1 && self.exported_names[0].name.name === '*') {
-        self.exported_names[0].print(output)
+    if (this.exported_names) {
+      if (this.exported_names.length === 1 && this.exported_names[0].name.name === '*') {
+        this.exported_names[0].print(output)
       } else {
         output.print('{')
-        self.exported_names.forEach(function (name_export, i) {
+        this.exported_names.forEach((name_export, i) => {
           output.space()
           name_export.print(output)
-          if (i < self.exported_names.length - 1) {
+          if (i < this.exported_names.length - 1) {
             output.print(',')
           }
         })
         output.space()
         output.print('}')
       }
-    } else if (self.exported_value) {
-      self.exported_value.print(output)
-    } else if (self.exported_definition) {
-      self.exported_definition.print(output)
-      if (is_ast_definitions(self.exported_definition)) return
+    } else if (this.exported_value) {
+      this.exported_value.print(output)
+    } else if (this.exported_definition) {
+      this.exported_definition.print(output)
+      if (is_ast_definitions(this.exported_definition)) return
     }
-    if (self.module_name) {
+    if (this.module_name) {
       output.space()
       output.print('from')
       output.space()
-      self.module_name.print(output)
+      this.module_name.print(output)
     }
-    if (self.exported_value &&
-                !(is_ast_defun(self.exported_value) ||
-                    is_ast_function(self.exported_value) ||
-                    is_ast_class(self.exported_value)) ||
-            self.module_name ||
-            self.exported_names
+    if (this.exported_value &&
+                !(is_ast_defun(this.exported_value) ||
+                    is_ast_function(this.exported_value) ||
+                    is_ast_class(this.exported_value)) ||
+            this.module_name ||
+            this.exported_names
     ) {
       output.semicolon()
     }

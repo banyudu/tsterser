@@ -15,7 +15,7 @@ export default class AST_Debugger extends AST_Statement {
     return { type: 'DebuggerStatement' }
   }
 
-  _codegen (_self, output: OutputStream) {
+  _codegen (this, output: OutputStream) {
     output.print('debugger')
     output.semicolon()
   }

@@ -34,28 +34,28 @@ export default class AST_NameMapping extends AST_Node {
     this.name = this.name.transform(tw)
   }
 
-  _codegen (self: AST_NameMapping, output: OutputStream) {
+  _codegen (this: AST_NameMapping, output: OutputStream) {
     const is_import = is_ast_import(output.parent())
-    const definition = self.name.definition()
+    const definition = this.name.definition()
     const names_are_different =
-            (definition?.mangled_name || self.name.name) !==
-            self.foreign_name.name
+            (definition?.mangled_name || this.name.name) !==
+            this.foreign_name.name
     if (names_are_different) {
       if (is_import) {
-        output.print(self.foreign_name.name)
+        output.print(this.foreign_name.name)
       } else {
-        self.name.print(output)
+        this.name.print(output)
       }
       output.space()
       output.print('as')
       output.space()
       if (is_import) {
-        self.name.print(output)
+        this.name.print(output)
       } else {
-        output.print(self.foreign_name.name)
+        output.print(this.foreign_name.name)
       }
     } else {
-      self.name.print(output)
+      this.name.print(output)
     }
   }
 

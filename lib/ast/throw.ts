@@ -12,8 +12,8 @@ export default class AST_Throw extends AST_Exit {
     }
   }
 
-  _codegen (self: AST_Throw, output: OutputStream) {
-    self._do_print(output, 'throw')
+  _codegen (this: AST_Throw, output: OutputStream) {
+    this._do_print(output, 'throw')
   }
 
   static documentation = 'A `throw` statement'

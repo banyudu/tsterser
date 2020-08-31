@@ -13,9 +13,9 @@ export default class AST_UnaryPostfix extends AST_Unary {
   }
 
   _dot_throw () { return false }
-  _codegen (self: AST_UnaryPostfix, output: OutputStream) {
-    self.expression.print(output)
-    output.print(self.operator)
+  _codegen (this: AST_UnaryPostfix, output: OutputStream) {
+    this.expression.print(output)
+    output.print(this.operator)
   }
 
   static documentation = 'Unary postfix expression, i.e. `i++`'

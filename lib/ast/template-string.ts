@@ -132,19 +132,19 @@ export default class AST_TemplateString extends AST_Node {
     }
   }
 
-  _codegen (self: AST_TemplateString, output: OutputStream) {
+  _codegen (this: AST_TemplateString, output: OutputStream) {
     const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')
-    for (let i = 0; i < self.segments.length; i++) {
-      if (!(is_ast_template_segment(self.segments[i]))) {
+    for (let i = 0; i < this.segments.length; i++) {
+      if (!(is_ast_template_segment(this.segments[i]))) {
         output.print('${')
-        self.segments[i].print(output)
+        this.segments[i].print(output)
         output.print('}')
       } else if (is_tagged) {
-        output.print(self.segments[i].raw)
+        output.print(this.segments[i].raw)
       } else {
-        output.print_template_string_chars(self.segments[i].value)
+        output.print_template_string_chars(this.segments[i].value)
       }
     }
     output.print('`')

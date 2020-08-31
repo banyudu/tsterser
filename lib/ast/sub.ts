@@ -202,10 +202,10 @@ export default class AST_Sub extends AST_PropAccess {
     this.property = (this.property).transform(tw)
   }
 
-  _codegen (self: AST_Sub, output: OutputStream) {
-    self.expression.print(output)
+  _codegen (this: AST_Sub, output: OutputStream) {
+    this.expression.print(output)
     output.print('[');
-    (self.property).print(output)
+    (this.property).print(output)
     output.print(']')
   }
 

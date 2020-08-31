@@ -15,8 +15,8 @@ export default class AST_Break extends AST_LoopControl {
     }
   }
 
-  _codegen (self: AST_Break, output: OutputStream) {
-    self._do_print(output, 'break')
+  _codegen (this: AST_Break, output: OutputStream) {
+    this._do_print(output, 'break')
   }
 
   static documentation = 'A `break` statement'

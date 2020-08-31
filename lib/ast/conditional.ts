@@ -409,15 +409,15 @@ export default class AST_Conditional extends AST_Node {
   }
 
   needs_parens = needsParens
-  _codegen (self: AST_Conditional, output: OutputStream) {
-    self.condition.print(output)
+  _codegen (this: AST_Conditional, output: OutputStream) {
+    this.condition.print(output)
     output.space()
     output.print('?')
     output.space()
-    self.consequent.print(output)
+    this.consequent.print(output)
     output.space()
     output.colon()
-    self.alternative.print(output)
+    this.alternative.print(output)
   }
 
   static documentation = 'Conditional expression using the ternary operator, i.e. `a ? b : c`'

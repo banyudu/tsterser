@@ -34,8 +34,8 @@ export default class AST_Directive extends AST_Statement {
     }
   }
 
-  _codegen (self: AST_Directive, output: OutputStream) {
-    output.print_string(self.value, self.quote)
+  _codegen (this: AST_Directive, output: OutputStream) {
+    output.print_string(this.value, this.quote)
     output.semicolon()
   }
 

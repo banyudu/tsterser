@@ -800,12 +800,12 @@ export default class AST_Binary extends AST_Node {
     return undefined
   }
 
-  _codegen (self: AST_Binary, output: OutputStream) {
-    const op = self.operator
-    self.left.print(output)
+  _codegen (this: AST_Binary, output: OutputStream) {
+    const op = this.operator
+    this.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */
-            is_ast_unary_postfix(self.left) &&
-            self.left.operator == '--') {
+            is_ast_unary_postfix(this.left) &&
+            this.left.operator == '--') {
       // space is mandatory to avoid outputting -->
       output.print(' ')
     } else {
@@ -814,17 +814,17 @@ export default class AST_Binary extends AST_Node {
     }
     output.print(op)
     if ((op == '<' || op == '<<') &&
-            is_ast_unary_prefix(self.right) &&
-            self.right.operator == '!' &&
-            is_ast_unary_prefix(self.right.expression) &&
-            self.right.expression.operator == '--') {
+            is_ast_unary_prefix(this.right) &&
+            this.right.operator == '!' &&
+            is_ast_unary_prefix(this.right.expression) &&
+            this.right.expression.operator == '--') {
       // space is mandatory to avoid outputting <!--
       output.print(' ')
     } else {
       // the space is optional depending on "beautify"
       output.space()
     }
-    self.right.print(output)
+    this.right.print(output)
   }
 
   static documentation = 'Binary expression, i.e. `a + b`'

@@ -61,12 +61,12 @@ export default class AST_Yield extends AST_Node {
     return undefined
   }
 
-  _codegen (self: AST_Yield, output: OutputStream) {
-    const star = self.is_star ? '*' : ''
+  _codegen (this: AST_Yield, output: OutputStream) {
+    const star = this.is_star ? '*' : ''
     output.print('yield' + star)
-    if (self.expression) {
+    if (this.expression) {
       output.space()
-      self.expression.print(output)
+      this.expression.print(output)
     }
   }
 

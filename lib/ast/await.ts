@@ -36,10 +36,10 @@ export default class AST_Await extends AST_Node {
             output.option('safari10') && is_ast_unary_prefix(p)
   }
 
-  _codegen (self: AST_Await, output: OutputStream) {
+  _codegen (this: AST_Await, output: OutputStream) {
     output.print('await')
     output.space()
-    const e = self.expression
+    const e = this.expression
     const parens = !(
       is_ast_call(e) ||
             is_ast_symbol_ref(e) ||
@@ -48,7 +48,7 @@ export default class AST_Await extends AST_Node {
             is_ast_constant(e)
     )
     if (parens) output.print('(')
-    self.expression.print(output)
+    this.expression.print(output)
     if (parens) output.print(')')
   }
 

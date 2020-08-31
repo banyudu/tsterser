@@ -7,8 +7,8 @@ export default class AST_Var extends AST_Definitions {
     return def_size(4, this)
   }
 
-  _codegen (self: AST_Var, output: OutputStream) {
-    self._do_print(output, 'var')
+  _codegen (this: AST_Var, output: OutputStream) {
+    this._do_print(output, 'var')
   }
 
   static documentation = 'A `var` statement'

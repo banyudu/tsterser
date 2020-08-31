@@ -9,10 +9,10 @@ export default class AST_Finally extends AST_Block {
     return 7 + list_overhead(this.body)
   }
 
-  _codegen (self: AST_Finally, output: OutputStream) {
+  _codegen (this: AST_Finally, output: OutputStream) {
     output.print('finally')
     output.space()
-    print_braced(self, output)
+    print_braced(this, output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

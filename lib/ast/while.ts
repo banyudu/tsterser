@@ -48,14 +48,14 @@ export default class AST_While extends AST_DWLoop {
     }
   }
 
-  _codegen (self: AST_While, output: OutputStream) {
+  _codegen (this: AST_While, output: OutputStream) {
     output.print('while')
     output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
+    output.with_parens(() => {
+      this.condition.print(output)
     })
     output.space()
-    self._do_print_body(output)
+    this._do_print_body(output)
   }
 
   static documentation = 'A `while` statement'

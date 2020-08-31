@@ -174,18 +174,18 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _codegen (self: AST_Switch, output: OutputStream) {
+  _codegen (this: AST_Switch, output: OutputStream) {
     output.print('switch')
     output.space()
-    output.with_parens(function () {
-      self.expression.print(output)
+    output.with_parens(() => {
+      this.expression.print(output)
     })
     output.space()
-    const last = self.body.length - 1
-    if (last < 0) print_braced_empty(self, output)
+    const last = this.body.length - 1
+    if (last < 0) print_braced_empty(this, output)
     else {
-      output.with_block(function () {
-        (self.body as any[]).forEach(function (branch, i) {
+      output.with_block(() => {
+        (this.body as any[]).forEach(function (branch, i) {
           output.indent(true)
           branch.print(output)
           if (i < last && branch.body.length > 0) { output.newline() }

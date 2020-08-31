@@ -53,22 +53,22 @@ export default class AST_ForIn extends AST_IterationStatement {
     }
   }
 
-  _codegen (self: AST_ForIn, output: OutputStream) {
+  _codegen (this: AST_ForIn, output: OutputStream) {
     output.print('for')
-    if (self.await) {
+    if (this.await) {
       output.space()
       output.print('await')
     }
     output.space()
-    output.with_parens(function () {
-            self.init?.print(output)
+    output.with_parens(() => {
+            this.init?.print(output)
             output.space()
-            output.print(is_ast_for_of(self) ? 'of' : 'in')
+            output.print(is_ast_for_of(this) ? 'of' : 'in')
             output.space()
-            self.object.print(output)
+            this.object.print(output)
     })
     output.space()
-    self._do_print_body(output)
+    this._do_print_body(output)
   }
 
   static documentation = 'A `for ... in` statement'

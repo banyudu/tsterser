@@ -120,19 +120,19 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen (self: AST_Class, output: OutputStream) {
+  _codegen (this: AST_Class, output: OutputStream) {
     output.print('class')
     output.space()
-    if (self.name) {
-      self.name.print(output)
+    if (this.name) {
+      this.name.print(output)
       output.space()
     }
-    if (self.extends) {
+    if (this.extends) {
       const parens = (
-        !(is_ast_symbol_ref(self.extends)) &&
-                    !(is_ast_prop_access(self.extends)) &&
-                    !(is_ast_class_expression(self.extends)) &&
-                    !(is_ast_function(self.extends))
+        !(is_ast_symbol_ref(this.extends)) &&
+                    !(is_ast_prop_access(this.extends)) &&
+                    !(is_ast_class_expression(this.extends)) &&
+                    !(is_ast_function(this.extends))
       )
       output.print('extends')
       if (parens) {
@@ -140,16 +140,16 @@ export default class AST_Class extends AST_Scope {
       } else {
         output.space()
       }
-      self.extends.print(output)
+      this.extends.print(output)
       if (parens) {
         output.print(')')
       } else {
         output.space()
       }
     }
-    if (self.properties.length > 0) {
-      output.with_block(function () {
-        self.properties.forEach(function (prop, i) {
+    if (this.properties.length > 0) {
+      output.with_block(() => {
+        this.properties.forEach(function (prop, i) {
           if (i) {
             output.newline()
           }

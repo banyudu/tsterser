@@ -79,15 +79,15 @@ export default class AST_Do extends AST_DWLoop {
     }
   }
 
-  _codegen (self: AST_Do, output: OutputStream) {
+  _codegen (this: AST_Do, output: OutputStream) {
     output.print('do')
     output.space()
-    make_block(self.body, output)
+    make_block(this.body, output)
     output.space()
     output.print('while')
     output.space()
-    output.with_parens(function () {
-      self.condition.print(output)
+    output.with_parens(() => {
+      this.condition.print(output)
     })
     output.semicolon()
   }

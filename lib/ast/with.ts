@@ -33,14 +33,14 @@ export default class AST_With extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self: AST_With, output: OutputStream) {
+  _codegen (this: AST_With, output: OutputStream) {
     output.print('with')
     output.space()
-    output.with_parens(function () {
-      self.expression.print(output)
+    output.with_parens(() => {
+      this.expression.print(output)
     })
     output.space()
-    self._do_print_body(output)
+    this._do_print_body(output)
   }
 
   static documentation = 'A `with` statement'

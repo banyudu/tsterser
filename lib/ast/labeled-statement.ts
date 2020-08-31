@@ -80,10 +80,10 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _codegen (self: AST_LabeledStatement, output: OutputStream) {
-    self.label.print(output)
+  _codegen (this: AST_LabeledStatement, output: OutputStream) {
+    this.label.print(output)
     output.colon();
-    (self.body).print(output)
+    (this.body).print(output)
   }
 
   add_source_map () { }

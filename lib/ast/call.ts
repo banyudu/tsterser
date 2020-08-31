@@ -906,8 +906,8 @@ export default class AST_Call extends AST_Node {
             p1.left === p
   }
 
-  _codegen (self: AST_Call, output: OutputStream) {
-    return callCodeGen(self, output)
+  _codegen (this: AST_Call, output: OutputStream) {
+    return callCodeGen(this, output)
   }
 
   static documentation = 'A function call expression'

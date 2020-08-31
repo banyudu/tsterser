@@ -82,16 +82,16 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     }
   }
 
-  _codegen (self: AST_ConciseMethod, output: OutputStream) {
+  _codegen (this: AST_ConciseMethod, output: OutputStream) {
     let type
-    if (self.is_generator && self.async) {
+    if (this.is_generator && this.async) {
       type = 'async*'
-    } else if (self.is_generator) {
+    } else if (this.is_generator) {
       type = '*'
-    } else if (self.async) {
+    } else if (this.async) {
       type = 'async'
     }
-    self._print_getter_setter(type, output)
+    this._print_getter_setter(type, output)
   }
 
   static propdoc = {

@@ -88,23 +88,23 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     static: 'eq'
   }
 
-  _codegen = (self: AST_ClassProperty, output: OutputStream) => {
-    if (self.static) {
+  _codegen (this: AST_ClassProperty, output: OutputStream) {
+    if (this.static) {
       output.print('static')
       output.space()
     }
 
-    if (is_ast_symbol_class_property(self.key)) {
-      print_property_name(self.key.name, self.quote, output)
+    if (is_ast_symbol_class_property(this.key)) {
+      print_property_name(this.key.name, this.quote, output)
     } else {
       output.print('[')
-      self.key.print(output)
+      this.key.print(output)
       output.print(']')
     }
 
-    if (self.value) {
+    if (this.value) {
       output.print('=')
-      self.value.print(output)
+      this.value.print(output)
     }
 
     output.semicolon()

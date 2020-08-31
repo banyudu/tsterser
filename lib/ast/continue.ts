@@ -15,8 +15,8 @@ export default class AST_Continue extends AST_LoopControl {
     }
   }
 
-  _codegen (self: AST_Continue, output: OutputStream) {
-    self._do_print(output, 'continue')
+  _codegen (this: AST_Continue, output: OutputStream) {
+    this._do_print(output, 'continue')
   }
 
   static documentation = 'A `continue` statement'

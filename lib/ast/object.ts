@@ -144,10 +144,10 @@ export default class AST_Object extends AST_Node {
     return !output.has_parens() && first_in_statement(output)
   }
 
-  _codegen (self: AST_Object, output: OutputStream) {
-    if (self.properties.length > 0) {
-      output.with_block(function () {
-        self.properties.forEach(function (prop, i) {
+  _codegen (this: AST_Object, output: OutputStream) {
+    if (this.properties.length > 0) {
+      output.with_block(() => {
+        this.properties.forEach(function (prop, i) {
           if (i) {
             output.print(',')
             output.newline()
@@ -157,7 +157,7 @@ export default class AST_Object extends AST_Node {
         })
         output.newline()
       })
-    } else print_braced_empty(self, output)
+    } else print_braced_empty(this, output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

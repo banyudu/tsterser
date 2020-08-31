@@ -50,16 +50,16 @@ export default class AST_Catch extends AST_Block {
     }
   }
 
-  _codegen (self: AST_Catch, output: OutputStream) {
+  _codegen (this: AST_Catch, output: OutputStream) {
     output.print('catch')
-    if (self.argname) {
+    if (this.argname) {
       output.space()
-      output.with_parens(function () {
-        self.argname.print(output)
+      output.with_parens(() => {
+        this.argname.print(output)
       })
     }
     output.space()
-    print_braced(self, output)
+    print_braced(this, output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

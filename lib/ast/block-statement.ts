@@ -29,7 +29,10 @@ export default class AST_BlockStatement extends AST_Block {
     }
   }
 
-  _codegen = blockStateMentCodeGen
+  _codegen (this: AST_BlockStatement, output: OutputStream) {
+    blockStateMentCodeGen(this, output)
+  }
+
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A block statement'
 

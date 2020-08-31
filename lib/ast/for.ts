@@ -108,34 +108,34 @@ export default class AST_For extends AST_IterationStatement {
     }
   }
 
-  _codegen (self: AST_For, output: OutputStream) {
+  _codegen (this: AST_For, output: OutputStream) {
     output.print('for')
     output.space()
-    output.with_parens(function () {
-      if (self.init) {
-        if (is_ast_definitions(self.init)) {
-          self.init.print(output)
+    output.with_parens(() => {
+      if (this.init) {
+        if (is_ast_definitions(this.init)) {
+          this.init.print(output)
         } else {
-          parenthesize_for_noin(self.init, output, true)
+          parenthesize_for_noin(this.init, output, true)
         }
         output.print(';')
         output.space()
       } else {
         output.print(';')
       }
-      if (self.condition) {
-        self.condition.print(output)
+      if (this.condition) {
+        this.condition.print(output)
         output.print(';')
         output.space()
       } else {
         output.print(';')
       }
-      if (self.step) {
-        self.step.print(output)
+      if (this.step) {
+        this.step.print(output)
       }
     })
     output.space()
-    self._do_print_body(output)
+    this._do_print_body(output)
   }
 
   static documentation = 'A `for` statement'

@@ -70,8 +70,8 @@ export default class AST_Symbol extends AST_Node {
     output.print_name(def ? def.mangled_name || def.name : this.name)
   }
 
-  _codegen (self: AST_Symbol, output: OutputStream) {
-    self._do_print(output)
+  _codegen (this: AST_Symbol, output: OutputStream) {
+    this._do_print(output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

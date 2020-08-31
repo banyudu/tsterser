@@ -16,8 +16,8 @@ export default class AST_BigInt extends AST_Constant {
     value: this.value
   } }
 
-  _codegen (self: AST_BigInt, output: OutputStream) {
-    output.print(self.getValue() + 'n')
+  _codegen (this: AST_BigInt, output: OutputStream) {
+    output.print(this.getValue() + 'n')
   }
 
   needs_parens (output: OutputStream) {

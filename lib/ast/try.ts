@@ -93,17 +93,17 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  _codegen (self: AST_Try, output: OutputStream) {
+  _codegen (this: AST_Try, output: OutputStream) {
     output.print('try')
     output.space()
-    print_braced(self, output)
-    if (self.bcatch) {
+    print_braced(this, output)
+    if (this.bcatch) {
       output.space()
-      self.bcatch.print(output)
+      this.bcatch.print(output)
     }
-    if (self.bfinally) {
+    if (this.bfinally) {
       output.space()
-      self.bfinally.print(output)
+      this.bfinally.print(output)
     }
   }
 

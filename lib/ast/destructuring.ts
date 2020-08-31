@@ -106,10 +106,10 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  _codegen (self: AST_Destructuring, output: OutputStream) {
-    output.print(self.is_array ? '[' : '{')
-    const len = self.names.length
-    self.names.forEach(function (name, i) {
+  _codegen (this: AST_Destructuring, output: OutputStream) {
+    output.print(this.is_array ? '[' : '{')
+    const len = this.names.length
+    this.names.forEach(function (name, i) {
       if (i > 0) output.comma()
       name.print(output)
       // If the final element is a hole, we need to make sure it
@@ -117,7 +117,7 @@ export default class AST_Destructuring extends AST_Node {
       // trailing comma.
       if (i == len - 1 && is_ast_hole(name)) output.comma()
     })
-    output.print(self.is_array ? ']' : '}')
+    output.print(this.is_array ? ']' : '}')
   }
 
   static documentation = 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names'

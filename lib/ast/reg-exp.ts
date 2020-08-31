@@ -48,14 +48,14 @@ export default class AST_RegExp extends AST_Constant {
     }
   }
 
-  _codegen (self: AST_RegExp, output: OutputStream) {
-    let { source, flags } = self.getValue()
+  _codegen (this: AST_RegExp, output: OutputStream) {
+    let { source, flags } = this.getValue()
     source = regexp_source_fix(source)
     flags = flags ? sort_regexp_flags(flags) : ''
     source = source.replace(r_slash_script, slash_script_replace)
             output.print?.(output.to_utf8(`/${source}/${flags}`))
             const parent = output.parent()
-            if (parent?._codegen_should_output_space?.(self)) {
+            if (parent?._codegen_should_output_space?.(this)) {
               output.print(' ')
             }
   }

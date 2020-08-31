@@ -97,9 +97,9 @@ export default class AST_Array extends AST_Node {
     }
   }
 
-  _codegen (self: AST_Array, output: OutputStream) {
-    output.with_square(function () {
-      const a = self.elements; const len = a.length
+  _codegen (this: AST_Array, output: OutputStream) {
+    output.with_square(() => {
+      const a = this.elements; const len = a.length
       if (len > 0) output.space()
       a.forEach(function (exp, i) {
         if (i) output.comma()

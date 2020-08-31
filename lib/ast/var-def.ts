@@ -79,15 +79,15 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  _codegen (self: AST_VarDef, output: OutputStream) {
-    self.name.print(output)
-    if (self.value) {
+  _codegen (this: AST_VarDef, output: OutputStream) {
+    this.name.print(output)
+    if (this.value) {
       output.space()
       output.print('=')
       output.space()
       const p = output.parent(1)
       const noin = is_ast_for(p) || is_ast_for_in(p)
-      parenthesize_for_noin(self.value, output, noin)
+      parenthesize_for_noin(this.value, output, noin)
     }
   }
 

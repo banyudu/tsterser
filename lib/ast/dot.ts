@@ -141,16 +141,16 @@ export default class AST_Dot extends AST_PropAccess {
     this.expression = this.expression.transform(tw)
   }
 
-  _codegen (self: AST_Dot, output: OutputStream) {
-    const expr = self.expression
+  _codegen (this: AST_Dot, output: OutputStream) {
+    const expr = this.expression
     expr.print(output)
-    const prop: string = self.property as string
+    const prop: string = this.property as string
     const print_computed = RESERVED_WORDS.has(prop)
       ? output.option('ie8')
       : !is_identifier_string(prop, (output.option('ecma') as unknown as number) >= 2015)
     if (print_computed) {
       output.print('[')
-      output.add_mapping(self.end)
+      output.add_mapping(this.end)
       output.print_string(prop)
       output.print(']')
     } else {
@@ -161,7 +161,7 @@ export default class AST_Dot extends AST_PropAccess {
       }
       output.print('.')
       // the name after dot would be mapped about here.
-      output.add_mapping(self.end)
+      output.add_mapping(this.end)
       output.print_name(prop)
     }
   }

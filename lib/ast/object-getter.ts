@@ -75,8 +75,8 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     static: 'eq'
   }
 
-  _codegen (self: AST_ObjectGetter, output: OutputStream) {
-    self._print_getter_setter('get', output)
+  _codegen (this: AST_ObjectGetter, output: OutputStream) {
+    this._print_getter_setter('get', output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }

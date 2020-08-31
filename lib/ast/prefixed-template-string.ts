@@ -41,8 +41,8 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     }
   }
 
-  _codegen (self: AST_PrefixedTemplateString, output: OutputStream) {
-    const tag = self.prefix
+  _codegen (this: AST_PrefixedTemplateString, output: OutputStream) {
+    const tag = this.prefix
     const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||
             is_ast_conditional(tag) ||
@@ -50,9 +50,9 @@ export default class AST_PrefixedTemplateString extends AST_Node {
             is_ast_unary(tag) ||
             is_ast_dot(tag) && is_ast_object(tag.expression)
     if (parenthesize_tag) output.print('(')
-    self.prefix.print(output)
+    this.prefix.print(output)
     if (parenthesize_tag) output.print(')')
-    self.template_string.print(output)
+    this.template_string.print(output)
   }
 
   static documentation = 'A templatestring with a prefix, such as String.raw`foobarbaz`'
