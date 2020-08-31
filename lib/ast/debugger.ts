@@ -1,6 +1,6 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import { make_node } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
@@ -24,4 +24,7 @@ export default class AST_Debugger extends AST_Statement {
   static documentation = 'Represents a debugger statement'
 
   static PROPS = AST_Statement.PROPS
+}
+
+export interface AST_Debugger_Props extends AST_Statement_Props {
 }

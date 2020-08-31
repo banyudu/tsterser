@@ -1,5 +1,5 @@
 import Compressor from '../compressor'
-import AST_Binary from './binary'
+import AST_Binary, { AST_Binary_Props } from './binary'
 import { make_node_from_constant, best_of_expression } from '../utils'
 
 export default class AST_DefaultAssign extends AST_Binary {
@@ -29,4 +29,7 @@ export default class AST_DefaultAssign extends AST_Binary {
   static documentation = 'A default assignment expression like in `(a = 3) => a`'
 
   static PROPS = AST_Binary.PROPS
+}
+
+export interface AST_DefaultAssign_Props extends AST_Binary_Props {
 }

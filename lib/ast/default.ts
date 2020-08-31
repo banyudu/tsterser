@@ -1,5 +1,5 @@
 import { OutputStream } from '../output'
-import AST_SwitchBranch from './switch-branch'
+import AST_SwitchBranch, { AST_SwitchBranch_Props } from './switch-branch'
 import { push, pop, list_overhead } from '../utils'
 import TreeWalker from '../tree-walker'
 
@@ -23,4 +23,7 @@ export default class AST_Default extends AST_SwitchBranch {
   static documentation = 'A `default` switch branch'
 
   static PROPS = AST_SwitchBranch.PROPS
+}
+
+export interface AST_Default_Props extends AST_SwitchBranch_Props {
 }

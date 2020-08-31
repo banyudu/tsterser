@@ -1,5 +1,5 @@
 import AST_Node from './node'
-import AST_Lambda from './lambda'
+import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import { lambda_modifiers, list_overhead, to_moz, to_moz_scope } from '../utils'
 
 export default class AST_Defun extends AST_Lambda {
@@ -22,4 +22,7 @@ export default class AST_Defun extends AST_Lambda {
   static documentation = 'A function definition'
 
   static PROPS = AST_Lambda.PROPS
+}
+
+export interface AST_Defun_Props extends AST_Lambda_Props {
 }

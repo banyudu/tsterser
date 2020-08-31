@@ -1,7 +1,7 @@
 import AST_VarDef from './var-def'
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
@@ -120,8 +120,12 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['definitions'])
-  constructor (args?) {
+  constructor (args?: AST_Definitions_Props) {
     super(args)
     this.definitions = args.definitions
   }
+}
+
+export interface AST_Definitions_Props extends AST_Statement_Props {
+  definitions?: AST_VarDef[] | undefined
 }

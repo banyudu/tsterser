@@ -1,7 +1,7 @@
 import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Statement from './statement'
+import AST_Statement, { AST_Statement_Props } from './statement'
 import { directives } from '../constants'
 import { make_node } from '../utils'
 
@@ -47,9 +47,14 @@ export default class AST_Directive extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['value', 'quote'])
-  constructor (args?) {
+  constructor (args?: AST_Directive_Props) {
     super(args)
     this.value = args.value
     this.quote = args.quote
   }
+}
+
+export interface AST_Directive_Props extends AST_Statement_Props {
+  value?: any | undefined
+  quote?: any | undefined
 }

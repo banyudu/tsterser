@@ -1,6 +1,6 @@
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
-import AST_Node from './node'
+import AST_Node, { AST_Node_Props } from './node'
 import TreeWalker from '../tree-walker'
 import { do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
 import SymbolDef from '../symbol-def'
@@ -127,9 +127,14 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
-  constructor (args?) {
+  constructor (args?: AST_Destructuring_Props) {
     super(args)
     this.names = args.names
     this.is_array = args.is_array
   }
+}
+
+export interface AST_Destructuring_Props extends AST_Node_Props {
+  names?: AST_Node[] | undefined
+  is_array?: boolean | undefined
 }
