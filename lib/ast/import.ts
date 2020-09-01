@@ -5,7 +5,8 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { list_overhead, do_list, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
-import { AST_NameMapping } from '.'
+import AST_NameMapping from './name-mapping'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Import extends AST_Node {
   imported_name: AST_SymbolImport
@@ -62,7 +63,7 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.imported_name) this.imported_name = this.imported_name.transform(tw)
     if (this.imported_names) do_list(this.imported_names, tw)
     this.module_name = this.module_name.transform(tw)

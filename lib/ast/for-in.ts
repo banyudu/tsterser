@@ -4,6 +4,7 @@ import AST_IterationStatement, { AST_IterationStatement_Props } from './iteratio
 import Compressor from '../compressor'
 import { suppress, reset_block_variables, push, pop, to_moz, is_ast_for_of } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_ForIn extends AST_IterationStatement {
   init?: any | undefined
@@ -39,7 +40,7 @@ export default class AST_ForIn extends AST_IterationStatement {
 
   _size = () => 8
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.init = this.init?.transform(tw) || null
     this.object = this.object.transform(tw)
     this.body = (this.body).transform(tw)

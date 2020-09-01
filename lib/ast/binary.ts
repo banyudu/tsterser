@@ -18,6 +18,7 @@ import {
   set_flag,
   lazy_op
 } from '../constants'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Binary extends AST_Node {
   left: AST_Node
@@ -746,7 +747,7 @@ export default class AST_Binary extends AST_Node {
     return size
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.left = this.left.transform(tw)
     this.right = this.right.transform(tw)
   }

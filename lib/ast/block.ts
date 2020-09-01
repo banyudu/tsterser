@@ -13,6 +13,7 @@ import {
   to_moz,
   do_list
 } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Block extends AST_Statement {
   body: any | undefined
@@ -57,7 +58,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.body = do_list(this.body, tw)
   }
 

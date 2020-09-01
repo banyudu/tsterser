@@ -3,6 +3,7 @@ import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import AST_Node from './node'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 import {
   make_node_from_constant,
@@ -163,7 +164,7 @@ export default class AST_Switch extends AST_Block {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = do_list(this.body, tw)
   }

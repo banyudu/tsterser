@@ -16,6 +16,7 @@ import {
 } from '../utils'
 
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Conditional extends AST_Node {
   alternative: AST_Node
@@ -393,7 +394,7 @@ export default class AST_Conditional extends AST_Node {
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.consequent = this.consequent.transform(tw)
     this.alternative = this.alternative.transform(tw)

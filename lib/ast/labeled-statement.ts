@@ -4,6 +4,7 @@ import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-
 import Compressor from '../compressor'
 import { push, pop, to_moz, make_node, is_ast_break, is_ast_loop_control } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
   label: any
@@ -67,7 +68,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp_props: any = { 'label.name': 'eq' }
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.label = this.label.transform(tw)
     this.body = (this.body).transform(tw)
   }

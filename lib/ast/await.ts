@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unary_prefix, is_ast_unary, is_ast_constant } from '../utils'
-import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Await extends AST_Node {
   expression: AST_Node
@@ -18,7 +18,7 @@ export default class AST_Await extends AST_Node {
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 

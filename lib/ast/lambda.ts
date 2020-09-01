@@ -11,6 +11,7 @@ import { opt_AST_Lambda, To_Moz_FunctionExpression, all_refs_local, walk, do_lis
 import { walk_abort } from '../constants'
 import Compressor from '../compressor'
 import { AST_DefaultAssign, AST_SymbolDeclaration } from '.'
+import { TreeTransformer } from '../../main'
 
 export default class AST_Lambda extends AST_Scope {
   argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
@@ -95,7 +96,7 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.name) this.name = this.name.transform(tw)
     this.argnames = do_list(this.argnames, tw)
     if (is_ast_node(this.body)) {

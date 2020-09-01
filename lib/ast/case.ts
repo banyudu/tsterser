@@ -5,6 +5,7 @@ import AST_Block from './block'
 import TreeWalker from '../tree-walker'
 
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Case extends AST_SwitchBranch {
   expression: any | undefined
@@ -46,7 +47,7 @@ export default class AST_Case extends AST_SwitchBranch {
     return 5 + list_overhead(this.body)
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = do_list(this.body, tw)
   }

@@ -3,6 +3,7 @@ import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
 import { AST_Finally, AST_Catch } from '.'
 
@@ -77,7 +78,7 @@ export default class AST_Try extends AST_Block {
     bfinally: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.body = do_list(this.body, tw)
     if (this.bcatch) this.bcatch = this.bcatch.transform(tw)
     if (this.bfinally) this.bfinally = this.bfinally.transform(tw)

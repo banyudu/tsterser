@@ -4,6 +4,7 @@ import AST_Node, { AST_Node_Props } from './node'
 import TreeWalker from '../tree-walker'
 import { do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
 import SymbolDef from '../symbol-def'
+import TreeTransformer from '../tree-transformer'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
@@ -89,7 +90,7 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp_props: any = { is_array: 'eq' }
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.names = do_list(this.names, tw)
   }
 

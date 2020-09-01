@@ -6,7 +6,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
 import { walk_body, list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
-import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
@@ -36,7 +36,7 @@ export default class AST_Catch extends AST_Block {
     argname: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.argname) this.argname = this.argname.transform(tw)
     this.body = do_list(this.body, tw)
   }

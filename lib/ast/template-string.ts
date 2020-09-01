@@ -4,6 +4,7 @@ import AST_TemplateSegment from './template-segment'
 import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_TemplateString extends AST_Node {
   segments: AST_TemplateSegment[]
@@ -104,7 +105,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.segments = do_list(this.segments, tw)
   }
 

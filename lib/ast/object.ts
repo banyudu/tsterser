@@ -17,6 +17,7 @@ import {
   first_in_statement,
   print_braced_empty, is_ast_expansion, is_ast_object, is_ast_symbol, is_ast_constant, is_ast_node, is_ast_string, is_ast_function
 } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Object extends AST_Node {
   properties: AST_Node[]
@@ -127,7 +128,7 @@ export default class AST_Object extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.properties = do_list(this.properties, tw)
   }
 

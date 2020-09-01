@@ -3,6 +3,7 @@ import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { to_moz_in_destructuring, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Expansion extends AST_Node {
   expression: AST_Node
@@ -32,7 +33,7 @@ export default class AST_Expansion extends AST_Node {
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 

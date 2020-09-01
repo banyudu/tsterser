@@ -6,6 +6,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: AST_TemplateString
@@ -28,7 +29,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.prefix = this.prefix.transform(tw)
     this.template_string = this.template_string.transform(tw)
   }

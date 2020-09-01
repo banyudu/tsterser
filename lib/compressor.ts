@@ -53,8 +53,8 @@ import AST_Toplevel from './ast/toplevel'
 import { parse } from './parse'
 
 import { SQUEEZED, has_flag, set_flag } from './constants'
-import TreeWalker from './tree-walker'
 import SymbolDef from './symbol-def'
+import TreeWalker from './tree-walker'
 
 export default class Compressor extends TreeWalker {
   options: any

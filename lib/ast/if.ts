@@ -5,6 +5,7 @@ import Compressor from '../compressor'
 import { make_node_from_constant, best_of_expression, make_node, force_statement, make_block, aborts, to_moz, is_empty, push, pop, extract_declarations_from_unreachable_code, is_ast_node, is_ast_if, is_ast_do, is_ast_statement_with_body, is_ast_simple_statement, is_ast_binary, is_ast_empty_statement, is_ast_exit } from '../utils'
 import TreeWalker from '../tree-walker'
 import { AST_Statement } from '.'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_If extends AST_StatementWithBody {
   condition: AST_Node
@@ -211,7 +212,7 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
     if (this.alternative) this.alternative = this.alternative.transform(tw)

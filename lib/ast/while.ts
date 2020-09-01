@@ -4,6 +4,7 @@ import AST_DWLoop, { AST_DWLoop_Props } from './dw-loop'
 import Compressor from '../compressor'
 import { make_node, reset_block_variables, push, pop, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_While extends AST_DWLoop {
   _optimize (compressor: Compressor) {
@@ -35,7 +36,7 @@ export default class AST_While extends AST_DWLoop {
 
   _size = () => 7
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
   }

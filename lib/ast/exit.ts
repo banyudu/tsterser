@@ -2,6 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Exit extends AST_Jump {
   value: AST_Node | undefined
@@ -20,7 +21,7 @@ export default class AST_Exit extends AST_Jump {
     if (this.value) push(this.value)
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.value) this.value = this.value.transform(tw)
   }
 

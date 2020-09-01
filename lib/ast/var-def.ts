@@ -7,6 +7,7 @@ import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { suppress, safe_to_assign, mark, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_VarDef extends AST_Node {
   name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
@@ -66,7 +67,7 @@ export default class AST_VarDef extends AST_Node {
     value: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.name = this.name.transform(tw)
     if (this.value) this.value = this.value.transform(tw)
   }

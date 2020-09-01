@@ -2671,7 +2671,7 @@ export function is_lhs (node: AST_Node, parent: AST_Node) {
 
 export const list_overhead = (array) => array.length && array.length - 1
 
-export function do_list (list: any[], tw: any) {
+export function do_list (list: any[], tw: TreeTransformer) {
   return MAP(list, function (node: AST_Node) {
     return node.transform(tw, true)
   })
@@ -2718,7 +2718,7 @@ export function is_ref_of (ref, type) {
   }
 }
 
-export function is_modified (compressor: Compressor, tw, node: AST_Node, value, level, immutable?) {
+export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_Node, value, level, immutable?) {
   const parent = tw.parent(level)
   const lhs = is_lhs(node, parent)
   if (lhs) return lhs

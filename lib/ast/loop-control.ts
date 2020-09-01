@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeWalker from '../tree-walker'
 import { AST_LabelRef } from '.'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_LoopControl extends AST_Jump {
   label: AST_LabelRef | undefined
@@ -16,7 +17,7 @@ export default class AST_LoopControl extends AST_Jump {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.label) this.label = this.label.transform(tw)
   }
 

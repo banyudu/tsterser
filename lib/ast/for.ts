@@ -5,6 +5,7 @@ import Compressor from '../compressor'
 
 import { make_node_from_constant, best_of_expression, extract_declarations_from_unreachable_code, parenthesize_for_noin, reset_block_variables, has_break_or_continue, as_statement_array, push, pop, to_moz, make_node, is_ast_node, is_ast_definitions, is_ast_block_statement, is_ast_break, is_ast_statement, is_ast_if } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_For extends AST_IterationStatement {
   step?: any | undefined
@@ -95,7 +96,7 @@ export default class AST_For extends AST_IterationStatement {
     step: 'exist'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.init) this.init = this.init.transform(tw)
     if (this.condition) this.condition = this.condition.transform(tw)
     if (this.step) this.step = this.step.transform(tw)

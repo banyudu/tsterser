@@ -4,6 +4,7 @@ import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
 import { is_iife_call, safe_to_assign, make_node, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Unary extends AST_Node {
   operator: string
@@ -103,7 +104,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 

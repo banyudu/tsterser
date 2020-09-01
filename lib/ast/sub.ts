@@ -6,6 +6,7 @@ import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_ex
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Sub extends AST_PropAccess {
   _prepend_comments_check (node: AST_Node) {
@@ -197,7 +198,7 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   _size = () => 2
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.property = (this.property).transform(tw)
   }

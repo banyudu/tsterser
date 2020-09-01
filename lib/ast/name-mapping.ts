@@ -6,6 +6,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { is_ast_import } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_NameMapping extends AST_Node {
   name: AST_SymbolExport|AST_SymbolImport
@@ -29,7 +30,7 @@ export default class AST_NameMapping extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.foreign_name = this.foreign_name.transform(tw)
     this.name = this.name.transform(tw)
   }

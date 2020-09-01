@@ -6,6 +6,7 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import TreeWalker from '../tree-walker'
 import { AST_String, AST_DefClass, AST_NameMapping } from '.'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Export extends AST_Statement {
   is_default: boolean
@@ -71,7 +72,7 @@ export default class AST_Export extends AST_Statement {
     is_default: 'eq'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.exported_definition) this.exported_definition = this.exported_definition.transform(tw)
     if (this.exported_value) this.exported_value = this.exported_value.transform(tw)
     if (this.exported_names) do_list(this.exported_names, tw)

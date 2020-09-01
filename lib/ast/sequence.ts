@@ -16,6 +16,7 @@ import {
   make_node,
   list_overhead, is_ast_sequence, is_ast_call, is_ast_unary, is_ast_binary, is_ast_var_def, is_ast_prop_access, is_ast_array, is_ast_object_property, is_ast_conditional, is_ast_arrow, is_ast_default_assign, is_ast_expansion, is_ast_for_of, is_ast_yield, is_ast_export
 } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Sequence extends AST_Node {
   expressions: AST_Node[]
@@ -127,7 +128,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     const result = do_list(this.expressions, tw)
     this.expressions = result.length
       ? result

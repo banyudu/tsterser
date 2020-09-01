@@ -2,7 +2,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { lift_key, make_sequence, to_moz, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
-import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
   key: any
@@ -59,7 +59,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return true
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (is_ast_node(this.key)) {
       this.key = this.key.transform(tw)
     }

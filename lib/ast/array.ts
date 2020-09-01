@@ -14,6 +14,7 @@ import {
   anyMayThrow,
   anySideEffect, is_ast_hole
 } from '../utils'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Array extends AST_Node {
   elements: AST_Node[]
@@ -86,7 +87,7 @@ export default class AST_Array extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.elements = do_list(this.elements, tw)
   }
 

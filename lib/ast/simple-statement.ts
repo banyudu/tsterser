@@ -4,6 +4,7 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, to_moz } from '../utils'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_SimpleStatement extends AST_Statement {
   body: any | undefined
@@ -46,7 +47,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.body = (this.body).transform(tw)
   }
 

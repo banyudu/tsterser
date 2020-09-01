@@ -53,6 +53,7 @@ import {
 import GetOutputStream, { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Call extends AST_Node {
   expression: AST_Node
@@ -879,7 +880,7 @@ export default class AST_Call extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.args = do_list(this.args, tw)
   }

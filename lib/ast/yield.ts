@@ -2,7 +2,7 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { is_undefined, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, is_ast_unary } from '../utils'
-import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Yield extends AST_Node {
   value: any
@@ -31,7 +31,7 @@ export default class AST_Yield extends AST_Node {
     is_star: 'eq'
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.expression) this.expression = this.expression.transform(tw)
   }
 

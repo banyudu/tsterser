@@ -7,6 +7,7 @@ import { make_sequence, anyMayThrow, anySideEffect, all_refs_local, push, pop, d
 import { clear_flag, INLINED } from '../constants'
 import TreeWalker from '../tree-walker'
 import { AST_ObjectProperty, AST_SymbolDefClass } from '.'
+import { TreeTransformer } from '../../main'
 
 export default class AST_Class extends AST_Scope {
   extends: AST_Node
@@ -61,7 +62,7 @@ export default class AST_Class extends AST_Scope {
     return all_refs_local.call(this, scope)
   }
 
-  reduce_vars (tw, descend: Function) {
+  reduce_vars (tw: TreeWalker, descend: Function) {
     clear_flag(this, INLINED)
     push(tw)
     descend()
@@ -96,7 +97,7 @@ export default class AST_Class extends AST_Scope {
     )
   }
 
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     if (this.name) this.name = this.name.transform(tw)
     if (this.extends) this.extends = this.extends.transform(tw)
     this.properties = do_list(this.properties, tw)

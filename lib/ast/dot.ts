@@ -6,6 +6,7 @@ import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotatio
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeWalker from '../tree-walker'
+import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {
   quote: string
@@ -137,7 +138,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   shallow_cmp_props: any = { property: 'eq' }
-  _transform (tw: TreeWalker) {
+  _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 
