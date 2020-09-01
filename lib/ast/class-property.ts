@@ -1,3 +1,4 @@
+import TreeWalker from '../tree-walker'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
@@ -60,7 +61,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     )
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       if (is_ast_node(this.key)) { this.key._walk(visitor) }
       if (is_ast_node(this.value)) { this.value._walk(visitor) }

@@ -30,7 +30,7 @@ export default class AST_Case extends AST_SwitchBranch {
     return true
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       this.expression._walk(visitor)
       walk_body(this, visitor)

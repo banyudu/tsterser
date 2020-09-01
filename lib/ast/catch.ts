@@ -1,3 +1,4 @@
+import TreeWalker from '../tree-walker'
 import AST_DefaultAssign from './default-assign'
 import AST_Expansion from './expansion'
 import AST_Destructuring from './destructuring'
@@ -11,7 +12,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       if (this.argname) this.argname._walk(visitor)
       walk_body(this, visitor)

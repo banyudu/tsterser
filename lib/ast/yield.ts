@@ -1,3 +1,4 @@
+import TreeWalker from '../tree-walker'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
@@ -16,7 +17,7 @@ export default class AST_Yield extends AST_Node {
     return this
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, this.expression && function (this) {
       this.expression._walk(visitor)
     })

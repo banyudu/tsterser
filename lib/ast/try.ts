@@ -54,7 +54,7 @@ export default class AST_Try extends AST_Block {
     return true
   }
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       walk_body(this, visitor)
       if (this.bcatch) this.bcatch._walk(visitor)

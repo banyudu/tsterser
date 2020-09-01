@@ -1,3 +1,4 @@
+import TreeWalker from '../tree-walker'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unary_prefix, is_ast_unary, is_ast_constant } from '../utils'
@@ -6,7 +7,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Await extends AST_Node {
   expression: AST_Node
 
-  _walk (visitor: any) {
+  _walk (visitor: TreeWalker) {
     return visitor._visit(this, function (this) {
       this.expression._walk(visitor)
     })
