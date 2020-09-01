@@ -66,7 +66,7 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.names.forEach(function (name: any) {
         name._walk(visitor)
       })

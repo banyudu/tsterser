@@ -16,7 +16,7 @@ export default class AST_Export extends AST_Statement {
   exported_names: Array<AST_NameMapping | undefined>
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this: any) {
+    return visitor._visit(this, () => {
       if (this.exported_definition) {
         this.exported_definition._walk(visitor)
       }

@@ -72,7 +72,7 @@ export default class AST_Class extends AST_Scope {
 
   is_block_scope () { return false }
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this: any) {
+    return visitor._visit(this, () => {
       if (this.name) {
         this.name._walk(visitor)
       }

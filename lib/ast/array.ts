@@ -69,7 +69,7 @@ export default class AST_Array extends AST_Node {
 
   _dot_throw () { return false }
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       const elements = this.elements
       for (let i = 0, len = elements.length; i < len; i++) {
         elements[i]._walk(visitor)

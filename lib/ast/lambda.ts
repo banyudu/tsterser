@@ -71,7 +71,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       if (this.name) this.name._walk(visitor)
       const argnames = this.argnames
       for (let i = 0, len = argnames.length; i < len; i++) {

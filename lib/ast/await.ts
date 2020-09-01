@@ -8,7 +8,7 @@ export default class AST_Await extends AST_Node {
   expression: AST_Node
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.expression._walk(visitor)
     })
   }

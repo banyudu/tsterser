@@ -37,7 +37,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.body._walk(visitor)
     })
   }

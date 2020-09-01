@@ -18,8 +18,8 @@ export default class AST_Yield extends AST_Node {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, this.expression && function (this) {
-      this.expression._walk(visitor)
+    return visitor._visit(this, () => {
+      this.expression?._walk(visitor)
     })
   }
 

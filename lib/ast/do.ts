@@ -54,7 +54,7 @@ export default class AST_Do extends AST_DWLoop {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.body._walk(visitor)
       this.condition._walk(visitor)
     })

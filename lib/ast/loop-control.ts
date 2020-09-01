@@ -7,8 +7,8 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_LoopControl extends AST_Jump {
   label: AST_LabelRef | undefined
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, this.label && function (this) {
-      this.label._walk(visitor)
+    return visitor._visit(this, () => {
+      this.label?._walk(visitor)
     })
   }
 

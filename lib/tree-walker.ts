@@ -19,10 +19,10 @@ export default class TreeWalker {
   _visit (node: AST_Node, descend?: Function) {
     this.push(node)
     const ret = this.visit(node, descend ? function () {
-      descend.call(node)
+      descend()
     } : () => {})
     if (!ret && descend) {
-      descend.call(node)
+      descend()
     }
     this.pop()
     return ret

@@ -147,7 +147,7 @@ export default class AST_Switch extends AST_Block {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.expression._walk(visitor)
       walk_body(this, visitor)
     })

@@ -22,7 +22,7 @@ export default class AST_Expansion extends AST_Node {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.expression.walk(visitor)
     })
   }

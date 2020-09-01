@@ -39,7 +39,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       this.label._walk(visitor)
       this.body._walk(visitor)
     })

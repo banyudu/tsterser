@@ -75,7 +75,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       const definitions = this.definitions
       for (let i = 0, len = definitions.length; i < len; i++) {
         definitions[i]._walk(visitor)

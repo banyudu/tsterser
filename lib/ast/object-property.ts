@@ -45,7 +45,7 @@ export default class AST_ObjectProperty extends AST_Node {
 
   _dot_throw () { return false }
   _walk (visitor: TreeWalker) {
-    return visitor._visit(this, function (this) {
+    return visitor._visit(this, () => {
       if (is_ast_node(this.key)) { this.key._walk(visitor) }
       this.value._walk(visitor)
     })
