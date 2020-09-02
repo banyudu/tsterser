@@ -8,7 +8,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_SimpleStatement extends AST_Statement {
   body: any | undefined
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return true
   }
 

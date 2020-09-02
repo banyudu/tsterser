@@ -11,7 +11,7 @@ export default class AST_If extends AST_StatementWithBody {
   condition: AST_Node
   alternative: AST_Statement | undefined
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return this.condition === context
   }
 

@@ -29,7 +29,7 @@ export default class AST_Binary extends AST_Node {
     return this.left === node
   }
 
-  _in_boolean_context_next (context) {
+  _in_boolean_context_next (context: AST_Node) {
     if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
       return true
     }

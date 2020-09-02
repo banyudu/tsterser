@@ -48,11 +48,11 @@ export default class AST_Node extends AST {
     croak('Invalid function parameter', this.start.line, this.start.col)
   }
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return false
   }
 
-  _in_boolean_context_next (context) {
+  _in_boolean_context_next (context: AST_Node) {
     return this.tail_node() === context
   }
 

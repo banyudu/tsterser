@@ -10,7 +10,7 @@ export default class AST_DWLoop extends AST_IterationStatement {
 
   static PROPS = AST_IterationStatement.PROPS.concat(['condition'])
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return this.condition === context
   }
 

@@ -32,13 +32,13 @@ export default class AST_Conditional extends AST_Node {
     this.alternative?.addStrings(add)
   }
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     if (this.condition === context) {
       return true
     }
   }
 
-  _in_boolean_context_next (context) {
+  _in_boolean_context_next (context: AST_Node) {
     return true
   }
 

@@ -12,7 +12,7 @@ export default class AST_For extends AST_IterationStatement {
   condition?: any | undefined
   init?: any | undefined
 
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return this.condition === context
   }
 

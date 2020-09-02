@@ -1,3 +1,4 @@
+import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Unary, { AST_Unary_Props } from './unary'
 import Compressor from '../compressor'
@@ -5,7 +6,7 @@ import { unary_bool, non_converting_unary } from '../constants'
 import { is_identifier_atom, make_node, make_sequence, best_of, first_in_statement, basic_negation, make_node_from_constant, is_ast_symbol_ref, is_ast_lambda, is_ast_unary_prefix, is_ast_prop_access, is_ast_sequence, is_ast_binary, is_ast_infinity, is_ast_number, is_ast_big_int } from '../utils'
 
 export default class AST_UnaryPrefix extends AST_Unary {
-  _in_boolean_context (context) {
+  _in_boolean_context (context: AST_Node) {
     return this.operator == '!' && this.expression === context
   }
 

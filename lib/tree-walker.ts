@@ -53,7 +53,7 @@ export default class TreeWalker {
     }
   }
 
-  self (): any {
+  self (): AST_Node {
     return this.stack[this.stack.length - 1]
   }
 
