@@ -13,7 +13,7 @@ export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
   walkInner = (visitor: TreeWalker) => {
-    if (this.argname) this.argname._walk(visitor)
+    if (this.argname) this.argname.walk(visitor)
     walk_body(this, visitor)
   }
 

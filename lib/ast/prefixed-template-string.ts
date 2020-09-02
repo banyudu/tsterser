@@ -17,8 +17,8 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.prefix._walk(visitor)
-    this.template_string._walk(visitor)
+    this.prefix.walk(visitor)
+    this.template_string.walk(visitor)
   }
 
   _children_backwards (push: Function) {

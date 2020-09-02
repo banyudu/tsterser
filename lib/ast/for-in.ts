@@ -25,9 +25,9 @@ export default class AST_ForIn extends AST_IterationStatement {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.init._walk(visitor)
-    this.object._walk(visitor)
-    this.body._walk(visitor)
+    this.init.walk(visitor)
+    this.object.walk(visitor)
+    this.body.walk(visitor)
   }
 
   _children_backwards (push: Function) {

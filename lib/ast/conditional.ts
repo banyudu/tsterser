@@ -379,9 +379,9 @@ export default class AST_Conditional extends AST_Node {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.condition._walk(visitor)
-    this.consequent._walk(visitor)
-    this.alternative._walk(visitor)
+    this.condition.walk(visitor)
+    this.consequent.walk(visitor)
+    this.alternative.walk(visitor)
   }
 
   _children_backwards (push: Function) {

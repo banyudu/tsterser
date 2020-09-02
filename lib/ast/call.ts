@@ -862,9 +862,9 @@ export default class AST_Call extends AST_Node {
   walkInner = (visitor: TreeWalker) => {
     const args = this.args
     for (let i = 0, len = args.length; i < len; i++) {
-      args[i]._walk(visitor)
+      args[i].walk(visitor)
     }
-    this.expression._walk(visitor) // TODO why do we need to crawl this last?
+    this.expression.walk(visitor) // TODO why do we need to crawl this last?
   }
 
   _children_backwards (push: Function) {

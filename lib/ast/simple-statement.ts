@@ -37,7 +37,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.body._walk(visitor)
+    this.body.walk(visitor)
   }
 
   _children_backwards (push: Function) {

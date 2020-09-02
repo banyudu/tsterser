@@ -31,7 +31,7 @@ export default class AST_Case extends AST_SwitchBranch {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.expression._walk(visitor)
+    this.expression.walk(visitor)
     walk_body(this, visitor)
   }
 

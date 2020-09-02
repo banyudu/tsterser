@@ -12,7 +12,7 @@ export default class AST_Exit extends AST_Jump {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.value?._walk(visitor)
+    this.value?.walk(visitor)
   }
 
   _children_backwards (push: Function) {

@@ -186,8 +186,8 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.expression._walk(visitor)
-    this.property._walk(visitor)
+    this.expression.walk(visitor)
+    this.property.walk(visitor)
   }
 
   _children_backwards (push: Function) {

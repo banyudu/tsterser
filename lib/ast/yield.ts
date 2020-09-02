@@ -18,7 +18,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.expression?._walk(visitor)
+    this.expression?.walk(visitor)
   }
 
   _children_backwards (push: Function) {

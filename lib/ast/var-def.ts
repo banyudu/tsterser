@@ -48,8 +48,8 @@ export default class AST_VarDef extends AST_Node {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.name._walk(visitor)
-    if (this.value) this.value._walk(visitor)
+    this.name.walk(visitor)
+    if (this.value) this.value.walk(visitor)
   }
 
   _children_backwards (push: Function) {

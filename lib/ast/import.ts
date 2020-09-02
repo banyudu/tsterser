@@ -20,14 +20,14 @@ export default class AST_Import extends AST_Node {
   aborts () { return null }
   walkInner = (visitor: TreeWalker) => {
     if (this.imported_name) {
-      this.imported_name._walk(visitor)
+      this.imported_name.walk(visitor)
     }
     if (this.imported_names) {
       this.imported_names.forEach(function (name_import) {
-        name_import._walk(visitor)
+        name_import.walk(visitor)
       })
     }
-    this.module_name._walk(visitor)
+    this.module_name.walk(visitor)
   }
 
   _children_backwards (push: Function) {

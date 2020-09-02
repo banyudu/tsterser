@@ -67,7 +67,7 @@ export default class AST_Destructuring extends AST_Node {
 
   walkInner = (visitor: TreeWalker) => {
     this.names.forEach(function (name: any) {
-      name._walk(visitor)
+      name.walk(visitor)
     })
   }
 

@@ -17,18 +17,18 @@ export default class AST_Export extends AST_Statement {
 
   walkInner = (visitor: TreeWalker) => {
     if (this.exported_definition) {
-      this.exported_definition._walk(visitor)
+      this.exported_definition.walk(visitor)
     }
     if (this.exported_value) {
-      this.exported_value._walk(visitor)
+      this.exported_value.walk(visitor)
     }
     if (this.exported_names) {
       this.exported_names.forEach(function (name_export) {
-        name_export._walk(visitor)
+        name_export.walk(visitor)
       })
     }
     if (this.module_name) {
-      this.module_name._walk(visitor)
+      this.module_name.walk(visitor)
     }
   }
 

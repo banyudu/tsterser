@@ -108,7 +108,7 @@ export default class AST_Sequence extends AST_Node {
 
   walkInner = (visitor: TreeWalker) => {
     this.expressions.forEach(function (node: AST_Node) {
-      node._walk(visitor)
+      node.walk(visitor)
     })
   }
 

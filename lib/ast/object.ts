@@ -108,7 +108,7 @@ export default class AST_Object extends AST_Node {
   walkInner = (visitor: TreeWalker) => {
     const properties = this.properties
     for (let i = 0, len = properties.length; i < len; i++) {
-      properties[i]._walk(visitor)
+      properties[i].walk(visitor)
     }
   }
 

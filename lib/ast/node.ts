@@ -157,16 +157,12 @@ export default class AST_Node extends AST {
 
   walkInner: Function | undefined = undefined
 
-  _walk (visitor: TreeWalker) {
+  public walk (visitor: TreeWalker) {
     return visitor._visit(this, () => this.walkInner?.(visitor))
   }
 
   addStrings (add: Function) {
 
-  }
-
-  walk (visitor: TreeWalker) {
-    return this._walk(visitor) // not sure the indirection will be any help
   }
 
   _children_backwards (push: Function) {}

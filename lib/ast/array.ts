@@ -71,7 +71,7 @@ export default class AST_Array extends AST_Node {
   walkInner = (visitor: TreeWalker) => {
     const elements = this.elements
     for (let i = 0, len = elements.length; i < len; i++) {
-      elements[i]._walk(visitor)
+      elements[i].walk(visitor)
     }
   }
 

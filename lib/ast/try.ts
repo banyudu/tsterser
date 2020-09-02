@@ -56,8 +56,8 @@ export default class AST_Try extends AST_Block {
 
   walkInner = (visitor: TreeWalker) => {
     walk_body(this, visitor)
-    if (this.bcatch) this.bcatch._walk(visitor)
-    if (this.bfinally) this.bfinally._walk(visitor)
+    if (this.bcatch) this.bcatch.walk(visitor)
+    if (this.bfinally) this.bfinally.walk(visitor)
   }
 
   _children_backwards (push: Function) {

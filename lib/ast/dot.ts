@@ -124,7 +124,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   walkInner = (visitor: TreeWalker) => {
-    this.expression._walk(visitor)
+    this.expression.walk(visitor)
   }
 
   _children_backwards (push: Function) {
