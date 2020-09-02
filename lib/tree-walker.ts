@@ -9,7 +9,7 @@ export default class TreeWalker {
   safe_ids: any
   in_loop: any
   loop_ids: Map<any, any> | undefined
-  defs_to_safe_ids: Map<any, any> | undefined
+  defs_to_safe_ids: Map<number, number[]> | undefined
   constructor (callback?: (node: any, descend: Function) => any) {
     this.visit = callback
     this.stack = []
@@ -18,11 +18,11 @@ export default class TreeWalker {
 
   _visit (node: AST_Node, descend?: Function) {
     this.push(node)
-    const ret = this.visit(node, descend ? function () {
-      descend()
-    } : () => {})
-    if (!ret && descend) {
-      descend()
+    const ret = this.visit(node, () => {
+      descend?.()
+    })
+    if (!ret) {
+      descend?.()
     }
     this.pop()
     return ret

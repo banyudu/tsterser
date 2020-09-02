@@ -2,9 +2,9 @@ import { in_function_defs, redefined_catch_def, keep_name, is_ast_node, is_ast_s
 import { MASK_EXPORT_DONT_MANGLE } from './constants'
 
 export default class SymbolDef {
-  name: any
+  name: string
   orig: any[]
-  init: any
+  init: boolean
   eliminated: number
   assignments: number
   scope: any
