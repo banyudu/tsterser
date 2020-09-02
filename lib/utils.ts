@@ -1678,7 +1678,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         var can_replace = !args || !hit
         if (!can_replace) {
           if (!abort) {
-            for (let j = compressor.self().argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
+            for (let j = (compressor.self() as any).argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
               args[j].transform(scanner)
             }
           }
@@ -2001,7 +2001,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
 
     function remove_candidate (expr) {
       if (is_ast_symbol_funarg(expr.name)) {
-        const iife = compressor.parent(); const argnames = compressor.self().argnames
+        const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
         const index = argnames.indexOf(expr.name)
         if (index < 0) {
           iife.args.length = Math.min(iife.args.length, argnames.length - 1)
