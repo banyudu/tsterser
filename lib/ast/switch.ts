@@ -13,7 +13,6 @@ import {
   print_braced_empty,
   make_node,
   anySideEffect,
-  walk_body,
   do_list,
   to_moz,
   list_overhead,
@@ -146,9 +145,11 @@ export default class AST_Switch extends AST_Block {
           anySideEffect(this.body, compressor)
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
-    walk_body(this, visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    result.push(...this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

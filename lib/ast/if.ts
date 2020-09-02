@@ -191,10 +191,12 @@ export default class AST_If extends AST_StatementWithBody {
     return true
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.condition.walk(visitor)
-    this.body.walk(visitor)
-    if (this.alternative) this.alternative.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.condition)
+    result.push(this.body)
+    if (this.alternative) result.push(this.alternative)
+    return result
   }
 
   _children_backwards (push: Function) {

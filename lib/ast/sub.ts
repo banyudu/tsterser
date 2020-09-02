@@ -5,7 +5,6 @@ import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_expression, safe_to_flatten, make_sequence, is_ast_symbol_ref, is_ast_lambda, is_ast_arrow, is_ast_number, is_ast_symbol_funarg, is_ast_array, is_ast_expansion, is_ast_hole } from '../utils'
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Sub extends AST_PropAccess {
@@ -185,9 +184,11 @@ export default class AST_Sub extends AST_PropAccess {
           this.property.has_side_effects(compressor)
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
-    this.property.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    result.push(this.property)
+    return result
   }
 
   _children_backwards (push: Function) {

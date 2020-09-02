@@ -4,7 +4,6 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
 import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
-import TreeWalker from '../tree-walker'
 import { AST_String, AST_DefClass, AST_NameMapping } from '.'
 import TreeTransformer from '../tree-transformer'
 
@@ -15,21 +14,23 @@ export default class AST_Export extends AST_Statement {
   exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
   exported_names: Array<AST_NameMapping | undefined>
 
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     if (this.exported_definition) {
-      this.exported_definition.walk(visitor)
+      result.push(this.exported_definition)
     }
     if (this.exported_value) {
-      this.exported_value.walk(visitor)
+      result.push(this.exported_value)
     }
     if (this.exported_names) {
       this.exported_names.forEach(function (name_export) {
-        name_export.walk(visitor)
+        result.push(name_export)
       })
     }
     if (this.module_name) {
-      this.module_name.walk(visitor)
+      result.push(this.module_name)
     }
+    return result
   }
 
   _children_backwards (push: Function) {

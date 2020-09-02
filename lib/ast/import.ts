@@ -4,7 +4,6 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { list_overhead, do_list, to_moz } from '../utils'
-import TreeWalker from '../tree-walker'
 import AST_NameMapping from './name-mapping'
 import TreeTransformer from '../tree-transformer'
 
@@ -18,16 +17,18 @@ export default class AST_Import extends AST_Node {
   }
 
   aborts () { return null }
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     if (this.imported_name) {
-      this.imported_name.walk(visitor)
+      result.push(this.imported_name)
     }
     if (this.imported_names) {
       this.imported_names.forEach(function (name_import) {
-        name_import.walk(visitor)
+        result.push(name_import)
       })
     }
-    this.module_name.walk(visitor)
+    result.push(this.module_name)
+    return result
   }
 
   _children_backwards (push: Function) {

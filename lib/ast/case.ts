@@ -30,9 +30,11 @@ export default class AST_Case extends AST_SwitchBranch {
     return true
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
-    walk_body(this, visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    result.push(...this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

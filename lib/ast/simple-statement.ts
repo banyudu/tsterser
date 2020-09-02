@@ -3,7 +3,6 @@ import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, to_moz } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_SimpleStatement extends AST_Statement {
@@ -36,8 +35,10 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this.body.has_side_effects(compressor)
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.body.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

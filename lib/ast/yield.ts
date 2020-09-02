@@ -1,4 +1,3 @@
-import TreeWalker from '../tree-walker'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
@@ -17,8 +16,10 @@ export default class AST_Yield extends AST_Node {
     return this
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression?.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    return result
   }
 
   _children_backwards (push: Function) {

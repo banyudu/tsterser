@@ -1,13 +1,14 @@
 import { OutputStream } from '../output'
 import AST_Jump, { AST_Jump_Props } from './jump'
-import TreeWalker from '../tree-walker'
 import { AST_LabelRef } from '.'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_LoopControl extends AST_Jump {
   label: AST_LabelRef | undefined
-  walkInner = (visitor: TreeWalker) => {
-    this.label?.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.label)
+    return result
   }
 
   _children_backwards (push: Function) {

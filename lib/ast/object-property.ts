@@ -1,4 +1,3 @@
-import TreeWalker from '../tree-walker'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
@@ -44,9 +43,11 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   _dot_throw () { return false }
-  walkInner = (visitor: TreeWalker) => {
-    if (is_ast_node(this.key)) { this.key.walk(visitor) }
-    this.value.walk(visitor)
+  walkInner = () => {
+    const result = []
+    if (is_ast_node(this.key)) { result.push(this.key) }
+    result.push(this.value)
+    return result
   }
 
   _children_backwards (push: Function) {

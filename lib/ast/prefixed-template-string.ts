@@ -5,7 +5,6 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { to_moz, is_ast_lambda, is_ast_binary, is_ast_conditional, is_ast_sequence, is_ast_unary, is_ast_dot, is_ast_object } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
@@ -16,9 +15,11 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     return this
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.prefix.walk(visitor)
-    this.template_string.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.prefix)
+    result.push(this.template_string)
+    return result
   }
 
   _children_backwards (push: Function) {

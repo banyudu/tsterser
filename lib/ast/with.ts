@@ -2,14 +2,15 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-with-body'
 import { to_moz } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_With extends AST_StatementWithBody {
   expression: AST_Node
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
-    this.body.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    result.push(this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

@@ -2,7 +2,6 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { to_moz_in_destructuring, to_moz } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Expansion extends AST_Node {
@@ -21,8 +20,10 @@ export default class AST_Expansion extends AST_Node {
     return this.expression._dot_throw(compressor)
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    return result
   }
 
   _children_backwards (push: Function) {

@@ -2,7 +2,6 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Number from './number'
-import TreeWalker from '../tree-walker'
 import {
   maintain_this_binding,
   first_in_statement,
@@ -106,10 +105,12 @@ export default class AST_Sequence extends AST_Node {
     return this.tail_node()._dot_throw(compressor)
   }
 
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     this.expressions.forEach(function (node: AST_Node) {
-      node.walk(visitor)
+      result.push(node)
     })
+    return result
   }
 
   addStrings (add: Function) {

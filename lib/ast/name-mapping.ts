@@ -5,16 +5,17 @@ import AST_SymbolExportForeign from './symbol-export-foreign'
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { is_ast_import } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_NameMapping extends AST_Node {
   name: AST_SymbolExport|AST_SymbolImport
   foreign_name: AST_SymbolExportForeign|AST_SymbolImportForeign
 
-  walkInner = (visitor: TreeWalker) => {
-    this.foreign_name.walk(visitor)
-    this.name.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.foreign_name)
+    result.push(this.name)
+    return result
   }
 
   _children_backwards (push: Function) {

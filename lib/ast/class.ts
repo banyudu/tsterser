@@ -71,14 +71,16 @@ export default class AST_Class extends AST_Scope {
   }
 
   is_block_scope () { return false }
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     if (this.name) {
-      this.name.walk(visitor)
+      result.push(this.name)
     }
     if (this.extends) {
-      this.extends.walk(visitor)
+      result.push(this.extends)
     }
-    this.properties.forEach((prop) => prop.walk(visitor))
+    this.properties.forEach((prop) => result.push(prop))
+    return result
   }
 
   _children_backwards (push: Function) {

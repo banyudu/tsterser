@@ -3,7 +3,6 @@ import AST_Node, { AST_Node_Props } from './node'
 import AST_Hole from './hole'
 import AST_Array from './array'
 import Compressor from '../compressor'
-import TreeWalker from '../tree-walker'
 
 import {
   blockStateMentCodeGen,
@@ -859,12 +858,14 @@ export default class AST_Call extends AST_Node {
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
   }
 
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     const args = this.args
     for (let i = 0, len = args.length; i < len; i++) {
-      args[i].walk(visitor)
+      result.push(args[i])
     }
-    this.expression.walk(visitor) // TODO why do we need to crawl this last?
+    result.push(this.expression)
+    return result // TODO why do we need to crawl this last?
   }
 
   _children_backwards (push: Function) {

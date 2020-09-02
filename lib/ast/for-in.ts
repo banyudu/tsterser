@@ -24,10 +24,12 @@ export default class AST_ForIn extends AST_IterationStatement {
     return true
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.init.walk(visitor)
-    this.object.walk(visitor)
-    this.body.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.init)
+    result.push(this.object)
+    result.push(this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

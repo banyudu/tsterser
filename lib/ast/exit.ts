@@ -1,7 +1,6 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Jump, { AST_Jump_Props } from './jump'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Exit extends AST_Jump {
@@ -11,8 +10,10 @@ export default class AST_Exit extends AST_Jump {
     return true
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.value?.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.value)
+    return result
   }
 
   _children_backwards (push: Function) {

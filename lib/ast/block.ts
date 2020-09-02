@@ -7,7 +7,6 @@ import {
   anySideEffect,
   anyMayThrow,
   reset_block_variables,
-  walk_body,
   clone_block_scope,
   list_overhead,
   to_moz,
@@ -38,8 +37,10 @@ export default class AST_Block extends AST_Statement {
   }
 
   is_block_scope () { return true }
-  walkInner = (visitor: TreeWalker) => {
-    walk_body(this, visitor)
+  walkInner = () => {
+    const result = []
+    result.push(...this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

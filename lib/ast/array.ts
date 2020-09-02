@@ -2,7 +2,6 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
-import TreeWalker from '../tree-walker'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -68,11 +67,13 @@ export default class AST_Array extends AST_Node {
   }
 
   _dot_throw () { return false }
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     const elements = this.elements
     for (let i = 0, len = elements.length; i < len; i++) {
-      elements[i].walk(visitor)
+      result.push(elements[i])
     }
+    return result
   }
 
   _children_backwards (push: Function) {

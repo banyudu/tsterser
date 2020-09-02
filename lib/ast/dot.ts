@@ -5,7 +5,6 @@ import Compressor from '../compressor'
 import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
 import { native_fns, _NOINLINE } from '../constants'
 import { RESERVED_WORDS, is_identifier_string } from '../parse'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {
@@ -123,8 +122,10 @@ export default class AST_Dot extends AST_PropAccess {
     return map?.has(this.property)
   }
 
-  walkInner = (visitor: TreeWalker) => {
-    this.expression.walk(visitor)
+  walkInner = () => {
+    const result = []
+    result.push(this.expression)
+    return result
   }
 
   _children_backwards (push: Function) {

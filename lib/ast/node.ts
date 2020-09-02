@@ -155,10 +155,10 @@ export default class AST_Node extends AST {
     return this._clone(deep)
   }
 
-  walkInner: Function | undefined = undefined
+  walkInner: () => AST_Node[] = () => []
 
   public walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => this.walkInner?.(visitor))
+    return visitor._visit(this, () => this.walkInner?.()?.forEach(item => item?.walk(visitor)))
   }
 
   addStrings (add: Function) {

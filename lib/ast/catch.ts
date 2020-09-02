@@ -1,4 +1,3 @@
-import TreeWalker from '../tree-walker'
 import AST_DefaultAssign from './default-assign'
 import AST_Expansion from './expansion'
 import AST_Destructuring from './destructuring'
@@ -6,15 +5,17 @@ import AST_SymbolCatch from './symbol-catch'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
-import { walk_body, list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
+import { list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
-  walkInner = (visitor: TreeWalker) => {
-    if (this.argname) this.argname.walk(visitor)
-    walk_body(this, visitor)
+  walkInner = () => {
+    const result = []
+    if (this.argname) result.push(this.argname)
+    result.push(...this.body)
+    return result
   }
 
   _children_backwards (push: Function) {

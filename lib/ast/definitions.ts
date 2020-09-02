@@ -4,7 +4,6 @@ import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
-import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Definitions extends AST_Statement {
@@ -74,11 +73,13 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = decls
   }
 
-  walkInner = (visitor: TreeWalker) => {
+  walkInner = () => {
+    const result = []
     const definitions = this.definitions
     for (let i = 0, len = definitions.length; i < len; i++) {
-      definitions[i].walk(visitor)
+      result.push(definitions[i])
     }
+    return result
   }
 
   _children_backwards (push: Function) {
