@@ -70,15 +70,13 @@ export default class AST_Lambda extends AST_Scope {
     return out
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      if (this.name) this.name._walk(visitor)
-      const argnames = this.argnames
-      for (let i = 0, len = argnames.length; i < len; i++) {
-        argnames[i]._walk(visitor)
-      }
-      walk_body(this, visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    if (this.name) this.name._walk(visitor)
+    const argnames = this.argnames
+    for (let i = 0, len = argnames.length; i < len; i++) {
+      argnames[i]._walk(visitor)
+    }
+    walk_body(this, visitor)
   }
 
   _children_backwards (push: Function) {

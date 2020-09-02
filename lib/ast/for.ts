@@ -73,13 +73,11 @@ export default class AST_For extends AST_IterationStatement {
     return true
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      if (this.init) this.init._walk(visitor)
-      if (this.condition) this.condition._walk(visitor)
-      if (this.step) this.step._walk(visitor)
-      this.body._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    if (this.init) this.init._walk(visitor)
+    if (this.condition) this.condition._walk(visitor)
+    if (this.step) this.step._walk(visitor)
+    this.body._walk(visitor)
   }
 
   _children_backwards (push: Function) {

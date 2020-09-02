@@ -859,14 +859,12 @@ export default class AST_Call extends AST_Node {
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      const args = this.args
-      for (let i = 0, len = args.length; i < len; i++) {
-        args[i]._walk(visitor)
-      }
-      this.expression._walk(visitor) // TODO why do we need to crawl this last?
-    })
+  walkInner = (visitor: TreeWalker) => {
+    const args = this.args
+    for (let i = 0, len = args.length; i < len; i++) {
+      args[i]._walk(visitor)
+    }
+    this.expression._walk(visitor) // TODO why do we need to crawl this last?
   }
 
   _children_backwards (push: Function) {

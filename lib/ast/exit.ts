@@ -11,10 +11,8 @@ export default class AST_Exit extends AST_Jump {
     return true
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.value?._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.value?._walk(visitor)
   }
 
   _children_backwards (push: Function) {

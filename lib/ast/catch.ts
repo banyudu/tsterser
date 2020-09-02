@@ -12,11 +12,9 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      if (this.argname) this.argname._walk(visitor)
-      walk_body(this, visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    if (this.argname) this.argname._walk(visitor)
+    walk_body(this, visitor)
   }
 
   _children_backwards (push: Function) {

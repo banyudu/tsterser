@@ -18,18 +18,16 @@ export default class AST_Import extends AST_Node {
   }
 
   aborts () { return null }
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      if (this.imported_name) {
-        this.imported_name._walk(visitor)
-      }
-      if (this.imported_names) {
-        this.imported_names.forEach(function (name_import) {
-          name_import._walk(visitor)
-        })
-      }
-      this.module_name._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    if (this.imported_name) {
+      this.imported_name._walk(visitor)
+    }
+    if (this.imported_names) {
+      this.imported_names.forEach(function (name_import) {
+        name_import._walk(visitor)
+      })
+    }
+    this.module_name._walk(visitor)
   }
 
   _children_backwards (push: Function) {

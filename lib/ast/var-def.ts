@@ -47,11 +47,9 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.name._walk(visitor)
-      if (this.value) this.value._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.name._walk(visitor)
+    if (this.value) this.value._walk(visitor)
   }
 
   _children_backwards (push: Function) {

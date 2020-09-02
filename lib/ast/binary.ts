@@ -714,11 +714,9 @@ export default class AST_Binary extends AST_Node {
     return this
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.left._walk(visitor)
-      this.right._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.left._walk(visitor)
+    this.right._walk(visitor)
   }
 
   _children_backwards (push: Function) {

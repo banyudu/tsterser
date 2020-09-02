@@ -21,10 +21,8 @@ export default class AST_Expansion extends AST_Node {
     return this.expression._dot_throw(compressor)
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.expression.walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.expression.walk(visitor)
   }
 
   _children_backwards (push: Function) {

@@ -87,10 +87,8 @@ export default class AST_Unary extends AST_Node {
     return this
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.expression._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.expression._walk(visitor)
   }
 
   _children_backwards (push: Function) {

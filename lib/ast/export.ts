@@ -15,23 +15,21 @@ export default class AST_Export extends AST_Statement {
   exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
   exported_names: Array<AST_NameMapping | undefined>
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      if (this.exported_definition) {
-        this.exported_definition._walk(visitor)
-      }
-      if (this.exported_value) {
-        this.exported_value._walk(visitor)
-      }
-      if (this.exported_names) {
-        this.exported_names.forEach(function (name_export) {
-          name_export._walk(visitor)
-        })
-      }
-      if (this.module_name) {
-        this.module_name._walk(visitor)
-      }
-    })
+  walkInner = (visitor: TreeWalker) => {
+    if (this.exported_definition) {
+      this.exported_definition._walk(visitor)
+    }
+    if (this.exported_value) {
+      this.exported_value._walk(visitor)
+    }
+    if (this.exported_names) {
+      this.exported_names.forEach(function (name_export) {
+        name_export._walk(visitor)
+      })
+    }
+    if (this.module_name) {
+      this.module_name._walk(visitor)
+    }
   }
 
   _children_backwards (push: Function) {

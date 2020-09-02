@@ -38,10 +38,8 @@ export default class AST_Block extends AST_Statement {
   }
 
   is_block_scope () { return true }
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      walk_body(this, visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    walk_body(this, visitor)
   }
 
   _children_backwards (push: Function) {

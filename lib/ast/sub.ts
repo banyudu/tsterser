@@ -185,11 +185,9 @@ export default class AST_Sub extends AST_PropAccess {
           this.property.has_side_effects(compressor)
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.expression._walk(visitor)
-      this.property._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.expression._walk(visitor)
+    this.property._walk(visitor)
   }
 
   _children_backwards (push: Function) {

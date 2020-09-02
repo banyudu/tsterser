@@ -105,13 +105,11 @@ export default class AST_Object extends AST_Node {
     return false
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      const properties = this.properties
-      for (let i = 0, len = properties.length; i < len; i++) {
-        properties[i]._walk(visitor)
-      }
-    })
+  walkInner = (visitor: TreeWalker) => {
+    const properties = this.properties
+    for (let i = 0, len = properties.length; i < len; i++) {
+      properties[i]._walk(visitor)
+    }
   }
 
   _children_backwards (push: Function) {

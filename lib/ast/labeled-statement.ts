@@ -38,11 +38,9 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return true
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.label._walk(visitor)
-      this.body._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.label._walk(visitor)
+    this.body._walk(visitor)
   }
 
   _children_backwards (push: Function) {

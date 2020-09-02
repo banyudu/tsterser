@@ -146,11 +146,9 @@ export default class AST_Switch extends AST_Block {
           anySideEffect(this.body, compressor)
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.expression._walk(visitor)
-      walk_body(this, visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.expression._walk(visitor)
+    walk_body(this, visitor)
   }
 
   _children_backwards (push: Function) {

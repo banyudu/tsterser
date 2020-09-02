@@ -74,13 +74,11 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = decls
   }
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      const definitions = this.definitions
-      for (let i = 0, len = definitions.length; i < len; i++) {
-        definitions[i]._walk(visitor)
-      }
-    })
+  walkInner = (visitor: TreeWalker) => {
+    const definitions = this.definitions
+    for (let i = 0, len = definitions.length; i < len; i++) {
+      definitions[i]._walk(visitor)
+    }
   }
 
   _children_backwards (push: Function) {

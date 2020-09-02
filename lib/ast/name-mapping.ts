@@ -12,11 +12,9 @@ export default class AST_NameMapping extends AST_Node {
   name: AST_SymbolExport|AST_SymbolImport
   foreign_name: AST_SymbolExportForeign|AST_SymbolImportForeign
 
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.foreign_name._walk(visitor)
-      this.name._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.foreign_name._walk(visitor)
+    this.name._walk(visitor)
   }
 
   _children_backwards (push: Function) {

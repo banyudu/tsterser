@@ -7,11 +7,9 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_With extends AST_StatementWithBody {
   expression: AST_Node
-  _walk (visitor: TreeWalker) {
-    return visitor._visit(this, () => {
-      this.expression._walk(visitor)
-      this.body._walk(visitor)
-    })
+  walkInner = (visitor: TreeWalker) => {
+    this.expression._walk(visitor)
+    this.body._walk(visitor)
   }
 
   _children_backwards (push: Function) {
