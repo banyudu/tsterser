@@ -1501,7 +1501,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
   // which are not sequentially executed, e.g. loops and conditionals.
   function collapse (statements: AST_Statement[], compressor: Compressor) {
     if (scope.pinned()) return statements
-    let args
+    let args = null
     const candidates: any[] = []
     let stat_index = statements.length
     var scanner = new TreeTransformer(function (node: AST_Node) {
@@ -1676,7 +1676,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         var abort = false
         var replaced: any = 0
         var can_replace = !args || !hit
-        if (!can_replace) {
+        if (!can_replace && args) {
           if (!abort) {
             for (let j = (compressor.self() as any).argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
               args[j].transform(scanner)
@@ -1743,7 +1743,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return false
     }
 
-    function has_overlapping_symbol (fn, arg, fn_strict) {
+    function has_overlapping_symbol (fn: AST_Scope, arg: AST_Node, fn_strict: boolean) {
       let found = false; let scan_this = !(is_ast_arrow(fn))
       arg.walk(new TreeWalker(function (node: AST_Node, descend) {
         if (found) return true
@@ -1771,12 +1771,13 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     }
 
     function extract_args () {
-      let iife; const fn = compressor.self()
+      const fn = compressor.self()
+      const iife = compressor.parent()
       if (is_func_expr(fn) &&
                 !fn.name &&
                 !fn.uses_arguments &&
                 !fn.pinned() &&
-                is_ast_call((iife = compressor.parent())) &&
+                is_ast_call(iife) &&
                 iife.expression === fn &&
                 iife.args.every((arg) => !(is_ast_expansion(arg)))
       ) {

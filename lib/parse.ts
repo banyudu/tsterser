@@ -1445,7 +1445,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const arrow_function = function (start, argnames, is_async) {
+  const arrow_function = function (start, argnames, is_async: boolean) {
     if (has_newline_before(S.token)) {
       croak('Unexpected newline before arrow (=>)')
     }
@@ -2403,7 +2403,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function concise_method_or_getset (name, start, is_class?) {
+  function concise_method_or_getset (name, start, is_class?: boolean) {
     const get_method_name_ast = function (name, start) {
       if (typeof name === 'string' || typeof name === 'number') {
         return new AST_SymbolMethod({
@@ -2558,7 +2558,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function map_name (is_import) {
+  function map_name (is_import: boolean) {
     function make_symbol (type: typeof AST_Symbol) {
       return new type({
         name: as_property_name(),
