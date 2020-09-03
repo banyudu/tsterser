@@ -2017,7 +2017,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         return true
       }
       let found = false
-      return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list) {
+      return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
         if (found) return node
         if (node === expr || node.body === expr) {
           found = true
@@ -2314,7 +2314,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
   }
 
   function eliminate_dead_code (statements: AST_Statement[], compressor: Compressor) {
-    let has_quit
+    let has_quit: AST_Statement[] = []
     const self = compressor.self()
     for (var i = 0, n = 0, len = statements.length; i < len; i++) {
       const stat = statements[i]
@@ -2342,7 +2342,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     statements.length = n
     CHANGED = n != len
     if (has_quit) {
-      has_quit.forEach(function (stat) {
+      has_quit.forEach(function (stat: AST_Statement) {
         extract_declarations_from_unreachable_code(compressor, stat, statements)
       })
     }
@@ -2777,7 +2777,7 @@ function loop_body (x) {
   return x
 }
 
-export function extract_declarations_from_unreachable_code (compressor: Compressor, stat, target) {
+export function extract_declarations_from_unreachable_code (compressor: Compressor, stat: AST_Statement, target: AST_Node[]) {
   if (!(is_ast_defun(stat))) {
     compressor.warn('Dropping unreachable code [{file}:{line},{col}]', stat.start)
   }
@@ -2817,7 +2817,7 @@ export function extract_declarations_from_unreachable_code (compressor: Compress
  * Iteration can be stopped and continued by passing the `to_visit` argument,
  * which is given to the callback in the second argument.
  **/
-export function walk (node: AST_Node, cb: Function, to_visit = [node]) {
+export function walk (node: AST_Node, cb: Function, to_visit: AST_Node[] = [node]) {
   const push = to_visit.push.bind(to_visit)
   while (to_visit.length) {
     const node = to_visit.pop()
@@ -2856,7 +2856,7 @@ export function read_property (obj, key) {
   return is_ast_symbol_ref(value) && value.fixed_value() || value
 }
 
-export function get_value (key) {
+export function get_value (key: AST_Node) {
   if (is_ast_constant(key)) {
     return key.getValue()
   }
@@ -2868,7 +2868,7 @@ export function get_value (key) {
   return key
 }
 
-export function make_node_from_constant (val, orig) {
+export function make_node_from_constant (val: any, orig: AST_Node) {
   switch (typeof val) {
     case 'string':
       return make_node('AST_String', orig, {

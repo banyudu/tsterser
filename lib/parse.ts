@@ -2791,7 +2791,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  function as_symbol (type, noerror?) {
+  function as_symbol (type: typeof AST_Symbol, noerror?: boolean) {
     if (!is('name')) {
       if (!noerror) croak('Name expected')
       return null
@@ -2827,7 +2827,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  var subscripts = function (expr: AST_Node, allow_calls: boolean) {
+  var subscripts = function (expr: AST_Node, allow_calls: boolean): AST_Node {
     const start = expr.start
     if (is('punc', '.')) {
       next()
@@ -2922,7 +2922,7 @@ export function parse ($TEXT: string, opt?: any) {
     return val
   }
 
-  function make_unary (CTOR: typeof AST_Unary, token, expr: AST_Node) {
+  function make_unary (CTOR: typeof AST_Unary, token: AST_Token, expr: AST_Node) {
     const op = token.value
     switch (op) {
       case '++':
@@ -2958,11 +2958,11 @@ export function parse ($TEXT: string, opt?: any) {
     return left
   }
 
-  function expr_ops (no_in) {
+  function expr_ops (no_in: boolean) {
     return expr_op(maybe_unary(true, true), 0, no_in)
   }
 
-  const maybe_conditional = function (no_in) {
+  const maybe_conditional = function (no_in: boolean) {
     const start = S.token
     const expr = expr_ops(no_in)
     if (is('operator', '?')) {
