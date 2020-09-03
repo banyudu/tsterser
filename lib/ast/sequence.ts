@@ -42,7 +42,7 @@ export default class AST_Sequence extends AST_Node {
     function filter_for_side_effects () {
       let first = first_in_statement(compressor)
       const last = self.expressions.length - 1
-      self.expressions.forEach(function (expr, index) {
+      self.expressions.forEach(function (expr: AST_Node, index) {
         if (index < last) expr = expr.drop_side_effect_free(compressor, first)
         if (expr) {
           merge_sequence(expressions, expr)

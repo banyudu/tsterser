@@ -2063,7 +2063,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const new_ = function (allow_calls) {
+  const new_ = function (allow_calls: boolean) {
     const start = S.token
     expect_token('operator', 'new')
     if (is('punc', '.')) {
@@ -2826,7 +2826,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  var subscripts = function (expr, allow_calls) {
+  var subscripts = function (expr: AST_Node, allow_calls: boolean) {
     const start = expr.start
     if (is('punc', '.')) {
       next()
@@ -2862,7 +2862,7 @@ export function parse ($TEXT: string, opt?: any) {
     if (is('template_head')) {
       return subscripts(new AST_PrefixedTemplateString({
         start: start,
-        prefix: expr,
+        prefix: expr as any,
         template_string: template_string(true),
         end: prev()
       }), allow_calls)
@@ -2921,7 +2921,7 @@ export function parse ($TEXT: string, opt?: any) {
     return val
   }
 
-  function make_unary (ctor, token, expr) {
+  function make_unary (ctor, token, expr: AST_Node) {
     const op = token.value
     switch (op) {
       case '++':
@@ -2979,7 +2979,7 @@ export function parse ($TEXT: string, opt?: any) {
     return expr
   }
 
-  function is_assignable (expr) {
+  function is_assignable (expr: AST_Node) {
     return is_ast_prop_access(expr) || is_ast_symbol_ref(expr)
   }
 

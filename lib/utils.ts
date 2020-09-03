@@ -1981,11 +1981,11 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       }
     }
 
-    function get_rvalue (expr) {
+    function get_rvalue (expr: AST_Node) {
       return expr[is_ast_assign(expr) ? 'right' : 'value']
     }
 
-    function get_lvalues (expr) {
+    function get_lvalues (expr: AST_Node) {
       const lvalues = new Map()
       if (is_ast_unary(expr)) return lvalues
       var tw = new TreeWalker(function (node: AST_Node) {
