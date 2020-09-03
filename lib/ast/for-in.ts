@@ -7,9 +7,9 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ForIn extends AST_IterationStatement {
-  init?: any | undefined
-  object: any
-  await: any
+  init?: AST_Node | undefined
+  object: AST_Node
+  await: boolean
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
@@ -88,6 +88,6 @@ export default class AST_ForIn extends AST_IterationStatement {
 }
 
 export interface AST_ForIn_Props extends AST_IterationStatement_Props {
-  init?: any | undefined
-  object?: any | undefined
+  init?: AST_Node | undefined
+  object?: AST_Node | undefined
 }

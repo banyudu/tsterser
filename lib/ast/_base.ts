@@ -6,4 +6,8 @@ export default class AST {
   get TYPE () {
     return this.constructor.name.substr(4)
   }
+
+  static get TYPE () {
+    return this.constructor.name.substr(4)
+  }
 }

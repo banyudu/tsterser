@@ -143,7 +143,8 @@ import {
   AST_While,
   AST_With,
   AST_Yield,
-  AST_Node
+  AST_Node,
+  AST_Unary
 } from './ast'
 
 import { _INLINE, _NOINLINE, _PURE } from './constants'
@@ -1064,7 +1065,7 @@ export function parse ($TEXT: string, opt?: any) {
 
   function expect (punc: string) { return expect_token('punc', punc) }
 
-  function has_newline_before (token) {
+  function has_newline_before (token: AST_Token) {
     return token.nlb || !token.comments_before.every((comment: Comment) => !comment.nlb)
   }
 
@@ -1110,7 +1111,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  var statement = embed_tokens(function (is_export_default, is_for_body, is_if_body) {
+  var statement = embed_tokens(function (is_export_default: boolean, is_for_body: boolean, is_if_body: boolean) {
     handle_regexp()
     switch (S.token?.type) {
       case 'string':
@@ -1348,7 +1349,7 @@ export function parse ($TEXT: string, opt?: any) {
     return new AST_SimpleStatement({ body: tmp })
   }
 
-  function break_cont (type) {
+  function break_cont (type: typeof AST_Break | typeof AST_Continue) {
     let label: any = null; let ldef
     if (!can_insert_semicolon()) {
       label = as_symbol(AST_LabelRef, true)
@@ -1421,7 +1422,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function for_of (init, is_await) {
+  function for_of (init, is_await: boolean) {
     const lhs = is_ast_definitions(init) ? init.definitions[0].name : null
     const obj = expression(true)
     expect(')')
@@ -2921,7 +2922,7 @@ export function parse ($TEXT: string, opt?: any) {
     return val
   }
 
-  function make_unary (ctor, token, expr: AST_Node) {
+  function make_unary (CTOR: typeof AST_Unary, token, expr: AST_Node) {
     const op = token.value
     switch (op) {
       case '++':
@@ -2932,7 +2933,7 @@ export function parse ($TEXT: string, opt?: any) {
         if (is_ast_symbol_ref(expr) && S.input.has_directive('use strict')) { croak('Calling delete on expression not allowed in strict mode', expr.start.line, expr.start.col, expr.start.pos) }
         break
     }
-    return new ctor({ operator: op, expression: expr })
+    return new CTOR({ operator: op, expression: expr })
   }
 
   var expr_op = function (left: any, min_prec: number, no_in: boolean) {
@@ -3075,7 +3076,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function in_loop (cont) {
+  function in_loop (cont: Function) {
     ++S.in_loop
     const ret = cont()
     --S.in_loop
