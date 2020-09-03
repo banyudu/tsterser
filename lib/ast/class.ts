@@ -71,7 +71,7 @@ export default class AST_Class extends AST_Scope {
   }
 
   is_block_scope () { return false }
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.name) {
       result.push(this.name)

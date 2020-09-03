@@ -67,7 +67,7 @@ export default class AST_Array extends AST_Node {
   }
 
   _dot_throw () { return false }
-  walkInner = () => {
+  walkInner () {
     const result = []
     const elements = this.elements
     for (let i = 0, len = elements.length; i < len; i++) {

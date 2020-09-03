@@ -10,7 +10,7 @@ export default class AST_Exit extends AST_Jump {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.value)
     return result

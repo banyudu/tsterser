@@ -38,7 +38,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.label)
     result.push(this.body)

@@ -122,7 +122,7 @@ export default class AST_Dot extends AST_PropAccess {
     return map?.has(this.property)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     return result

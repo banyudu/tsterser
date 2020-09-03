@@ -35,7 +35,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this.body.has_side_effects(compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.body)
     return result

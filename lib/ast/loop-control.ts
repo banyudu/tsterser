@@ -5,7 +5,7 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_LoopControl extends AST_Jump {
   label: AST_LabelRef | undefined
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.label)
     return result

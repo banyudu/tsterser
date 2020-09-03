@@ -191,7 +191,7 @@ export default class AST_If extends AST_StatementWithBody {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.condition)
     result.push(this.body)

@@ -11,7 +11,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.argname) result.push(this.argname)
     result.push(...this.body)

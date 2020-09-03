@@ -145,7 +145,7 @@ export default class AST_Switch extends AST_Block {
           anySideEffect(this.body, compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     result.push(...this.body)

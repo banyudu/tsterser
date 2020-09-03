@@ -53,7 +53,7 @@ export default class AST_Do extends AST_DWLoop {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.body)
     result.push(this.condition)

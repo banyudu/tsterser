@@ -714,7 +714,7 @@ export default class AST_Binary extends AST_Node {
     return this
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.left)
     result.push(this.right)

@@ -184,7 +184,7 @@ export default class AST_Sub extends AST_PropAccess {
           this.property.has_side_effects(compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     result.push(this.property)

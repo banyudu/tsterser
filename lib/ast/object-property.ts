@@ -43,7 +43,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   _dot_throw () { return false }
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (is_ast_node(this.key)) { result.push(this.key) }
     result.push(this.value)

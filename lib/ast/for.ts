@@ -73,7 +73,7 @@ export default class AST_For extends AST_IterationStatement {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.init) result.push(this.init)
     if (this.condition) result.push(this.condition)

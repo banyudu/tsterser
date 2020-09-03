@@ -393,11 +393,11 @@ export const MAP = (function () {
   return MAP
 })()
 
-export function make_node (ctorName: keyof typeof AST_DICT, orig?: any, props?: any): any {
+export function make_node (ctorName: keyof typeof AST_DICT, orig?: AST_Node | AnyObject, props?: AnyObject): any {
   return make_ast_node(AST_DICT[ctorName] as any, orig, props)
 }
 
-export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: AST_Node, props?: any): T {
+export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: AST_Node | AnyObject, props?: any): T {
   return new CTOR(Object.assign({}, props, { start: props?.start || orig?.start, end: props?.end || orig?.end }))
 }
 
@@ -1192,7 +1192,7 @@ var MOZ_TO_ME: any = {
   })
 }
 
-export function my_start_token (moznode: any) {
+export function my_start_token (moznode: MozillaAst) {
   const loc = moznode.loc
   const start = loc?.start
   const range = moznode.range
@@ -1200,10 +1200,10 @@ export function my_start_token (moznode: any) {
     file: loc?.source,
     line: start?.line,
     col: start?.column,
-    pos: range ? range[0] : moznode.start,
+    pos: range ? range[0] : moznode.start as number,
     endline: start?.line,
     endcol: start?.column,
-    endpos: range ? range[0] : moznode.start,
+    endpos: range ? range[0] : moznode.start as number,
     raw: raw_token(moznode)
   })
 }
@@ -1429,7 +1429,7 @@ export function is_undefined (node: AST_Node, compressor?: Compressor) {
             !node.expression.has_side_effects(compressor)
 }
 
-export function force_statement (stat: any, output: OutputStream) {
+export function force_statement (stat: AST_Node, output: OutputStream) {
   if (output.option('braces')) {
     make_block(stat, output)
   } else {
@@ -1437,7 +1437,7 @@ export function force_statement (stat: any, output: OutputStream) {
   }
 }
 
-export function make_block (stmt: any, output: OutputStream) {
+export function make_block (stmt: AST_Node | undefined, output: OutputStream) {
   if (!stmt || is_ast_empty_statement(stmt)) { output.print('{}') } else if (is_ast_block_statement(stmt)) { stmt.print?.(output) } else {
     output.with_block(function () {
       output.indent()
@@ -1954,7 +1954,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return null
     }
 
-    function mangleable_var (var_def) {
+    function mangleable_var (var_def: AST_VarDef) {
       const value = var_def.value
       if (!(is_ast_symbol_ref(value))) return
       if (value.name == 'arguments') return
@@ -1963,7 +1963,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return (value_def = def)
     }
 
-    function get_lhs (expr) {
+    function get_lhs (expr: AST_Node) {
       if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
         const def = expr.name.definition?.()
         if (!member(expr.name, def.orig)) return
@@ -1999,7 +1999,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return lvalues
     }
 
-    function remove_candidate (expr) {
+    function remove_candidate (expr: AST_Node) {
       if (is_ast_symbol_funarg(expr.name)) {
         const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
         const index = argnames.indexOf(expr.name)
@@ -2038,7 +2038,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       }))
     }
 
-    function is_lhs_local (lhs) {
+    function is_lhs_local (lhs: AST_Node) {
       while (is_ast_prop_access(lhs)) lhs = lhs.expression
       return is_ast_symbol_ref(lhs) &&
                 lhs.definition?.().scope === scope &&

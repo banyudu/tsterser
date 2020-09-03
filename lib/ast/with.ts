@@ -6,7 +6,7 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_With extends AST_StatementWithBody {
   expression: AST_Node
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     result.push(this.body)

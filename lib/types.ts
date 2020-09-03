@@ -170,7 +170,7 @@ export enum OutputQuoteStyle {
 export interface MozillaAst {
   loc: any
   range: [number, number]
-  start: MozillaAst
+  start: MozillaAst | number
   superClass: MozillaAst
   prefix?: boolean
   arguments: MozillaAst[]

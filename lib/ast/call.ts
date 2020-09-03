@@ -858,7 +858,7 @@ export default class AST_Call extends AST_Node {
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     const args = this.args
     for (let i = 0, len = args.length; i < len; i++) {

@@ -70,7 +70,7 @@ export default class AST_Lambda extends AST_Scope {
     return out
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.name) result.push(this.name)
     const argnames = this.argnames

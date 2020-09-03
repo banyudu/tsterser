@@ -30,7 +30,7 @@ export default class AST_Case extends AST_SwitchBranch {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     result.push(...this.body)

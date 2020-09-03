@@ -87,7 +87,7 @@ export default class AST_Unary extends AST_Node {
     return this
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     return result

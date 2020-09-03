@@ -14,7 +14,7 @@ export default class AST_Export extends AST_Statement {
   exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
   exported_names: Array<AST_NameMapping | undefined>
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.exported_definition) {
       result.push(this.exported_definition)

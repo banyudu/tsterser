@@ -105,7 +105,7 @@ export default class AST_Sequence extends AST_Node {
     return this.tail_node()._dot_throw(compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     this.expressions.forEach(function (node: AST_Node) {
       result.push(node)

@@ -73,7 +73,7 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = decls
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     const definitions = this.definitions
     for (let i = 0, len = definitions.length; i < len; i++) {

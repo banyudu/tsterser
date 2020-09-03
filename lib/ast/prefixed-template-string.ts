@@ -15,7 +15,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     return this
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.prefix)
     result.push(this.template_string)

@@ -20,7 +20,7 @@ export default class AST_Expansion extends AST_Node {
     return this.expression._dot_throw(compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.expression)
     return result

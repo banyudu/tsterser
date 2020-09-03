@@ -65,7 +65,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     this.names.forEach(function (name: any) {
       result.push(name)

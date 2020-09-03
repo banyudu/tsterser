@@ -47,7 +47,7 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.name)
     if (this.value) result.push(this.value)

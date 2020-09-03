@@ -378,7 +378,7 @@ export default class AST_Conditional extends AST_Node {
           this.alternative._dot_throw(compressor)
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(this.condition)
     result.push(this.consequent)

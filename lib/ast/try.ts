@@ -54,7 +54,7 @@ export default class AST_Try extends AST_Block {
     return true
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     result.push(...this.body)
     if (this.bcatch) result.push(this.bcatch)

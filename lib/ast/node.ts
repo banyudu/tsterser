@@ -155,7 +155,9 @@ export default class AST_Node extends AST {
     return this._clone(deep)
   }
 
-  walkInner: () => AST_Node[] = () => []
+  walkInner (): AST_Node[] {
+    return []
+  }
 
   public walk (visitor: TreeWalker) {
     return visitor._visit(this, () => this.walkInner?.()?.forEach(item => item?.walk(visitor)))

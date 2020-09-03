@@ -104,7 +104,7 @@ export default class AST_Object extends AST_Node {
     return false
   }
 
-  walkInner = () => {
+  walkInner () {
     const result = []
     const properties = this.properties
     for (let i = 0, len = properties.length; i < len; i++) {

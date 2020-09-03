@@ -17,7 +17,7 @@ export default class AST_Import extends AST_Node {
   }
 
   aborts () { return null }
-  walkInner = () => {
+  walkInner () {
     const result = []
     if (this.imported_name) {
       result.push(this.imported_name)
