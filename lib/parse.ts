@@ -1467,8 +1467,8 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var function_ = function (ctor, is_generator_property, is_async, is_export_default?) {
-    const in_statement = ctor === AST_Defun
+  var function_ = function (CTOR: typeof AST_Defun | typeof AST_Function, is_generator_property: boolean, is_async: boolean, is_export_default?: boolean) {
+    const in_statement = CTOR === AST_Defun
     const is_generator = is('operator', '*')
     if (is_generator) {
       next()
@@ -1477,17 +1477,17 @@ export function parse ($TEXT: string, opt?: any) {
     const name = is('name') ? as_symbol(in_statement ? AST_SymbolDefun : AST_SymbolLambda) : null
     if (in_statement && !name) {
       if (is_export_default) {
-        ctor = AST_Function
+        CTOR = AST_Function
       } else {
         unexpected()
       }
     }
 
-    if (name && ctor !== AST_Accessor && !(is_ast_symbol_declaration(name))) { unexpected(prev()) }
+    if (name && CTOR !== AST_Accessor && !(is_ast_symbol_declaration(name))) { unexpected(prev()) }
 
     const args: any = []
     const body: any = _function_body(true, is_generator || is_generator_property, is_async, name, args)
-    return new ctor({
+    return new CTOR({
       start: args.start,
       end: body.end,
       is_generator: is_generator,
@@ -1827,7 +1827,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  function _function_body (block, generator, is_async, name?, args?) {
+  function _function_body (block: boolean, generator: boolean, is_async: boolean, name?: AST_Symbol, args?: AST_Symbol[]) {
     const loop = S.in_loop
     const labels = S.labels
     const current_generator = S.in_generator
@@ -2359,7 +2359,7 @@ export function parse ($TEXT: string, opt?: any) {
     return new AST_Object({ properties: a })
   })
 
-  function class_ (KindOfClass) {
+  function class_ (KindOfClass: typeof AST_DefClass) {
     let start; let method; let class_name; let extends_; const a: any[] = []
 
     S.input.push_directives_stack() // Push directive stack, but not scope stack
@@ -2558,7 +2558,7 @@ export function parse ($TEXT: string, opt?: any) {
   }
 
   function map_name (is_import) {
-    function make_symbol (type) {
+    function make_symbol (type: typeof AST_Symbol) {
       return new type({
         name: as_property_name(),
         start: prev(),
