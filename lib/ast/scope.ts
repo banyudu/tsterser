@@ -39,7 +39,7 @@ import {
   WRITE_ONLY
 } from '../constants'
 
-function map_add (map: Map<string, any[]>, key: string, value: any) {
+function map_add (map: Map<string | number, any[]>, key: string | number, value: any) {
   if (map.has(key)) {
         map.get(key)?.push(value)
   } else {
@@ -620,7 +620,7 @@ export default class AST_Scope extends AST_Block {
               continue
             }
             if (is_ast_block_statement(self.body[i])) {
-              const tmp = [i, 1].concat(self.body[i].body)
+              const tmp: any[] = [i, 1].concat(self.body[i].body)
               self.body.splice.apply(self.body, tmp)
               continue
             }

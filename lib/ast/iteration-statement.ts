@@ -1,9 +1,10 @@
 import AST_Node from './node'
 import AST_StatementWithBody, { AST_StatementWithBody_Props } from './statement-with-body'
 import { clone_block_scope } from '../utils'
+import AST_Scope from './scope'
 
 export default class AST_IterationStatement extends AST_StatementWithBody {
-  block_scope: any
+  block_scope?: AST_Scope
   init?: any
   condition?: any
   step?: any
@@ -29,5 +30,5 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
 }
 
 export interface AST_IterationStatement_Props extends AST_StatementWithBody_Props {
-  block_scope?: any | undefined
+  block_scope?: AST_Scope
 }

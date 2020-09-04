@@ -2254,11 +2254,11 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return false
     }
 
-    function is_return_void (value) {
+    function is_return_void (value: AST_Node | undefined) {
       return !value || is_ast_unary_prefix(value) && value.operator == 'void'
     }
 
-    function can_merge_flow (ab) {
+    function can_merge_flow (ab: AST_Node) {
       if (!ab) return false
       for (let j = i + 1, len = statements.length; j < len; j++) {
         const stat = statements[j]
@@ -2383,7 +2383,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     if (n != len) CHANGED = true
   }
 
-  function to_simple_statement (block, decls) {
+  function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
     if (!(is_ast_block_statement(block))) return block
     let stat: any = null
     for (let i = 0, len = block.body.length; i < len; i++) {
@@ -2399,7 +2399,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     return stat
   }
 
-  function sequencesize_2 (statements: any[], compressor: Compressor) {
+  function sequencesize_2 (statements: AST_Statement[], compressor: Compressor) {
     function cons_seq (right) {
       n--
       CHANGED = true
@@ -3333,7 +3333,7 @@ export function mark_lambda (this, tw: TreeWalker, descend: Function, compressor
   return true
 }
 
-export function recursive_ref (compressor: TreeWalker, def: AST_VarDef) {
+export function recursive_ref (compressor: TreeWalker, def: SymbolDef) {
   let node
   for (let i = 0; (node = compressor.parent(i)); i++) {
     if (

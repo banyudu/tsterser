@@ -13,10 +13,11 @@ import {
   do_list
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import AST_Scope from './scope'
 
 export default class AST_Block extends AST_Statement {
-  body: any | undefined
-  block_scope: any
+  body: AST_Statement[]
+  block_scope?: AST_Scope
   expression: any
 
   _optimize (compressor: Compressor) {
@@ -83,7 +84,7 @@ export default class AST_Block extends AST_Statement {
 }
 
 export interface AST_Block_Props extends AST_Statement_Props {
-  body?: any | undefined
-  block_scope?: any | undefined
+  body?: AST_Statement[]
+  block_scope?: AST_Scope
   expression?: any
 }

@@ -41,7 +41,7 @@ export default class AST_Arrow extends AST_Lambda {
       args_and_arrow += 2
     }
 
-    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : this.body._size())
+    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : (this.body as any)._size())
   }
 
   _to_mozilla_ast (parent: AST_Node): any {

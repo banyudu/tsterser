@@ -1445,7 +1445,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const arrow_function = function (start, argnames, is_async: boolean) {
+  const arrow_function = function (start: AST_Token, argnames, is_async: boolean) {
     if (has_newline_before(S.token)) {
       croak('Unexpected newline before arrow (=>)')
     }
@@ -1502,11 +1502,11 @@ export function parse ($TEXT: string, opt?: any) {
   function track_used_binding_identifiers (is_parameter: boolean, strict: boolean) {
     const parameters = new Set()
     let duplicate: any = false
-    let default_assignment = false
-    let spread = false
+    let default_assignment: false | AST_Token = false
+    let spread: false | AST_Token = false
     let strict_mode = !!strict
     var tracker = {
-      add_parameter: function (token) {
+      add_parameter: function (token: AST_Token) {
         if (parameters.has(token.value)) {
           if (duplicate === false) {
             duplicate = token
@@ -1531,12 +1531,12 @@ export function parse ($TEXT: string, opt?: any) {
           }
         }
       },
-      mark_default_assignment: function (token) {
+      mark_default_assignment: function (token: AST_Token) {
         if (!default_assignment) {
           default_assignment = token
         }
       },
-      mark_spread: function (token) {
+      mark_spread: function (token: AST_Token) {
         if (!spread) {
           spread = token
         }

@@ -1,13 +1,16 @@
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { push_uniq, is_ast_node } from '../utils'
+import SymbolDef from '../symbol-def'
+import { MangleOptions } from '../types'
+import AST_Scope from './scope'
 
-let mangle_options
+let mangle_options: MangleOptions | undefined
 
 export default class AST_Symbol extends AST_Node {
-  thedef: any
-  name: any
-  scope: any
+  thedef: SymbolDef
+  name: string
+  scope: AST_Scope
 
   fixed_value () {
     const fixed = this.thedef.fixed
@@ -30,7 +33,7 @@ export default class AST_Symbol extends AST_Node {
     this.mark_enclosed()
   }
 
-  unmangleable (options: any) {
+  unmangleable (options: MangleOptions) {
     const def = this.definition()
     return !def || def.unmangleable(options)
   }

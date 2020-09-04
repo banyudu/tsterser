@@ -1,5 +1,6 @@
 import { in_function_defs, redefined_catch_def, keep_name, is_ast_node, is_ast_symbol_lambda, is_ast_symbol_defun, is_ast_symbol_method, is_ast_symbol_class, is_ast_symbol_def_class } from './utils'
 import { MASK_EXPORT_DONT_MANGLE } from './constants'
+import { MangleOptions } from './types'
 
 export default class SymbolDef {
   name: string
@@ -52,7 +53,7 @@ export default class SymbolDef {
     return this.fixed()
   }
 
-  unmangleable (options: any) {
+  unmangleable (options: MangleOptions) {
     if (!options) options = {}
     const firstOrig = this.orig[0]
     if (in_function_defs(this.id) && keep_name(options.keep_fnames, firstOrig.name)) return true
