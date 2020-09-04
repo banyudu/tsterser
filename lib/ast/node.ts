@@ -35,7 +35,7 @@ export default class AST_Node extends AST {
   _annotations?: number
   body?: any
   key: any
-  definitions?: any
+  definitions?: AST_Node[]
   scope: any
   name: any
   block_scope?: AST_Scope | null

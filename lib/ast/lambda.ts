@@ -139,7 +139,7 @@ export default class AST_Lambda extends AST_Scope {
       })
     })
     output.space()
-    print_braced(self, output, true)
+    print_braced(self as any, output, true)
   }
 
   _codegen (output: OutputStream) {

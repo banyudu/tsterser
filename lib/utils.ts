@@ -1805,7 +1805,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           if (is_ast_expansion(sym)) {
             const elements = iife.args.slice(i)
             if (elements.every((arg) =>
-              !has_overlapping_symbol(fn, arg, fn_strict)
+              !has_overlapping_symbol(fn as any, arg, fn_strict)
             )) {
               candidates.unshift([make_node('AST_VarDef', sym, {
                 name: sym.expression,
@@ -1818,7 +1818,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
             if (!arg) {
               arg = make_node('AST_Undefined', sym).transform(compressor)
             } else if (is_ast_lambda(arg) && arg.pinned?.() ||
-                            has_overlapping_symbol(fn, arg, fn_strict)
+                            has_overlapping_symbol(fn as any, arg, fn_strict)
             ) {
               arg = null
             }
@@ -2282,7 +2282,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       })
     }
 
-    function as_statement_array_with_return (node: AST_Node, ab) {
+    function as_statement_array_with_return (node: AST_Node, ab: AST_Binary) {
       const body = as_statement_array(node).slice(0, -1)
       if (ab.value) {
         body.push(make_node('AST_SimpleStatement', ab.value, {
@@ -2292,7 +2292,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return body
     }
 
-    function next_index (i) {
+    function next_index (i: number) {
       for (var j = i + 1, len = statements.length; j < len; j++) {
         const stat = statements[j]
         if (!(is_ast_var(stat) && declarations_only(stat))) {
@@ -2302,7 +2302,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return j
     }
 
-    function prev_index (i) {
+    function prev_index (i: number) {
       for (var j = i; --j >= 0;) {
         const stat = statements[j]
         if (!(is_ast_var(stat) && declarations_only(stat))) {
@@ -2400,13 +2400,14 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
   }
 
   function sequencesize_2 (statements: AST_Statement[], compressor: Compressor) {
-    function cons_seq (right) {
+    function cons_seq (right: AST_Node) {
       n--
       CHANGED = true
       const left = prev.body
       return make_sequence(left, [left, right]).transform(compressor)
     }
-    var n = 0; let prev
+    var n = 0
+    let prev: AST_Node | undefined
     for (let i = 0; i < statements.length; i++) {
       const stat = statements[i]
       if (prev) {
@@ -2447,7 +2448,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       if (compressor.option('conditionals') && is_ast_if(stat)) {
         const decls: any[] = []
         const body = to_simple_statement(stat.body, decls)
-        const alt = to_simple_statement(stat.alternative, decls)
+        const alt = to_simple_statement(stat.alternative as any, decls)
         if (body !== false && alt !== false && decls.length > 0) {
           const len = decls.length
           decls.push(make_node('AST_If', stat, {
@@ -2470,7 +2471,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     statements.length = n
   }
 
-  function join_object_assignments (defn, body) {
+  function join_object_assignments (defn: AST_Node, body: AST_Node) {
     if (!(is_ast_definitions(defn))) return
     const def = defn.definitions[defn.definitions.length - 1]
     if (!(is_ast_object(def.value))) return
@@ -3709,7 +3710,7 @@ export function to_moz_block (node: AST_Node) {
   }
 }
 
-export function to_moz_scope (type: string, node: AST_Node) {
+export function to_moz_scope (type: string, node: AST_Node): MozillaAst {
   const body = node.body.map(to_moz)
   if (is_ast_simple_statement(node.body[0]) && is_ast_string((node.body[0]).body)) {
     body.unshift(to_moz(new AST_EmptyStatement(node.body[0])))
@@ -3720,7 +3721,7 @@ export function to_moz_scope (type: string, node: AST_Node) {
   }
 }
 
-export function To_Moz_FunctionExpression (M: AST_Lambda, parent: any) {
+export function To_Moz_FunctionExpression (M: AST_Lambda, parent: any): MozillaAst {
   const is_generator = parent.is_generator !== undefined
     ? parent.is_generator : M.is_generator
   return {

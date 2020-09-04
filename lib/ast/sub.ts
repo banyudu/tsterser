@@ -6,13 +6,14 @@ import { is_lhs, make_node, best_of, make_node_from_constant, to_moz, best_of_ex
 import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Sub extends AST_PropAccess {
   _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),

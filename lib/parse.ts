@@ -1862,7 +1862,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  function _await_expression () {
+  function _await_expression (): AST_Node | never {
     // Previous token must be "await" and not be interpreted as an identifier
     if (!is_in_async()) {
       croak('Unexpected await expression outside async function',
@@ -2040,7 +2040,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  var var_ = function (no_in?) {
+  var var_ = function (no_in?: boolean) {
     return new AST_Var({
       start: prev(),
       definitions: vardefs(no_in, 'var'),
@@ -2048,7 +2048,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var let_ = function (no_in?) {
+  var let_ = function (no_in?: boolean) {
     return new AST_Let({
       start: prev(),
       definitions: vardefs(no_in, 'let'),
@@ -2056,7 +2056,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var const_ = function (no_in?) {
+  var const_ = function (no_in?: boolean) {
     return new AST_Const({
       start: prev(),
       definitions: vardefs(no_in, 'const'),
@@ -2075,7 +2075,8 @@ export function parse ($TEXT: string, opt?: any) {
         end: prev()
       }), allow_calls)
     }
-    const newexp = expr_atom(false); let args
+    const newexp = expr_atom(false)
+    let args
     if (is('punc', '(')) {
       next()
       args = expr_list(')', (options.ecma as number) >= 2017)
@@ -2137,7 +2138,7 @@ export function parse ($TEXT: string, opt?: any) {
     return ex.to_fun_args(croak)
   }
 
-  var expr_atom = function (allow_calls: boolean, allow_arrows?: boolean) {
+  var expr_atom = function (allow_calls: boolean, allow_arrows?: boolean): AST_Node {
     if (is('operator', 'new')) {
       return new_(allow_calls)
     }
@@ -2263,7 +2264,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function expr_list (closing, allow_trailing_comma, allow_empty?) {
+  function expr_list (closing: string, allow_trailing_comma: boolean, allow_empty?: boolean) {
     let first = true; const a: any[] = []
     while (!is('punc', closing)) {
       if (first) first = false; else expect(',')
@@ -2288,7 +2289,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   })
 
-  const create_accessor = embed_tokens((is_generator, is_async) => {
+  const create_accessor = embed_tokens((is_generator: boolean, is_async: boolean) => {
     return function_(AST_Accessor, is_generator, is_async)
   })
 
@@ -2400,11 +2401,11 @@ export function parse ($TEXT: string, opt?: any) {
       extends: extends_,
       properties: a,
       end: prev()
-    })
+    } as any)
   }
 
-  function concise_method_or_getset (name, start, is_class?: boolean) {
-    const get_method_name_ast = function (name, start) {
+  function concise_method_or_getset (name: any, start: AST_Token, is_class?: boolean) {
+    const get_method_name_ast = function (name: any, start: AST_Token) {
       if (typeof name === 'string' || typeof name === 'number') {
         return new AST_SymbolMethod({
           start,
@@ -2416,7 +2417,7 @@ export function parse ($TEXT: string, opt?: any) {
       }
       return name
     }
-    const get_class_property_key_ast = (name, _arg) => {
+    const get_class_property_key_ast = (name: any, _arg?: any): AST_Node => {
       if (_arg) {
         // do nothing
       }
@@ -2555,7 +2556,7 @@ export function parse ($TEXT: string, opt?: any) {
         end: mod_str
       }),
       end: S.token
-    })
+    } as any)
   }
 
   function map_name (is_import: boolean) {
@@ -2599,7 +2600,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function map_nameAsterisk (is_import, name) {
+  function map_nameAsterisk (is_import: boolean, name?: AST_SymbolImportForeign | AST_SymbolExportForeign) {
     const foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
     const type = is_import ? AST_SymbolImport : AST_SymbolExport
     const start = S.token
@@ -2625,7 +2626,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function map_names (is_import) {
+  function map_names (is_import: boolean) {
     let names
     if (is('punc', '{')) {
       next()
@@ -2714,7 +2715,7 @@ export function parse ($TEXT: string, opt?: any) {
       exported_value: exported_value,
       exported_definition: exported_definition,
       end: prev()
-    })
+    } as any)
   }
 
   function as_property_name () {
@@ -2765,7 +2766,7 @@ export function parse ($TEXT: string, opt?: any) {
     return tmp.value
   }
 
-  function _make_symbol (type) {
+  function _make_symbol (type: typeof AST_Node) {
     const name = S.token?.value
     return new (name == 'this' ? AST_This
       : name == 'super' ? AST_Super
@@ -2796,7 +2797,7 @@ export function parse ($TEXT: string, opt?: any) {
       if (!noerror) croak('Name expected')
       return null
     }
-    const sym = _make_symbol(type)
+    const sym: any = _make_symbol(type)
     _verify_symbol(sym)
     next()
     return sym
@@ -3028,7 +3029,7 @@ export function parse ($TEXT: string, opt?: any) {
   }
 
   // In ES6, AssignmentExpression can also be an ArrowFunction
-  var maybe_assign = function (no_in) {
+  var maybe_assign = function (no_in: boolean): AST_Node {
     handle_regexp()
     const start = S.token
 
@@ -3060,7 +3061,7 @@ export function parse ($TEXT: string, opt?: any) {
     return left
   }
 
-  var expression = function (commas?: boolean, no_in?) {
+  var expression = function (commas?: boolean, no_in?: boolean) {
     const start = S.token
     const exprs: any[] = []
     while (true) {
