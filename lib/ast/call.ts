@@ -1,4 +1,3 @@
-import AST_VarDef from './var-def'
 import AST_Node, { AST_Node_Props } from './node'
 import AST_Hole from './hole'
 import AST_Array from './array'
@@ -53,6 +52,7 @@ import GetOutputStream, { OutputStream } from '../output'
 
 import { parse, JS_Parse_Error } from '../parse'
 import TreeTransformer from '../tree-transformer'
+import SymbolDef from '../symbol-def'
 
 export default class AST_Call extends AST_Node {
   expression: AST_Node
@@ -573,7 +573,7 @@ export default class AST_Call extends AST_Node {
       const value_walker = (node: AST_Node) => {
         if (is_ast_scope(node)) {
           const scope_outer_refs = new Set()
-          node.enclosed.forEach(function (def: AST_VarDef) {
+          node.enclosed.forEach(function (def: SymbolDef) {
             scope_outer_refs.add(def.name)
           })
           node.variables.forEach(function (name) {

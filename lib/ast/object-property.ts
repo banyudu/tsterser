@@ -5,20 +5,20 @@ import { lift_key, make_sequence, to_moz, print_property_name, is_ast_node, is_a
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
-  key: any
-  value: any
+  key: AST_Node
+  value: AST_Node
   quote: any
   static: boolean
 
   computed_key () { return false }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_ObjectProperty {
     return lift_key(this, compressor)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {
     const computed_key = is_ast_object_key_val(this) && is_ast_node(this.key)
-    const key = computed_key && this.key.drop_side_effect_free(compressor, first_in_statement)
+    const key = computed_key && (this.key).drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
     if (key && value) {
       return make_sequence(this, [key, value])
@@ -122,10 +122,10 @@ export default class AST_ObjectProperty extends AST_Node {
         self.key.print(output)
       })
     }
-    self.value._do_print(output, true)
+    (self.value as any)._do_print(output, true)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key as any) }
   static documentation = 'Base class for literal object properties'
   static propdoc = {
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',
@@ -141,6 +141,6 @@ export default class AST_ObjectProperty extends AST_Node {
 }
 
 export interface AST_ObjectProperty_Props extends AST_Node_Props {
-  key?: any | undefined
-  value?: any | undefined
+  key?: AST_Node
+  value?: AST_Node
 }

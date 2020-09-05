@@ -2352,7 +2352,7 @@ export function parse ($TEXT: string, opt?: any) {
       a.push(new AST_ObjectKeyVal({
         start: start,
         quote: start?.quote,
-        key: is_ast_node(name) ? name : '' + name,
+        key: (is_ast_node(name) ? name : '' + name) as any,
         value: value,
         end: prev()
       }))

@@ -3,12 +3,14 @@ import { OutputStream } from '../output'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
+import AST_Lambda from './lambda'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
   async: boolean
   is_generator: boolean
   static: boolean
   quote: string|undefined
+  value: AST_Lambda
 
   _optimize (compressor: Compressor) {
     lift_key(this, compressor)
@@ -34,8 +36,8 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return this
   }
 
-  drop_side_effect_free () {
-    return this.computed_key() ? this.key : null
+  drop_side_effect_free (): AST_Node | null {
+    return this.computed_key() ? this.key as any : null
   }
 
   may_throw (compressor: Compressor) {
@@ -75,7 +77,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
     return {
       type: 'MethodDefinition',
       computed: !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key),
-      kind: this.key === 'constructor' ? 'constructor' : 'method',
+      kind: (this.key as any) === 'constructor' ? 'constructor' : 'method',
       static: this.static,
       key: to_moz(this.key),
       value: to_moz(this.value)

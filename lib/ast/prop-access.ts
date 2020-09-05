@@ -6,8 +6,8 @@ import { static_values, global_objs, walk_abort } from '../constants'
 import { MozillaAst } from '../types'
 
 export default class AST_PropAccess extends AST_Node {
-  expression: any
-  property: any
+  expression: AST_Node
+  property: AST_Node | string
 
   _needs_parens (child: AST_Node) {
     return this.expression === child
@@ -15,13 +15,13 @@ export default class AST_PropAccess extends AST_Node {
 
   _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
-      let key = this.property
-      if (is_ast_node(key)) {
+      let key: any = this.property
+      if (key instanceof AST_Node && is_ast_node(key)) {
         key = key._eval?.(compressor, depth)
         if (key === this.property) return this
       }
       const exp = this.expression
-      let val
+      let val: any
       if (is_undeclared_ref(exp)) {
         let aa
         let first_arg = exp.name === 'hasOwnProperty' &&
@@ -36,7 +36,7 @@ export default class AST_PropAccess extends AST_Node {
         }
         const static_value = static_values.get(exp.name)
         if (!static_value || !static_value.has(key)) return this
-        val = global_objs[exp.name]
+        val = (global_objs as any)[exp.name]
       } else {
         val = exp._eval(compressor, depth + 1)
         if (!val || val === exp || !HOP(val, key)) return this

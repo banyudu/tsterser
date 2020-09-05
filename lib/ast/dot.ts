@@ -93,7 +93,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   _find_defs (compressor: Compressor, suffix) {
-    return this.expression._find_defs(compressor, '.' + this.property + suffix)
+    return this.expression._find_defs(compressor, '.' + (this.property as any) + suffix)
   }
 
   _dot_throw (compressor: Compressor) {
@@ -133,7 +133,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   _size (): number {
-    return this.property.length + 1
+    return (this.property as any).length + 1
   }
 
   shallow_cmp_props: any = { property: 'eq' }

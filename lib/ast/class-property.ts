@@ -79,7 +79,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   _size (): number {
     return (
       static_size(this.static) +
-                (typeof this.key === 'string' ? this.key.length + 2 : 0) +
+                (typeof this.key === 'string' ? (this.key as any).length + 2 : 0) +
                 (this.value ? 1 : 0)
     )
   }

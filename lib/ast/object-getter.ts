@@ -37,7 +37,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
         computed: computed,
         kind: kind,
         static: (this as any).static,
-        key: to_moz(this.key),
+        key: to_moz(this.key as any),
         value: to_moz(this.value)
       }
     }
@@ -50,16 +50,16 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     }
   }
 
-  drop_side_effect_free () {
-    return this.computed_key() ? this.key : null
+  drop_side_effect_free (): AST_Node | null {
+    return this.computed_key() ? this.key as any : null
   }
 
   may_throw (compressor: Compressor) {
-    return this.computed_key() && this.key.may_throw(compressor)
+    return this.computed_key() && (this.key as any).may_throw(compressor)
   }
 
   has_side_effects (compressor: Compressor) {
-    return this.computed_key() && this.key.has_side_effects(compressor)
+    return this.computed_key() && (this.key as any).has_side_effects(compressor)
   }
 
   _dot_throw () { return true }
@@ -79,7 +79,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
     this._print_getter_setter('get', output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, (this.key as any).name) }
   static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static getter (classes only)'

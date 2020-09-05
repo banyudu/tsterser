@@ -18,13 +18,13 @@ export default class AST_Sub extends AST_PropAccess {
       type: 'MemberExpression',
       object: to_moz(this.expression),
       computed: true,
-      property: to_moz(this.property)
+      property: to_moz(this.property as any)
     }
   }
 
   _optimize (compressor: Compressor) {
     let expr = this.expression
-    let prop = this.property
+    let prop: AST_Node = this.property as AST_Node
     let property: any
     if (compressor.option('properties')) {
       var key = prop.evaluate(compressor)
@@ -46,7 +46,7 @@ export default class AST_Sub extends AST_PropAccess {
           return make_node('AST_Dot', this, {
             expression: expr,
             property: property,
-            quote: prop.quote
+            quote: (prop as any).quote
           }).optimize(compressor)
         }
       }
@@ -165,24 +165,27 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+    const prop = this.property as AST_Node
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
-    if (!expression) return this.property.drop_side_effect_free(compressor, first_in_statement)
-    const property = this.property.drop_side_effect_free(compressor)
+    if (!expression) return prop.drop_side_effect_free(compressor, first_in_statement)
+    const property = prop.drop_side_effect_free(compressor)
     if (!property) return expression
     return make_sequence(this, [expression, property])
   }
 
   may_throw (compressor: Compressor) {
+    const property = this.property as AST_Node
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
-          this.property.may_throw(compressor)
+          property.may_throw(compressor)
   }
 
   has_side_effects (compressor: Compressor) {
+    const property = this.property as AST_Node
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
-          this.property.has_side_effects(compressor)
+          property.has_side_effects(compressor)
   }
 
   walkInner () {
@@ -200,13 +203,14 @@ export default class AST_Sub extends AST_PropAccess {
   _size = () => 2
   _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
-    this.property = (this.property).transform(tw)
+    this.property = (this.property as any).transform(tw)
   }
 
   _codegen (output: OutputStream) {
+    const property = this.property as AST_Node
     this.expression.print(output)
-    output.print('[');
-    (this.property).print(output)
+    output.print('[')
+    property.print(output)
     output.print(']')
   }
 

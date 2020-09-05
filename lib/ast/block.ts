@@ -38,7 +38,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   is_block_scope () { return true }
-  walkInner () {
+  walkInner (): AST_Node[] {
     const result = []
     result.push(...this.body)
     return result

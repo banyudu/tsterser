@@ -48,19 +48,19 @@ function map_add (map: Map<string | number, any[]>, key: string | number, value:
 }
 
 export default class AST_Scope extends AST_Block {
-  functions: any
   globals: any
-  variables: any
-  enclosed: any
   _added_var_names?: Set<any>
   _var_name_cache: any
-  parent_scope: any
-  uses_eval: any
-  uses_with: any
-  cname: any
   _block_scope: boolean
+  variables?: Map<string, SymbolDef> | undefined
+  functions?: Map<string, SymbolDef> | undefined
+  uses_with?: boolean
+  uses_eval?: boolean
+  parent_scope?: AST_Scope
+  enclosed?: SymbolDef[]
+  cname?: number
 
-  process_expression (insert, compressor?: Compressor) {
+  process_expression (insert: boolean, compressor?: Compressor) {
     const self = this
     var tt = new TreeTransformer(function (node: AST_Node) {
       if (insert && is_ast_simple_statement(node)) {
@@ -223,16 +223,16 @@ export default class AST_Scope extends AST_Block {
     // symbols (that may not be in_use).
     tw = new TreeWalker(scan_ref_scoped)
     in_use_ids.forEach(function (def: SymbolDef) {
-      const init = initializations.get(def.id)
+      const init: AST_Node[] = initializations.get(def.id)
       if (init) {
-        init.forEach(function (init) {
-          init.walk(tw)
+        init.forEach(function (item) {
+          item.walk(tw)
         })
       }
     })
     // pass 3: we should drop declarations not in_use
     var tt = new TreeTransformer(
-      function before (this, node: AST_Node, descend: Function, in_list) {
+      function before (this: AST_Node, node: AST_Node, descend: Function, in_list: boolean) {
         const parent = tt.parent()
         let def
         if (drop_vars) {
@@ -637,7 +637,7 @@ export default class AST_Scope extends AST_Block {
     return self
   }
 
-  make_var_name (prefix) {
+  make_var_name (prefix: string) {
     const var_names = this.var_names()
     prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
     let name = prefix
@@ -686,7 +686,7 @@ export default class AST_Scope extends AST_Block {
       ) {
         const defs = defs_by_id.get(node.expression.definition?.().id)
         if (defs) {
-          const def = defs.get(String(get_value(node.property)))
+          const def = defs.get(String(get_value(node.property as any)))
           const sym = make_node('AST_SymbolRef', node, {
             name: def.name,
             scope: node.expression.scope,
@@ -724,7 +724,7 @@ export default class AST_Scope extends AST_Block {
       if (this._added_var_names) {
         this._added_var_names.forEach(name => { var_names?.add(name) })
       }
-      this.enclosed.forEach(function (def: AST_VarDef) {
+      this.enclosed.forEach(function (def: SymbolDef) {
                       var_names?.add(def.name)
       })
       this.variables.forEach(function (_, name: string) {
@@ -763,7 +763,7 @@ export default class AST_Scope extends AST_Block {
     const new_scope_enclosed_set = new Set(scope.enclosed)
     const scope_ancestry = (() => {
       const ancestry: any[] = []
-      let cur = this
+      let cur: AST_Scope = this
       do {
         ancestry.push(cur)
       } while ((cur = cur.parent_scope))
@@ -795,7 +795,7 @@ export default class AST_Scope extends AST_Block {
 
   def_function (symbol: any, init: boolean) {
     const def = this.def_variable(symbol, init)
-    if (!def.init || is_ast_defun(def.init)) def.init = init
+    if (!def.init || is_ast_defun(def.init as any)) def.init = init
     this.functions.set(symbol.name, def)
     return def
   }
@@ -804,7 +804,7 @@ export default class AST_Scope extends AST_Block {
     let def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
-      if (def.init && (def.scope !== symbol.scope || is_ast_function(def.init))) {
+      if (def.init && (def.scope !== symbol.scope || is_ast_function(def.init as any))) {
         def.init = init
       }
     } else {
@@ -820,14 +820,14 @@ export default class AST_Scope extends AST_Block {
   }
 
   get_defun_scope () {
-    let self = this
+    let self: AST_Scope = this
     while (self.is_block_scope()) {
       self = self.parent_scope
     }
     return self
   }
 
-  clone (deep: boolean) {
+  clone (deep?: boolean) {
     const node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
@@ -1134,12 +1134,12 @@ export default class AST_Scope extends AST_Block {
 }
 
 export interface AST_Scope_Props extends AST_Block_Props {
-  variables?: any | undefined
-  functions?: any | undefined
-  uses_with?: any | undefined
-  uses_eval?: any | undefined
-  parent_scope?: any | undefined
-  enclosed?: any | undefined
-  cname?: any | undefined
+  variables?: Map<string, SymbolDef> | undefined
+  functions?: Map<string, SymbolDef> | undefined
+  uses_with?: boolean
+  uses_eval?: boolean
+  parent_scope?: AST_Scope
+  enclosed?: SymbolDef[]
+  cname?: number
   _var_name_cache?: any | undefined
 }

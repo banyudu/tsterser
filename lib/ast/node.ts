@@ -77,7 +77,7 @@ export default class AST_Node extends AST {
     return false
   }
 
-  _optimize (compressor?: Compressor) {
+  _optimize (compressor?: Compressor): AST_Node {
     return this
   }
 

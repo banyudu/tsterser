@@ -47,7 +47,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   is_block_scope () { return false }
-  init_scope_vars (...args) {
+  init_scope_vars (...args: any[]) {
     init_scope_vars.apply(this, args)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
@@ -70,7 +70,7 @@ export default class AST_Lambda extends AST_Scope {
     return out
   }
 
-  walkInner () {
+  walkInner (): AST_Node[] {
     const result = []
     if (this.name) result.push(this.name)
     const argnames = this.argnames
