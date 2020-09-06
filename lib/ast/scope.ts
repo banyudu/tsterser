@@ -713,7 +713,7 @@ export default class AST_Scope extends AST_Block {
     return self.transform(hoister)
   }
 
-  init_scope_vars (parent: AST_Node) {
+  init_scope_vars (parent: AST_Scope) {
     return init_scope_vars.call(this, parent)
   }
 

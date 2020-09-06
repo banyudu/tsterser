@@ -19,7 +19,7 @@ export default class AST_Arrow extends AST_Lambda {
   }
 
   drop_side_effect_free (): any { return null }
-  negate () {
+  negate (): AST_Node {
     return basic_negation(this)
   }
 

@@ -3507,7 +3507,7 @@ export function is_nullish_check (check: any, check_subject: AST_Node, compresso
     let null_cmp
     let undefined_cmp
 
-    const find_comparison = cmp => {
+    const find_comparison = (cmp: AST_Node) => {
       if (!(
         is_ast_binary(cmp) &&
                 (cmp.operator === '===' || cmp.operator === '==')
@@ -3562,7 +3562,7 @@ export function is_nullish_check (check: any, check_subject: AST_Node, compresso
 }
 
 // TODO this only works with AST_Defun, shouldn't it work for other ways of defining functions?
-export function retain_top_func (fn, compressor: Compressor) {
+export function retain_top_func (fn: AST_Node, compressor: Compressor) {
   return compressor.top_retain &&
         is_ast_defun(fn) &&
         has_flag(fn, TOP) &&
@@ -3579,8 +3579,9 @@ export function find_scope (tw: TreeWalker) {
   }
 }
 
-export function find_variable (compressor: Compressor, name) {
-  let scope; let i = 0
+export function find_variable (compressor: Compressor, name: any) {
+  let scope: any
+  let i = 0
   while ((scope = compressor.parent(i++))) {
     if (is_ast_scope(scope)) break
     if (is_ast_catch(scope) && scope.argname) {
@@ -3591,7 +3592,7 @@ export function find_variable (compressor: Compressor, name) {
   return scope.find_variable(name)
 }
 
-export function scope_encloses_variables_in_this_scope (scope: AST_Scope, pulled_scope) {
+export function scope_encloses_variables_in_this_scope (scope: AST_Scope, pulled_scope: AST_Scope) {
   for (const enclosed of pulled_scope.enclosed) {
     if (pulled_scope.variables.has(enclosed.name)) {
       continue
@@ -3605,18 +3606,18 @@ export function scope_encloses_variables_in_this_scope (scope: AST_Scope, pulled
   return false
 }
 
-export function is_atomic (lhs, self: AST_Node) {
+export function is_atomic (lhs: AST_Node, self: AST_Node) {
   return is_ast_symbol_ref(lhs) || lhs.TYPE === self.TYPE
 }
 
-export function is_reachable (self: AST_Node, defs) {
+export function is_reachable (self: AST_Node, defs: SymbolDef[]) {
   const find_ref = (node: AST_Node) => {
     if (is_ast_symbol_ref(node) && member(node.definition?.(), defs)) {
       return walk_abort
     }
   }
 
-  return walk_parent(self, (node: AST_Node, info) => {
+  return walk_parent(self, (node: AST_Node, info: any) => {
     if (is_ast_scope(node) && node !== self) {
       const parent = info.parent()
       if (is_ast_call(parent) && parent.expression === node) return
@@ -3678,7 +3679,7 @@ export function left_is_object (node: AST_Node): boolean {
   return false
 }
 
-export function init_scope_vars (this, parent_scope: any) {
+export function init_scope_vars (this: AST_Scope, parent_scope: AST_Scope) {
   this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
   this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
   this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
@@ -3775,18 +3776,18 @@ export const base54 = (() => {
   return base54
 })()
 
-export function in_function_defs (id) {
+export function in_function_defs (id: any) {
   return function_defs?.has(id)
 }
 
-const shallow_cmp = (node1, node2) => {
+const shallow_cmp = (node1: AST_Node | null, node2: AST_Node | null) => {
   return (
     node1 === null && node2 === null ||
         node1.TYPE === node2.TYPE && node1.shallow_cmp(node2)
   )
 }
 
-export const equivalent_to = (tree1, tree2) => {
+export const equivalent_to = (tree1: any, tree2: any) => {
   if (!shallow_cmp(tree1, tree2)) return false
   const walk_1_state = [tree1]
   const walk_2_state = [tree2]

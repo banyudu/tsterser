@@ -2937,7 +2937,7 @@ export function parse ($TEXT: string, opt?: any) {
     return new CTOR({ operator: op, expression: expr })
   }
 
-  var expr_op = function (left: any, min_prec: number, no_in: boolean) {
+  var expr_op = function (left: any, min_prec: number, no_in: boolean): any {
     let op = is('operator') ? S.token?.value : null
     if (op == 'in' && no_in) op = null
     if (op == '**' && is_ast_unary_prefix(left) &&

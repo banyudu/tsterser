@@ -6,6 +6,7 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
 import { AST_Finally, AST_Catch } from '.'
+import { MozillaAst } from '../types'
 
 /* -----[ EXCEPTIONS ]----- */
 
@@ -13,7 +14,7 @@ export default class AST_Try extends AST_Block {
   bfinally: AST_Finally | undefined
   bcatch: AST_Catch | undefined
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_Try {
     tighten_body(this.body, compressor)
     if (this.bcatch && this.bfinally && this.bfinally.body.every(is_empty)) this.bfinally = null
     if (compressor.option('dead_code') && this.body.every(is_empty)) {
@@ -24,7 +25,7 @@ export default class AST_Try extends AST_Block {
       if (this.bfinally) body.push(...this.bfinally.body)
       return make_node('AST_BlockStatement', this, {
         body: body
-      }).optimize(compressor)
+      }).optimize(compressor) as AST_Try
     }
     return this
   }
@@ -84,7 +85,7 @@ export default class AST_Try extends AST_Block {
     if (this.bfinally) this.bfinally = this.bfinally.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'TryStatement',
       block: to_moz_block(this),

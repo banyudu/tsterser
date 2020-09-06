@@ -4,7 +4,7 @@ import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 import AST_Lambda from './lambda'
-import { AST_Arrow } from '.'
+import AST_Arrow from './arrow'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
   async: boolean
@@ -13,7 +13,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   quote: string|undefined
   value: AST_Lambda
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_ConciseMethod {
     lift_key(this, compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
@@ -32,7 +32,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
         key: is_ast_symbol_method(this.key) ? this.key.name : this.key,
         value: arrow,
         quote: this.quote
-      })
+      }) as AST_ConciseMethod
     }
     return this
   }

@@ -62,7 +62,7 @@ export default function SourceMap (options: SourceMapOptions) {
   const orig_map: any = options.orig && new MOZ_SourceMap.SourceMapConsumer(options.orig)
 
   if (orig_map) {
-    orig_map.sources.forEach(function (source) {
+    orig_map.sources.forEach(function (source: any) {
       const sourceContent = orig_map.sourceContentFor(source, true)
       if (sourceContent) {
         generator.setSourceContent(source, sourceContent)
