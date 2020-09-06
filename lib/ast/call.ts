@@ -755,8 +755,8 @@ export default class AST_Call extends AST_Node {
       }
       if (is_func_expr(this.expression) &&
               (!this.expression.name || !this.expression.name.definition?.().references.length)) {
-        const node = this.clone()
-        node.expression.process_expression(false, compressor)
+        const node = this.clone() as AST_Call
+        (node.expression as any).process_expression(false, compressor)
         return node
       }
       return this

@@ -1332,7 +1332,7 @@ export function parse ($TEXT: string, opt?: any) {
       // check for `continue` that refers to this label.
       // those should be reported as syntax errors.
       // https://github.com/mishoo/UglifyJS2/issues/287
-      label.references.forEach(function (ref) {
+      (label as any).references.forEach(function (ref: any) {
         if (is_ast_continue(ref)) {
           ref = ref.label?.start
           croak('Continue label `' + label.name + '` refers to non-IterationStatement.',
@@ -1343,7 +1343,7 @@ export function parse ($TEXT: string, opt?: any) {
     return new AST_LabeledStatement({ body: stat, label: label })
   }
 
-  function simple_statement (tmp?) {
+  function simple_statement (tmp?: any) {
     tmp = expression(true)
     semicolon()
     return new AST_SimpleStatement({ body: tmp })
@@ -1422,7 +1422,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function for_of (init, is_await: boolean) {
+  function for_of (init: any, is_await: boolean) {
     const lhs = is_ast_definitions(init) ? init.definitions[0].name : null
     const obj = expression(true)
     expect(')')
@@ -1435,7 +1435,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function for_in (init) {
+  function for_in (init: AST_Node) {
     const obj = expression(true)
     expect(')')
     return new AST_ForIn({
@@ -1445,7 +1445,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const arrow_function = function (start: AST_Token, argnames, is_async: boolean) {
+  const arrow_function = function (start: AST_Token, argnames: any, is_async: boolean) {
     if (has_newline_before(S.token)) {
       croak('Unexpected newline before arrow (=>)')
     }
@@ -1557,7 +1557,7 @@ export function parse ($TEXT: string, opt?: any) {
     return tracker
   }
 
-  function parameters (params) {
+  function parameters (params: any[]) {
     const used_parameters = track_used_binding_identifiers(true, S.input.has_directive('use strict'))
 
     expect('(')
@@ -1579,7 +1579,7 @@ export function parse ($TEXT: string, opt?: any) {
     next()
   }
 
-  function parameter (used_parameters, symbol_type?) {
+  function parameter (used_parameters: any, symbol_type?: any) {
     let param
     let expand: any | null | false = false
     if (used_parameters === undefined) {
@@ -1619,7 +1619,7 @@ export function parse ($TEXT: string, opt?: any) {
     return param
   }
 
-  function binding_element (used_parameters, symbol_type) {
+  function binding_element (used_parameters: any, symbol_type: any) {
     const elements: any[] = []
     let first = true
     let is_expand = false
@@ -1724,7 +1724,7 @@ export function parse ($TEXT: string, opt?: any) {
           } else {
             elements.push(new AST_ObjectKeyVal({
               start: start,
-              key: value.name,
+              key: value.name as any,
               value: value,
               end: value.end
             }))
@@ -1790,7 +1790,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  function params_or_seq_ (allow_arrows, maybe_sequence) {
+  function params_or_seq_ (allow_arrows: boolean, maybe_sequence: boolean) {
     let spread_token
     let invalid_sequence
     let trailing_comma
@@ -1987,7 +1987,7 @@ export function parse ($TEXT: string, opt?: any) {
         argname: name,
         body: block_(),
         end: prev()
-      })
+      } as any)
     }
     if (is('keyword', 'finally')) {
       const start = S.token
@@ -2766,7 +2766,7 @@ export function parse ($TEXT: string, opt?: any) {
     return tmp.value
   }
 
-  function _make_symbol (type: typeof AST_Node) {
+  function _make_symbol (type: typeof AST_Node): AST_Symbol {
     const name = S.token?.value
     return new (name == 'this' ? AST_This
       : name == 'super' ? AST_Super
@@ -2774,7 +2774,7 @@ export function parse ($TEXT: string, opt?: any) {
       name: String(name),
       start: S.token,
       end: S.token
-    })
+    }) as any
   }
 
   function _verify_symbol (sym: AST_Symbol) {
@@ -2797,7 +2797,7 @@ export function parse ($TEXT: string, opt?: any) {
       if (!noerror) croak('Name expected')
       return null
     }
-    const sym: any = _make_symbol(type)
+    const sym = _make_symbol(type)
     _verify_symbol(sym)
     next()
     return sym

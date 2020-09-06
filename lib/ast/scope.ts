@@ -572,7 +572,7 @@ export default class AST_Scope extends AST_Block {
         let defs: any[] = []
         const is_lambda = is_ast_lambda(self)
         const args_as_names = is_lambda ? (self as any).args_as_names() : null
-        vars.forEach((def: AST_VarDef, name) => {
+        vars.forEach((def: any, name) => {
           if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
             vars.delete(name)
           } else {

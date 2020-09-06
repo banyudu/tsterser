@@ -14,17 +14,17 @@ import {
 } from '../utils'
 
 export default class AST_Arrow extends AST_Lambda {
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_Lambda {
     return opt_AST_Lambda(this, compressor)
   }
 
-  drop_side_effect_free () { return null }
+  drop_side_effect_free (): any { return null }
   negate () {
     return basic_negation(this)
   }
 
   _dot_throw () { return false }
-  init_scope_vars (...args) {
+  init_scope_vars (...args: any[]) {
     init_scope_vars.apply(this, args)
     this.uses_arguments = false
   }
@@ -57,7 +57,7 @@ export default class AST_Arrow extends AST_Lambda {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this
   }

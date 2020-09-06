@@ -114,7 +114,7 @@ export default class AST_Conditional extends AST_Node {
           !self.condition.has_side_effects(compressor) &&
           !consequent.expression.has_side_effects(compressor) &&
           typeof (arg_index = single_arg_diff(consequent.args, alternative.args)) === 'number') {
-      const node = consequent.clone()
+      const node: any = consequent.clone()
       node.args[arg_index] = make_node('AST_Conditional', self, {
         condition: self.condition,
         consequent: consequent.args[arg_index],
@@ -317,7 +317,7 @@ export default class AST_Conditional extends AST_Node {
         right: consequent
       })
     }
-    const node = this.clone()
+    const node = this.clone() as AST_Conditional
     node.consequent = consequent
     node.alternative = alternative
     return node
@@ -344,7 +344,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   negate (compressor: Compressor, first_in_statement: Function | boolean) {
-    const self = this.clone()
+    const self = this.clone() as AST_Conditional
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
     return best(this, self, first_in_statement)

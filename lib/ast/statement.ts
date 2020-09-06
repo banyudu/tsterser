@@ -10,7 +10,7 @@ export default class AST_Statement extends AST_Node {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
   }
 
-  aborts () { return null }
+  aborts (): any { return null }
   negate () {
     throw new Error('Cannot negate a statement')
   }

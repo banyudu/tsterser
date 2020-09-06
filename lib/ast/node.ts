@@ -56,7 +56,7 @@ export default class AST_Node extends AST {
     return this.tail_node() === context
   }
 
-  get_loopcontrol_target (node: AST_Node) {
+  get_loopcontrol_target (node: AST_Node): any {
     return undefined
   }
 
@@ -93,7 +93,7 @@ export default class AST_Node extends AST {
     return basic_negation(this)
   }
 
-  _find_defs (compressor: Compressor, suffix): any {}
+  _find_defs (compressor: Compressor, suffix: string): any {}
   is_string (compressor: Compressor) { return false }
   is_number (compressor: Compressor) { return false }
   is_boolean () { return false }
@@ -113,7 +113,7 @@ export default class AST_Node extends AST {
     return val
   }
 
-  is_constant () {
+  is_constant (): boolean {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
     if (is_ast_constant(this)) {
@@ -151,7 +151,7 @@ export default class AST_Node extends AST {
     return new this.CTOR(this)
   }
 
-  clone (deep?: boolean) {
+  clone (deep?: boolean): AST_Node {
     return this._clone(deep)
   }
 
@@ -169,9 +169,9 @@ export default class AST_Node extends AST {
 
   _children_backwards (push: Function) {}
   _size (info?: any) { return 0 }
-  size (compressor?: Compressor, stack?) {
+  size (compressor?: Compressor, stack?: any) {
     let size = 0
-    walk_parent(this, (node: AST_Node, info) => {
+    walk_parent(this, (node: AST_Node, info: any) => {
       size += node?._size(info) || 0
     }, stack || (compressor?.stack))
 
@@ -204,14 +204,15 @@ export default class AST_Node extends AST {
     if (this.shallow_cmp_props === undefined) {
       throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
     }
-    for (const key in this.shallow_cmp_props) {
+    const self: any = this
+    for (const key in self.shallow_cmp_props) {
       if (this.shallow_cmp_props[key] === 'eq') {
-        if (this[key] !== other[key]) {
+        if (self[key] !== other[key]) {
           return false
         }
       } else if (this.shallow_cmp_props[key] === 'exist') {
         // return `(this.${key} == null ? other.${key} == null : this.${key} === other.${key})`
-        if ((this[key] != null || other[key] != null) && (this[key] == null || this[key] !== other[key])) {
+        if ((self[key] != null || other[key] != null) && (self[key] == null || self[key] !== other[key])) {
           return false
         }
       } else {
@@ -268,10 +269,10 @@ export default class AST_Node extends AST {
     }
   }
 
-  static warnings = []
+  static warnings: any[] = []
   static enable_warnings = false
 
-  static warn (txt, props?) {
+  static warn (txt: string, props?: any) {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }
 

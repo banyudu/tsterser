@@ -2691,7 +2691,7 @@ export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AS
   return val
 }
 
-export function is_lhs_read_only (lhs) {
+export function is_lhs_read_only (lhs: any): boolean {
   if (is_ast_this(lhs)) return true
   if (is_ast_symbol_ref(lhs)) return is_ast_symbol_lambda(lhs.definition?.().orig[0])
   if (is_ast_prop_access(lhs)) {
@@ -2712,7 +2712,7 @@ export function is_func_expr (node: AST_Node | undefined | string): node is AST_
   return is_ast_arrow(node) || is_ast_function(node)
 }
 
-export function is_ref_of (ref, type) {
+export function is_ref_of (ref: any, type: typeof AST_Node) {
   if (!(is_ast_symbol_ref(ref))) return false
   const orig = ref.definition?.().orig
   for (let i = orig.length; --i >= 0;) {
@@ -2720,10 +2720,10 @@ export function is_ref_of (ref, type) {
   }
 }
 
-export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_Node, value, level, immutable?) {
+export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_Node, value: any, level: number, immutable?: undefined): boolean {
   const parent = tw.parent(level)
   const lhs = is_lhs(node, parent)
-  if (lhs) return lhs
+  if (lhs) return lhs as any
   if (!immutable &&
         is_ast_call(parent) &&
         parent.expression === node &&
@@ -2742,7 +2742,7 @@ export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_N
     return is_modified(compressor, tw, obj, obj, level + 2)
   }
   if (is_ast_prop_access(parent) && parent.expression === node) {
-    const prop = read_property(value, parent.property)
+    const prop = read_property(value, (parent as any).property)
     return !immutable && is_modified(compressor, tw, parent, prop, level + 1)
   }
 }
@@ -2759,11 +2759,11 @@ export function can_be_evicted_from_block (node: AST_Node) {
 }
 
 // tell me if a statement aborts
-export function aborts (thing) {
+export function aborts (thing: any) {
   return thing?.aborts()
 }
 
-export function as_statement_array (thing) {
+export function as_statement_array (thing: any) {
   if (thing === null) return []
   if (is_ast_block_statement(thing)) return thing.body
   if (is_ast_empty_statement(thing)) return []
@@ -2771,7 +2771,7 @@ export function as_statement_array (thing) {
   throw new Error("Can't convert thing to statement array")
 }
 
-function loop_body (x) {
+function loop_body (x: any) {
   if (is_ast_iteration_statement(x)) {
     return is_ast_block_statement(x.body) ? x.body : x
   }
@@ -2834,7 +2834,7 @@ export function walk (node: AST_Node, cb: Function, to_visit: AST_Node[] = [node
   return false
 }
 
-export function read_property (obj, key) {
+export function read_property (obj: any, key: any) {
   key = get_value(key)
   if (is_ast_node(key)) return
   let value
@@ -2909,7 +2909,7 @@ export function make_node_from_constant (val: any, orig: AST_Node) {
   }
 }
 
-export function has_break_or_continue (loop, parent?: AST_Node) {
+export function has_break_or_continue (loop: AST_Node, parent?: AST_Node) {
   let found = false
   var tw = new TreeWalker(function (node: AST_Node) {
     if (found || is_ast_scope(node)) return true
@@ -2923,7 +2923,7 @@ export function has_break_or_continue (loop, parent?: AST_Node) {
   return found
 }
 
-export function block_aborts (this) {
+export function block_aborts (this: any) {
   for (let i = 0; i < this.body.length; i++) {
     if (aborts(this.body[i])) {
       return this.body[i]
@@ -2932,7 +2932,7 @@ export function block_aborts (this) {
   return null
 }
 
-export function inline_array_like_spread (self: AST_Node, compressor: Compressor, elements) {
+export function inline_array_like_spread (self: AST_Node, compressor: Compressor, elements: any[]) {
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i]
     if (is_ast_expansion(el)) {
@@ -3026,24 +3026,24 @@ export function print_property_name (key: string, quote: string, output: OutputS
 }
 
 /* #__INLINE__ */
-export const key_size = key =>
+export const key_size = (key: any) =>
   typeof key === 'string' ? key.length : 0
 
 /* #__INLINE__ */
-export const static_size = is_static => is_static ? 7 : 0
+export const static_size = (is_static: boolean) => is_static ? 7 : 0
 
 /* #__INLINE__ */
-export const def_size = (size, def: AST_Definitions) => size + list_overhead(def.definitions)
+export const def_size = (size: number, def: AST_Definitions) => size + list_overhead(def.definitions)
 
 /* #__INLINE__ */
-export const lambda_modifiers = func =>
+export const lambda_modifiers = (func: any) =>
   (func.is_generator ? 1 : 0) + (func.async ? 6 : 0)
 
 export function is_undeclared_ref (node: AST_Node | undefined | string): node is AST_SymbolRef {
   return is_ast_symbol_ref(node) && node.definition?.().undeclared
 }
 
-export function safe_to_flatten (value, compressor: Compressor) {
+export function safe_to_flatten (value: any, compressor: Compressor) {
   if (is_ast_symbol_ref(value)) {
     value = value.fixed_value()
   }
@@ -3053,7 +3053,7 @@ export function safe_to_flatten (value, compressor: Compressor) {
   return is_ast_new(compressor.parent())
 }
 
-export function is_empty (thing) {
+export function is_empty (thing: any) {
   if (thing === null) return true
   if (is_ast_empty_statement(thing)) return true
   if (is_ast_block_statement(thing)) return thing.body.length == 0
@@ -3148,7 +3148,7 @@ export function skip_string (node: AST_Node) {
   }
 }
 
-export function needsParens (this, output: OutputStream) {
+export function needsParens (this: AST_Node, output: OutputStream) {
   const p = output.parent()
   // !(a = false) → true
   if (is_ast_unary(p)) { return true }
@@ -3465,7 +3465,7 @@ export function within_array_or_object_literal (compressor: Compressor) {
   return false
 }
 
-export function is_nullish (node: AST_Node) {
+export function is_nullish (node: AST_Node): boolean {
   let fixed
   return (
     is_ast_null(node) ||
@@ -3475,10 +3475,10 @@ export function is_nullish (node: AST_Node) {
             is_ast_node((fixed = node.definition?.().fixed)) &&
             is_nullish(fixed)
         )
-  )
+  ) as any
 }
 
-export function is_nullish_check (check, check_subject, compressor: Compressor) {
+export function is_nullish_check (check: any, check_subject: AST_Node, compressor: Compressor) {
   if (check_subject.may_throw(compressor)) return false
 
   let nullish_side

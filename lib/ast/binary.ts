@@ -617,7 +617,8 @@ export default class AST_Binary extends AST_Node {
   }
 
   negate (compressor: Compressor, first_in_statement: Function | boolean) {
-    const self = this.clone(); const op = this.operator
+    const self = this.clone() as AST_Binary
+    const op = this.operator
     if (compressor.option('unsafe_comps')) {
       switch (op) {
         case '<=' : self.operator = '>'; return self
