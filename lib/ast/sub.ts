@@ -8,6 +8,7 @@ import { UNUSED, clear_flag } from '../constants'
 import { is_basic_identifier_string } from '../parse'
 import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
+import AST_Dot from './dot'
 
 export default class AST_Sub extends AST_PropAccess {
   _prepend_comments_check (node: AST_Node) {
@@ -23,7 +24,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_Node {
     let expr = this.expression
     let prop: AST_Node = this.property as AST_Node
     let property: any
@@ -44,11 +45,11 @@ export default class AST_Sub extends AST_PropAccess {
         property = '' + key
         if (is_basic_identifier_string(property) &&
                   property.length <= prop.size() + 1) {
-          return make_node('AST_Dot', this, {
+          return (make_node('AST_Dot', this, {
             expression: expr,
             property: property,
             quote: (prop as any).quote
-          }).optimize(compressor)
+          }) as AST_Dot).optimize(compressor)
         }
       }
     }
@@ -165,7 +166,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     const prop = this.property as AST_Node
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
@@ -189,10 +190,10 @@ export default class AST_Sub extends AST_PropAccess {
           property.has_side_effects(compressor)
   }
 
-  walkInner () {
+  walkInner (): AST_Node[] {
     const result = []
     result.push(this.expression)
-    result.push(this.property)
+    result.push(this.property as AST_Node)
     return result
   }
 

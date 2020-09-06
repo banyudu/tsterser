@@ -3348,7 +3348,7 @@ export function recursive_ref (compressor: TreeWalker, def: SymbolDef) {
   return node
 }
 
-export function to_node (value: any, orig: AST_Node) {
+export function to_node (value: any, orig: AST_Node): AST_Node {
   if (is_ast_node(value)) return make_node(value.constructor.name as any, orig, value)
   if (Array.isArray(value)) {
     return make_node('AST_Array', orig, {
@@ -3428,7 +3428,7 @@ export function all_refs_local (this: any, scope: AST_Scope) {
   return result
 }
 
-export function is_iife_call (node: AST_Node) {
+export function is_iife_call (node: AST_Node): boolean {
   // Used to determine whether the node can benefit from negation.
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
