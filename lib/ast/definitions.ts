@@ -1,5 +1,6 @@
 import AST_VarDef from './var-def'
 import AST_Node from './node'
+import AST_SymbolRef from './symbol-ref'
 import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
@@ -26,7 +27,7 @@ export default class AST_Definitions extends AST_Statement {
     const reduce_vars = compressor.option('reduce_vars')
     const assignments = this.definitions.reduce(function (a, def) {
       if (def.value && !(is_ast_destructuring(def.name))) {
-        const name = make_node('AST_SymbolRef', def.name, def.name)
+        const name = make_node('AST_SymbolRef', def.name, def.name) as AST_SymbolRef
         a.push(make_node('AST_Assign', def, {
           operator: '=',
           left: name,

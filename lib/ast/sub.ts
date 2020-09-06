@@ -1,4 +1,5 @@
 import AST_Node from './node'
+import AST_SymbolRef from './symbol-ref'
 import { OutputStream } from '../output'
 import AST_PropAccess, { AST_PropAccess_Props } from './prop-access'
 import Compressor from '../compressor'
@@ -94,8 +95,8 @@ export default class AST_Sub extends AST_PropAccess {
           }
         }
         if (argname) {
-          const sym = make_node('AST_SymbolRef', this, argname)
-          sym.reference({})
+          const sym = make_node('AST_SymbolRef', this, argname) as AST_SymbolRef
+          sym.reference()
           clear_flag(argname, UNUSED)
           return sym
         }
@@ -103,7 +104,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
     if (is_lhs(this, compressor.parent())) return this
     if (key !== prop) {
-      const sub = this.flatten_object(property, compressor)
+      const sub: any = this.flatten_object(property, compressor)
       if (sub) {
         expr = this.expression = sub.expression
         prop = this.property = sub.property

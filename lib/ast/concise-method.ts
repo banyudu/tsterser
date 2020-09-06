@@ -4,6 +4,7 @@ import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 import AST_Lambda from './lambda'
+import { AST_Arrow } from '.'
 
 export default class AST_ConciseMethod extends AST_ObjectProperty {
   async: boolean
@@ -24,7 +25,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
           is_ast_return(this.value.body[0]) &&
           this.value.body[0].value &&
           !this.value.contains_this()) {
-      const arrow = make_node('AST_Arrow', this.value, this.value)
+      const arrow = make_node('AST_Arrow', this.value, this.value) as AST_Arrow
       arrow.async = this.async
       arrow.is_generator = this.is_generator
       return make_node('AST_ObjectKeyVal', this, {

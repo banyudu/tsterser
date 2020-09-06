@@ -43,7 +43,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   _optimize (compressor: Compressor) {
-    let self = this
+    let self: AST_Conditional = this
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
     if (is_ast_sequence(self.condition)) {
@@ -68,7 +68,7 @@ export default class AST_Conditional extends AST_Node {
         condition: negated,
         consequent: self.alternative,
         alternative: self.consequent
-      })
+      }) as AST_Conditional
     }
     const condition = self.condition
     const consequent = self.consequent

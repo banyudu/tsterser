@@ -393,7 +393,7 @@ export const MAP = (function () {
   return MAP
 })()
 
-export function make_node (ctorName: keyof typeof AST_DICT, orig?: AST_Node | AnyObject, props?: AnyObject): any {
+export function make_node (ctorName: keyof typeof AST_DICT, orig?: AST_Node | AnyObject, props?: AnyObject): AST_Node {
   return make_ast_node(AST_DICT[ctorName] as any, orig, props)
 }
 
@@ -1604,7 +1604,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       let sym
       if (is_ast_call(node) ||
                 is_ast_exit(node) &&
-                    (side_effects || is_ast_prop_access(lhs) || may_modify(lhs)) ||
+                    (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
                 is_ast_prop_access(node) &&
                     (side_effects || node.expression.may_throw_on_access(compressor)) ||
                 is_ast_symbol_ref(node) &&
@@ -2135,7 +2135,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           CHANGED = true
           statements[i] = make_node('AST_SimpleStatement', stat, {
             body: stat.value.expression
-          })
+          }) as AST_SimpleStatement
           continue
         }
       }
@@ -2189,7 +2189,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           CHANGED = true
           statements[i] = make_node('AST_SimpleStatement', stat.condition, {
             body: stat.condition
-          })
+          }) as AST_SimpleStatement
           continue
         }
         // ---
@@ -2287,7 +2287,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       if (ab.value) {
         body.push(make_node('AST_SimpleStatement', ab.value, {
           body: ab.value.expression
-        }))
+        }) as AST_SimpleStatement)
       }
       return body
     }
@@ -2360,7 +2360,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     function push_seq () {
       if (!seq.length) return
       const body = make_sequence(seq[0], seq)
-      statements[n++] = make_node('AST_SimpleStatement', body, { body: body })
+      statements[n++] = make_node('AST_SimpleStatement', body, { body: body }) as AST_SimpleStatement
       seq = []
     }
     for (var i = 0, len = statements.length; i < len; i++) {
@@ -2525,7 +2525,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
   }
 
   function join_consecutive_vars (statements: AST_Statement[]) {
-    let defs
+    let defs: any
     for (var i = 0, j = -1, len = statements.length; i < len; i++) {
       var stat = statements[i]
       var prev: any = statements[j]
@@ -3208,9 +3208,9 @@ export function reset_variables (tw: TreeWalker, compressor: Compressor, node: A
   })
 }
 
-export function safe_to_assign (tw: TreeWalker, def: SymbolDef, scope: AST_Scope, value) {
+export function safe_to_assign (tw: TreeWalker, def: SymbolDef, scope: AST_Scope, value: any) {
   if (def.fixed === undefined) return true
-  let def_safe_ids
+  let def_safe_ids: any
   if (def.fixed === null &&
         (def_safe_ids = tw.defs_to_safe_ids.get(def.id))
   ) {
@@ -3252,14 +3252,14 @@ export function ref_once (tw: TreeWalker, compressor: Compressor, def: SymbolDef
         tw.loop_ids.get(def.id) === tw.in_loop
 }
 
-export function is_immutable (value) {
+export function is_immutable (value: any) {
   if (!value) return false
   return value.is_constant() ||
         is_ast_lambda(value) ||
         is_ast_this(value)
 }
 
-export function mark_escaped (tw: TreeWalker, d, scope: AST_Scope, node: AST_Node, value, level, depth: number) {
+export function mark_escaped (tw: TreeWalker, d: any, scope: AST_Scope, node: AST_Node, value: any, level: number, depth: number) {
   const parent = tw.parent(level)
   if (value) {
     if (value.is_constant()) return
@@ -3294,7 +3294,7 @@ export function mark_escaped (tw: TreeWalker, d, scope: AST_Scope, node: AST_Nod
   d.direct_access = true
 }
 
-export function mark_lambda (this, tw: TreeWalker, descend: Function, compressor: Compressor) {
+export function mark_lambda (this: any, tw: TreeWalker, descend: Function, compressor: Compressor) {
   clear_flag(this, INLINED)
   push(tw)
   reset_variables(tw, compressor, this)
@@ -3303,17 +3303,17 @@ export function mark_lambda (this, tw: TreeWalker, descend: Function, compressor
     pop(tw)
     return
   }
-  let iife
+  let iife: any
   if (!this.name &&
         is_ast_call((iife = tw.parent())) &&
         iife.expression === this &&
-        !iife.args.some(arg => is_ast_expansion(arg)) &&
-        this.argnames.every(arg_name => is_ast_symbol(arg_name))
+        !iife.args.some((arg: any) => is_ast_expansion(arg)) &&
+        this.argnames.every((arg_name: any) => is_ast_symbol(arg_name))
   ) {
     // Virtually turn IIFE parameters into variable definitions:
     //   (function(a,b) {...})(c,d) => (function() {var a=c,b=d; ...})()
     // So existing transformation rules can work on them.
-    this.argnames.forEach((arg, i) => {
+    this.argnames.forEach((arg: any, i: number) => {
       if (!arg.definition) return
       const d = arg.definition?.()
       // Avoid setting fixed when there's more than one origin for a variable value
@@ -3348,7 +3348,7 @@ export function recursive_ref (compressor: TreeWalker, def: SymbolDef) {
   return node
 }
 
-export function to_node (value, orig) {
+export function to_node (value: any, orig: AST_Node) {
   if (is_ast_node(value)) return make_node(value.constructor.name as any, orig, value)
   if (Array.isArray(value)) {
     return make_node('AST_Array', orig, {
@@ -3375,14 +3375,14 @@ export function to_node (value, orig) {
 }
 
 // method to negate an expression
-export function basic_negation (exp) {
+export function basic_negation (exp: AST_Node) {
   return make_node('AST_UnaryPrefix', exp, {
     operator: '!',
     expression: exp
   })
 }
 
-export function best (orig, alt, first_in_statement: Function | boolean) {
+export function best (orig: AST_Node, alt: AST_Node, first_in_statement: Function | boolean) {
   const negated = basic_negation(orig)
   if (first_in_statement) {
     const stat = make_node('AST_SimpleStatement', alt, {
@@ -3395,7 +3395,7 @@ export function best (orig, alt, first_in_statement: Function | boolean) {
 
 /* -----[ boolean/negation helpers ]----- */
 // determine if expression is constant
-export function all_refs_local (this, scope: AST_Scope) {
+export function all_refs_local (this: any, scope: AST_Scope) {
   let result: any = true
   walk(this, (node: AST_Node) => {
     if (is_ast_symbol_ref(node)) {

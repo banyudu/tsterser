@@ -68,7 +68,7 @@ export default class AST_Call extends AST_Node {
     const exp = self.expression
     let fn = exp
     inline_array_like_spread(self, compressor, self.args)
-    const simple_args = self.args.every((arg) =>
+    const simple_args = self.args.every((arg: any) =>
       !(is_ast_expansion(arg))
     )
     if (compressor.option('reduce_vars') &&
@@ -189,7 +189,7 @@ export default class AST_Call extends AST_Node {
             var params: any[] = []
             if (self.args.length >= 1 &&
                   self.args.length <= 2 &&
-                  self.args.every((arg) => {
+                  self.args.every((arg: any) => {
                     const value = arg.evaluate(compressor)
                     params.push(value)
                     return arg !== value
@@ -374,7 +374,7 @@ export default class AST_Call extends AST_Node {
           base54.reset()
           ast.compute_char_frequency(mangle)
           ast.mangle_names(mangle)
-          let fun
+          let fun: any
           walk(ast, (node: AST_Node) => {
             if (is_func_expr(node)) {
               fun = node
@@ -385,7 +385,7 @@ export default class AST_Call extends AST_Node {
           blockStateMentCodeGen.call(fun, fun, code2)
           self.args = [
             make_node('AST_String', self, {
-              value: fun.argnames.map(function (arg) {
+              value: fun.argnames.map(function (arg: any) {
                 return arg.print_to_string()
               }).join(',')
             }),

@@ -7,6 +7,7 @@ import TreeTransformer from '../tree-transformer'
 import TreeWalker from '../tree-walker'
 import SymbolDef from '../symbol-def'
 import AST_SymbolBlockDeclaration from './symbol-block-declaration'
+import AST_Var from './var'
 import { js_error } from '../parse'
 
 import {
@@ -38,6 +39,7 @@ import {
   MASK_EXPORT_DONT_MANGLE,
   WRITE_ONLY
 } from '../constants'
+import { AST_SymbolRef } from '.'
 
 function map_add (map: Map<string | number, any[]>, key: string | number, value: any) {
   if (map.has(key)) {
@@ -569,7 +571,7 @@ export default class AST_Scope extends AST_Block {
       self = self.transform(tt)
       if (vars_found > 0) {
         // collect only vars which don't show up in self's arguments list
-        let defs: any[] = []
+        let defs: any = []
         const is_lambda = is_ast_lambda(self)
         const args_as_names = is_lambda ? (self as any).args_as_names() : null
         vars.forEach((def: any, name) => {
@@ -628,7 +630,7 @@ export default class AST_Scope extends AST_Block {
           }
           defs = make_node('AST_Var', self, {
             definitions: defs
-          })
+          }) as AST_Var
           hoisted.push(defs)
         }
       }
@@ -691,8 +693,8 @@ export default class AST_Scope extends AST_Block {
             name: def.name,
             scope: node.expression.scope,
             thedef: def
-          })
-          sym.reference({})
+          }) as AST_SymbolRef
+          sym.reference()
           return sym
         }
       }

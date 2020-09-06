@@ -16,7 +16,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   _optimize (compressor: Compressor) {
-    let self = this
+    let self: AST_If = this
     if (is_empty(self.alternative)) self.alternative = null
 
     if (!compressor.option('conditionals')) return self
@@ -139,7 +139,7 @@ export default class AST_If extends AST_StatementWithBody {
         }),
         body: self.body.body,
         alternative: null
-      })
+      }) as AST_If
     }
     if (aborts(self.body)) {
       if (self.alternative) {

@@ -2006,7 +2006,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function vardefs (no_in, kind) {
+  function vardefs (no_in: boolean, kind: string) {
     const a: any[] = []
     let def
     for (;;) {

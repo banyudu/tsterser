@@ -223,7 +223,7 @@ function if_break_in_loop (self: AST_For, compressor: Compressor) {
         body: rest
       }).transform(compressor)
     }
-    self = if_break_in_loop(self, compressor)
+    self = if_break_in_loop(self, compressor) as any
   }
 }
 

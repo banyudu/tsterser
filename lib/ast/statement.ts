@@ -11,7 +11,7 @@ export default class AST_Statement extends AST_Node {
   }
 
   aborts (): any { return null }
-  negate () {
+  negate (): any {
     throw new Error('Cannot negate a statement')
   }
 

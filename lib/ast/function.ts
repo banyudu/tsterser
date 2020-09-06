@@ -64,7 +64,7 @@ export default class AST_Function extends AST_Lambda {
     const tricky_name = tricky_def ? tricky_def.mangled_name || tricky_def.name : null
 
     while (true) {
-      const name = next_mangled(this, options)
+      const name = next_mangled(this as any, options)
       if (!tricky_name || tricky_name != name) { return name }
     }
   }
