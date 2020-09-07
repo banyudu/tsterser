@@ -30,7 +30,7 @@ import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from
 
 export default class AST_Assign extends AST_Binary {
   to_fun_args (croak: Function): any {
-    const insert_default = (ex) => {
+    const insert_default = (ex: any) => {
       if (this.right) {
         return new AST_DefaultAssign({
           start: ex.start,
@@ -89,7 +89,7 @@ export default class AST_Assign extends AST_Binary {
     }
     return self
 
-    function in_try (level, node: AST_Node) {
+    function in_try (level: number, node: AST_Node) {
       const right = self.right
       self.right = make_node('AST_Null', right)
       const may_throw = node.may_throw(compressor)

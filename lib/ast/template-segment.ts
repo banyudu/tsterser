@@ -7,7 +7,7 @@ export default class AST_TemplateSegment extends AST_Node {
   value: any
   raw: any
 
-  drop_side_effect_free () { return null }
+  drop_side_effect_free (): any { return null }
   has_side_effects (compressor: Compressor) { return false }
   shallow_cmp_props: any = { value: 'eq' }
   _size (): number {

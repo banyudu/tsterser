@@ -1,4 +1,5 @@
 import AST_Atom, { AST_Atom_Props } from './atom'
+import { MozillaAst } from '../types'
 export default class AST_Hole extends AST_Atom {
   to_fun_args (croak: Function): any {
     return this
@@ -6,7 +7,7 @@ export default class AST_Hole extends AST_Atom {
 
   value = (function () {}())
 
-  to_mozilla_ast = function To_Moz_ArrayHole () { return null }
+  to_mozilla_ast (): MozillaAst { return null }
 
   _size = () => 0 // comma is taken into account
 

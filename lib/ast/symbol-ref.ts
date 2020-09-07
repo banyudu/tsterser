@@ -229,7 +229,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return value
   }
 
-  _find_defs (compressor: Compressor, suffix: string) {
+  _find_defs (compressor: Compressor, suffix: string): any {
     if (!this.global()) return
     const defines = compressor.option('global_defs') as AnyObject
     const name = this.name + suffix

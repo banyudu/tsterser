@@ -355,14 +355,14 @@ export default class AST_Call extends AST_Node {
           body: []
         }).optimize(compressor)
       }
-      if (self.args.every((x) =>
+      if (self.args.every((x: any) =>
         is_ast_string(x)
       )) {
         // quite a corner-case, but we can handle it:
         //   https://github.com/mishoo/UglifyJS2/issues/203
         // if the code argument is a constant, then we can minify it.
         try {
-          const code = 'n(function(' + self.args.slice(0, -1).map(function (arg) {
+          const code = 'n(function(' + self.args.slice(0, -1).map(function (arg: any) {
             return arg.value
           }).join(',') + '){' + self.args[self.args.length - 1].value + '})'
           let ast = parse(code)
@@ -449,10 +449,12 @@ export default class AST_Call extends AST_Node {
       }
     }
     if (can_inline) {
-      var scope; var in_loop; var level = -1
-      let def
-      let returned_value
-      let nearest_scope
+      var scope: any
+      var in_loop: any
+      var level = -1
+      let def: any
+      let returned_value: any
+      let nearest_scope: any
       if (simple_args &&
               !fn.uses_arguments &&
               !fn.pinned() &&
@@ -506,7 +508,7 @@ export default class AST_Call extends AST_Node {
     }
     return self
 
-    function return_value (stat) {
+    function return_value (stat: any) {
       if (!stat) return make_node('AST_Undefined', self)
       if (is_ast_return(stat)) {
         if (!stat.value) return make_node('AST_Undefined', self)
@@ -520,7 +522,7 @@ export default class AST_Call extends AST_Node {
       }
     }
 
-    function can_flatten_body (stat) {
+    function can_flatten_body (stat: any) {
       const body = fn.body
       const len = body.length
       if (compressor.option('inline') < 3) {
@@ -544,7 +546,7 @@ export default class AST_Call extends AST_Node {
       return return_value(stat)
     }
 
-    function can_inject_args (block_scoped, safe_to_inject) {
+    function can_inject_args (block_scoped: any, safe_to_inject: boolean) {
       for (let i = 0, len = fn.argnames.length; i < len; i++) {
         const arg = fn.argnames[i]
         if (is_ast_default_assign(arg)) {
@@ -610,7 +612,7 @@ export default class AST_Call extends AST_Node {
       return true
     }
 
-    function can_inject_vars (block_scoped, safe_to_inject) {
+    function can_inject_vars (block_scoped: any, safe_to_inject: boolean) {
       const len = fn.body.length
       for (let i = 0; i < len; i++) {
         const stat = fn.body[i]
@@ -637,7 +639,7 @@ export default class AST_Call extends AST_Node {
         if (scope.is_block_scope() && scope.block_scope) {
           // TODO this is sometimes undefined during compression.
           // But it should always have a value!
-          scope.block_scope.variables.forEach(function (variable) {
+          scope.block_scope.variables.forEach(function (variable: any) {
             block_scoped.add(variable.name)
           })
         }
@@ -661,7 +663,7 @@ export default class AST_Call extends AST_Node {
       return !in_loop || in_loop.length == 0 || !is_reachable(fn, in_loop)
     }
 
-    function append_var (decls, expressions: AST_Node[], name, value) {
+    function append_var (decls: any[], expressions: AST_Node[], name: any, value: any) {
       const def = name.definition?.()
       scope.variables.set(name.name, def)
       scope.enclosed.push(def)
@@ -683,7 +685,7 @@ export default class AST_Call extends AST_Node {
       }
     }
 
-    function flatten_args (decls, expressions: AST_Node[]) {
+    function flatten_args (decls: any, expressions: AST_Node[]) {
       const len = fn.argnames.length
       for (var i = self.args.length; --i >= len;) {
         expressions.push(self.args[i])
@@ -704,7 +706,7 @@ export default class AST_Call extends AST_Node {
       expressions.reverse()
     }
 
-    function flatten_vars (decls, expressions: AST_Node[]) {
+    function flatten_vars (decls: any, expressions: AST_Node[]) {
       let pos = expressions.length
       for (let i = 0, lines = fn.body.length; i < lines; i++) {
         const stat = fn.body[i]
@@ -713,7 +715,7 @@ export default class AST_Call extends AST_Node {
           const var_def = stat.definitions[j]
           var name = var_def.name
           append_var(decls, expressions, name, var_def.value)
-          if (in_loop && fn.argnames.every((argname) =>
+          if (in_loop && fn.argnames.every((argname: any) =>
             argname.name != name.name
           )) {
             const def = fn.variables.get(name.name)
@@ -729,7 +731,7 @@ export default class AST_Call extends AST_Node {
       }
     }
 
-    function flatten_fn (returned_value) {
+    function flatten_fn (returned_value: any) {
       const decls: any[] = []
       const expressions: any[] = []
       flatten_args(decls, expressions)
@@ -745,7 +747,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
         let exprs = this.args.slice()
@@ -808,7 +810,7 @@ export default class AST_Call extends AST_Node {
         }
         const static_fn = static_fns.get(e.name)
         if (!static_fn || !static_fn.has(key)) return this
-        val = global_objs[e.name]
+        val = (global_objs as any)[e.name]
       } else {
         val = e._eval(compressor, depth + 1)
         if (val === e || !val) return this

@@ -48,7 +48,7 @@ export default class AST_Binary extends AST_Node {
               !self.left.has_side_effects(compressor) &&
                   !self.right.has_side_effects(compressor)
     }
-    function reverse (op?) {
+    function reverse (op?: any) {
       if (reversible()) {
         if (op) self.operator = op
         const tmp = self.left
@@ -546,7 +546,7 @@ export default class AST_Binary extends AST_Node {
     return self
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const right = this.right.drop_side_effect_free(compressor)
     if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
     if (lazy_op.has(this.operator)) {
@@ -617,7 +617,7 @@ export default class AST_Binary extends AST_Node {
           this.right.is_constant_expression()
   }
 
-  negate (compressor: Compressor, first_in_statement: Function | boolean) {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     const self = this.clone() as AST_Binary
     const op = this.operator
     if (compressor.option('unsafe_comps')) {
@@ -729,7 +729,7 @@ export default class AST_Binary extends AST_Node {
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _size (info): number {
+  _size (info: any): number {
     if (this.operator === 'in') return 4
 
     let size = this.operator.length
