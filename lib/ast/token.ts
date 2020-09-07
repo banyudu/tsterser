@@ -14,8 +14,8 @@ export default class AST_Token extends AST {
   endpos: number | null
   endline: number | null
   endcol: number | null
-  comments_before?: Comment[]
-  comments_after?: Comment[]
+  comments_before: Comment[]
+  comments_after: Comment[]
   end?: any
 
   static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
@@ -36,8 +36,8 @@ export default class AST_Token extends AST {
       this.endline = args.endline
       this.endpos = args.endpos
       this.nlb = args.nlb
-      this.comments_before = args.comments_before
-      this.comments_after = args.comments_after
+      this.comments_before = args.comments_before ?? []
+      this.comments_after = args.comments_after ?? []
       this.file = args.file
       this.raw = args.raw
       this.quote = args.quote

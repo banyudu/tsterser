@@ -39,6 +39,6 @@ export default class AST_String extends AST_Constant {
 }
 
 export interface AST_String_Props extends AST_Constant_Props {
-  value?: string | undefined
-  quote?: string | undefined
+  value: string
+  quote: string
 }

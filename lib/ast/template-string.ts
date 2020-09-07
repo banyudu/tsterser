@@ -165,5 +165,5 @@ export default class AST_TemplateString extends AST_Node {
 }
 
 export interface AST_TemplateString_Props extends AST_Node_Props {
-  segments?: AST_TemplateSegment[] | undefined
+  segments: AST_TemplateSegment[]
 }

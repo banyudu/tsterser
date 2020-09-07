@@ -101,7 +101,7 @@ export function reserve_quoted_keys (ast: AST_Node, reserved: string[]) {
     } else if (is_ast_object_property(node) && node.quote) {
       add((node.key as any).name)
     } else if (is_ast_sub(node)) {
-      addStrings(node.property as any, add)
+      addStrings(node.property, add)
     }
   }))
 }
@@ -171,7 +171,6 @@ export function mangle_properties (ast: AST_Node, options: any) {
     } else if (is_ast_dot(node)) {
       let declared = !!options.undeclared
       if (!declared) {
-        // TODO: check type
         let root: any = node
         while (root.expression) {
           root = root.expression
@@ -180,11 +179,11 @@ export function mangle_properties (ast: AST_Node, options: any) {
       }
       if (declared &&
                 (!keep_quoted_strict || !node.quote)) {
-        add(node.property as any) // TODO: check type
+        add(node.property)
       }
     } else if (is_ast_sub(node)) {
       if (!keep_quoted_strict) {
-        addStrings(node.property as any, add)
+        addStrings(node.property, add)
       }
     } else if (is_ast_call(node) &&
             node.expression.print_to_string() == 'Object.defineProperty') {
@@ -206,10 +205,10 @@ export function mangle_properties (ast: AST_Node, options: any) {
       }
     } else if (is_ast_dot(node)) {
       if (!keep_quoted_strict || !node.quote) {
-        node.property = mangle(node.property as any) // TODO: check type
+        node.property = mangle(node.property)
       }
     } else if (!options.keep_quoted && is_ast_sub(node)) {
-      node.property = mangleStrings(node.property as any) // TODO: check type
+      node.property = mangleStrings(node.property)
     } else if (is_ast_call(node) &&
             node.expression.print_to_string() == 'Object.defineProperty') {
       node.args[1] = mangleStrings(node.args[1])

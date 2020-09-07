@@ -3658,9 +3658,9 @@ export function print (this: AST_Node, output: OutputStream, force_parens?: bool
       base54.consider(this.name, -1)
     } else if (printMangleOptions.properties) {
       if (is_ast_dot(this)) {
-        base54.consider(this.property as any, -1)
+        base54.consider(this.property, -1)
       } else if (is_ast_sub(this)) {
-        skip_string(this.property as any)
+        skip_string(this.property)
       }
     }
   }
@@ -3755,7 +3755,7 @@ export const base54 = (() => {
     }
   }
   function compare (a: string, b: string) {
-    return (frequency.get(b)) - (frequency.get(a))
+    return (frequency.get(b) ?? NaN) - (frequency.get(a) ?? NaN)
   }
   base54.sort = function () {
     chars = mergeSort(leading, compare).concat(mergeSort(digits, compare))
@@ -3783,7 +3783,7 @@ export function in_function_defs (id: any) {
 const shallow_cmp = (node1: AST_Node | null, node2: AST_Node | null) => {
   return (
     node1 === null && node2 === null ||
-        node1.TYPE === node2.TYPE && node1.shallow_cmp(node2)
+        node1?.TYPE === node2?.TYPE && node1?.shallow_cmp(node2)
   )
 }
 

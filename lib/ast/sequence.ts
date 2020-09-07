@@ -195,5 +195,5 @@ export default class AST_Sequence extends AST_Node {
 }
 
 export interface AST_Sequence_Props extends AST_Node_Props {
-  expressions?: AST_Node[] | undefined
+  expressions: AST_Node[]
 }
