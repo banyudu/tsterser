@@ -9,6 +9,7 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {
   quote: string
+  property: string
 
   _prepend_comments_check (node: AST_Node) {
     return this.expression === node
@@ -93,7 +94,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   _find_defs (compressor: Compressor, suffix: string) {
-    return this.expression._find_defs(compressor, '.' + (this.property as any) + suffix)
+    return this.expression._find_defs(compressor, '.' + this.property + suffix)
   }
 
   _dot_throw (compressor: Compressor) {
@@ -133,7 +134,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   _size (): number {
-    return (this.property as any).length + 1
+    return this.property.length + 1
   }
 
   shallow_cmp_props: any = { property: 'eq' }
@@ -144,7 +145,7 @@ export default class AST_Dot extends AST_PropAccess {
   _codegen (output: OutputStream) {
     const expr = this.expression
     expr.print(output)
-    const prop: string = this.property as string
+    const prop: string = this.property
     const print_computed = RESERVED_WORDS.has(prop)
       ? output.option('ie8')
       : !is_identifier_string(prop, (output.option('ecma') as unknown as number) >= 2015)
@@ -180,4 +181,5 @@ export default class AST_Dot extends AST_PropAccess {
 
 export interface AST_Dot_Props extends AST_PropAccess_Props {
   quote?: string | undefined
+  property: string
 }

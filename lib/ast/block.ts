@@ -49,7 +49,7 @@ export default class AST_Block extends AST_Statement {
     while (i--) push(this.body[i])
   }
 
-  clone (deep?: boolean) {
+  clone (deep?: boolean): AST_Node {
     return clone_block_scope.call(this, deep)
   }
 

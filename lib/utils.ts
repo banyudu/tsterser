@@ -2656,7 +2656,7 @@ export function walk_body (node: AST_Node, visitor: TreeWalker) {
   }
 }
 
-export function clone_block_scope (this: AST_Node, deep: boolean) {
+export function clone_block_scope (this: AST_Node, deep: boolean): AST_Node {
   const clone = this._clone(deep)
   if (this.block_scope) {
     // TODO this is sometimes undefined during compression.

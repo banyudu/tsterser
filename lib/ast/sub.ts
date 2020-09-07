@@ -11,6 +11,8 @@ import { MozillaAst } from '../types'
 import AST_Dot from './dot'
 
 export default class AST_Sub extends AST_PropAccess {
+  property: AST_Node
+
   _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
@@ -20,13 +22,13 @@ export default class AST_Sub extends AST_PropAccess {
       type: 'MemberExpression',
       object: to_moz(this.expression),
       computed: true,
-      property: to_moz(this.property as any)
+      property: to_moz(this.property)
     }
   }
 
   _optimize (compressor: Compressor): AST_Node {
     let expr = this.expression
-    let prop: AST_Node = this.property as AST_Node
+    let prop: AST_Node = this.property
     let property: any
     if (compressor.option('properties')) {
       var key = prop.evaluate(compressor)
@@ -167,7 +169,7 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
-    const prop = this.property as AST_Node
+    const prop = this.property
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
     if (!expression) return prop.drop_side_effect_free(compressor, first_in_statement)
@@ -177,14 +179,14 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   may_throw (compressor: Compressor) {
-    const property = this.property as AST_Node
+    const property = this.property
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
           property.may_throw(compressor)
   }
 
   has_side_effects (compressor: Compressor) {
-    const property = this.property as AST_Node
+    const property = this.property
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
           property.has_side_effects(compressor)
@@ -193,7 +195,7 @@ export default class AST_Sub extends AST_PropAccess {
   walkInner (): AST_Node[] {
     const result: AST_Node[] = []
     result.push(this.expression)
-    result.push(this.property as AST_Node)
+    result.push(this.property)
     return result
   }
 
@@ -205,14 +207,13 @@ export default class AST_Sub extends AST_PropAccess {
   _size = () => 2
   _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
-    this.property = (this.property as any).transform(tw)
+    this.property = this.property.transform(tw)
   }
 
   _codegen (output: OutputStream) {
-    const property = this.property as AST_Node
     this.expression.print(output)
     output.print('[')
-    property.print(output)
+    this.property.print(output)
     output.print(']')
   }
 
@@ -222,4 +223,5 @@ export default class AST_Sub extends AST_PropAccess {
 }
 
 export interface AST_Sub_Props extends AST_PropAccess_Props {
+  property: AST_Node
 }
