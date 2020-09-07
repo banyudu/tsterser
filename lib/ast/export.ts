@@ -13,7 +13,7 @@ export default class AST_Export extends AST_Statement {
   module_name: AST_String | undefined
   exported_value: AST_Node | undefined
   exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
-  exported_names: Array<AST_NameMapping | undefined>
+  exported_names: AST_NameMapping[]
 
   walkInner () {
     const result: AST_Node[] = []
@@ -23,11 +23,9 @@ export default class AST_Export extends AST_Statement {
     if (this.exported_value) {
       result.push(this.exported_value)
     }
-    if (this.exported_names) {
-      this.exported_names.forEach(function (name_export) {
-        result.push(name_export)
-      })
-    }
+    this.exported_names.forEach(function (name_export) {
+      result.push(name_export)
+    })
     if (this.module_name) {
       result.push(this.module_name)
     }
@@ -36,10 +34,8 @@ export default class AST_Export extends AST_Statement {
 
   _children_backwards (push: Function) {
     if (this.module_name) push(this.module_name)
-    if (this.exported_names) {
-      let i = this.exported_names.length
-      while (i--) push(this.exported_names[i])
-    }
+    let i = this.exported_names.length
+    while (i--) push(this.exported_names[i])
     if (this.exported_value) push(this.exported_value)
     if (this.exported_definition) push(this.exported_definition)
   }
@@ -51,7 +47,7 @@ export default class AST_Export extends AST_Statement {
       size += this.exported_value._size()
     }
 
-    if (this.exported_names) {
+    if (this.exported_names.length > 0) {
       // Braces and commas
       size += 2 + list_overhead(this.exported_names)
     }
@@ -75,12 +71,12 @@ export default class AST_Export extends AST_Statement {
   _transform (tw: TreeTransformer) {
     if (this.exported_definition) this.exported_definition = this.exported_definition.transform(tw)
     if (this.exported_value) this.exported_value = this.exported_value.transform(tw)
-    if (this.exported_names) do_list(this.exported_names, tw)
+    if (this.exported_names.length > 0) do_list(this.exported_names, tw)
     if (this.module_name) this.module_name = this.module_name.transform(tw)
   }
 
   _to_mozilla_ast (parent: AST_Node): MozillaAst {
-    if (this.exported_names) {
+    if (this.exported_names.length > 0) {
       if (this.exported_names[0].name.name === '*') {
         return {
           type: 'ExportAllDeclaration',
@@ -102,7 +98,7 @@ export default class AST_Export extends AST_Statement {
     }
     return {
       type: this.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
-      declaration: to_moz(this.exported_value || this.exported_definition)
+      declaration: to_moz(this.exported_value ?? this.exported_definition)
     }
   }
 
@@ -113,7 +109,7 @@ export default class AST_Export extends AST_Statement {
       output.print('default')
       output.space()
     }
-    if (this.exported_names) {
+    if (this.exported_names.length > 0) {
       if (this.exported_names.length === 1 && this.exported_names[0].name.name === '*') {
         this.exported_names[0].print(output)
       } else {
@@ -144,8 +140,7 @@ export default class AST_Export extends AST_Statement {
                 !(is_ast_defun(this.exported_value) ||
                     is_ast_function(this.exported_value) ||
                     is_ast_class(this.exported_value)) ||
-            this.module_name ||
-            this.exported_names
+            this.module_name != undefined || this.exported_names.length > 0
     ) {
       output.semicolon()
     }
@@ -165,8 +160,8 @@ export default class AST_Export extends AST_Statement {
     super(args)
     this.exported_definition = args.exported_definition
     this.exported_value = args.exported_value
-    this.is_default = args.is_default
-    this.exported_names = args.exported_names
+    this.is_default = args.is_default ?? false
+    this.exported_names = args.exported_names ?? []
     this.module_name = args.module_name
   }
 }
@@ -174,7 +169,7 @@ export default class AST_Export extends AST_Statement {
 export interface AST_Export_Props extends AST_Statement_Props {
   exported_definition?: AST_Defun|AST_Definitions|AST_DefClass | undefined | undefined
   exported_value?: AST_Node | undefined | undefined
-  is_default?: boolean | undefined
-  exported_names?: Array<AST_NameMapping | undefined> | undefined
+  is_default?: boolean
+  exported_names?: AST_NameMapping[] | null
   module_name?: AST_String | undefined | undefined
 }
