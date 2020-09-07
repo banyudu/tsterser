@@ -117,7 +117,7 @@ export default class AST_Try extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
-  constructor (args?: AST_Try_Props) {
+  constructor (args: AST_Try_Props) {
     super(args)
     this.bcatch = args.bcatch
     this.bfinally = args.bfinally

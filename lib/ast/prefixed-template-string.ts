@@ -63,7 +63,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
-  constructor (args?: AST_PrefixedTemplateString_Props) {
+  constructor (args: AST_PrefixedTemplateString_Props) {
     super(args)
     this.template_string = args.template_string
     this.prefix = args.prefix

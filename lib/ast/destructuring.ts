@@ -129,7 +129,7 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
-  constructor (args?: AST_Destructuring_Props) {
+  constructor (args: AST_Destructuring_Props) {
     super(args)
     this.names = args.names
     this.is_array = args.is_array

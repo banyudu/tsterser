@@ -36,7 +36,7 @@ export default class AST_LoopControl extends AST_Jump {
   }
 
   static PROPS = AST_Jump.PROPS.concat(['label'])
-  constructor (args?: AST_LoopControl_Props) {
+  constructor (args: AST_LoopControl_Props) {
     super(args)
     this.label = args.label
   }

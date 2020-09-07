@@ -68,7 +68,7 @@ export default class AST_RegExp extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value'])
 
-  constructor (args?: AST_RegExp_Props) {
+  constructor (args: AST_RegExp_Props) {
     super(args)
     this.value = args.value
   }

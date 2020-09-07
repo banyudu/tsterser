@@ -629,7 +629,7 @@ var MOZ_TO_ME: any = {
       end: my_end_token(M),
       names: M.elements.map(function (elm) {
         if (elm === null) {
-          return new AST_Hole()
+          return new AST_Hole({})
         }
         return from_moz(elm)
       }),
@@ -834,7 +834,7 @@ var MOZ_TO_ME: any = {
       start: my_start_token(M),
       end: my_end_token(M),
       elements: M.elements.map(function (elem) {
-        return elem === null ? new AST_Hole() : from_moz(elem)
+        return elem === null ? new AST_Hole({}) : from_moz(elem)
       })
     })
   },

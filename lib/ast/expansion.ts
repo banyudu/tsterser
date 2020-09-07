@@ -55,7 +55,7 @@ export default class AST_Expansion extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?: AST_Expansion_Props) {
+  constructor (args: AST_Expansion_Props) {
     super(args)
     this.expression = args.expression
   }

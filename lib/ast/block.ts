@@ -76,7 +76,7 @@ export default class AST_Block extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
-  constructor (args?: AST_Block_Props) {
+  constructor (args: AST_Block_Props) {
     super(args)
     this.body = args.body
     this.block_scope = args.block_scope

@@ -18,7 +18,7 @@ export default class AST_ForOf extends AST_ForIn {
   static documentation = 'A `for ... of` statement'
 
   static PROPS = AST_ForIn.PROPS.concat(['await'])
-  constructor (args?: AST_ForOf_Props) {
+  constructor (args: AST_ForOf_Props) {
     super(args)
     this.await = args.await
   }

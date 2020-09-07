@@ -16,7 +16,7 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
   static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 
   static PROPS = AST_Symbol.PROPS.concat(['init'])
-  constructor (args?: AST_SymbolDeclaration_Props) {
+  constructor (args: AST_SymbolDeclaration_Props) {
     super(args)
     this.init = args.init
   }

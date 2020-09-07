@@ -46,7 +46,7 @@ export default class AST_Exit extends AST_Jump {
   }
 
   static PROPS = AST_Jump.PROPS.concat(['value'])
-  constructor (args?: AST_Exit_Props) {
+  constructor (args: AST_Exit_Props) {
     super(args)
     this.value = args.value
   }

@@ -128,7 +128,7 @@ export default class AST_PropAccess extends AST_Node {
   } as any
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
-  constructor (args?: AST_PropAccess_Props) {
+  constructor (args: AST_PropAccess_Props) {
     super(args)
     this.expression = args.expression
     this.property = args.property

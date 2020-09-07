@@ -121,7 +121,7 @@ export default class AST_Array extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args?: AST_Array_Props) { // eslint-disable-line
+  constructor (args: AST_Array_Props) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }

@@ -48,7 +48,7 @@ export default class AST_Directive extends AST_Statement {
   } as any
 
   static PROPS = AST_Statement.PROPS.concat(['value', 'quote'])
-  constructor (args?: AST_Directive_Props) {
+  constructor (args: AST_Directive_Props) {
     super(args)
     this.value = args.value
     this.quote = args.quote

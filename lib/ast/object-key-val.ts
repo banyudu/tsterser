@@ -141,7 +141,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   }
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
-  constructor (args?: AST_ObjectKeyVal_Props) {
+  constructor (args: AST_ObjectKeyVal_Props) {
     super(args)
     this.quote = args.quote
   }

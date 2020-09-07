@@ -99,7 +99,7 @@ export default class AST_VarDef extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['name', 'value'])
-  constructor (args?: AST_VarDef_Props) {
+  constructor (args: AST_VarDef_Props) {
     super(args)
     this.name = args.name
     this.value = args.value

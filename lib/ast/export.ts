@@ -161,7 +161,7 @@ export default class AST_Export extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
-  constructor (args?: AST_Export_Props) {
+  constructor (args: AST_Export_Props) {
     super(args)
     this.exported_definition = args.exported_definition
     this.exported_value = args.exported_value

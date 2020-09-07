@@ -430,7 +430,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
-  constructor (args?: AST_Conditional_Props) {
+  constructor (args: AST_Conditional_Props) {
     super(args)
     this.condition = args.condition
     this.consequent = args.consequent

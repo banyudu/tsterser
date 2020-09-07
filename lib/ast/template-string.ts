@@ -158,7 +158,7 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['segments'])
-  constructor (args?: AST_TemplateString_Props) {
+  constructor (args: AST_TemplateString_Props) {
     super(args)
     this.segments = args.segments
   }

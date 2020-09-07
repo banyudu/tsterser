@@ -80,7 +80,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   } as any
 
   static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
-  constructor (args?: AST_ForIn_Props) {
+  constructor (args: AST_ForIn_Props) {
     super(args)
     this.init = args.init
     this.object = args.object

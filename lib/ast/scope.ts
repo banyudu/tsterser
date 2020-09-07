@@ -1119,7 +1119,7 @@ export default class AST_Scope extends AST_Block {
   } as any
 
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
-  constructor (args?: AST_Scope_Props) {
+  constructor (args: AST_Scope_Props) {
     super(args)
     this.variables = args.variables
     this.functions = args.functions

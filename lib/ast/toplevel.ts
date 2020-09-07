@@ -363,7 +363,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['globals'])
-  constructor (args?: AST_Toplevel_Props) {
+  constructor (args: AST_Toplevel_Props) {
     super(args)
     this.globals = args.globals
   }

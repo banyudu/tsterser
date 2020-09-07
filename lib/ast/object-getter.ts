@@ -89,7 +89,7 @@ export default class AST_ObjectGetter extends AST_ObjectProperty {
   static documentation = 'An object getter property'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
-  constructor (args?: AST_ObjectGetter_Props) {
+  constructor (args: AST_ObjectGetter_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static

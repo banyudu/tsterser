@@ -1170,7 +1170,7 @@ export function parse ($TEXT: string, opt?: any) {
           case ';':
             S.in_directives = false
             next()
-            return new AST_EmptyStatement()
+            return new AST_EmptyStatement({})
           default:
             unexpected()
         }
@@ -1188,7 +1188,7 @@ export function parse ($TEXT: string, opt?: any) {
           case 'debugger':
             next()
             semicolon()
-            return new AST_Debugger()
+            return new AST_Debugger({})
 
           case 'do':
             next()

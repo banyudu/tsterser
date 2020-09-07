@@ -22,7 +22,7 @@ export default class AST_TemplateSegment extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['value', 'raw'])
-  constructor (args?: AST_TemplateSegment_Props) {
+  constructor (args: AST_TemplateSegment_Props) {
     super(args)
     this.value = args.value
     this.raw = args.raw

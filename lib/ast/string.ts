@@ -31,7 +31,7 @@ export default class AST_String extends AST_Constant {
 
   static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
 
-  constructor (args?: AST_String_Props) {
+  constructor (args: AST_String_Props) {
     super(args)
     this.value = args.value
     this.quote = args.quote

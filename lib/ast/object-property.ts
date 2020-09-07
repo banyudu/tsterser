@@ -133,7 +133,7 @@ export default class AST_ObjectProperty extends AST_Node {
   } as any
 
   static PROPS = AST_Node.PROPS.concat(['key', 'value'])
-  constructor (args?: AST_ObjectProperty_Props) {
+  constructor (args: AST_ObjectProperty_Props) {
     super(args)
     this.key = args.key
     this.value = args.value

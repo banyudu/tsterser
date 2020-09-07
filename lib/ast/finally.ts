@@ -19,7 +19,7 @@ export default class AST_Finally extends AST_Block {
   static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
 
   static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?: AST_Finally_Props) {
+  constructor (args: AST_Finally_Props) {
     super(args)
     this.argname = args.argname
   }

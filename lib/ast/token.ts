@@ -24,7 +24,7 @@ export default class AST_Token extends AST {
     return type === 'AST_Token'
   }
 
-  constructor (args?: AST_Token_Props) {
+  constructor (args: AST_Token_Props) {
     super()
 
     if (args) {

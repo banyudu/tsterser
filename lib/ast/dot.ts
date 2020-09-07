@@ -173,7 +173,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   static PROPS = AST_PropAccess.PROPS.concat(['quote'])
-  constructor (args?: AST_Dot_Props) {
+  constructor (args: AST_Dot_Props) {
     super(args)
     this.quote = args.quote
   }

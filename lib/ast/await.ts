@@ -58,7 +58,7 @@ export default class AST_Await extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args?: AST_Await_Props) {
+  constructor (args: AST_Await_Props) {
     super(args)
     this.expression = args.expression
   }

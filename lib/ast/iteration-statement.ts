@@ -23,7 +23,7 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
   } as any
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['block_scope'])
-  constructor (args?: AST_IterationStatement_Props) {
+  constructor (args: AST_IterationStatement_Props) {
     super(args)
     this.block_scope = args.block_scope
   }

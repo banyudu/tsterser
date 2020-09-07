@@ -188,7 +188,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expressions'])
-  constructor (args?: AST_Sequence_Props) {
+  constructor (args: AST_Sequence_Props) {
     super(args)
     this.expressions = args.expressions
   }

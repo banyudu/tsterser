@@ -158,7 +158,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
-  constructor (args?: AST_Lambda_Props) {
+  constructor (args: AST_Lambda_Props) {
     super(args)
     this.name = args.name
     this.argnames = args.argnames

@@ -132,7 +132,7 @@ export default class AST_Call extends AST_Node {
               }).optimize(compressor)
             } else if (is_ast_number(self.args[0]) && self.args[0].value <= 11) {
               const elements: any[] = []
-              for (let i = 0; i < self.args[0].value; i++) elements.push(new AST_Hole())
+              for (let i = 0; i < self.args[0].value; i++) elements.push(new AST_Hole({}))
               return new AST_Array({ elements })
             }
             break
@@ -920,7 +920,7 @@ export default class AST_Call extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args?: AST_Call_Props) { // eslint-disable-line
+  constructor (args: AST_Call_Props) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args

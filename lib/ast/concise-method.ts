@@ -108,7 +108,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   static documentation = 'An ES6 concise method inside an object or class'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
-  constructor (args?: AST_ConciseMethod_Props) {
+  constructor (args: AST_ConciseMethod_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static

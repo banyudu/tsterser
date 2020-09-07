@@ -49,7 +49,7 @@ export default class AST_With extends AST_StatementWithBody {
   }
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
-  constructor (args?: AST_With_Props) {
+  constructor (args: AST_With_Props) {
     super(args)
     this.expression = args.expression
   }

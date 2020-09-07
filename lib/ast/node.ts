@@ -292,7 +292,7 @@ export default class AST_Node extends AST {
 
   static PROPS = ['start', 'end']
 
-  constructor (args?: AST_Node_Props) {
+  constructor (args: AST_Node_Props) {
     super()
     this.start = args?.start
     this.end = args?.end

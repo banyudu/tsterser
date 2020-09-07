@@ -14,7 +14,7 @@ export default class AST_DWLoop extends AST_IterationStatement {
     return this.condition === context
   }
 
-  constructor (args?: AST_DWLoop_Props) {
+  constructor (args: AST_DWLoop_Props) {
     super(args)
     this.condition = args.condition
   }

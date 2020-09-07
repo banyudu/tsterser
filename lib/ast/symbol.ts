@@ -87,7 +87,7 @@ export default class AST_Symbol extends AST_Node {
   static documentation = 'Base class for all symbols'
 
   static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
-  constructor (args?: AST_Symbol_Props) {
+  constructor (args: AST_Symbol_Props) {
     super(args)
     this.scope = args.scope
     this.name = args.name

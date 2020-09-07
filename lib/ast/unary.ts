@@ -137,7 +137,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
-  constructor (args?: AST_Unary_Props) {
+  constructor (args: AST_Unary_Props) {
     super(args)
     this.operator = args.operator
     this.expression = args.expression

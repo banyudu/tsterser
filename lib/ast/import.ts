@@ -141,7 +141,7 @@ export default class AST_Import extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
-  constructor (args?: AST_Import_Props) {
+  constructor (args: AST_Import_Props) {
     super(args)
     this.imported_name = args.imported_name
     this.imported_names = args.imported_names

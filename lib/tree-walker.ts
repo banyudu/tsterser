@@ -57,7 +57,7 @@ export default class TreeWalker {
     return this.stack[this.stack.length - 1]
   }
 
-  find_parent<T extends AST_Node> (type: new () => T) {
+  find_parent<T extends AST_Node> (type: new (args?: any) => T) {
     const stack = this.stack
     for (let i = stack.length; --i >= 0;) {
       const x = stack[i]

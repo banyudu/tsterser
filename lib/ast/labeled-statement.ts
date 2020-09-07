@@ -94,7 +94,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   } as any
 
   static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
-  constructor (args?: AST_LabeledStatement_Props) {
+  constructor (args: AST_LabeledStatement_Props) {
     super(args)
     this.label = args.label
   }

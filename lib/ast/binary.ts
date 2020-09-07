@@ -838,7 +838,7 @@ export default class AST_Binary extends AST_Node {
   }
 
   static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
-  constructor (args?: AST_Binary_Props) { // eslint-disable-line
+  constructor (args: AST_Binary_Props) { // eslint-disable-line
     super(args)
     this.operator = args.operator
     this.left = args.left

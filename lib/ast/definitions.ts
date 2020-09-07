@@ -122,7 +122,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   static PROPS = AST_Statement.PROPS.concat(['definitions'])
-  constructor (args?: AST_Definitions_Props) {
+  constructor (args: AST_Definitions_Props) {
     super(args)
     this.definitions = args.definitions
   }

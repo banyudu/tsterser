@@ -70,7 +70,7 @@ export default class AST_Catch extends AST_Block {
   }
 
   static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args?: AST_Catch_Props) {
+  constructor (args: AST_Catch_Props) {
     super(args)
     this.argname = args.argname
   }

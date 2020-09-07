@@ -85,7 +85,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   static documentation = 'An object setter property'
 
   static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
-  constructor (args?: AST_ObjectSetter_Props) {
+  constructor (args: AST_ObjectSetter_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static
