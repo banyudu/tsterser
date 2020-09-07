@@ -33,16 +33,12 @@ export default class AST_Arrow extends AST_Lambda {
   _size (info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
-    if (
-      !(
-        this.argnames.length === 1 &&
-                is_ast_symbol(this.argnames[0])
-      )
-    ) {
+    if (!(this.argnames.length === 1 && is_ast_symbol(this.argnames[0]))) {
       args_and_arrow += 2
     }
 
-    return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : (this.body as any)._size())
+    // return lambda_modifiers(this) + args_and_arrow + (Array.isArray(this.body) ? list_overhead(this.body) : (this.body as any)._size())
+    return lambda_modifiers(this) + args_and_arrow + list_overhead(this.body)
   }
 
   _to_mozilla_ast (parent: AST_Node): any {
