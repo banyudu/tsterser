@@ -608,7 +608,7 @@ export function set_moz_loc (mynode: AST_Node, moznode: MozillaAst): MozillaAst 
 
 export let FROM_MOZ_STACK: MozillaAst[] = []
 
-export function from_moz (node: MozillaAst) {
+export function from_moz (node?: MozillaAst) {
     FROM_MOZ_STACK?.push(node)
     const ret = node != null ? MOZ_TO_ME[node.type](node) : null
     FROM_MOZ_STACK?.pop()
@@ -3751,7 +3751,7 @@ export const base54 = (() => {
   }
   base54.consider = function (str: string, delta: number) {
     for (let i = str.length; --i >= 0;) {
-      frequency.set(str[i], (frequency.get(str[i])) + delta) // TODO: check type
+      frequency.set(str[i], (frequency.get(str[i]) ?? NaN) + delta) // TODO: check type
     }
   }
   function compare (a: string, b: string) {
