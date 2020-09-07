@@ -4,6 +4,7 @@ import Compressor from '../compressor'
 import AST_With from './with'
 import { PRECEDENCE } from '../parse'
 import TreeWalker from '../tree-walker'
+import { MozillaAst } from '../types'
 
 import { is_undefined, make_node, first_in_statement, best_of, make_sequence, maintain_this_binding, is_object, best, push, pop, to_moz, basic_negation, to_moz_in_destructuring, make_node_from_constant, is_nullish, is_ast_binary, is_ast_sequence, is_ast_unary, is_ast_call, is_ast_unary_postfix, is_ast_string, is_ast_unary_prefix, is_ast_symbol_ref, is_ast_prop_access, is_ast_null, is_ast_assign, is_ast_node, is_ast_constant, is_ast_template_string } from '../utils'
 
@@ -39,7 +40,7 @@ export default class AST_Binary extends AST_Node {
     return /^\w/.test(this.operator) && this.left === child
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self: any = this
     function reversible () {
       return self.left.is_constant() ||
@@ -716,7 +717,7 @@ export default class AST_Binary extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.left)
     result.push(this.right)
     return result
@@ -753,7 +754,7 @@ export default class AST_Binary extends AST_Node {
     this.right = this.right.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',
@@ -774,7 +775,7 @@ export default class AST_Binary extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     // (foo && bar)()
     if (is_ast_call(p) && p.expression === this) { return true }

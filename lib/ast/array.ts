@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
+import { MozillaAst } from '../types'
 import {
   literals_in_boolean_context,
   inline_array_like_spread,
@@ -27,7 +28,7 @@ export default class AST_Array extends AST_Node {
     })
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     const optimized = literals_in_boolean_context(this, compressor)
     if (optimized !== this) {
       return optimized
@@ -35,7 +36,7 @@ export default class AST_Array extends AST_Node {
     return inline_array_like_spread(this, compressor, this.elements)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const values = trim(this.elements, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
@@ -68,7 +69,7 @@ export default class AST_Array extends AST_Node {
 
   _dot_throw () { return false }
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     const elements = this.elements
     for (let i = 0, len = elements.length; i < len; i++) {
       result.push(elements[i])
@@ -90,7 +91,7 @@ export default class AST_Array extends AST_Node {
     this.elements = do_list(this.elements, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'ArrayExpression',
       elements: this.elements.map(to_moz)

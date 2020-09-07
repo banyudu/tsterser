@@ -5,7 +5,7 @@ import AST_Call, { AST_Call_Props } from './call'
 import { is_undeclared_ref, callCodeGen, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (
       compressor.option('unsafe') &&
           is_undeclared_ref(this.expression) &&
@@ -27,7 +27,7 @@ export default class AST_New extends AST_Call {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (this.args.length === 0 &&
             (is_ast_prop_access(p) || // (new Date).getTime(), (new Date)["getTime"]()

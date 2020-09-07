@@ -70,7 +70,7 @@ export default function SourceMap (options: SourceMapOptions) {
     })
   }
 
-  function add (source, gen_line: number, gen_col: number, orig_line: number, orig_col: number, name: string) {
+  function add (source: any, gen_line: number, gen_col: number, orig_line: number, orig_col: number, name: string) {
     if (orig_map) {
       const info = orig_map.originalPositionFor({
         line: orig_line,

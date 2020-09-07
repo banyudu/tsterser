@@ -4,6 +4,7 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, to_moz } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_SimpleStatement extends AST_Statement {
   body: any | undefined
@@ -12,7 +13,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return true
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (compressor.option('side_effects')) {
       const body = this.body
       const node = body.drop_side_effect_free(compressor, true)
@@ -36,7 +37,7 @@ export default class AST_SimpleStatement extends AST_Statement {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.body)
     return result
   }
@@ -50,7 +51,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(this.body) // TODO: check type

@@ -56,7 +56,7 @@ export default class AST_Try extends AST_Block {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(...this.body)
     if (this.bcatch) result.push(this.bcatch)
     if (this.bfinally) result.push(this.bfinally)

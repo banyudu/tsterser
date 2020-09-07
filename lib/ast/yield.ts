@@ -9,7 +9,7 @@ export default class AST_Yield extends AST_Node {
   is_star: boolean
   expression: AST_Node | undefined
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
       this.expression = null
     }
@@ -17,7 +17,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
@@ -43,7 +43,7 @@ export default class AST_Yield extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3

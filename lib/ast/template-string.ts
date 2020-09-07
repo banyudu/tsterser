@@ -4,11 +4,12 @@ import AST_TemplateSegment from './template-segment'
 import Compressor from '../compressor'
 import { make_node, trim, first_in_statement, make_sequence, anySideEffect, do_list, to_moz, is_ast_prefixed_template_string, is_ast_node, is_ast_template_segment, is_ast_template_string } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_TemplateString extends AST_Node {
   segments: AST_TemplateSegment[]
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (!compressor.option('evaluate') ||
       is_ast_prefixed_template_string(compressor.parent())) { return this }
 
@@ -71,7 +72,7 @@ export default class AST_TemplateString extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const values = trim(this.segments, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
@@ -87,7 +88,7 @@ export default class AST_TemplateString extends AST_Node {
 
   is_string () { return true }
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     this.segments.forEach(function (seg) {
       result.push(seg)
     })
@@ -108,7 +109,7 @@ export default class AST_TemplateString extends AST_Node {
     this.segments = do_list(this.segments, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const quasis: any[] = []
     const expressions: any[] = []
     for (let i = 0; i < this.segments.length; i++) {

@@ -6,19 +6,20 @@ import AST_Node, { AST_Node_Props } from './node'
 import { list_overhead, do_list, to_moz } from '../utils'
 import AST_NameMapping from './name-mapping'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Import extends AST_Node {
   imported_name: AST_SymbolImport
   module_name: AST_String
   imported_names: AST_NameMapping[]
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     return this
   }
 
-  aborts () { return null }
+  aborts (): any { return null }
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (this.imported_name) {
       result.push(this.imported_name)
     }
@@ -68,7 +69,7 @@ export default class AST_Import extends AST_Node {
     this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const specifiers: any[] = []
     if (this.imported_name) {
       specifiers.push({

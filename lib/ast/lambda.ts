@@ -12,6 +12,7 @@ import { walk_abort } from '../constants'
 import Compressor from '../compressor'
 import { AST_DefaultAssign, AST_SymbolDeclaration } from '.'
 import { TreeTransformer } from '../../main'
+import { MozillaAst } from '../types'
 
 export default class AST_Lambda extends AST_Scope {
   argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
@@ -71,7 +72,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   walkInner (): AST_Node[] {
-    const result = []
+    const result: AST_Node[] = []
     if (this.name) result.push(this.name)
     const argnames = this.argnames
     for (let i = 0, len = argnames.length; i < len; i++) {
@@ -106,7 +107,7 @@ export default class AST_Lambda extends AST_Scope {
     }
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return To_Moz_FunctionExpression(this, parent)
   }
 

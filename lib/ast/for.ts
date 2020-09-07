@@ -16,7 +16,7 @@ export default class AST_For extends AST_IterationStatement {
     return this.condition === context
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (!compressor.option('loops')) return this
     if (compressor.option('side_effects') && this.init) {
       this.init = this.init.drop_side_effect_free(compressor)
@@ -74,7 +74,7 @@ export default class AST_For extends AST_IterationStatement {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (this.init) result.push(this.init)
     if (this.condition) result.push(this.condition)
     if (this.step) result.push(this.step)
@@ -212,7 +212,7 @@ function if_break_in_loop (self: AST_For, compressor: Compressor) {
             compressor.loopcontrol_target(node) === compressor.self()
   }
 
-  function drop_it (rest) {
+  function drop_it (rest: any) {
     rest = as_statement_array(rest)
     if (is_ast_block_statement(self.body)) {
       self.body = self.body.clone()

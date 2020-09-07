@@ -2527,7 +2527,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
   function join_consecutive_vars (statements: AST_Statement[]) {
     let defs: any
     for (var i = 0, j = -1, len = statements.length; i < len; i++) {
-      var stat = statements[i]
+      var stat: any = statements[i]
       var prev: any = statements[j]
       if (is_ast_definitions(stat)) {
         if (prev && prev.TYPE == stat.TYPE) {

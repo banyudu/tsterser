@@ -12,7 +12,7 @@ export default class AST_NameMapping extends AST_Node {
   foreign_name: AST_SymbolExportForeign|AST_SymbolImportForeign
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.foreign_name)
     result.push(this.name)
     return result

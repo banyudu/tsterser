@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Number from './number'
+import { MozillaAst } from '../types'
 import {
   maintain_this_binding,
   first_in_statement,
@@ -24,7 +25,7 @@ export default class AST_Sequence extends AST_Node {
     return this.expressions[0] === node
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self: any = this
     if (!compressor.option('side_effects')) return self
     const expressions: any[] = []
@@ -42,7 +43,7 @@ export default class AST_Sequence extends AST_Node {
     function filter_for_side_effects () {
       let first = first_in_statement(compressor)
       const last = self.expressions.length - 1
-      self.expressions.forEach(function (expr: AST_Node, index) {
+      self.expressions.forEach(function (expr: AST_Node, index: number) {
         if (index < last) expr = expr.drop_side_effect_free(compressor, first)
         if (expr) {
           merge_sequence(expressions, expr)
@@ -63,7 +64,7 @@ export default class AST_Sequence extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const last = this.tail_node()
     const expr = last.drop_side_effect_free(compressor)
     if (expr === last) return this
@@ -83,7 +84,7 @@ export default class AST_Sequence extends AST_Node {
     return anySideEffect(this.expressions, compressor)
   }
 
-  negate (compressor: Compressor) {
+  negate (compressor: Compressor): AST_Node {
     const expressions = this.expressions.slice()
     expressions.push(expressions.pop().negate(compressor))
     return make_sequence(this, expressions)
@@ -106,7 +107,7 @@ export default class AST_Sequence extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     this.expressions.forEach(function (node: AST_Node) {
       result.push(node)
     })
@@ -134,14 +135,14 @@ export default class AST_Sequence extends AST_Node {
       : [new AST_Number({ value: 0 })]
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'SequenceExpression',
       expressions: this.expressions.map(to_moz)
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_call(p) || // (foo, bar)() or foo(1, (2, 3), 4)
             is_ast_unary(p) || // !(foo, bar, baz)

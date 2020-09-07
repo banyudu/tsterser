@@ -28,7 +28,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     const self = this
     if (!compressor.option('switches')) return self
     let branch
@@ -126,7 +126,7 @@ export default class AST_Switch extends AST_Block {
     }
     return self
 
-    function eliminate_branch (branch, prev) {
+    function eliminate_branch (branch: any, prev: any) {
       if (prev && !aborts(prev)) {
         prev.body = prev.body.concat(branch.body)
       } else {
@@ -146,7 +146,7 @@ export default class AST_Switch extends AST_Block {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     result.push(...this.body)
     return result

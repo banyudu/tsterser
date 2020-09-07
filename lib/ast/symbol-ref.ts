@@ -41,17 +41,17 @@ export default class AST_SymbolRef extends AST_Symbol {
     })
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): AST_SymbolRef {
     if (!compressor.option('ie8') &&
           is_undeclared_ref(this) &&
           (!this.scope.uses_with || !compressor.find_parent(AST_With))) {
       switch (this.name) {
         case 'undefined':
-          return make_node('AST_Undefined', this).optimize(compressor)
+          return make_node('AST_Undefined', this).optimize(compressor) as AST_SymbolRef
         case 'NaN':
-          return make_node('AST_NaN', this).optimize(compressor)
+          return make_node('AST_NaN', this).optimize(compressor) as AST_SymbolRef
         case 'Infinity':
-          return make_node('AST_Infinity', this).optimize(compressor)
+          return make_node('AST_Infinity', this).optimize(compressor) as AST_SymbolRef
       }
     }
     const parent = compressor.parent()
@@ -141,7 +141,7 @@ export default class AST_SymbolRef extends AST_Symbol {
         return fixed.optimize(compressor)
       }
       if (fixed && def.should_replace === undefined) {
-        let init
+        let init: any
         if (is_ast_this(fixed)) {
           if (!(is_ast_symbol_funarg(def.orig[0])) &&
                       def.references.every((ref) =>
@@ -186,14 +186,14 @@ export default class AST_SymbolRef extends AST_Symbol {
     }
     return this
 
-    function has_symbol_ref (value) {
+    function has_symbol_ref (value: AST_Node) {
       return walk(value, (node: AST_Node) => {
         if (is_ast_symbol_ref(node)) return walk_abort
       })
     }
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const safe_access = this.is_declared(compressor) ||
           pure_prop_access_globals.has(this.name)
     return safe_access ? null : this
@@ -210,7 +210,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   _eval (compressor: Compressor, depth: number) {
     const fixed = this.fixed_value()
     if (!fixed) return this
-    let value
+    let value: any
     if (HOP(fixed, '_eval')) {
       value = fixed._eval(compressor)
     } else {
@@ -229,7 +229,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return value
   }
 
-  _find_defs (compressor: Compressor, suffix) {
+  _find_defs (compressor: Compressor, suffix: string) {
     if (!this.global()) return
     const defines = compressor.option('global_defs') as AnyObject
     const name = this.name + suffix

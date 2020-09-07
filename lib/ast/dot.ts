@@ -14,7 +14,7 @@ export default class AST_Dot extends AST_PropAccess {
     return this.expression === node
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (this.property == 'arguments' || this.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
         prop: this.property,
@@ -92,7 +92,7 @@ export default class AST_Dot extends AST_PropAccess {
           this.expression.has_side_effects(compressor)
   }
 
-  _find_defs (compressor: Compressor, suffix) {
+  _find_defs (compressor: Compressor, suffix: string) {
     return this.expression._find_defs(compressor, '.' + (this.property as any) + suffix)
   }
 
@@ -123,7 +123,7 @@ export default class AST_Dot extends AST_PropAccess {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }

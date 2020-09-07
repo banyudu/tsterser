@@ -42,7 +42,7 @@ export default class AST_Conditional extends AST_Node {
     return true
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self: AST_Conditional = this
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
@@ -284,7 +284,7 @@ export default class AST_Conditional extends AST_Node {
                   node.expression.getValue())
     }
 
-    function single_arg_diff (a, b) {
+    function single_arg_diff (a: any[], b: any[]) {
       for (let i = 0, len = a.length; i < len; i++) {
         if (is_ast_expansion(a[i])) return
         if (!a[i].equivalent_to(b[i])) {
@@ -299,7 +299,7 @@ export default class AST_Conditional extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const consequent = this.consequent.drop_side_effect_free(compressor)
     const alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
@@ -343,11 +343,11 @@ export default class AST_Conditional extends AST_Node {
     return value === node ? this : value
   }
 
-  negate (compressor: Compressor, first_in_statement: Function | boolean) {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Conditional {
     const self = this.clone() as AST_Conditional
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
-    return best(this, self, first_in_statement)
+    return best(this, self, first_in_statement) as AST_Conditional
   }
 
   is_string (compressor: Compressor) {
@@ -379,7 +379,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.condition)
     result.push(this.consequent)
     result.push(this.alternative)

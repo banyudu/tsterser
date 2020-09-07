@@ -5,6 +5,7 @@ import TreeWalker from '../tree-walker'
 import { do_list, to_moz, is_ast_object_key_val, is_ast_symbol, is_ast_hole, is_ast_symbol_declaration } from '../utils'
 import SymbolDef from '../symbol-def'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
@@ -16,7 +17,7 @@ export default class AST_Destructuring extends AST_Node {
     return this
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
           !this.is_array &&
@@ -66,7 +67,7 @@ export default class AST_Destructuring extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     this.names.forEach(function (name: any) {
       result.push(name)
     })
@@ -94,7 +95,7 @@ export default class AST_Destructuring extends AST_Node {
     this.names = do_list(this.names, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (this.is_array) {
       return {
         type: 'ArrayPattern',

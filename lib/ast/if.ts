@@ -15,7 +15,7 @@ export default class AST_If extends AST_StatementWithBody {
     return this.condition === context
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self: AST_If = this
     if (is_empty(self.alternative)) self.alternative = null
 
@@ -192,7 +192,7 @@ export default class AST_If extends AST_StatementWithBody {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.condition)
     result.push(this.body)
     if (this.alternative) result.push(this.alternative)

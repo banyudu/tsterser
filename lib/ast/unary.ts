@@ -5,11 +5,12 @@ import TreeWalker from '../tree-walker'
 import { unary_side_effects, WRITE_ONLY, set_flag, clear_flag, unary } from '../constants'
 import { is_iife_call, safe_to_assign, make_node, mark, make_sequence, to_moz, is_ast_symbol_ref, is_ast_sequence, is_ast_unary_prefix, is_ast_prop_access, is_ast_node, is_ast_call, is_ast_binary } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Unary extends AST_Node {
   operator: string
   expression: AST_Node
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
         set_flag(this, WRITE_ONLY)
@@ -88,7 +89,7 @@ export default class AST_Unary extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
@@ -108,7 +109,7 @@ export default class AST_Unary extends AST_Node {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,
@@ -117,7 +118,7 @@ export default class AST_Unary extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this ||
             is_ast_call(p) && p.expression === this ||

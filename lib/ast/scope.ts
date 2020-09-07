@@ -575,7 +575,7 @@ export default class AST_Scope extends AST_Block {
         const is_lambda = is_ast_lambda(self)
         const args_as_names = is_lambda ? (self as any).args_as_names() : null
         vars.forEach((def: any, name) => {
-          if (is_lambda && args_as_names.some((x) => x.name === def.name.name)) {
+          if (is_lambda && args_as_names.some((x: any) => x.name === def.name.name)) {
             vars.delete(name)
           } else {
             def = def.clone()
@@ -602,19 +602,17 @@ export default class AST_Scope extends AST_Block {
                 self.body.splice(i, 1)
                 continue
               }
-              if (is_ast_sequence(expr) &&
-                              is_ast_assign((assign = expr.expressions[0])) &&
-                              assign.operator == '=' &&
-                              is_ast_symbol((sym = assign.left)) &&
-                              vars.has(sym.name)
-              ) {
-                const def = vars.get(sym.name)
-                if (def.value) break
-                def.value = assign.right
-                remove(defs, def)
-                defs.push(def)
-                self.body[i].body = make_sequence(expr, expr.expressions.slice(1))
-                continue
+              if (is_ast_sequence(expr)) {
+                assign = expr.expressions[0]
+                if (is_ast_assign(assign) && assign.operator == '=' && is_ast_symbol((sym = assign.left)) && vars.has(sym.name)) {
+                  const def = vars.get(sym.name)
+                  if (def.value) break
+                  def.value = assign.right
+                  remove(defs, def)
+                  defs.push(def)
+                  self.body[i].body = make_sequence(expr, expr.expressions.slice(1))
+                  continue
+                }
               }
             }
             if (is_ast_empty_statement(self.body[i])) {
@@ -653,7 +651,7 @@ export default class AST_Scope extends AST_Block {
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     const top_retain = is_ast_toplevel(self) && compressor.top_retain || (() => false)
     const defs_by_id = new Map()
-    var hoister = new TreeTransformer(function (this, node: AST_Node, descend: Function) {
+    var hoister = new TreeTransformer(function (this: AST_Scope, node: AST_Node, descend: Function) {
       if (is_ast_definitions(node) &&
               is_ast_export(hoister.parent())) return node
       if (is_ast_var_def(node)) {
@@ -789,7 +787,7 @@ export default class AST_Scope extends AST_Block {
     return this._block_scope || false
   }
 
-  find_variable (name: any | string) {
+  find_variable (name: any | string): any {
     if (is_ast_symbol(name)) name = name.name
     return this.variables.get(name) ||
           (this.parent_scope?.find_variable(name))
@@ -1086,7 +1084,7 @@ export default class AST_Scope extends AST_Block {
           const def = scope.find_variable(name) ||
                         toplevel.globals.get(name) ||
                         scope.def_variable(node)
-          refs.forEach(function (ref) {
+          refs.forEach(function (ref: any) {
             ref.thedef = def
             ref.reference()
           })

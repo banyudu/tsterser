@@ -7,12 +7,13 @@ import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
 import { list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Catch extends AST_Block {
   argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (this.argname) result.push(this.argname)
     result.push(...this.body)
     return result
@@ -41,13 +42,13 @@ export default class AST_Catch extends AST_Block {
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'CatchClause',
       param: to_moz(this.argname),
       guard: null,
       body: to_moz_block(this)
-    }
+    } as any
   }
 
   _codegen (output: OutputStream) {

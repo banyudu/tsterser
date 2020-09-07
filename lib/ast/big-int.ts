@@ -22,7 +22,7 @@ export default class AST_BigInt extends AST_Constant {
     output.print(this.getValue() + 'n')
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()

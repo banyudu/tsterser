@@ -25,7 +25,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.init)
     result.push(this.object)
     result.push(this.body)

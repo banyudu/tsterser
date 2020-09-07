@@ -3,13 +3,14 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Constant, { AST_Constant_Props } from './constant'
 import { regexp_source_fix, sort_regexp_flags, literals_in_boolean_context } from '../utils'
+import { MozillaAst } from '../types'
 
 const r_slash_script = /(<\s*\/\s*script)/i
 const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
   value: RegExp
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     return literals_in_boolean_context(this, compressor)
   }
 
@@ -30,14 +31,14 @@ export default class AST_RegExp extends AST_Constant {
     return this.value.toString().length
   }
 
-  shallow_cmp (other) {
+  shallow_cmp (other: any) {
     return (
       this.value.flags === other.value.flags &&
                 this.value.source === other.value.source
     )
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const pattern = this.value.source
     const flags = this.value.flags
     return {

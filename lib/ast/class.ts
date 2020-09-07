@@ -8,19 +8,20 @@ import { clear_flag, INLINED } from '../constants'
 import TreeWalker from '../tree-walker'
 import { AST_ObjectProperty, AST_SymbolDefClass } from '.'
 import { TreeTransformer } from '../../main'
+import { MozillaAst } from '../types'
 
 export default class AST_Class extends AST_Scope {
   extends: AST_Node
   properties: AST_ObjectProperty[]
   name: AST_SymbolClass|AST_SymbolDefClass | undefined
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const with_effects: any[] = []
     const trimmed_extends = this.extends?.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
@@ -72,7 +73,7 @@ export default class AST_Class extends AST_Scope {
 
   is_block_scope () { return false }
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (this.name) {
       result.push(this.name)
     }
@@ -108,7 +109,7 @@ export default class AST_Class extends AST_Scope {
     extends: 'exist'
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,

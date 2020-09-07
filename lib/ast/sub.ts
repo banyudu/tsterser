@@ -191,7 +191,7 @@ export default class AST_Sub extends AST_PropAccess {
   }
 
   walkInner (): AST_Node[] {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     result.push(this.property as AST_Node)
     return result

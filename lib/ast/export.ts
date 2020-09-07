@@ -6,6 +6,7 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import { to_moz, do_list, list_overhead, is_ast_definitions, is_ast_defun, is_ast_function, is_ast_class } from '../utils'
 import { AST_String, AST_DefClass, AST_NameMapping } from '.'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Export extends AST_Statement {
   is_default: boolean
@@ -15,7 +16,7 @@ export default class AST_Export extends AST_Statement {
   exported_names: Array<AST_NameMapping | undefined>
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (this.exported_definition) {
       result.push(this.exported_definition)
     }
@@ -78,7 +79,7 @@ export default class AST_Export extends AST_Statement {
     if (this.module_name) this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (this.exported_names) {
       if (this.exported_names[0].name.name === '*') {
         return {

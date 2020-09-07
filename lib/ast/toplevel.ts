@@ -25,9 +25,10 @@ import {
 import TreeTransformer from '../tree-transformer'
 import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP } from '../constants'
 import { parse, RESERVED_WORDS } from '../parse'
+import { MozillaAst } from '../types'
 
 export let function_defs: Set<any> | null = null
-export let printMangleOptions
+export let printMangleOptions: any
 export let unmangleable_names: Set<any> | null = null
 
 export default class AST_Toplevel extends AST_Scope {
@@ -42,10 +43,10 @@ export default class AST_Toplevel extends AST_Scope {
     reset_variables(tw, compressor, this)
   }
 
-  resolve_defines (this, compressor: Compressor) {
+  resolve_defines (this: AST_Toplevel, compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
-    return this.transform(new TreeTransformer(function (this, node: AST_Node) {
+    return this.transform(new TreeTransformer(function (this: any, node: AST_Node) {
       const def = node._find_defs(compressor, '')
       if (!def) return
       let level = 0; let child = node; let parent
@@ -66,7 +67,7 @@ export default class AST_Toplevel extends AST_Scope {
     const self = this
     const reduce_vars = compressor.option('reduce_vars')
 
-    const preparation = new TreeWalker(function (node: AST_Node, descend) {
+    const preparation: TreeWalker = new TreeWalker(function (node: AST_Node, descend) {
       clear_flag(node, CLEAR_BETWEEN_PASSES)
       if (reduce_vars) {
         if (compressor.top_retain &&
@@ -188,7 +189,7 @@ export default class AST_Toplevel extends AST_Scope {
     return list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return to_moz_scope('Program', this)
   }
 
@@ -284,7 +285,7 @@ export default class AST_Toplevel extends AST_Scope {
     if (options.cache) {
       this.globals.forEach(collect)
       if (options.cache.props) {
-        options.cache.props.forEach(function (mangled_name) {
+        options.cache.props.forEach(function (mangled_name: any) {
           mangled_names.add(mangled_name)
         })
       }

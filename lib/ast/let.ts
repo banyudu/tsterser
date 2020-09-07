@@ -2,9 +2,10 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Definitions, { AST_Definitions_Props } from './definitions'
 import { def_size, to_moz } from '../utils'
+import { MozillaAst } from '../types'
 
 export default class AST_Let extends AST_Definitions {
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'let',

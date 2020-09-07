@@ -63,7 +63,7 @@ export default class AST_Call extends AST_Node {
     return this.TYPE == 'Call' && this.expression === node
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     const self: any = this
     const exp = self.expression
     let fn = exp
@@ -859,7 +859,7 @@ export default class AST_Call extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     const args = this.args
     for (let i = 0, len = args.length; i < len; i++) {
       result.push(args[i])
@@ -892,7 +892,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent(); let p1
     if (is_ast_new(p) && p.expression === this ||
             is_ast_export(p) && p.is_default && is_ast_function(this.expression)) { return true }

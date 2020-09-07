@@ -3,6 +3,7 @@ import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import { to_moz_in_destructuring, to_moz } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Expansion extends AST_Node {
   expression: AST_Node
@@ -21,7 +22,7 @@ export default class AST_Expansion extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
@@ -36,7 +37,7 @@ export default class AST_Expansion extends AST_Node {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: to_moz_in_destructuring() ? 'RestElement' : 'SpreadElement',
       argument: to_moz(this.expression)

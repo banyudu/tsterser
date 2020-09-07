@@ -233,7 +233,7 @@ export default class AST_Node extends AST {
     return output.get()
   }
 
-  needs_parens (output: OutputStream) { return false }
+  needs_parens (output: OutputStream): boolean { return false }
   optimize (compressor: Compressor) {
     if (!this._optimize) {
       throw new Error('optimize not defined')

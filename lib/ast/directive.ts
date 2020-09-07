@@ -4,11 +4,12 @@ import { OutputStream } from '../output'
 import AST_Statement, { AST_Statement_Props } from './statement'
 import { directives } from '../constants'
 import { make_node } from '../utils'
+import { MozillaAst } from '../types'
 
 export default class AST_Directive extends AST_Statement {
   value: any
   quote: any
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (compressor.option('directives') &&
           (!directives.has(this.value) || compressor.has_directive(this.value) !== this)) {
       return make_node('AST_EmptyStatement', this)
@@ -22,7 +23,7 @@ export default class AST_Directive extends AST_Statement {
     return 2 + this.value.length
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'ExpressionStatement',
       expression: {
@@ -31,7 +32,7 @@ export default class AST_Directive extends AST_Statement {
         raw: this.print_to_string()
       },
       directive: this.value
-    }
+    } as any
   }
 
   _codegen (output: OutputStream) {

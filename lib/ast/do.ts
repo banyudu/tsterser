@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Do extends AST_DWLoop {
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (!compressor.option('loops')) return this
     const cond = this.condition.tail_node().evaluate(compressor)
     if (!(is_ast_node(cond))) {
@@ -54,7 +54,7 @@ export default class AST_Do extends AST_DWLoop {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.body)
     result.push(this.condition)
     return result

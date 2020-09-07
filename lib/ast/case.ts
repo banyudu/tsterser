@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import AST_SwitchBranch, { AST_SwitchBranch_Props } from './switch-branch'
 import Compressor from '../compressor'
 import AST_Block from './block'
+import AST_Node from './node'
 import TreeWalker from '../tree-walker'
 
 import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_list } from '../utils'
@@ -31,7 +32,7 @@ export default class AST_Case extends AST_SwitchBranch {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     result.push(...this.body)
     return result

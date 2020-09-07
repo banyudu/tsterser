@@ -15,7 +15,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (is_ast_break(this.body) &&
           compressor.loopcontrol_target(this.body) === this.body) {
       return make_node('AST_EmptyStatement', this)
@@ -39,7 +39,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.label)
     result.push(this.body)
     return result

@@ -10,7 +10,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this.operator == '!' && this.expression === context
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self = this
     let e = self.expression
     if (self.operator == 'delete' &&
@@ -114,7 +114,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this
   }
 
-  negate () {
+  negate (): AST_Node {
     if (this.operator == '!') { return this.expression }
     return basic_negation(this)
   }

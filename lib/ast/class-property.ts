@@ -3,12 +3,13 @@ import { OutputStream } from '../output'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
 import { to_moz, print_property_name, static_size, make_sequence, is_ast_node, is_ast_symbol_class_property, is_ast_symbol, is_ast_symbol_ref } from '../utils'
+import { MozillaAst } from '../types'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
   quote: string
   static: boolean
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
@@ -36,7 +37,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     const key = this.computed_key() && this.key.drop_side_effect_free(compressor)
 
     const value = this.static && this.value &&
@@ -61,7 +62,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     if (is_ast_node(this.key)) { result.push(this.key) }
     if (is_ast_node(this.value)) { result.push(this.value) }
     return result

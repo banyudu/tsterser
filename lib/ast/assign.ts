@@ -45,7 +45,7 @@ export default class AST_Assign extends AST_Binary {
     return insert_default(this.left.to_fun_args(croak))
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     let self: any = this
     let def
     if (compressor.option('dead_code') &&
@@ -105,7 +105,7 @@ export default class AST_Assign extends AST_Binary {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor) {
+  drop_side_effect_free (compressor: Compressor): any {
     let left = this.left
     if (left.has_side_effects(compressor) ||
           compressor.has_directive('use strict') &&

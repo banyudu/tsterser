@@ -11,7 +11,7 @@ export default class AST_EmptyStatement extends AST_Statement {
   }
 
   _size = () => 1
-  _codegen (this, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.semicolon()
   }
 

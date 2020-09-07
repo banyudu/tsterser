@@ -19,7 +19,7 @@ export default class AST_Number extends AST_Constant {
     value: 'eq'
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()

@@ -2,6 +2,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
+import { MozillaAst } from '../types'
 
 import {
   literals_in_boolean_context,
@@ -30,7 +31,7 @@ export default class AST_Object extends AST_Node {
     })
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     const optimized = literals_in_boolean_context(this, compressor)
     if (optimized !== this) {
       return optimized
@@ -56,7 +57,7 @@ export default class AST_Object extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean) {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
@@ -71,18 +72,18 @@ export default class AST_Object extends AST_Node {
 
   _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
-      const val = {}
+      const val: any = {}
       for (let i = 0, len = this.properties.length; i < len; i++) {
         const prop: any = this.properties[i]
         if (is_ast_expansion(prop)) return this
-        let key = prop.key
+        let key: any = prop.key
         if (is_ast_symbol(key)) {
           key = key.name
         } else if (is_ast_node(key)) {
           key = key._eval?.(compressor, depth)
           if (key === prop.key) return this
         }
-        if (typeof Object.prototype[key] === 'function') {
+        if (typeof (Object.prototype as any)[key] === 'function') {
           return this
         }
         if (is_ast_function(prop.value)) continue
@@ -105,7 +106,7 @@ export default class AST_Object extends AST_Node {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     const properties = this.properties
     for (let i = 0, len = properties.length; i < len; i++) {
       result.push(properties[i])
@@ -118,7 +119,7 @@ export default class AST_Object extends AST_Node {
     while (i--) push(this.properties[i])
   }
 
-  _size (info): number {
+  _size (info: any): number {
     let base = 2
     if (first_in_statement(info)) {
       base += 2 // parens
@@ -131,7 +132,7 @@ export default class AST_Object extends AST_Node {
     this.properties = do_list(this.properties, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'ObjectExpression',
       properties: this.properties.map(to_moz)
@@ -140,7 +141,7 @@ export default class AST_Object extends AST_Node {
 
   // same goes for an object literal, because otherwise it would be
   // interpreted as a block of code.
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     return !output.has_parens() && first_in_statement(output)
   }
 

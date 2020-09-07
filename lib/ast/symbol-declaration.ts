@@ -8,7 +8,7 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
 
   may_throw (compressor: Compressor) { return false }
   has_side_effects (compressor: Compressor) { return false }
-  _find_defs (compressor: Compressor, suffix) {
+  _find_defs (compressor: Compressor, suffix: string) {
     if (!this.global()) return
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
   }

@@ -7,7 +7,7 @@ export default class AST_Await extends AST_Node {
   expression: AST_Node
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
@@ -29,7 +29,7 @@ export default class AST_Await extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this ||
             is_ast_call(p) && p.expression === this ||

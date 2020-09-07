@@ -4,7 +4,7 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import { make_node } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', this) }
     return this
   }
@@ -15,7 +15,7 @@ export default class AST_Debugger extends AST_Statement {
     return { type: 'DebuggerStatement' }
   }
 
-  _codegen (this, output: OutputStream) {
+  _codegen (output: OutputStream) {
     output.print('debugger')
     output.semicolon()
   }

@@ -11,7 +11,7 @@ export default class AST_Exit extends AST_Jump {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     result.push(this.value)
     return result
   }

@@ -4,6 +4,7 @@ import AST_Node from './node'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import { to_moz, lift_key, make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_class, is_ast_default_assign } from '../utils'
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
+import { MozillaAst } from '../types'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   quote: string
@@ -15,7 +16,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return this
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
@@ -58,7 +59,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
   }
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     lift_key(this, compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}

@@ -56,7 +56,7 @@ export default class AST_PropAccess extends AST_Node {
     return this
   }
 
-  flatten_object (key, compressor: Compressor) {
+  flatten_object (key: any, compressor: Compressor) {
     if (!compressor.option('properties')) return
     const arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     const expr = this.expression
@@ -65,14 +65,14 @@ export default class AST_PropAccess extends AST_Node {
       for (let i = props.length; --i >= 0;) {
         const prop = props[i]
         if ('' + (is_ast_concise_method(prop) ? prop.key.name : prop.key) == key) {
-          if (!props.every((prop) => {
+          if (!props.every((prop: any) => {
             return is_ast_object_key_val(prop) ||
                           arrows && is_ast_concise_method(prop) && !prop.is_generator
           })) break
           if (!safe_to_flatten(prop.value, compressor)) break
           return make_node('AST_Sub', this, {
             expression: make_node('AST_Array', expr, {
-              elements: props.map(function (prop) {
+              elements: props.map(function (prop: any) {
                 let v = prop.value
                 if (is_ast_accessor(v)) v = make_node('AST_Function', v, v)
                 const k = prop.key
@@ -101,7 +101,7 @@ export default class AST_PropAccess extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (is_ast_new(p) && p.expression === this) {
       // i.e. new (foo.bar().baz)

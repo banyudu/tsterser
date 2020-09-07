@@ -15,11 +15,12 @@ import {
 } from '../utils'
 import { walk_abort } from '../constants'
 import SymbolDef from '../symbol-def'
+import { MozillaAst } from '../types'
 
 export default class AST_Function extends AST_Lambda {
   name: any
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     const self = opt_AST_Lambda(this, compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&
@@ -35,7 +36,8 @@ export default class AST_Function extends AST_Lambda {
     return self
   }
 
-  drop_side_effect_free () { return null }
+  drop_side_effect_free (): AST_Function { return null }
+
   _eval (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       const fn: any = function () {}
@@ -48,7 +50,7 @@ export default class AST_Function extends AST_Lambda {
     return this
   }
 
-  negate () {
+  negate (): AST_Node {
     return basic_negation(this)
   }
 
@@ -74,13 +76,13 @@ export default class AST_Function extends AST_Lambda {
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return To_Moz_FunctionExpression(this, parent)
   }
 
   // a function expression needs parens around it when it's provably
   // the first token to appear in a statement.
-  needs_parens (output: OutputStream) {
+  needs_parens (output: OutputStream): boolean {
     if (!output.has_parens() && first_in_statement(output)) {
       return true
     }

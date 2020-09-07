@@ -6,11 +6,12 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 import { make_node, anyMayThrow, anySideEffect, make_sequence, walk, do_list, to_moz, is_ast_destructuring, is_ast_symbol_declaration, is_ast_for, is_ast_for_in } from '../utils'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_Definitions extends AST_Statement {
   definitions: AST_VarDef[]
 
-  _optimize (compressor: Compressor) {
+  _optimize (compressor: Compressor): any {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
     return this
   }
@@ -75,7 +76,7 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   walkInner () {
-    const result = []
+    const result: AST_Node[] = []
     const definitions = this.definitions
     for (let i = 0, len = definitions.length; i < len; i++) {
       result.push(definitions[i])
@@ -93,7 +94,7 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = do_list(this.definitions, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'var',

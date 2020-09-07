@@ -2,7 +2,7 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { push_uniq, is_ast_node } from '../utils'
 import SymbolDef from '../symbol-def'
-import { MangleOptions } from '../types'
+import { MangleOptions, MozillaAst } from '../types'
 import AST_Scope from './scope'
 
 let mangle_options: MangleOptions | undefined
@@ -33,7 +33,7 @@ export default class AST_Symbol extends AST_Node {
     this.mark_enclosed()
   }
 
-  unmangleable (options: MangleOptions) {
+  unmangleable (options: MangleOptions): any {
     const def = this.definition()
     return !def || def.unmangleable(options)
   }
@@ -60,7 +60,7 @@ export default class AST_Symbol extends AST_Node {
     name: 'eq'
   }
 
-  _to_mozilla_ast (parent: AST_Node) {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const def = this.definition()
     return {
       type: 'Identifier',
