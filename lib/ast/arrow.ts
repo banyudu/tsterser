@@ -12,6 +12,7 @@ import {
   print_braced,
   to_moz, is_ast_prop_access, is_ast_binary, is_ast_assign, is_ast_unary, is_ast_call, is_ast_symbol, is_ast_return
 } from '../utils'
+import { AST_Scope } from '.'
 
 export default class AST_Arrow extends AST_Lambda {
   _optimize (compressor: Compressor): AST_Lambda {
@@ -24,8 +25,8 @@ export default class AST_Arrow extends AST_Lambda {
   }
 
   _dot_throw () { return false }
-  init_scope_vars (...args: any[]) {
-    init_scope_vars.apply(this, args)
+  init_scope_vars (parent_scope: AST_Scope) {
+    init_scope_vars.apply(this, [parent_scope])
     this.uses_arguments = false
   }
 

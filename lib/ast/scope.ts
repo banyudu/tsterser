@@ -620,8 +620,7 @@ export default class AST_Scope extends AST_Block {
               continue
             }
             if (is_ast_block_statement(self.body[i])) {
-              const tmp: any[] = [i, 1].concat(self.body[i].body)
-              self.body.splice.apply(self.body, tmp)
+              self.body.splice(i, 1, self.body[i].body)
               continue
             }
             break

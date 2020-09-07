@@ -48,8 +48,8 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   is_block_scope () { return false }
-  init_scope_vars (...args: any[]) {
-    init_scope_vars.apply(this, args)
+  init_scope_vars (parent_scope: AST_Scope) {
+    init_scope_vars.apply(this, [parent_scope])
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
       name: 'arguments',
