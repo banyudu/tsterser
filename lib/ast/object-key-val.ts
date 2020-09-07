@@ -2,9 +2,8 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
-import { to_moz, lift_key, make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_class, is_ast_default_assign } from '../utils'
+import { lift_key, make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_default_assign } from '../utils'
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
-import { MozillaAst } from '../types'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   quote: string
@@ -16,47 +15,20 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return this
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
-    let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
-      type: 'Identifier',
-      value: this.key
-    }
-    if (typeof this.key === 'number') {
-      key = {
-        type: 'Literal',
-        value: Number(this.key)
-      }
-    }
-    if (typeof this.key === 'string') {
-      key = {
-        type: 'Identifier',
-        name: this.key
-      }
-    }
-    let kind
+  _to_mozilla_ast_computed (): boolean {
     const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
     let computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     if (is_ast_object_key_val(this)) {
-      kind = 'init'
       computed = !string_or_num
     }
-    if (is_ast_class(parent)) {
-      return {
-        type: 'MethodDefinition',
-        computed: computed,
-        kind: kind,
-        static: (this as any).static,
-        key: to_moz(this.key),
-        value: to_moz(this.value)
-      }
+    return computed
+  }
+
+  _to_mozilla_ast_kind (): string | undefined {
+    if (is_ast_object_key_val(this)) {
+      return 'init'
     }
-    return {
-      type: 'Property',
-      computed: computed,
-      kind: kind,
-      key: key,
-      value: to_moz(this.value)
-    }
+    return undefined
   }
 
   _optimize (compressor: Compressor): any {

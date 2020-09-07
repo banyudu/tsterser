@@ -2,53 +2,14 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
 import Compressor from '../compressor'
-import { to_moz, key_size, static_size, is_ast_node, is_ast_symbol_method, is_ast_symbol, is_ast_symbol_ref, is_ast_object_getter, is_ast_class } from '../utils'
-import { MozillaAst } from '../types'
+import { key_size, static_size, is_ast_symbol_method } from '../utils'
 
 export default class AST_ObjectGetter extends AST_ObjectProperty {
   static: boolean
   quote: string|undefined
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
-    let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
-      type: 'Identifier',
-      value: this.key
-    }
-    if (typeof this.key === 'number') {
-      key = {
-        type: 'Literal',
-        value: Number(this.key)
-      }
-    }
-    if (typeof this.key === 'string') {
-      key = {
-        type: 'Identifier',
-        name: this.key
-      }
-    }
-    let kind
-    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
-    if (is_ast_object_getter(this)) {
-      kind = 'get'
-    }
-    if (is_ast_class(parent)) {
-      return {
-        type: 'MethodDefinition',
-        computed: computed,
-        kind: kind,
-        static: (this as any).static,
-        key: to_moz(this.key as any),
-        value: to_moz(this.value)
-      }
-    }
-    return {
-      type: 'Property',
-      computed: computed,
-      kind: kind,
-      key: key,
-      value: to_moz(this.value)
-    }
+  _to_mozilla_ast_kind (): string | undefined {
+    return 'get'
   }
 
   drop_side_effect_free (): AST_Node | null {

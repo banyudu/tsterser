@@ -10,22 +10,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
   static: boolean
 
   _to_mozilla_ast (parent: AST_Node): MozillaAst {
-    let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
-      type: 'Identifier',
-      value: this.key
-    }
-    if (typeof this.key === 'number') {
-      key = {
-        type: 'Literal',
-        value: Number(this.key)
-      }
-    }
-    if (typeof this.key === 'string') {
-      key = {
-        type: 'Identifier',
-        name: this.key
-      }
-    }
+    const key = this._to_mozilla_ast_key()
     const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
     const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     return {

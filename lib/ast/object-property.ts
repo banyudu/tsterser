@@ -66,7 +66,16 @@ export default class AST_ObjectProperty extends AST_Node {
     if (this.value) this.value = this.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast_computed (): boolean {
+    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
+    return string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+  }
+
+  _to_mozilla_ast_kind (): string | undefined {
+    return undefined
+  }
+
+  _to_mozilla_ast_key () {
     let key: any = is_ast_node(this.key) ? to_moz(this.key) : {
       type: 'Identifier',
       value: this.key
@@ -83,9 +92,13 @@ export default class AST_ObjectProperty extends AST_Node {
         name: this.key
       }
     }
-    let kind
-    const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
-    const computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
+    return key
+  }
+
+  _to_mozilla_ast (parent: AST_Node): any {
+    const key = this._to_mozilla_ast_key()
+    const kind = this._to_mozilla_ast_kind()
+    const computed = this._to_mozilla_ast_computed()
     if (is_ast_class(parent)) {
       return {
         type: 'MethodDefinition',
