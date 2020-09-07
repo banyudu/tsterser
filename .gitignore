@@ -4,3 +4,12 @@
 tmp/
 dist/
 coverage/
+**/*.js.map
+**/*.ts.map
+**/*.d.ts
+
+lib/**/*.js
+tools/**/*.js
+
+main.js
+tsconfig.tsbuildinfo
