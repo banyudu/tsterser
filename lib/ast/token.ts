@@ -9,7 +9,7 @@ export default class AST_Token extends AST {
   col: number
   nlb?: boolean
   file: string
-  raw: string
+  raw?: string
   quote: string
   endpos: number | null
   endline: number | null

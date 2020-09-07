@@ -11,8 +11,8 @@ import { MozillaAst } from '../types'
 /* -----[ EXCEPTIONS ]----- */
 
 export default class AST_Try extends AST_Block {
-  bfinally: AST_Finally | undefined
-  bcatch: AST_Catch | undefined
+  bfinally: AST_Finally
+  bcatch: AST_Catch
 
   _optimize (compressor: Compressor): AST_Try {
     tighten_body(this.body, compressor)
@@ -125,6 +125,6 @@ export default class AST_Try extends AST_Block {
 }
 
 export interface AST_Try_Props extends AST_Block_Props {
-  bcatch?: AST_Catch | undefined | undefined
-  bfinally?: AST_Finally | undefined | undefined
+  bcatch: AST_Catch
+  bfinally: AST_Finally
 }

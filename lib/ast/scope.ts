@@ -63,7 +63,7 @@ export default class AST_Scope extends AST_Block {
   cname?: number
 
   process_expression (insert: boolean, compressor?: Compressor) {
-    const self = this
+    const self: AST_Scope = this
     var tt = new TreeTransformer(function (node: AST_Node) {
       if (insert && is_ast_simple_statement(node)) {
         return make_node('AST_Return', node, {
@@ -86,7 +86,7 @@ export default class AST_Scope extends AST_Block {
           })
         })
       }
-      if (is_ast_class(node) || is_ast_lambda(node) && (node as any) !== self) {
+      if (is_ast_class(node) || is_ast_lambda(node) && (node) !== self) {
         return node
       }
       if (is_ast_block(node)) {
@@ -111,7 +111,7 @@ export default class AST_Scope extends AST_Block {
     const optUnused = compressor.option('unused')
     if (!optUnused) return
     if (compressor.has_directive('use asm')) return
-    const self = this
+    const self: AST_Scope = this
     if (self.pinned()) return
     const drop_funcs = !(is_ast_toplevel(self)) || compressor.toplevel.funcs
     const drop_vars = !(is_ast_toplevel(self)) || compressor.toplevel.vars
@@ -290,7 +290,7 @@ export default class AST_Scope extends AST_Block {
             }
           }
         }
-        if ((is_ast_defun(node) || is_ast_def_class(node)) && (node as any) !== self) {
+        if ((is_ast_defun(node) || is_ast_def_class(node)) && node !== self) {
           const def = node.name?.definition?.()
           const keep = def.global && !drop_funcs || in_use_ids.has(def.id)
           if (!keep) {
@@ -794,7 +794,7 @@ export default class AST_Scope extends AST_Block {
 
   def_function (symbol: any, init: boolean) {
     const def = this.def_variable(symbol, init)
-    if (!def.init || is_ast_defun(def.init as any)) def.init = init
+    if (!def.init || is_ast_defun(def.init)) def.init = init
     this.functions.set(symbol.name, def)
     return def
   }
@@ -803,7 +803,7 @@ export default class AST_Scope extends AST_Block {
     let def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
-      if (def.init && (def.scope !== symbol.scope || is_ast_function(def.init as any))) {
+      if (def.init && (def.scope !== symbol.scope || is_ast_function(def.init))) {
         def.init = init
       }
     } else {

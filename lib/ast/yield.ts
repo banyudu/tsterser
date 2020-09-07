@@ -7,7 +7,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Yield extends AST_Node {
   value: any
   is_star: boolean
-  expression: AST_Node | undefined
+  expression: AST_Node | null
 
   _optimize (compressor: Compressor): any {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
@@ -85,6 +85,6 @@ export default class AST_Yield extends AST_Node {
 }
 
 export interface AST_Yield_Props extends AST_Node_Props {
-  expression?: AST_Node | undefined | undefined
+  expression: AST_Node | null
   is_star?: boolean | undefined
 }

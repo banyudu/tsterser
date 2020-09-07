@@ -120,8 +120,8 @@ export default class AST_Node extends AST {
       return !(is_ast_reg_exp(this))
     } else {
       return is_ast_unary_prefix(this) &&
-              is_ast_constant((this as any).expression) &&
-              unaryPrefix.has((this as any).operator)
+              is_ast_constant(this.expression) &&
+              unaryPrefix.has(this.operator)
     }
   }
 

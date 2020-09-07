@@ -100,7 +100,7 @@ export default class AST_Lambda extends AST_Scope {
   _transform (tw: TreeTransformer) {
     if (this.name) this.name = this.name.transform(tw)
     this.argnames = do_list(this.argnames, tw)
-    if (is_ast_node(this.body as any)) {
+    if (is_ast_node(this.body)) {
       this.body = (this.body as any).transform(tw)
     } else {
       this.body = do_list(this.body, tw)
