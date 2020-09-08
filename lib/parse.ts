@@ -367,7 +367,7 @@ export function js_error (message: string, filename: string | undefined, line: n
   throw new JS_Parse_Error(message, filename, line, col, pos)
 }
 
-function is_token (token: any, type?: string, val?: string) {
+function is_token (token: any, type?: string | null, val?: string) {
   return token.type == type && (val == null || token.value == val)
 }
 
@@ -2600,7 +2600,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function map_nameAsterisk (is_import: boolean, name?: AST_SymbolImportForeign | AST_SymbolExportForeign) {
+  function map_nameAsterisk (is_import: boolean, name?: AST_SymbolImportForeign | AST_SymbolExportForeign | null) {
     const foreign_type = is_import ? AST_SymbolImportForeign : AST_SymbolExportForeign
     const type = is_import ? AST_SymbolImport : AST_SymbolExport
     const start = S.token
@@ -2792,7 +2792,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  function as_symbol (type: typeof AST_Symbol, noerror?: boolean) {
+  function as_symbol (type: typeof AST_Symbol | null, noerror?: boolean) {
     if (!is('name')) {
       if (!noerror) croak('Name expected')
       return null

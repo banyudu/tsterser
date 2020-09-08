@@ -89,7 +89,7 @@ export class OutputStream {
   private _newline_insert = -1
   private _last = ''
   private _mapping_token: AST_Token | false
-  private _mapping_name: string
+  private _mapping_name: string | undefined
   private _indentation = 0
   private _current_col = 0
   private _current_line = 1

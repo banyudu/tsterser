@@ -1309,7 +1309,7 @@ export function to_moz (node?: AST_Node | null): MozillaAst | null {
 let TO_MOZ_STACK: Array<any | null> | null = null
 
 export function to_moz_in_destructuring () {
-  let i = TO_MOZ_STACK?.length
+  let i = TO_MOZ_STACK?.length ?? 0
   while (i--) {
     if (is_ast_destructuring(TO_MOZ_STACK?.[i])) {
       return true
@@ -1579,7 +1579,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       // Replace variable with assignment when found
       if (can_replace &&
                 !(is_ast_symbol_declaration(node)) &&
-                lhs.equivalent_to(node)
+                lhs?.equivalent_to(node)
       ) {
         if (stop_if_hit) {
           abort = true
@@ -1685,7 +1685,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         var value_def: any = null
         var stop_after: any = null
         var stop_if_hit: any = null
-        var lhs = get_lhs(candidate)
+        var lhs: AST_Node | undefined = get_lhs(candidate)
         if (!lhs || is_lhs_read_only(lhs) || lhs.has_side_effects(compressor)) continue
         // Locate symbols which may execute code outside of scanning range
         var lvalues = get_lvalues(candidate)
@@ -1987,7 +1987,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       return (value_def = def)
     }
 
-    function get_lhs (expr: AST_Node) {
+    function get_lhs (expr: AST_Node): AST_Node | undefined {
       if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
         const def = expr.name.definition?.()
         if (!member(expr.name, def.orig)) return
@@ -2003,6 +2003,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         return !is_ref_of(lhs, AST_SymbolConst) &&
                     !is_ref_of(lhs, AST_SymbolLet) && lhs
       }
+      return undefined
     }
 
     function get_rvalue (expr: AST_Node) {
@@ -2105,7 +2106,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     function side_effects_external (node: AST_Node, lhs?: boolean): boolean {
       if (is_ast_assign(node)) return side_effects_external(node.left, true)
       if (is_ast_unary(node)) return side_effects_external(node.expression, true)
-      if (is_ast_var_def(node)) return node.value && side_effects_external(node.value)
+      if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
       if (lhs) {
         if (is_ast_dot(node)) return side_effects_external(node.expression, true)
         if (is_ast_sub(node)) return side_effects_external(node.expression, true)
@@ -2705,7 +2706,7 @@ export function do_list (list: any[], tw: TreeTransformer) {
 // we shouldn't compress (1,func)(something) to
 // func(something) because that changes the meaning of
 // the func (becomes lexical instead of global).
-export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AST_Node) {
+export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AST_Node | undefined) {
   if (is_ast_unary_prefix(parent) && parent.operator == 'delete' ||
         is_ast_call(parent) && parent.expression === orig &&
             (is_ast_prop_access(val) || is_ast_symbol_ref(val) && val.name == 'eval')) {
