@@ -39,7 +39,7 @@ export default class AST_Conditional extends AST_Node {
     return false
   }
 
-  _in_boolean_context_next (context: AST_Node) {
+  _in_boolean_context_next (context: AST_Node): boolean {
     return true
   }
 

@@ -3734,7 +3734,7 @@ export function to_moz_scope (type: string, node: AST_Node): MozillaAst {
   }
 }
 
-export function To_Moz_FunctionExpression (M: AST_Lambda, parent: any): MozillaAst {
+export function To_Moz_FunctionExpression (M: AST_Lambda, parent: any): MozillaAstFunctionExpression {
   const is_generator = parent.is_generator !== undefined
     ? parent.is_generator : M.is_generator
   return {

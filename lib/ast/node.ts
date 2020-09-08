@@ -52,7 +52,7 @@ export default class AST_Node extends AST {
     return false
   }
 
-  _in_boolean_context_next (context: AST_Node) {
+  _in_boolean_context_next (context: AST_Node): boolean {
     return this.tail_node() === context
   }
 

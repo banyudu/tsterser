@@ -30,10 +30,11 @@ export default class AST_Binary extends AST_Node {
     return this.left === node
   }
 
-  _in_boolean_context_next (context: AST_Node) {
+  _in_boolean_context_next (context: AST_Node): boolean {
     if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
       return true
     }
+    return false
   }
 
   _codegen_should_output_space (child: AST_Node) {

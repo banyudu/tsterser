@@ -51,7 +51,7 @@ function map_add (map: Map<string | number, any[]>, key: string | number, value:
 export default class AST_Scope extends AST_Block {
   globals: any
   _added_var_names?: Set<any>
-  _var_name_cache: any
+  protected _var_name_cache: any
   _block_scope: boolean
   variables?: Map<string, SymbolDef> | undefined
   functions?: Map<string, SymbolDef> | undefined
