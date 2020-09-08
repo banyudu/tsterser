@@ -1,3 +1,4 @@
 test
 dist
 *.d.ts
+**/*.js

@@ -2519,7 +2519,7 @@ export function parse ($TEXT: string, opt?: any) {
           quote,
           key,
           end: prev()
-        })
+        } as any)
       }
     }
   }

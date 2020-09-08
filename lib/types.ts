@@ -229,3 +229,80 @@ export interface MozillaAst {
   static?: boolean
   end?: any
 }
+
+export interface MozillaAstArrayPattern extends MozillaAst {
+  elements: MozillaAst[]
+}
+
+export interface MozillaAstArrayExpression extends MozillaAst {
+  elements: MozillaAst[]
+}
+
+export interface MozillaAstObjectPattern extends MozillaAst {
+  properties: MozillaAst[]
+}
+
+export interface MozillaAstObjectExpression extends MozillaAst {
+  properties: MozillaAst[]
+}
+
+export interface MozillaAstTemplateLiteral extends MozillaAst {
+  expressions: MozillaAst[]
+}
+
+export interface MozillaAstSequenceExpression extends MozillaAst {
+  expressions: MozillaAst[]
+}
+
+export interface MozillaAstProperty extends MozillaAst {
+  key: MozillaAst
+}
+
+export interface MozillaAstMethodDefinition extends MozillaAst {
+  key: MozillaAst
+}
+
+export interface MozillaAstFieldDefinition extends MozillaAst {
+  key: MozillaAst
+}
+
+export interface MozillaAstFunctionDeclaration extends MozillaAst {
+  params: MozillaAst[]
+}
+
+export interface MozillaAstFunctionExpression extends MozillaAst {
+  params: MozillaAst[]
+}
+
+export interface MozillaAstArrowFunctionExpression extends MozillaAst {
+  params: MozillaAst[]
+}
+
+export interface MozillaAstMemberExpression extends MozillaAst {
+  property: MozillaAst
+}
+
+export interface MozillaAstVariableDeclaration extends MozillaAst {
+  declarations: MozillaAst[]
+}
+
+export interface MozillaAstImportDeclaration extends MozillaAst {
+  specifiers: MozillaAst[]
+}
+
+export interface MozillaAstMetaProperty extends MozillaAst {
+  meta: MozillaAst
+  property: MozillaAst
+}
+
+export interface MozillaAstSwitchStatement extends MozillaAst {
+  cases: MozillaAst[]
+}
+
+export interface MozillaAstNewExpression extends MozillaAst {
+  arguments: MozillaAst[]
+}
+
+export interface MozillaAstCallExpression extends MozillaAst {
+  arguments: MozillaAst[]
+}

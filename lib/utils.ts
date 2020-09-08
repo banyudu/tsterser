@@ -1,4 +1,25 @@
-import { MozillaAst } from './types'
+import {
+  MozillaAst,
+  MozillaAstMetaProperty,
+  MozillaAstNewExpression,
+  MozillaAstCallExpression,
+  MozillaAstSwitchStatement,
+  MozillaAstImportDeclaration,
+  MozillaAstVariableDeclaration,
+  MozillaAstArrayExpression,
+  MozillaAstSequenceExpression,
+  MozillaAstArrayPattern,
+  MozillaAstFunctionExpression,
+  MozillaAstFunctionDeclaration,
+  MozillaAstObjectPattern,
+  MozillaAstMemberExpression,
+  MozillaAstMethodDefinition,
+  MozillaAstObjectExpression,
+  MozillaAstTemplateLiteral,
+  MozillaAstArrowFunctionExpression,
+  MozillaAstFieldDefinition,
+  MozillaAstProperty
+} from './types'
 import { OutputStream } from './output'
 /***********************************************************************
 
@@ -491,7 +512,7 @@ export function sort_regexp_flags (flags: string) {
 }
 
 export function set_annotation (node: AST_Node, annotation: number) {
-  node._annotations |= annotation
+  node._annotations = (node._annotations ?? 0) | annotation
 }
 
 export function convert_to_predicate (obj: {[x: string]: string | string[]}) {
@@ -503,7 +524,7 @@ export function convert_to_predicate (obj: {[x: string]: string | string[]}) {
 }
 
 export function has_annotation (node: AST_Node, annotation: number) {
-  return node._annotations & annotation
+  return (node._annotations ?? 0) & annotation
 }
 
 export function warn (compressor: Compressor, node: AST_Node) {
@@ -606,13 +627,13 @@ export function set_moz_loc (mynode: AST_Node, moznode: MozillaAst): MozillaAst 
   return moznode
 }
 
-export let FROM_MOZ_STACK: MozillaAst[] = []
+export let FROM_MOZ_STACK: Array<MozillaAst | undefined> = []
 
 export function from_moz (node?: MozillaAst) {
-    FROM_MOZ_STACK?.push(node)
-    const ret = node != null ? MOZ_TO_ME[node.type](node) : null
-    FROM_MOZ_STACK?.pop()
-    return ret
+  FROM_MOZ_STACK.push(node)
+  const ret = node != null ? MOZ_TO_ME[node.type](node) : null
+  FROM_MOZ_STACK.pop()
+  return ret
 }
 
 var MOZ_TO_ME: any = {
@@ -623,7 +644,7 @@ var MOZ_TO_ME: any = {
       body: normalize_directives((M.body as any[]).map(from_moz))
     })
   },
-  ArrayPattern: function (M: MozillaAst) {
+  ArrayPattern: function (M: MozillaAstArrayPattern) {
     return new AST_Destructuring({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -636,7 +657,7 @@ var MOZ_TO_ME: any = {
       is_array: true
     })
   },
-  ObjectPattern: function (M: MozillaAst) {
+  ObjectPattern: function (M: MozillaAstObjectPattern) {
     return new AST_Destructuring({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -675,7 +696,7 @@ var MOZ_TO_ME: any = {
       raw: M.value.raw
     })
   },
-  TemplateLiteral: function (M: MozillaAst) {
+  TemplateLiteral: function (M: MozillaAstTemplateLiteral) {
     const segments: any[] = []
     const quasis = (M).quasis as any[]
     for (let i = 0; i < quasis.length; i++) {
@@ -698,7 +719,7 @@ var MOZ_TO_ME: any = {
       prefix: from_moz((M).tag)
     })
   },
-  FunctionDeclaration: function (M: MozillaAst) {
+  FunctionDeclaration: function (M: MozillaAstFunctionDeclaration) {
     return new AST_Defun({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -709,7 +730,7 @@ var MOZ_TO_ME: any = {
       body: normalize_directives(from_moz(M.body as MozillaAst).body)
     })
   },
-  FunctionExpression: function (M: MozillaAst) {
+  FunctionExpression: function (M: MozillaAstFunctionExpression) {
     return new AST_Function({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -720,7 +741,7 @@ var MOZ_TO_ME: any = {
       body: normalize_directives(from_moz(M.body as MozillaAst).body)
     })
   },
-  ArrowFunctionExpression: function (M: MozillaAst) {
+  ArrowFunctionExpression: function (M: MozillaAstArrowFunctionExpression) {
     const mozbody = M.body as MozillaAst
     const body = mozbody.type === 'BlockStatement'
       ? from_moz(mozbody).body
@@ -753,7 +774,7 @@ var MOZ_TO_ME: any = {
       bfinally: M.finalizer ? new AST_Finally(from_moz(M.finalizer)) : null
     })
   },
-  Property: function (M: MozillaAst) {
+  Property: function (M: MozillaAstProperty) {
     const key = M.key
     const args: any = {
       start: my_start_token(key || M.value),
@@ -795,7 +816,7 @@ var MOZ_TO_ME: any = {
       return new AST_ConciseMethod(args)
     }
   },
-  MethodDefinition: function (M: MozillaAst) {
+  MethodDefinition: function (M: MozillaAstMethodDefinition) {
     const args: any = {
       start: my_start_token(M),
       end: my_end_token(M),
@@ -813,7 +834,7 @@ var MOZ_TO_ME: any = {
     args.async = M.value.async
     return new AST_ConciseMethod(args)
   },
-  FieldDefinition: function (M: MozillaAst) {
+  FieldDefinition: function (M: MozillaAstFieldDefinition) {
     let key
     if (M.computed) {
       key = from_moz(M.key)
@@ -829,7 +850,7 @@ var MOZ_TO_ME: any = {
       static: M.static
     })
   },
-  ArrayExpression: function (M: MozillaAst) {
+  ArrayExpression: function (M: MozillaAstArrayExpression) {
     return new AST_Array({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -838,7 +859,7 @@ var MOZ_TO_ME: any = {
       })
     })
   },
-  ObjectExpression: function (M: MozillaAst) {
+  ObjectExpression: function (M: MozillaAstObjectExpression) {
     return new AST_Object({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -851,14 +872,14 @@ var MOZ_TO_ME: any = {
       })
     })
   },
-  SequenceExpression: function (M: MozillaAst) {
+  SequenceExpression: function (M: MozillaAstSequenceExpression) {
     return new AST_Sequence({
       start: my_start_token(M),
       end: my_end_token(M),
       expressions: M.expressions.map(from_moz)
     })
   },
-  MemberExpression: function (M: MozillaAst) {
+  MemberExpression: function (M: MozillaAstMemberExpression) {
     return new (M.computed ? AST_Sub : AST_Dot)({
       start: my_start_token(M),
       end: my_end_token(M),
@@ -874,7 +895,7 @@ var MOZ_TO_ME: any = {
       body: (M.consequent as MozillaAst[]).map(from_moz)
     })
   },
-  VariableDeclaration: function (M: MozillaAst) {
+  VariableDeclaration: function (M: MozillaAstVariableDeclaration) {
     return new (M.kind === 'const' ? AST_Const
       : M.kind === 'let' ? AST_Let : AST_Var)({
       start: my_start_token(M),
@@ -883,7 +904,7 @@ var MOZ_TO_ME: any = {
     })
   },
 
-  ImportDeclaration: function (M: MozillaAst) {
+  ImportDeclaration: function (M: MozillaAstImportDeclaration) {
     let imported_name = null
     let imported_names: any[] | null = null
     M.specifiers.forEach(function (specifier) {
@@ -984,7 +1005,7 @@ var MOZ_TO_ME: any = {
         return new (val ? AST_True : AST_False as any)(args)
     }
   },
-  MetaProperty: function (M: MozillaAst) {
+  MetaProperty: function (M: MozillaAstMetaProperty) {
     if (M.meta.name === 'new' && M.property.name === 'target') {
       return new AST_NewTarget({
         start: my_start_token(M),
@@ -993,7 +1014,7 @@ var MOZ_TO_ME: any = {
     }
   },
   Identifier: function (M: MozillaAst) {
-    const p = FROM_MOZ_STACK?.[FROM_MOZ_STACK.length - 2]
+    const p = FROM_MOZ_STACK[FROM_MOZ_STACK.length - 2]
     return new (p.type == 'LabeledStatement' ? AST_Label
       : p.type == 'VariableDeclarator' && p.id === M ? (p.kind == 'const' ? AST_SymbolConst : p.kind == 'let' ? AST_SymbolLet : AST_SymbolVar)
         : /Import.*Specifier/.test(p.type) ? (p.local === M ? AST_SymbolImport : AST_SymbolImportForeign)
@@ -1064,7 +1085,7 @@ var MOZ_TO_ME: any = {
     expression: from_moz(M.object),
     body: from_moz(M.body as MozillaAst)
   }),
-  SwitchStatement: (M: MozillaAst) => new AST_Switch({
+  SwitchStatement: (M: MozillaAstSwitchStatement) => new AST_Switch({
     start: my_start_token(M),
     end: my_end_token(M),
     expression: from_moz(M.discriminant),
@@ -1178,13 +1199,13 @@ var MOZ_TO_ME: any = {
     consequent: from_moz(M.consequent as MozillaAst),
     alternative: from_moz(M.alternate)
   }),
-  NewExpression: (M: MozillaAst) => new AST_New({
+  NewExpression: (M: MozillaAstNewExpression) => new AST_New({
     start: my_start_token(M),
     end: my_end_token(M),
     expression: from_moz(M.callee),
     args: M.arguments.map(from_moz)
   }),
-  CallExpression: (M: MozillaAst) => new AST_Call({
+  CallExpression: (M: MozillaAstCallExpression) => new AST_Call({
     start: my_start_token(M),
     end: my_end_token(M),
     expression: from_moz(M.callee),

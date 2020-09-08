@@ -133,6 +133,6 @@ export default class AST_ObjectProperty extends AST_Node {
 }
 
 export interface AST_ObjectProperty_Props extends AST_Node_Props {
-  key?: AST_Node
-  value?: AST_Node
+  key: AST_Node
+  value: AST_Node
 }
