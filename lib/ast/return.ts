@@ -13,7 +13,7 @@ export default class AST_Return extends AST_Exit {
   }
 
   may_throw (compressor: Compressor): boolean {
-    return this.value?.may_throw(compressor)
+    return !!this.value?.may_throw(compressor)
   }
 
   _size () {

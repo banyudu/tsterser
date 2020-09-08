@@ -2138,7 +2138,7 @@ export function parse ($TEXT: string, opt?: any) {
     return ex.to_fun_args(croak)
   }
 
-  var expr_atom = function (allow_calls: boolean, allow_arrows?: boolean): AST_Node {
+  var expr_atom = function (allow_calls: boolean, allow_arrows: boolean = false): AST_Node {
     if (is('operator', 'new')) {
       return new_(allow_calls)
     }

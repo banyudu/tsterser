@@ -53,13 +53,13 @@ export default class AST_Scope extends AST_Block {
   _added_var_names?: Set<any>
   protected _var_name_cache: any
   _block_scope: boolean
-  variables?: Map<string, SymbolDef> | undefined
-  functions?: Map<string, SymbolDef> | undefined
-  uses_with?: boolean
-  uses_eval?: boolean
+  variables: Map<string, SymbolDef>
+  functions: Map<string, SymbolDef>
+  uses_with: boolean
+  uses_eval: boolean
   parent_scope?: AST_Scope
-  enclosed?: SymbolDef[]
-  cname?: number
+  enclosed: SymbolDef[]
+  cname: number
 
   process_expression (insert: boolean, compressor?: Compressor) {
     const self: AST_Scope = this
@@ -1131,13 +1131,13 @@ export default class AST_Scope extends AST_Block {
   static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
   constructor (args: AST_Scope_Props) {
     super(args)
-    this.variables = args.variables
-    this.functions = args.functions
-    this.uses_with = args.uses_with
-    this.uses_eval = args.uses_eval
+    this.variables = args.variables ?? new Map()
+    this.functions = args.functions ?? new Map()
+    this.uses_with = args.uses_with ?? false
+    this.uses_eval = args.uses_eval ?? false
     this.parent_scope = args.parent_scope
-    this.enclosed = args.enclosed
-    this.cname = args.cname
+    this.enclosed = args.enclosed ?? []
+    this.cname = args.cname ?? NaN
     this._var_name_cache = args._var_name_cache
   }
 }

@@ -60,6 +60,6 @@ export default class AST_ObjectSetter extends AST_ObjectMethodProperty {
 }
 
 export interface AST_ObjectSetter_Props extends AST_ObjectMethodProperty_Props {
-  quote?: string|undefined | undefined
-  static?: boolean | undefined
+  quote: string|undefined | undefined
+  static: boolean | undefined
 }

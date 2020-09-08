@@ -1426,7 +1426,7 @@ export function first_in_statement (stack: any) {
       return false
     }
   }
-  return undefined
+  return false
 }
 
 function best_of_statement (ast1: AST_Node, ast2: AST_Node) {
