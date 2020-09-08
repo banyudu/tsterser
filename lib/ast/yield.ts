@@ -86,5 +86,5 @@ export default class AST_Yield extends AST_Node {
 
 export interface AST_Yield_Props extends AST_Node_Props {
   expression: AST_Node | null
-  is_star?: boolean | undefined
+  is_star: boolean | undefined
 }

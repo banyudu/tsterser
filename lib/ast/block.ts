@@ -85,6 +85,6 @@ export default class AST_Block extends AST_Statement {
 
 export interface AST_Block_Props extends AST_Statement_Props {
   body?: AST_Statement[]
-  block_scope?: AST_Scope
+  block_scope?: AST_Scope | null
   expression?: any
 }

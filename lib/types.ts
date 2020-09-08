@@ -214,7 +214,7 @@ export interface MozillaAst {
   params?: MozillaAst[]
   generator?: boolean
   async?: boolean
-  expression?: MozillaAst
+  expression?: MozillaAst | null
   handlers?: MozillaAst[]
   guardedHandlers?: any[]
   block?: MozillaAst

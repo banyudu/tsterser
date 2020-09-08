@@ -71,6 +71,6 @@ export default class AST_PrefixedTemplateString extends AST_Node {
 }
 
 export interface AST_PrefixedTemplateString_Props extends AST_Node_Props {
-  template_string?: AST_TemplateString | undefined
-  prefix?: AST_SymbolRef|AST_PropAccess | undefined
+  template_string: AST_TemplateString | undefined
+  prefix: AST_SymbolRef|AST_PropAccess | undefined
 }

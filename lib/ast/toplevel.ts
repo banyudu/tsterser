@@ -34,7 +34,7 @@ export let unmangleable_names: Set<any> | null = null
 export default class AST_Toplevel extends AST_Scope {
   variables: any
   globals: Map<any, any>
-  mangled_names: any
+  mangled_names: Set<any>
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     this.globals.forEach(function (def: SymbolDef) {
@@ -365,7 +365,7 @@ export default class AST_Toplevel extends AST_Scope {
   static PROPS = AST_Scope.PROPS.concat(['globals'])
   constructor (args: AST_Toplevel_Props) {
     super(args)
-    this.globals = args.globals
+    this.globals = args.globals ?? new Map()
   }
 }
 
