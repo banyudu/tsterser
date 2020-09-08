@@ -165,8 +165,9 @@ export function mangle_properties (ast: AST_Node, options: any) {
       }
     } else if (is_ast_object_property(node)) {
       // setter or getter, since KeyVal is handled above
-      if (!keep_quoted_strict || !node.key.end.quote) {
-        add(node.key.name)
+      const key: AST_Node = node.key as any
+      if (!keep_quoted_strict || !key.end.quote) {
+        add(key.name)
       }
     } else if (is_ast_dot(node)) {
       let declared = !!options.undeclared
@@ -193,6 +194,7 @@ export function mangle_properties (ast: AST_Node, options: any) {
 
   // step 2: transform the tree, renaming properties
   return ast.transform(new TreeTransformer(function (node: AST_Node) {
+    const key: AST_Node = node.key
     if (is_ast_object_key_val(node)) {
       if (typeof node.key === 'string' &&
                 (!keep_quoted_strict || !node.quote)) {
@@ -200,8 +202,8 @@ export function mangle_properties (ast: AST_Node, options: any) {
       }
     } else if (is_ast_object_property(node)) {
       // setter, getter, method or class field
-      if (!keep_quoted_strict || !node.key.end.quote) {
-        node.key.name = mangle(node.key.name)
+      if (!keep_quoted_strict || !key.end.quote) {
+        key.name = mangle(key.name)
       }
     } else if (is_ast_dot(node)) {
       if (!keep_quoted_strict || !node.quote) {

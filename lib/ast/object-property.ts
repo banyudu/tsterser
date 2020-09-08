@@ -6,7 +6,6 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
   key: AST_Node | string
-  // key: any
   value: AST_Node
   quote: any
   static: boolean

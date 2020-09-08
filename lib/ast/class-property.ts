@@ -8,6 +8,7 @@ import { MozillaAst } from '../types'
 export default class AST_ClassProperty extends AST_ObjectProperty {
   quote: string
   static: boolean
+  key: AST_Node
 
   _to_mozilla_ast (parent: AST_Node): MozillaAst {
     const key = this._to_mozilla_ast_key()

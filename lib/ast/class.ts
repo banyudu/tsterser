@@ -52,7 +52,8 @@ export default class AST_Class extends AST_Scope {
     }
 
     for (const prop of this.properties) {
-      if (prop.computed_key() && !prop.key.is_constant_expression(scope)) {
+      const key: AST_Node = prop.key as any
+      if (prop.computed_key() && !key.is_constant_expression(scope)) {
         return false
       }
       if (prop.static && prop.value && !prop.value.is_constant_expression(scope)) {
