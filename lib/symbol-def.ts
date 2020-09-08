@@ -22,7 +22,7 @@ export default class SymbolDef {
   recursive_refs: number
   references: any[]
   should_replace: any
-  single_use: string | boolean
+  single_use: string | boolean | undefined
   fixed: any
   constructor (scope: any | null, orig: { name: string }, init?: boolean) {
     this.name = orig.name

@@ -2094,7 +2094,8 @@ export function parse ($TEXT: string, opt?: any) {
   }
 
   function as_atom_node () {
-    const tok = S.token; let ret
+    const tok = S.token
+    let ret
     switch (tok?.type) {
       case 'name':
         ret = _make_symbol(AST_SymbolRef)
@@ -2222,7 +2223,7 @@ export function parse ($TEXT: string, opt?: any) {
       return subscripts(template_string(false), allow_calls)
     }
     if (ATOMIC_START_TOKEN.has(S.token?.type as string)) {
-      return subscripts(as_atom_node(), allow_calls)
+      return subscripts(as_atom_node() as any, allow_calls)
     }
     unexpected()
   }

@@ -210,7 +210,7 @@ export interface MozillaAst {
   quasis?: MozillaAst[]
   quasi?: MozillaAst
   tag?: MozillaAst
-  id?: MozillaAst
+  id?: MozillaAst | null
   params?: MozillaAst[]
   generator?: boolean
   async?: boolean
@@ -271,7 +271,7 @@ export interface MozillaAstFunctionDeclaration extends MozillaAst {
 }
 
 export interface MozillaAstFunctionExpression extends MozillaAst {
-  params: MozillaAst[]
+  params: Array<MozillaAst | null>
 }
 
 export interface MozillaAstArrowFunctionExpression extends MozillaAst {

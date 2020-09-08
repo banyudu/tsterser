@@ -80,7 +80,7 @@ export default class AST_Yield extends AST_Node {
   constructor (args: AST_Yield_Props) {
     super(args)
     this.expression = args.expression
-    this.is_star = args.is_star
+    this.is_star = args.is_star ?? false
   }
 }
 

@@ -145,6 +145,6 @@ export default class AST_Unary extends AST_Node {
 }
 
 export interface AST_Unary_Props extends AST_Node_Props {
-  operator?: string | undefined
+  operator: string
   expression?: AST_Node | undefined
 }

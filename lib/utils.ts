@@ -1384,7 +1384,7 @@ export function literals_in_boolean_context (self: AST_Node, compressor: Compres
   return self
 }
 
-export function make_sequence (orig: AST_Node, expressions: AST_Node[]) {
+export function make_sequence (orig: AST_Node, expressions: Array<AST_Node | undefined>) {
   if (expressions.length == 1) return expressions[0]
   if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
   return make_node('AST_Sequence', orig, {
@@ -1392,7 +1392,7 @@ export function make_sequence (orig: AST_Node, expressions: AST_Node[]) {
   })
 }
 
-export function merge_sequence (array: AST_Node[], node: AST_Node) {
+export function merge_sequence (array: Array<AST_Node | undefined>, node: AST_Node | undefined) {
   if (is_ast_sequence(node)) {
     array.push(...node.expressions)
   } else {
@@ -2667,13 +2667,13 @@ export function reset_def (compressor: Compressor, def: SymbolDef) {
   }
 }
 
-export function is_identifier_atom (node: AST_Node) {
+export function is_identifier_atom (node: AST_Node | undefined): boolean {
   return is_ast_infinity(node) ||
         is_ast_na_n(node) ||
         is_ast_undefined(node)
 }
 
-export function walk_body (node: AST_Node, visitor: TreeWalker) {
+export function walk_body (node: AST_Node, visitor: TreeWalker): void {
   const body = node.body
   for (let i = 0, len = body.length; i < len; i++) {
     body[i].walk(visitor)
@@ -2710,7 +2710,10 @@ export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AS
   if (is_ast_unary_prefix(parent) && parent.operator == 'delete' ||
         is_ast_call(parent) && parent.expression === orig &&
             (is_ast_prop_access(val) || is_ast_symbol_ref(val) && val.name == 'eval')) {
-    return make_sequence(orig, [make_node('AST_Number', orig, { value: 0 }), val])
+    return make_sequence(orig, [
+      make_node('AST_Number', orig, { value: 0 }),
+      val
+    ])
   }
   return val
 }
@@ -2769,6 +2772,7 @@ export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_N
     const prop = read_property(value, (parent as any).property)
     return !immutable && is_modified(compressor, tw, parent, prop, level + 1)
   }
+  return false
 }
 
 export function can_be_evicted_from_block (node: AST_Node) {
@@ -3567,7 +3571,7 @@ export function is_nullish_check (check: any, check_subject: AST_Node, compresso
         return false
       }
 
-      if (!defined_side.equivalent_to(check_subject)) {
+      if (!defined_side?.equivalent_to(check_subject)) {
         return false
       }
 
