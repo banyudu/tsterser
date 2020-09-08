@@ -1,11 +1,12 @@
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
-import { lift_key, make_sequence, to_moz, print_property_name, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val, is_ast_symbol_method } from '../utils'
+import { lift_key, make_sequence, to_moz, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
-  key: AST_Node
+  // key: AST_Node | string
+  key: any
   value: AST_Node
   quote: any
   static: boolean
@@ -118,27 +119,7 @@ export default class AST_ObjectProperty extends AST_Node {
     }
   }
 
-  _print_getter_setter (type: string, output: OutputStream) {
-    const self = this
-    if (self.static) {
-      output.print('static')
-      output.space()
-    }
-    if (type) {
-      output.print(type)
-      output.space()
-    }
-    if (is_ast_symbol_method(self.key)) {
-      print_property_name(self.key.name, self.quote, output)
-    } else {
-      output.with_square(function () {
-        self.key.print(output)
-      })
-    }
-    (self.value as any)._do_print(output, true)
-  }
-
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key as any) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key) }
   static documentation = 'Base class for literal object properties'
   static propdoc = {
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',

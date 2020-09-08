@@ -1,27 +1,30 @@
 import AST_Node from './node'
+import AST_Accessor from './accessor'
 import { OutputStream } from '../output'
-import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
+import AST_ObjectMethodProperty, { AST_ObjectMethodProperty_Props } from './object-method-property'
 import Compressor from '../compressor'
 import { key_size, static_size, is_ast_symbol_method } from '../utils'
 
-export default class AST_ObjectSetter extends AST_ObjectProperty {
+export default class AST_ObjectSetter extends AST_ObjectMethodProperty {
   quote: string|undefined
   static: boolean
+  key: AST_Node
+  value: AST_Accessor
 
   _to_mozilla_ast_kind (): string | undefined {
     return 'set'
   }
 
   drop_side_effect_free (): AST_Node | null {
-    return this.computed_key() ? this.key as any : null
+    return this.computed_key() ? this.key : null
   }
 
   may_throw (compressor: Compressor) {
-    return this.computed_key() && (this.key as any).may_throw(compressor)
+    return this.computed_key() && this.key.may_throw(compressor)
   }
 
   has_side_effects (compressor: Compressor) {
-    return this.computed_key() && (this.key as any).has_side_effects(compressor)
+    return this.computed_key() && this.key.has_side_effects(compressor)
   }
 
   computed_key () {
@@ -40,7 +43,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
     this._print_getter_setter('set', output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, (this.key as any).name) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
   static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static setter (classes only)'
@@ -48,7 +51,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
 
   static documentation = 'An object setter property'
 
-  static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static'])
+  static PROPS = AST_ObjectMethodProperty.PROPS.concat(['quote', 'static'])
   constructor (args: AST_ObjectSetter_Props) {
     super(args)
     this.quote = args.quote
@@ -56,7 +59,7 @@ export default class AST_ObjectSetter extends AST_ObjectProperty {
   }
 }
 
-export interface AST_ObjectSetter_Props extends AST_ObjectProperty_Props {
+export interface AST_ObjectSetter_Props extends AST_ObjectMethodProperty_Props {
   quote?: string|undefined | undefined
   static?: boolean | undefined
 }

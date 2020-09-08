@@ -1,18 +1,17 @@
 import AST_Node from './node'
 import { OutputStream } from '../output'
-import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
+import AST_ObjectMethodProperty, { AST_ObjectMethodProperty_Props } from './object-method-property'
 import Compressor from '../compressor'
 import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
-import AST_Lambda from './lambda'
 import AST_Arrow from './arrow'
 import { MozillaAst } from '../types'
 
-export default class AST_ConciseMethod extends AST_ObjectProperty {
+export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
   async: boolean
   is_generator: boolean
   static: boolean
   quote: string|undefined
-  value: AST_Lambda
+  key: AST_Node
 
   _optimize (compressor: Compressor): AST_ConciseMethod {
     lift_key(this, compressor)
@@ -39,7 +38,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   }
 
   drop_side_effect_free (): AST_Node | null {
-    return this.computed_key() ? this.key as any : null
+    return this.computed_key() ? this.key : null
   }
 
   may_throw (compressor: Compressor) {
@@ -107,7 +106,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
 
   static documentation = 'An ES6 concise method inside an object or class'
 
-  static PROPS = AST_ObjectProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
+  static PROPS = AST_ObjectMethodProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
   constructor (args: AST_ConciseMethod_Props) {
     super(args)
     this.quote = args.quote
@@ -117,7 +116,7 @@ export default class AST_ConciseMethod extends AST_ObjectProperty {
   }
 }
 
-export interface AST_ConciseMethod_Props extends AST_ObjectProperty_Props {
+export interface AST_ConciseMethod_Props extends AST_ObjectMethodProperty_Props {
   quote?: string|undefined | undefined
   static?: boolean | undefined
   is_generator?: boolean | undefined
