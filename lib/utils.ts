@@ -73,7 +73,6 @@ import {
   clear_flag,
   WRITE_ONLY,
   unary_side_effects,
-  INLINED,
   TOP,
   lazy_op
 } from './constants'
@@ -2680,16 +2679,6 @@ export function walk_body (node: AST_Node, visitor: TreeWalker): void {
   }
 }
 
-export function clone_block_scope (this: AST_Node, deep: boolean): AST_Node {
-  const clone = this._clone(deep)
-  if (this.block_scope) {
-    // TODO this is sometimes undefined during compression.
-    // But it should always have a value!
-    clone.block_scope = this.block_scope.clone()
-  }
-  return clone
-}
-
 export function is_lhs (node: AST_Node, parent: AST_Node) {
   if (is_ast_unary(parent) && unary_side_effects.has(parent.operator)) return parent.expression
   if (is_ast_assign(parent) && parent.left === node) return node
@@ -3190,7 +3179,7 @@ export function needsParens (this: AST_Node, output: OutputStream) {
   if (p?._needs_parens(this)) { return true }
   // ({a, b} = {a: 1, b: 2}), a destructuring assignment
   if (is_ast_assign(this) && is_ast_destructuring(this.left) && !this.left.is_array) { return true }
-  return undefined
+  return false
 }
 export function next_mangled (scope: AST_Scope, options: any) {
   const ext = scope.enclosed
@@ -3322,46 +3311,6 @@ export function mark_escaped (tw: TreeWalker, d: any, scope: AST_Scope, node: AS
   d.direct_access = true
 }
 
-export function mark_lambda (this: any, tw: TreeWalker, descend: Function, compressor: Compressor) {
-  clear_flag(this, INLINED)
-  push(tw)
-  reset_variables(tw, compressor, this)
-  if (this.uses_arguments) {
-    descend()
-    pop(tw)
-    return
-  }
-  let iife: any
-  if (!this.name &&
-        is_ast_call((iife = tw.parent())) &&
-        iife.expression === this &&
-        !iife.args.some((arg: any) => is_ast_expansion(arg)) &&
-        this.argnames.every((arg_name: any) => is_ast_symbol(arg_name))
-  ) {
-    // Virtually turn IIFE parameters into variable definitions:
-    //   (function(a,b) {...})(c,d) => (function() {var a=c,b=d; ...})()
-    // So existing transformation rules can work on them.
-    this.argnames.forEach((arg: any, i: number) => {
-      if (!arg.definition) return
-      const d = arg.definition?.()
-      // Avoid setting fixed when there's more than one origin for a variable value
-      if (d.orig.length > 1) return
-      if (d.fixed === undefined && (!this.uses_arguments || tw.has_directive('use strict'))) {
-        d.fixed = function () {
-          return iife.args[i] || make_node('AST_Undefined', iife)
-        }
-        tw.loop_ids.set(d.id, tw.in_loop)
-        mark(tw, d, true)
-      } else {
-        d.fixed = false
-      }
-    })
-  }
-  descend()
-  pop(tw)
-  return true
-}
-
 export function recursive_ref (compressor: TreeWalker, def: SymbolDef) {
   let node
   for (let i = 0; (node = compressor.parent(i)); i++) {
@@ -3422,55 +3371,12 @@ export function best (orig: AST_Node, alt: AST_Node, first_in_statement: Functio
 }
 
 /* -----[ boolean/negation helpers ]----- */
-// determine if expression is constant
-export function all_refs_local (this: any, scope: AST_Scope) {
-  let result: any = true
-  walk(this, (node: AST_Node) => {
-    if (is_ast_symbol_ref(node)) {
-      if (has_flag(this, INLINED)) {
-        result = false
-        return walk_abort
-      }
-      const def = node.definition?.()
-      if (
-        member(def, this.enclosed) &&
-                !this.variables.has(def.name)
-      ) {
-        if (scope) {
-          const scope_def = scope.find_variable(node)
-          if (def.undeclared ? !scope_def : scope_def === def) {
-            result = 'f'
-            return true
-          }
-        }
-        result = false
-        return walk_abort
-      }
-      return true
-    }
-    if (is_ast_this(node) && is_ast_arrow(this)) {
-      result = false
-      return walk_abort
-    }
-  })
-  return result
-}
 
 export function is_iife_call (node: AST_Node): boolean {
   // Used to determine whether the node can benefit from negation.
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
   return is_ast_function(node.expression) || is_iife_call(node.expression)
-}
-
-export function opt_AST_Lambda (self: AST_Lambda, compressor: Compressor) {
-  tighten_body(self.body, compressor)
-  if (compressor.option('side_effects') &&
-        self.body.length == 1 &&
-        self.body[0] === compressor.has_directive('use strict')) {
-    self.body.length = 0
-  }
-  return self
 }
 
 export function is_object (node: AST_Node) {

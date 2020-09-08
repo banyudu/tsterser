@@ -7,7 +7,6 @@ import {
   anySideEffect,
   anyMayThrow,
   reset_block_variables,
-  clone_block_scope,
   list_overhead,
   to_moz,
   do_list
@@ -47,10 +46,6 @@ export default class AST_Block extends AST_Statement {
   _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
-  }
-
-  clone (deep?: boolean): AST_Node {
-    return clone_block_scope.call(this, deep)
   }
 
   _size (info: any) {

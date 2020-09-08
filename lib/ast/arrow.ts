@@ -1,9 +1,7 @@
 import AST_Node from './node'
-import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import {
-  opt_AST_Lambda,
   basic_negation,
   list_overhead,
   lambda_modifiers,
@@ -14,10 +12,6 @@ import {
 import { AST_Scope } from '.'
 
 export default class AST_Arrow extends AST_Lambda {
-  _optimize (compressor: Compressor): AST_Lambda {
-    return opt_AST_Lambda(this, compressor)
-  }
-
   drop_side_effect_free (): any { return null }
   negate (): AST_Node {
     return basic_negation(this)

@@ -6,11 +6,12 @@ import AST_Scope, { AST_Scope_Props } from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
 import TreeWalker from '../tree-walker'
 
-import { opt_AST_Lambda, To_Moz_FunctionExpression, all_refs_local, walk, do_list, print_braced, mark_lambda, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
+import { push, pop, is_ast_call, is_ast_expansion, reset_variables, make_node, mark, tighten_body, To_Moz_FunctionExpression, walk, do_list, print_braced, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
 
-import { walk_abort } from '../constants'
+import { walk_abort, INLINED, clear_flag } from '../constants'
 import Compressor from '../compressor'
-import { AST_DefaultAssign, AST_SymbolDeclaration } from '.'
+import AST_DefaultAssign from './default-assign'
+import AST_SymbolDeclaration from './symbol-declaration'
 import { TreeTransformer } from '../../main'
 import { MozillaAst } from '../types'
 
@@ -22,16 +23,61 @@ export default class AST_Lambda extends AST_Scope {
   async: boolean
 
   _optimize (compressor: Compressor): any {
-    return opt_AST_Lambda(this, compressor)
+    tighten_body(this.body, compressor)
+    if (compressor.option('side_effects') &&
+          this.body.length == 1 &&
+          this.body[0] === compressor.has_directive('use strict')) {
+      this.body.length = 0
+    }
+    return this
   }
 
   may_throw (compressor: Compressor) { return false }
   has_side_effects (compressor: Compressor) { return false }
   _eval (compressor: Compressor) { return this }
-  is_constant_expression = all_refs_local
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
-    return mark_lambda.call(this, tw, descend, compressor)
+  is_constant_expression (scope: AST_Scope) {
+    return this.all_refs_local(scope)
+  }
+
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
+    clear_flag(this, INLINED)
+    push(tw)
+    reset_variables(tw, compressor, this as any)
+    if (this.uses_arguments) {
+      descend()
+      pop(tw)
+      return
+    }
+    let iife: any
+    if (!this.name &&
+          is_ast_call((iife = tw.parent())) &&
+          iife.expression === this &&
+          !iife.args.some((arg: any) => is_ast_expansion(arg)) &&
+          this.argnames.every((arg_name: any) => is_ast_symbol(arg_name))
+    ) {
+      // Virtually turn IIFE parameters into variable definitions:
+      //   (function(a,b) {...})(c,d) => (function() {var a=c,b=d; ...})()
+      // So existing transformation rules can work on them.
+      this.argnames.forEach((arg: any, i: number) => {
+        if (!arg.definition) return
+        const d = arg.definition?.()
+        // Avoid setting fixed when there's more than one origin for a variable value
+        if (d.orig.length > 1) return
+        if (d.fixed === undefined && (!this.uses_arguments || tw.has_directive('use strict'))) {
+          d.fixed = function () {
+            return iife.args[i] || make_node('AST_Undefined', iife)
+          }
+          tw.loop_ids.set(d.id, tw.in_loop)
+          mark(tw, d, true)
+        } else {
+          d.fixed = false
+        }
+      })
+    }
+    descend()
+    pop(tw)
+    return true
   }
 
   contains_this () {

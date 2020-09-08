@@ -19,11 +19,14 @@ import {
   can_be_evicted_from_block,
   make_sequence,
   push_uniq,
+  is_ast_arrow,
+  is_ast_this,
   get_value,
   next_mangled,
   maintain_this_binding,
   redefined_catch_def,
   is_ref_of,
+  member,
   string_template,
   is_empty,
   defaults,
@@ -33,6 +36,8 @@ import {
 import {
   has_flag,
   set_flag,
+  walk_abort,
+  INLINED,
   UNUSED,
   MASK_EXPORT_WANT_MANGLE,
   MASK_EXPORT_DONT_MANGLE,
@@ -60,6 +65,40 @@ export default class AST_Scope extends AST_Block {
   parent_scope?: AST_Scope
   enclosed: SymbolDef[]
   cname: number
+
+  // determine if expression is constant
+  protected all_refs_local (scope: AST_Scope) {
+    let result: any = true
+    walk(this, (node: AST_Node) => {
+      if (is_ast_symbol_ref(node)) {
+        if (has_flag(this, INLINED)) {
+          result = false
+          return walk_abort
+        }
+        const def = node.definition?.()
+        if (
+          member(def, this.enclosed) &&
+                  !this.variables.has(def.name)
+        ) {
+          if (scope) {
+            const scope_def = scope.find_variable(node)
+            if (def.undeclared ? !scope_def : scope_def === def) {
+              result = 'f'
+              return true
+            }
+          }
+          result = false
+          return walk_abort
+        }
+        return true
+      }
+      if (is_ast_this(node) && is_ast_arrow(this)) {
+        result = false
+        return walk_abort
+      }
+    })
+    return result
+  }
 
   process_expression (insert: boolean, compressor?: Compressor) {
     const self: AST_Scope = this

@@ -5,7 +5,7 @@ import TreeWalker from '../tree-walker'
 
 export default class AST_Accessor extends AST_Lambda {
   drop_side_effect_free (): AST_Accessor { return null }
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
     push(tw)
     reset_variables(tw, compressor, this)
     descend()

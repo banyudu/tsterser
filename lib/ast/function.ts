@@ -3,7 +3,6 @@ import { OutputStream } from '../output'
 import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import Compressor from '../compressor'
 import {
-  opt_AST_Lambda,
   walk,
   basic_negation,
   list_overhead,
@@ -21,7 +20,7 @@ export default class AST_Function extends AST_Lambda {
   name: any
 
   _optimize (compressor: Compressor): any {
-    const self = opt_AST_Lambda(this, compressor)
+    const self = super._optimize(compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&
           !self.name &&

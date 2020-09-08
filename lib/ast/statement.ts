@@ -2,9 +2,11 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import { string_template } from '../utils'
 import Compressor from '../compressor'
+import AST_Scope from './scope'
 
 export default class AST_Statement extends AST_Node {
   body: any
+  block_scope?: AST_Scope
 
   _eval (compressor: Compressor): any {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
@@ -13,6 +15,16 @@ export default class AST_Statement extends AST_Node {
   aborts (): any { return null }
   negate (): any {
     throw new Error('Cannot negate a statement')
+  }
+
+  clone (deep?: boolean): AST_Node {
+    const clone = this._clone(deep)
+    if (this.block_scope) {
+      // TODO this is sometimes undefined during compression.
+      // But it should always have a value!
+      clone.block_scope = this.block_scope.clone()
+    }
+    return clone
   }
 
   _codegen (output: OutputStream) {

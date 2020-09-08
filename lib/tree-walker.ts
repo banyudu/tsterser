@@ -3,7 +3,7 @@ import AST_Node from './ast/node'
 import AST_Scope from './ast/scope'
 
 export default class TreeWalker {
-  visit: Function
+  visit: Function | undefined
   stack: AST_Node[]
   directives: AnyObject
   safe_ids: AnyObject
@@ -22,7 +22,7 @@ export default class TreeWalker {
 
   _visit (node: AST_Node, descend?: Function) {
     this.push(node)
-    const ret = this.visit(node, () => {
+    const ret = this.visit?.(node, () => {
       descend?.()
     })
     if (!ret) {

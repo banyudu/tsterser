@@ -3,7 +3,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Scope, { AST_Scope_Props } from './scope'
 import Compressor from '../compressor'
-import { make_sequence, anyMayThrow, anySideEffect, all_refs_local, push, pop, do_list, to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function } from '../utils'
+import { make_sequence, anyMayThrow, anySideEffect, push, pop, do_list, to_moz, is_ast_class_expression, is_ast_symbol_ref, is_ast_prop_access, is_ast_function } from '../utils'
 import { clear_flag, INLINED } from '../constants'
 import TreeWalker from '../tree-walker'
 import { AST_ObjectProperty, AST_SymbolDefClass } from '.'
@@ -61,7 +61,7 @@ export default class AST_Class extends AST_Scope {
       }
     }
 
-    return all_refs_local.call(this, scope)
+    return this.all_refs_local(scope)
   }
 
   reduce_vars (tw: TreeWalker, descend: Function) {
