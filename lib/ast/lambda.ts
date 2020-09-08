@@ -6,7 +6,7 @@ import AST_Scope, { AST_Scope_Props } from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
 import TreeWalker from '../tree-walker'
 
-import { opt_AST_Lambda, To_Moz_FunctionExpression, all_refs_local, walk, do_list, print_braced, init_scope_vars, mark_lambda, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
+import { opt_AST_Lambda, To_Moz_FunctionExpression, all_refs_local, walk, do_list, print_braced, mark_lambda, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
 
 import { walk_abort } from '../constants'
 import Compressor from '../compressor'
@@ -49,7 +49,7 @@ export default class AST_Lambda extends AST_Scope {
 
   is_block_scope () { return false }
   init_scope_vars (parent_scope: AST_Scope) {
-    init_scope_vars.apply(this, [parent_scope])
+    this._init_scope_vars(parent_scope)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
       name: 'arguments',

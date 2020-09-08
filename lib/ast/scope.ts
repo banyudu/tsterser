@@ -20,7 +20,6 @@ import {
   make_sequence,
   push_uniq,
   get_value,
-  init_scope_vars,
   next_mangled,
   maintain_this_binding,
   redefined_catch_def,
@@ -710,8 +709,19 @@ export default class AST_Scope extends AST_Block {
     return self.transform(hoister)
   }
 
+  _init_scope_vars (parent: AST_Scope) {
+    this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
+    this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
+    this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
+    this.uses_eval = false // will be set to true if this or nested scope uses the global `eval`
+    this.parent_scope = parent // the parent scope
+    this.enclosed = [] // a list of variables from this or outer scope(s) that are referenced from this or inner scopes
+    this.cname = -1 // the current index for mangling functions/variables
+    this._var_name_cache = null
+  }
+
   init_scope_vars (parent: AST_Scope) {
-    return init_scope_vars.call(this, parent)
+    this._init_scope_vars(parent)
   }
 
   var_names (): Set<string> | null {
@@ -904,17 +914,17 @@ export default class AST_Scope extends AST_Block {
         return true
       }
       if (is_ast_scope(node)) {
-                node.init_scope_vars?.(scope)
-                const save_scope = scope
-                const save_defun = defun
-                const save_labels = labels
-                defun = scope = node
-                labels = new Map()
-                descend()
-                scope = save_scope
-                defun = save_defun
-                labels = save_labels
-                return true // don't descend again in TreeWalker
+        node.init_scope_vars(scope)
+        const save_scope = scope
+        const save_defun = defun
+        const save_labels = labels
+        defun = scope = node
+        labels = new Map()
+        descend()
+        scope = save_scope
+        defun = save_defun
+        labels = save_labels
+        return true // don't descend again in TreeWalker
       }
       if (is_ast_labeled_statement(node)) {
         const l = node.label

@@ -5,7 +5,6 @@ import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import {
   opt_AST_Lambda,
   basic_negation,
-  init_scope_vars,
   list_overhead,
   lambda_modifiers,
   left_is_object,
@@ -26,7 +25,7 @@ export default class AST_Arrow extends AST_Lambda {
 
   _dot_throw () { return false }
   init_scope_vars (parent_scope: AST_Scope) {
-    init_scope_vars.apply(this, [parent_scope])
+    this._init_scope_vars(parent_scope)
     this.uses_arguments = false
   }
 

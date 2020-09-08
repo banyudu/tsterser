@@ -3702,17 +3702,6 @@ export function left_is_object (node: AST_Node): boolean {
   return false
 }
 
-export function init_scope_vars (this: AST_Scope, parent_scope: AST_Scope) {
-  this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
-  this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
-  this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
-  this.uses_eval = false // will be set to true if this or nested scope uses the global `eval`
-  this.parent_scope = parent_scope // the parent scope
-  this.enclosed = [] // a list of variables from this or outer scope(s) that are referenced from this or inner scopes
-  this.cname = -1 // the current index for mangling functions/variables
-  this._var_name_cache = null
-}
-
 export function callCodeGen (self: AST_Call, output: OutputStream) {
   self.expression.print(output)
   if (is_ast_new(self) && self.args.length === 0) { return }
