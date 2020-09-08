@@ -82,10 +82,10 @@ export default class AST_Toplevel extends AST_Scope {
     // Stack of look-up tables to keep track of whether a `SymbolDef` has been
     // properly assigned before use:
     // - `push()` & `pop()` when visiting conditional branches
-    preparation.safe_ids = Object.create(null)
-    preparation.in_loop = null
-    preparation.loop_ids = new Map()
-    preparation.defs_to_safe_ids = new Map()
+    // preparation.safe_ids = Object.create(null)
+    // preparation.in_loop = null
+    // preparation.loop_ids = new Map()
+    // preparation.defs_to_safe_ids = new Map()
     self.walk(preparation)
   }
 

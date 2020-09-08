@@ -1015,25 +1015,27 @@ var MOZ_TO_ME: any = {
   },
   Identifier: function (M: MozillaAst) {
     const p = FROM_MOZ_STACK[FROM_MOZ_STACK.length - 2]
-    return new (p.type == 'LabeledStatement' ? AST_Label
-      : p.type == 'VariableDeclarator' && p.id === M ? (p.kind == 'const' ? AST_SymbolConst : p.kind == 'let' ? AST_SymbolLet : AST_SymbolVar)
-        : /Import.*Specifier/.test(p.type) ? (p.local === M ? AST_SymbolImport : AST_SymbolImportForeign)
-          : p.type == 'ExportSpecifier' ? (p.local === M ? AST_SymbolExport : AST_SymbolExportForeign)
-            : p.type == 'FunctionExpression' ? (p.id === M ? AST_SymbolLambda : AST_SymbolFunarg)
-              : p.type == 'FunctionDeclaration' ? (p.id === M ? AST_SymbolDefun : AST_SymbolFunarg)
-                : p.type == 'ArrowFunctionExpression' ? (p.params.includes(M)) ? AST_SymbolFunarg : AST_SymbolRef
-                  : p.type == 'ClassExpression' ? (p.id === M ? AST_SymbolClass : AST_SymbolRef)
-                    : p.type == 'Property' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolMethod)
-                      : p.type == 'FieldDefinition' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolClassProperty)
-                        : p.type == 'ClassDeclaration' ? (p.id === M ? AST_SymbolDefClass : AST_SymbolRef)
-                          : p.type == 'MethodDefinition' ? (p.computed ? AST_SymbolRef : AST_SymbolMethod)
-                            : p.type == 'CatchClause' ? AST_SymbolCatch
-                              : p.type == 'BreakStatement' || p.type == 'ContinueStatement' ? AST_LabelRef
-                                : AST_SymbolRef)({
-      start: my_start_token(M),
-      end: my_end_token(M),
-      name: M.name
-    })
+    if (p) {
+      return new (p.type === 'LabeledStatement' ? AST_Label
+        : p.type === 'VariableDeclarator' && p.id === M ? (p.kind == 'const' ? AST_SymbolConst : p.kind == 'let' ? AST_SymbolLet : AST_SymbolVar)
+          : /Import.*Specifier/.test(p.type) ? (p.local === M ? AST_SymbolImport : AST_SymbolImportForeign)
+            : p.type === 'ExportSpecifier' ? (p.local === M ? AST_SymbolExport : AST_SymbolExportForeign)
+              : p.type === 'FunctionExpression' ? (p.id === M ? AST_SymbolLambda : AST_SymbolFunarg)
+                : p.type === 'FunctionDeclaration' ? (p.id === M ? AST_SymbolDefun : AST_SymbolFunarg)
+                  : p.type === 'ArrowFunctionExpression' ? ((p as MozillaAstArrowFunctionExpression).params.includes(M)) ? AST_SymbolFunarg : AST_SymbolRef
+                    : p.type === 'ClassExpression' ? (p.id === M ? AST_SymbolClass : AST_SymbolRef)
+                      : p.type === 'Property' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolMethod)
+                        : p.type === 'FieldDefinition' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolClassProperty)
+                          : p.type === 'ClassDeclaration' ? (p.id === M ? AST_SymbolDefClass : AST_SymbolRef)
+                            : p.type === 'MethodDefinition' ? (p.computed ? AST_SymbolRef : AST_SymbolMethod)
+                              : p.type === 'CatchClause' ? AST_SymbolCatch
+                                : p.type === 'BreakStatement' || p.type === 'ContinueStatement' ? AST_LabelRef
+                                  : AST_SymbolRef)({
+        start: my_start_token(M),
+        end: my_end_token(M),
+        name: M.name
+      })
+    }
   },
   BigIntLiteral (M: MozillaAst) {
     return new AST_BigInt({
