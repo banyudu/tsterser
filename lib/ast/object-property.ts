@@ -5,8 +5,8 @@ import { lift_key, make_sequence, to_moz, is_ast_node, is_ast_symbol, is_ast_sym
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
-  // key: AST_Node | string
-  key: any
+  key: AST_Node | string
+  // key: any
   value: AST_Node
   quote: any
   static: boolean
@@ -18,8 +18,7 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {
-    const computed_key = is_ast_object_key_val(this) && is_ast_node(this.key)
-    const key = computed_key && (this.key).drop_side_effect_free(compressor, first_in_statement)
+    const key = is_ast_object_key_val(this) && is_ast_node(this.key) && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
     if (key && value) {
       return make_sequence(this, [key, value])
@@ -34,7 +33,7 @@ export default class AST_ObjectProperty extends AST_Node {
 
   has_side_effects (compressor: Compressor) {
     return (
-      this.computed_key() && this.key.has_side_effects(compressor) ||
+      this.computed_key() && is_ast_node(this.key) && this.key.has_side_effects(compressor) ||
               this.value.has_side_effects(compressor)
     )
   }
@@ -106,7 +105,7 @@ export default class AST_ObjectProperty extends AST_Node {
         computed: computed,
         kind: kind,
         static: (this as any).static,
-        key: to_moz(this.key),
+        key: to_moz(this.key as any),
         value: to_moz(this.value)
       }
     }
@@ -119,7 +118,7 @@ export default class AST_ObjectProperty extends AST_Node {
     }
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key) }
+  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key as any) }
   static documentation = 'Base class for literal object properties'
   static propdoc = {
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',
