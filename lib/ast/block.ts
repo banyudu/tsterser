@@ -113,6 +113,7 @@ export default class AST_Block extends AST_Statement {
   body: AST_Statement[]
   block_scope?: AST_Scope
   expression: any
+  CHANGED: boolean = false
 
   protected _block_aborts () {
     for (let i = 0; i < this.body.length; i++) {
@@ -168,644 +169,624 @@ export default class AST_Block extends AST_Statement {
     }
   }
 
-  // Tighten a bunch of statements together. Used whenever there is a block.
-  tighten_body (compressor: Compressor) {
-    const statements = this.body
+  // Search from right to left for assignment-like expressions:
+  // - `var a = x;`
+  // - `a = x;`
+  // - `++a`
+  // For each candidate, scan from left to right for first usage, then try
+  // to fold assignment into the site for compression.
+  // Will not attempt to collapse assignments into or past code blocks
+  // which are not sequentially executed, e.g. loops and conditionals.
+  collapse (statements: AST_Statement[], compressor: Compressor) {
+    const { in_loop, in_try, scope } = this.find_loop_scope_try(compressor)
+    if (scope.pinned()) return statements
+    let args = null
+    const candidates: any[] = []
+    let stat_index = statements.length
+    var scanner = new TreeTransformer((node: AST_Node) => {
+      if (abort) return node
+      // Skip nodes before `candidate` as quickly as possible
+      if (!hit) {
+        if (node !== hit_stack[hit_index]) return node
+        hit_index++
+        if (hit_index < hit_stack.length) return handle_custom_scan_order(node)
+        hit = true
+        stop_after = find_stop(node, 0)
+        if (stop_after === node) abort = true
+        return node
+      }
+      // Stop immediately if these node types are encountered
+      const parent = scanner.parent()
+      if (is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left) ||
+        is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
+        is_ast_debugger(node) ||
+        is_ast_destructuring(node) ||
+        is_ast_expansion(node) && is_ast_symbol(node.expression) && node.expression.definition?.().references.length > 1 ||
+        is_ast_iteration_statement(node) && !(is_ast_for(node)) ||
+        is_ast_loop_control(node) ||
+        is_ast_try(node) ||
+        is_ast_with(node) ||
+        is_ast_yield(node) ||
+        is_ast_export(node) ||
+        is_ast_class(node) ||
+        is_ast_for(parent) && node !== parent.init ||
+        !replace_all && (is_ast_symbol_ref(node) && !node.is_declared(compressor) && !pure_prop_access_globals.has(node as any)) ||
+        is_ast_await(node as any) ||
+        is_ast_symbol_ref(node) && is_ast_call(parent) && has_annotation(parent, _NOINLINE)
+      ) {
+        abort = true
+        return node
+      }
+      // Stop only if candidate is found within conditional branches
+      if (!stop_if_hit && (!lhs_local || !replace_all) &&
+                (is_ast_binary(parent) && lazy_op.has(parent.operator) && parent.left !== node ||
+                    is_ast_conditional(parent) && parent.condition !== node ||
+                    is_ast_if(parent) && parent.condition !== node)) {
+        stop_if_hit = parent
+      }
+      // Replace variable with assignment when found
+      if (can_replace &&
+                !(is_ast_symbol_declaration(node)) &&
+                lhs?.equivalent_to(node)
+      ) {
+        if (stop_if_hit) {
+          abort = true
+          return node
+        }
+        if (is_lhs(node, parent)) {
+          if (value_def) replaced++
+          return node
+        } else {
+          replaced++
+          if (value_def && is_ast_var_def(candidate)) return node
+        }
+        this.CHANGED = abort = true
+        compressor.info('Collapsing {name} [{file}:{line},{col}]', {
+          name: node.print_to_string(),
+          file: node.start.file,
+          line: node.start.line,
+          col: node.start.col
+        })
+        if (is_ast_unary_postfix(candidate)) {
+          return make_node('AST_UnaryPrefix', candidate, candidate)
+        }
+        if (is_ast_var_def(candidate)) {
+          const def = (candidate.name as any).definition?.()
+          const value = candidate.value
+          if (def.references.length - def.replaced == 1 && !compressor.exposed(def)) {
+            def.replaced++
+            if (funarg && is_identifier_atom(value)) {
+              return value?.transform(compressor)
+            } else {
+              return maintain_this_binding(parent, node, value)
+            }
+          }
+          return make_node('AST_Assign', candidate, {
+            operator: '=',
+            left: make_node('AST_SymbolRef', candidate.name, candidate.name),
+            right: value
+          })
+        }
+        clear_flag(candidate, WRITE_ONLY)
+        return candidate
+      }
+      // These node types have child nodes that execute sequentially,
+      // but are otherwise not safe to scan into or beyond them.
+      let sym
+      if (is_ast_call(node) ||
+        is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
+        is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor)) ||
+        is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
+        is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
+        (sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
+        may_throw && (in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
+        stop_after = node
+        if (is_ast_scope(node)) abort = true
+      }
+      return handle_custom_scan_order(node)
+    }, function (node: AST_Node) {
+      if (abort) return
+      if (stop_after === node) abort = true
+      if (stop_if_hit === node) stop_if_hit = null
+    })
+    var multi_replacer = new TreeTransformer(function (node: AST_Node) {
+      if (abort) return node
+      // Skip nodes before `candidate` as quickly as possible
+      if (!hit) {
+        if (node !== hit_stack[hit_index]) return node
+        hit_index++
+        if (hit_index < hit_stack.length) return
+        hit = true
+        return node
+      }
+      // Replace variable when found
+      if (is_ast_symbol_ref(node) &&
+                node.name == def.name) {
+        if (!--replaced) abort = true
+        if (is_lhs(node, multi_replacer.parent())) return node
+        def.replaced++
+        value_def.replaced--
+        return candidate.value
+      }
+      // Skip (non-executed) functions and (leading) default case in switch statements
+      if (is_ast_default(node) || is_ast_scope(node)) return node
+    })
+    while (--stat_index >= 0) {
+      // Treat parameters as collapsible in IIFE, i.e.
+      //   function(a, b){ ... }(x());
+      // would be translated into equivalent assignments:
+      //   var a = x(), b = undefined;
+      if (stat_index == 0 && compressor.option('unused')) extract_args()
+      // Find collapsible assignments
+      var hit_stack: any[] = []
+      extract_candidates(statements[stat_index])
+      while (candidates.length > 0) {
+        hit_stack = candidates.pop()
+        var hit_index = 0
+        var candidate = hit_stack[hit_stack.length - 1]
+        var value_def: any = null
+        var stop_after: any = null
+        var stop_if_hit: any = null
+        var lhs: AST_Node | undefined = get_lhs(candidate)
+        if (!lhs || is_lhs_read_only(lhs) || lhs.has_side_effects(compressor)) continue
+        // Locate symbols which may execute code outside of scanning range
+        var lvalues = get_lvalues(candidate)
+        var lhs_local = is_lhs_local(lhs)
+        if (is_ast_symbol_ref(lhs)) lvalues.set(lhs.name, false)
+        var side_effects = value_has_side_effects(candidate)
+        var replace_all = replace_all_symbols()
+        var may_throw = candidate.may_throw(compressor)
+        var funarg = is_ast_symbol_funarg(candidate.name)
+        var hit = funarg
+        var abort = false
+        var replaced: any = 0
+        var can_replace = !args || !hit
+        if (!can_replace && args) {
+          if (!abort) {
+            for (let j = (compressor.self() as any).argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
+              args[j].transform(scanner)
+            }
+          }
+          can_replace = true
+        }
+        if (!abort) {
+          for (let i = stat_index; i < statements.length; i++) {
+            statements[i].transform(scanner)
+          }
+        }
+        if (value_def) {
+          var def = candidate.name.definition?.()
+          if (abort && def.references.length - def.replaced > replaced) replaced = false
+          else {
+            abort = false
+            hit_index = 0
+            hit = funarg
+            if (!abort) {
+              for (let i = stat_index; i < statements.length; i++) {
+                statements[i].transform(multi_replacer)
+              }
+            }
+            value_def.single_use = false
+          }
+        }
+        if (replaced && !remove_candidate(candidate)) statements.splice(stat_index, 1)
+      }
+    }
+
+    function handle_custom_scan_order (node: AST_Node) {
+      // Skip (non-executed) functions
+      if (is_ast_scope(node)) return node
+
+      // Scan case expressions first in a switch statement
+      if (is_ast_switch(node)) {
+        node.expression = node.expression.transform(scanner)
+        if (!abort) {
+          for (let i = 0, len = node.body.length; i < len; i++) {
+            const branch = node.body[i]
+            if (is_ast_case(branch)) {
+              if (!hit) {
+                if (branch !== hit_stack[hit_index]) continue
+                hit_index++
+              }
+              branch.expression = branch.expression.transform(scanner)
+              if (!replace_all) break
+            }
+          }
+        }
+        abort = true
+        return node
+      }
+    }
+
+    function redefined_within_scope (def: SymbolDef, scope: AST_Scope) {
+      if (def.global) return false
+      let cur_scope = def.scope
+      while (cur_scope && cur_scope !== scope) {
+        if (cur_scope.variables.has(def.name)) return true
+        cur_scope = cur_scope.parent_scope
+      }
+      return false
+    }
+
+    function has_overlapping_symbol (fn: AST_Scope, arg: AST_Node, fn_strict: boolean) {
+      let found = false; let scan_this = !(is_ast_arrow(fn))
+      arg.walk(new TreeWalker(function (node: AST_Node, descend) {
+        if (found) return true
+        if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
+          let s = node.definition?.().scope
+          if (s !== scope) {
+            while ((s = s.parent_scope)) {
+              if (s === scope) return true
+            }
+          }
+          return (found = true)
+        }
+        if ((fn_strict || scan_this) && is_ast_this(node)) {
+          return (found = true)
+        }
+        if (is_ast_scope(node) && !(is_ast_arrow(node))) {
+          const prev = scan_this
+          scan_this = false
+          descend()
+          scan_this = prev
+          return true
+        }
+      }))
+      return found
+    }
+
+    function extract_args () {
+      const fn = compressor.self()
+      const iife = compressor.parent()
+      if (is_func_expr(fn) && !fn.name && !fn.uses_arguments && !fn.pinned() && is_ast_call(iife) && iife.expression === fn && iife.args.every((arg) => !(is_ast_expansion(arg)))) {
+        let fn_strict = compressor.has_directive('use strict')
+        if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
+        const len = fn.argnames.length
+        args = iife.args.slice(len)
+        const names = new Set()
+        for (let i = len; --i >= 0;) {
+          const sym = fn.argnames[i]
+          let arg: any = iife.args[i]
+          // The following two line fix is a duplicate of the fix at
+          // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
+          // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
+          // Might be doing the exact same thing.
+          const def = (sym as any).definition?.()
+          const is_reassigned = def && def.orig.length > 1
+          if (is_reassigned) continue
+          args.unshift(make_node('AST_VarDef', sym, {
+            name: sym,
+            value: arg
+          }))
+          if (names.has(sym.name)) continue
+          names.add(sym.name)
+          if (is_ast_expansion(sym)) {
+            const elements = iife.args.slice(i)
+            if (elements.every((arg) =>
+              !has_overlapping_symbol(fn as any, arg, fn_strict)
+            )) {
+              candidates.unshift([make_node('AST_VarDef', sym, {
+                name: sym.expression,
+                value: make_node('AST_Array', iife, {
+                  elements: elements
+                })
+              })])
+            }
+          } else {
+            if (!arg) {
+              arg = make_node('AST_Undefined', sym).transform(compressor)
+            } else if (is_ast_lambda(arg) && arg.pinned?.() || has_overlapping_symbol(fn as any, arg, fn_strict)) {
+              arg = null
+            }
+            if (arg) {
+              candidates.unshift([make_node('AST_VarDef', sym, { name: sym, value: arg })])
+            }
+          }
+        }
+      }
+    }
+
+    function extract_candidates (expr: AST_Node) {
+      hit_stack.push(expr)
+      if (is_ast_assign(expr)) {
+        if (!expr.left.has_side_effects(compressor)) {
+          candidates.push(hit_stack.slice())
+        }
+        extract_candidates(expr.right)
+      } else if (is_ast_binary(expr)) {
+        extract_candidates(expr.left)
+        extract_candidates(expr.right)
+      } else if (is_ast_call(expr) && !has_annotation(expr, _NOINLINE)) {
+        extract_candidates(expr.expression)
+        expr.args.forEach(extract_candidates)
+      } else if (is_ast_case(expr)) {
+        extract_candidates(expr.expression)
+      } else if (is_ast_conditional(expr)) {
+        extract_candidates(expr.condition)
+        extract_candidates(expr.consequent)
+        extract_candidates(expr.alternative)
+      } else if (is_ast_definitions(expr)) {
+        const len = expr.definitions.length
+        // limit number of trailing variable definitions for consideration
+        let i = len - 200
+        if (i < 0) i = 0
+        for (; i < len; i++) {
+          extract_candidates(expr.definitions[i])
+        }
+      } else if (is_ast_d_w_loop(expr)) {
+        extract_candidates(expr.condition)
+        if (!(is_ast_block(expr.body))) {
+          extract_candidates(expr.body)
+        }
+      } else if (is_ast_exit(expr)) {
+        if (expr.value) extract_candidates(expr.value)
+      } else if (is_ast_for(expr)) {
+        if (expr.init) extract_candidates(expr.init)
+        if (expr.condition) extract_candidates(expr.condition)
+        if (expr.step) extract_candidates(expr.step)
+        if (!(is_ast_block(expr.body))) {
+          extract_candidates(expr.body)
+        }
+      } else if (is_ast_for_in(expr)) {
+        extract_candidates(expr.object)
+        if (!(is_ast_block(expr.body))) {
+          extract_candidates(expr.body)
+        }
+      } else if (is_ast_if(expr)) {
+        extract_candidates(expr.condition)
+        if (!(is_ast_block(expr.body))) {
+          extract_candidates(expr.body)
+        }
+        if (expr.alternative && !(is_ast_block(expr.alternative))) {
+          extract_candidates(expr.alternative)
+        }
+      } else if (is_ast_sequence(expr)) {
+        expr.expressions.forEach(extract_candidates)
+      } else if (is_ast_simple_statement(expr)) {
+        extract_candidates(expr.body)
+      } else if (is_ast_switch(expr)) {
+        extract_candidates(expr.expression)
+        expr.body.forEach(extract_candidates)
+      } else if (is_ast_unary(expr)) {
+        if (expr.operator == '++' || expr.operator == '--') {
+          candidates.push(hit_stack.slice())
+        }
+      } else if (is_ast_var_def(expr)) {
+        if (expr.value) {
+          candidates.push(hit_stack.slice())
+          extract_candidates(expr.value)
+        }
+      }
+      hit_stack.pop()
+    }
+
+    function find_stop (node: AST_Node, level: number, write_only?: boolean): AST_Node | null {
+      const parent = scanner.parent(level)
+      if (is_ast_assign(parent)) {
+        if (write_only && !(is_ast_prop_access(parent.left) || lvalues.has((parent.left as any).name))) {
+          return find_stop(parent, level + 1, write_only)
+        }
+        return node
+      }
+      if (is_ast_binary(parent)) {
+        if (write_only && (!lazy_op.has(parent.operator) || parent.left === node)) {
+          return find_stop(parent, level + 1, write_only)
+        }
+        return node
+      }
+      if (is_ast_call(parent)) return node
+      if (is_ast_case(parent)) return node
+      if (is_ast_conditional(parent)) {
+        if (write_only && parent.condition === node) {
+          return find_stop(parent, level + 1, write_only)
+        }
+        return node
+      }
+      if (is_ast_definitions(parent)) {
+        return find_stop(parent, level + 1, true)
+      }
+      if (is_ast_exit(parent)) {
+        return write_only ? find_stop(parent, level + 1, write_only) : node
+      }
+      if (is_ast_if(parent)) {
+        if (write_only && parent.condition === node) {
+          return find_stop(parent, level + 1, write_only)
+        }
+        return node
+      }
+      if (is_ast_iteration_statement(parent)) return node
+      if (is_ast_sequence(parent)) {
+        return find_stop(parent, level + 1, parent.tail_node() !== node)
+      }
+      if (is_ast_simple_statement(parent)) {
+        return find_stop(parent, level + 1, true)
+      }
+      if (is_ast_switch(parent)) return node
+      if (is_ast_var_def(parent)) return node
+      return null
+    }
+
+    function mangleable_var (var_def: AST_VarDef) {
+      const value = var_def.value
+      if (!(is_ast_symbol_ref(value))) return
+      if (value.name == 'arguments') return
+      const def = value.definition?.()
+      if (def.undeclared) return
+      return (value_def = def)
+    }
+
+    function get_lhs (expr: AST_Node): AST_Node | undefined {
+      if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
+        const def = expr.name.definition?.()
+        if (!member(expr.name, def.orig)) return
+        const referenced = def.references.length - def.replaced
+        if (!referenced) return
+        const declared = def.orig.length - def.eliminated
+        if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
+          return make_node('AST_SymbolRef', expr.name, expr.name)
+        }
+      } else {
+        const lhs = expr[is_ast_assign(expr) ? 'left' : 'expression']
+        return !is_ref_of(lhs, AST_SymbolConst) &&
+                    !is_ref_of(lhs, AST_SymbolLet) && lhs
+      }
+      return undefined
+    }
+
+    function get_rvalue (expr: AST_Node) {
+      return expr[is_ast_assign(expr) ? 'right' : 'value']
+    }
+
+    function get_lvalues (expr: AST_Node) {
+      const lvalues = new Map()
+      if (is_ast_unary(expr)) return lvalues
+      var tw = new TreeWalker(function (node: AST_Node) {
+        let sym = node
+        while (is_ast_prop_access(sym)) sym = sym.expression
+        if (is_ast_symbol_ref(sym) || is_ast_this(sym)) {
+          lvalues.set(sym.name, lvalues.get(sym.name) || is_modified(compressor, tw, node, node, 0))
+        }
+      })
+      get_rvalue(expr).walk(tw)
+      return lvalues
+    }
+
+    function remove_candidate (expr: AST_Node) {
+      if (is_ast_symbol_funarg(expr.name)) {
+        const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
+        const index = argnames.indexOf(expr.name)
+        if (index < 0) {
+          iife.args.length = Math.min(iife.args.length, argnames.length - 1)
+        } else {
+          const args = iife.args
+          if (args[index]) {
+            args[index] = make_node('AST_Number', args[index], {
+              value: 0
+            })
+          }
+        }
+        return true
+      }
+      let found = false
+      return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
+        if (found) return node
+        if (node === expr || node.body === expr) {
+          found = true
+          if (is_ast_var_def(node)) {
+            node.value = is_ast_symbol_const(node.name)
+              ? make_node('AST_Undefined', node.value) // `const` always needs value.
+              : null
+            return node
+          }
+          return in_list ? MAP.skip : null
+        }
+      }, function (node: AST_Node) {
+        if (is_ast_sequence(node)) {
+          switch (node.expressions.length) {
+            case 0: return null
+            case 1: return node.expressions[0]
+          }
+        }
+      }))
+    }
+
+    function is_lhs_local (lhs: AST_Node) {
+      while (is_ast_prop_access(lhs)) lhs = lhs.expression
+      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === scope && !(in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
+    }
+
+    function value_has_side_effects (expr: AST_Node) {
+      if (is_ast_unary(expr)) return unary_side_effects.has(expr.operator)
+      return get_rvalue(expr).has_side_effects(compressor)
+    }
+
+    function replace_all_symbols () {
+      if (side_effects) return false
+      if (value_def) return true
+      if (is_ast_symbol_ref(lhs)) {
+        const def = lhs.definition?.()
+        if (def.references.length - def.replaced == (is_ast_var_def(candidate) ? 1 : 2)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    function may_modify (sym: AST_Symbol) {
+      if (!sym.definition) return true // AST_Destructuring
+      const def = sym.definition?.()
+      if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
+      if (def.scope.get_defun_scope() !== scope) return true
+      return !def.references.every((ref) => {
+        let s = ref.scope.get_defun_scope()
+        // "block" scope within AST_Catch
+        if (s.TYPE == 'Scope') s = s.parent_scope
+        return s === scope
+      })
+    }
+
+    function side_effects_external (node: AST_Node, lhs?: boolean): boolean {
+      if (is_ast_assign(node)) return side_effects_external(node.left, true)
+      if (is_ast_unary(node)) return side_effects_external(node.expression, true)
+      if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
+      if (lhs) {
+        if (is_ast_dot(node)) return side_effects_external(node.expression, true)
+        if (is_ast_sub(node)) return side_effects_external(node.expression, true)
+        if (is_ast_symbol_ref(node)) return node.definition?.().scope !== scope
+      }
+      return false
+    }
+  }
+
+  find_loop_scope_try (compressor: Compressor) {
     let in_loop: boolean
     let in_try: boolean
     let scope = compressor.find_parent(AST_Scope).get_defun_scope()
-    find_loop_scope_try()
-    let CHANGED; let max_iter = 10
+    let node = compressor.self(); let level = 0
     do {
-      CHANGED = false
-      eliminate_spurious_blocks(statements)
-      if (compressor.option('dead_code')) {
-        eliminate_dead_code(statements, compressor)
+      if (is_ast_catch(node) || is_ast_finally(node)) {
+        level++
+      } else if (is_ast_iteration_statement(node)) {
+        in_loop = true
+      } else if (is_ast_scope(node)) {
+        scope = node
+        break
+      } else if (is_ast_try(node)) {
+        in_try = true
       }
-      if (compressor.option('if_return')) {
-        handle_if_return(statements, compressor)
-      }
-      if (compressor.sequences_limit > 0) {
-        sequencesize(statements, compressor)
-        sequencesize_2(statements, compressor)
-      }
-      if (compressor.option('join_vars')) {
-        join_consecutive_vars(statements)
-      }
-      if (compressor.option('collapse_vars')) {
-        collapse(statements, compressor)
-      }
-    } while (CHANGED && max_iter-- > 0)
+    } while ((node = compressor.parent(level++)))
+    return { in_loop, in_try, scope }
+  }
 
-    function find_loop_scope_try () {
-      let node = compressor.self(); let level = 0
-      do {
-        if (is_ast_catch(node) || is_ast_finally(node)) {
-          level++
-        } else if (is_ast_iteration_statement(node)) {
-          in_loop = true
-        } else if (is_ast_scope(node)) {
-          scope = node
-          break
-        } else if (is_ast_try(node)) {
-          in_try = true
-        }
-      } while ((node = compressor.parent(level++)))
-    }
-
-    // Search from right to left for assignment-like expressions:
-    // - `var a = x;`
-    // - `a = x;`
-    // - `++a`
-    // For each candidate, scan from left to right for first usage, then try
-    // to fold assignment into the site for compression.
-    // Will not attempt to collapse assignments into or past code blocks
-    // which are not sequentially executed, e.g. loops and conditionals.
-    function collapse (statements: AST_Statement[], compressor: Compressor) {
-      if (scope.pinned()) return statements
-      let args = null
-      const candidates: any[] = []
-      let stat_index = statements.length
-      var scanner = new TreeTransformer(function (node: AST_Node) {
-        if (abort) return node
-        // Skip nodes before `candidate` as quickly as possible
-        if (!hit) {
-          if (node !== hit_stack[hit_index]) return node
-          hit_index++
-          if (hit_index < hit_stack.length) return handle_custom_scan_order(node)
-          hit = true
-          stop_after = find_stop(node, 0)
-          if (stop_after === node) abort = true
-          return node
-        }
-        // Stop immediately if these node types are encountered
-        const parent = scanner.parent()
-        if (is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left) ||
-          is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
-          is_ast_debugger(node) ||
-          is_ast_destructuring(node) ||
-          is_ast_expansion(node) && is_ast_symbol(node.expression) && node.expression.definition?.().references.length > 1 ||
-          is_ast_iteration_statement(node) && !(is_ast_for(node)) ||
-          is_ast_loop_control(node) ||
-          is_ast_try(node) ||
-          is_ast_with(node) ||
-          is_ast_yield(node) ||
-          is_ast_export(node) ||
-          is_ast_class(node) ||
-          is_ast_for(parent) && node !== parent.init ||
-          !replace_all && (is_ast_symbol_ref(node) && !node.is_declared(compressor) && !pure_prop_access_globals.has(node as any)) ||
-          is_ast_await(node as any) ||
-          is_ast_symbol_ref(node) && is_ast_call(parent) && has_annotation(parent, _NOINLINE)
-        ) {
-          abort = true
-          return node
-        }
-        // Stop only if candidate is found within conditional branches
-        if (!stop_if_hit && (!lhs_local || !replace_all) &&
-                  (is_ast_binary(parent) && lazy_op.has(parent.operator) && parent.left !== node ||
-                      is_ast_conditional(parent) && parent.condition !== node ||
-                      is_ast_if(parent) && parent.condition !== node)) {
-          stop_if_hit = parent
-        }
-        // Replace variable with assignment when found
-        if (can_replace &&
-                  !(is_ast_symbol_declaration(node)) &&
-                  lhs?.equivalent_to(node)
-        ) {
-          if (stop_if_hit) {
-            abort = true
-            return node
-          }
-          if (is_lhs(node, parent)) {
-            if (value_def) replaced++
-            return node
-          } else {
-            replaced++
-            if (value_def && is_ast_var_def(candidate)) return node
-          }
-          CHANGED = abort = true
-          compressor.info('Collapsing {name} [{file}:{line},{col}]', {
-            name: node.print_to_string(),
-            file: node.start.file,
-            line: node.start.line,
-            col: node.start.col
-          })
-          if (is_ast_unary_postfix(candidate)) {
-            return make_node('AST_UnaryPrefix', candidate, candidate)
-          }
-          if (is_ast_var_def(candidate)) {
-            const def = (candidate.name as any).definition?.()
-            const value = candidate.value
-            if (def.references.length - def.replaced == 1 && !compressor.exposed(def)) {
-              def.replaced++
-              if (funarg && is_identifier_atom(value)) {
-                return value?.transform(compressor)
-              } else {
-                return maintain_this_binding(parent, node, value)
-              }
-            }
-            return make_node('AST_Assign', candidate, {
-              operator: '=',
-              left: make_node('AST_SymbolRef', candidate.name, candidate.name),
-              right: value
-            })
-          }
-          clear_flag(candidate, WRITE_ONLY)
-          return candidate
-        }
-        // These node types have child nodes that execute sequentially,
-        // but are otherwise not safe to scan into or beyond them.
-        let sym
-        if (is_ast_call(node) ||
-          is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
-          is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor)) ||
-          is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
-          is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
-          (sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
-          may_throw && (in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
-          stop_after = node
-          if (is_ast_scope(node)) abort = true
-        }
-        return handle_custom_scan_order(node)
-      }, function (node: AST_Node) {
-        if (abort) return
-        if (stop_after === node) abort = true
-        if (stop_if_hit === node) stop_if_hit = null
-      })
-      var multi_replacer = new TreeTransformer(function (node: AST_Node) {
-        if (abort) return node
-        // Skip nodes before `candidate` as quickly as possible
-        if (!hit) {
-          if (node !== hit_stack[hit_index]) return node
-          hit_index++
-          if (hit_index < hit_stack.length) return
-          hit = true
-          return node
-        }
-        // Replace variable when found
-        if (is_ast_symbol_ref(node) &&
-                  node.name == def.name) {
-          if (!--replaced) abort = true
-          if (is_lhs(node, multi_replacer.parent())) return node
-          def.replaced++
-          value_def.replaced--
-          return candidate.value
-        }
-        // Skip (non-executed) functions and (leading) default case in switch statements
-        if (is_ast_default(node) || is_ast_scope(node)) return node
-      })
-      while (--stat_index >= 0) {
-        // Treat parameters as collapsible in IIFE, i.e.
-        //   function(a, b){ ... }(x());
-        // would be translated into equivalent assignments:
-        //   var a = x(), b = undefined;
-        if (stat_index == 0 && compressor.option('unused')) extract_args()
-        // Find collapsible assignments
-        var hit_stack: any[] = []
-        extract_candidates(statements[stat_index])
-        while (candidates.length > 0) {
-          hit_stack = candidates.pop()
-          var hit_index = 0
-          var candidate = hit_stack[hit_stack.length - 1]
-          var value_def: any = null
-          var stop_after: any = null
-          var stop_if_hit: any = null
-          var lhs: AST_Node | undefined = get_lhs(candidate)
-          if (!lhs || is_lhs_read_only(lhs) || lhs.has_side_effects(compressor)) continue
-          // Locate symbols which may execute code outside of scanning range
-          var lvalues = get_lvalues(candidate)
-          var lhs_local = is_lhs_local(lhs)
-          if (is_ast_symbol_ref(lhs)) lvalues.set(lhs.name, false)
-          var side_effects = value_has_side_effects(candidate)
-          var replace_all = replace_all_symbols()
-          var may_throw = candidate.may_throw(compressor)
-          var funarg = is_ast_symbol_funarg(candidate.name)
-          var hit = funarg
-          var abort = false
-          var replaced: any = 0
-          var can_replace = !args || !hit
-          if (!can_replace && args) {
-            if (!abort) {
-              for (let j = (compressor.self() as any).argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
-                args[j].transform(scanner)
-              }
-            }
-            can_replace = true
-          }
-          if (!abort) {
-            for (let i = stat_index; i < statements.length; i++) {
-              statements[i].transform(scanner)
-            }
-          }
-          if (value_def) {
-            var def = candidate.name.definition?.()
-            if (abort && def.references.length - def.replaced > replaced) replaced = false
-            else {
-              abort = false
-              hit_index = 0
-              hit = funarg
-              if (!abort) {
-                for (let i = stat_index; i < statements.length; i++) {
-                  statements[i].transform(multi_replacer)
-                }
-              }
-              value_def.single_use = false
-            }
-          }
-          if (replaced && !remove_candidate(candidate)) statements.splice(stat_index, 1)
-        }
-      }
-
-      function handle_custom_scan_order (node: AST_Node) {
-        // Skip (non-executed) functions
-        if (is_ast_scope(node)) return node
-
-        // Scan case expressions first in a switch statement
-        if (is_ast_switch(node)) {
-          node.expression = node.expression.transform(scanner)
-          if (!abort) {
-            for (let i = 0, len = node.body.length; i < len; i++) {
-              const branch = node.body[i]
-              if (is_ast_case(branch)) {
-                if (!hit) {
-                  if (branch !== hit_stack[hit_index]) continue
-                  hit_index++
-                }
-                branch.expression = branch.expression.transform(scanner)
-                if (!replace_all) break
-              }
-            }
-          }
-          abort = true
-          return node
-        }
-      }
-
-      function redefined_within_scope (def: SymbolDef, scope: AST_Scope) {
-        if (def.global) return false
-        let cur_scope = def.scope
-        while (cur_scope && cur_scope !== scope) {
-          if (cur_scope.variables.has(def.name)) return true
-          cur_scope = cur_scope.parent_scope
-        }
-        return false
-      }
-
-      function has_overlapping_symbol (fn: AST_Scope, arg: AST_Node, fn_strict: boolean) {
-        let found = false; let scan_this = !(is_ast_arrow(fn))
-        arg.walk(new TreeWalker(function (node: AST_Node, descend) {
-          if (found) return true
-          if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
-            let s = node.definition?.().scope
-            if (s !== scope) {
-              while ((s = s.parent_scope)) {
-                if (s === scope) return true
-              }
-            }
-            return (found = true)
-          }
-          if ((fn_strict || scan_this) && is_ast_this(node)) {
-            return (found = true)
-          }
-          if (is_ast_scope(node) && !(is_ast_arrow(node))) {
-            const prev = scan_this
-            scan_this = false
-            descend()
-            scan_this = prev
-            return true
-          }
-        }))
-        return found
-      }
-
-      function extract_args () {
-        const fn = compressor.self()
-        const iife = compressor.parent()
-        if (is_func_expr(fn) && !fn.name && !fn.uses_arguments && !fn.pinned() && is_ast_call(iife) && iife.expression === fn && iife.args.every((arg) => !(is_ast_expansion(arg)))) {
-          let fn_strict = compressor.has_directive('use strict')
-          if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
-          const len = fn.argnames.length
-          args = iife.args.slice(len)
-          const names = new Set()
-          for (let i = len; --i >= 0;) {
-            const sym = fn.argnames[i]
-            let arg: any = iife.args[i]
-            // The following two line fix is a duplicate of the fix at
-            // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
-            // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
-            // Might be doing the exact same thing.
-            const def = (sym as any).definition?.()
-            const is_reassigned = def && def.orig.length > 1
-            if (is_reassigned) continue
-            args.unshift(make_node('AST_VarDef', sym, {
-              name: sym,
-              value: arg
-            }))
-            if (names.has(sym.name)) continue
-            names.add(sym.name)
-            if (is_ast_expansion(sym)) {
-              const elements = iife.args.slice(i)
-              if (elements.every((arg) =>
-                !has_overlapping_symbol(fn as any, arg, fn_strict)
-              )) {
-                candidates.unshift([make_node('AST_VarDef', sym, {
-                  name: sym.expression,
-                  value: make_node('AST_Array', iife, {
-                    elements: elements
-                  })
-                })])
-              }
-            } else {
-              if (!arg) {
-                arg = make_node('AST_Undefined', sym).transform(compressor)
-              } else if (is_ast_lambda(arg) && arg.pinned?.() || has_overlapping_symbol(fn as any, arg, fn_strict)) {
-                arg = null
-              }
-              if (arg) {
-                candidates.unshift([make_node('AST_VarDef', sym, { name: sym, value: arg })])
-              }
-            }
-          }
-        }
-      }
-
-      function extract_candidates (expr: AST_Node) {
-        hit_stack.push(expr)
-        if (is_ast_assign(expr)) {
-          if (!expr.left.has_side_effects(compressor)) {
-            candidates.push(hit_stack.slice())
-          }
-          extract_candidates(expr.right)
-        } else if (is_ast_binary(expr)) {
-          extract_candidates(expr.left)
-          extract_candidates(expr.right)
-        } else if (is_ast_call(expr) && !has_annotation(expr, _NOINLINE)) {
-          extract_candidates(expr.expression)
-          expr.args.forEach(extract_candidates)
-        } else if (is_ast_case(expr)) {
-          extract_candidates(expr.expression)
-        } else if (is_ast_conditional(expr)) {
-          extract_candidates(expr.condition)
-          extract_candidates(expr.consequent)
-          extract_candidates(expr.alternative)
-        } else if (is_ast_definitions(expr)) {
-          const len = expr.definitions.length
-          // limit number of trailing variable definitions for consideration
-          let i = len - 200
-          if (i < 0) i = 0
-          for (; i < len; i++) {
-            extract_candidates(expr.definitions[i])
-          }
-        } else if (is_ast_d_w_loop(expr)) {
-          extract_candidates(expr.condition)
-          if (!(is_ast_block(expr.body))) {
-            extract_candidates(expr.body)
-          }
-        } else if (is_ast_exit(expr)) {
-          if (expr.value) extract_candidates(expr.value)
-        } else if (is_ast_for(expr)) {
-          if (expr.init) extract_candidates(expr.init)
-          if (expr.condition) extract_candidates(expr.condition)
-          if (expr.step) extract_candidates(expr.step)
-          if (!(is_ast_block(expr.body))) {
-            extract_candidates(expr.body)
-          }
-        } else if (is_ast_for_in(expr)) {
-          extract_candidates(expr.object)
-          if (!(is_ast_block(expr.body))) {
-            extract_candidates(expr.body)
-          }
-        } else if (is_ast_if(expr)) {
-          extract_candidates(expr.condition)
-          if (!(is_ast_block(expr.body))) {
-            extract_candidates(expr.body)
-          }
-          if (expr.alternative && !(is_ast_block(expr.alternative))) {
-            extract_candidates(expr.alternative)
-          }
-        } else if (is_ast_sequence(expr)) {
-          expr.expressions.forEach(extract_candidates)
-        } else if (is_ast_simple_statement(expr)) {
-          extract_candidates(expr.body)
-        } else if (is_ast_switch(expr)) {
-          extract_candidates(expr.expression)
-          expr.body.forEach(extract_candidates)
-        } else if (is_ast_unary(expr)) {
-          if (expr.operator == '++' || expr.operator == '--') {
-            candidates.push(hit_stack.slice())
-          }
-        } else if (is_ast_var_def(expr)) {
-          if (expr.value) {
-            candidates.push(hit_stack.slice())
-            extract_candidates(expr.value)
-          }
-        }
-        hit_stack.pop()
-      }
-
-      function find_stop (node: AST_Node, level: number, write_only?: boolean): AST_Node | null {
-        const parent = scanner.parent(level)
-        if (is_ast_assign(parent)) {
-          if (write_only && !(is_ast_prop_access(parent.left) || lvalues.has((parent.left as any).name))) {
-            return find_stop(parent, level + 1, write_only)
-          }
-          return node
-        }
-        if (is_ast_binary(parent)) {
-          if (write_only && (!lazy_op.has(parent.operator) || parent.left === node)) {
-            return find_stop(parent, level + 1, write_only)
-          }
-          return node
-        }
-        if (is_ast_call(parent)) return node
-        if (is_ast_case(parent)) return node
-        if (is_ast_conditional(parent)) {
-          if (write_only && parent.condition === node) {
-            return find_stop(parent, level + 1, write_only)
-          }
-          return node
-        }
-        if (is_ast_definitions(parent)) {
-          return find_stop(parent, level + 1, true)
-        }
-        if (is_ast_exit(parent)) {
-          return write_only ? find_stop(parent, level + 1, write_only) : node
-        }
-        if (is_ast_if(parent)) {
-          if (write_only && parent.condition === node) {
-            return find_stop(parent, level + 1, write_only)
-          }
-          return node
-        }
-        if (is_ast_iteration_statement(parent)) return node
-        if (is_ast_sequence(parent)) {
-          return find_stop(parent, level + 1, parent.tail_node() !== node)
-        }
-        if (is_ast_simple_statement(parent)) {
-          return find_stop(parent, level + 1, true)
-        }
-        if (is_ast_switch(parent)) return node
-        if (is_ast_var_def(parent)) return node
-        return null
-      }
-
-      function mangleable_var (var_def: AST_VarDef) {
-        const value = var_def.value
-        if (!(is_ast_symbol_ref(value))) return
-        if (value.name == 'arguments') return
-        const def = value.definition?.()
-        if (def.undeclared) return
-        return (value_def = def)
-      }
-
-      function get_lhs (expr: AST_Node): AST_Node | undefined {
-        if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
-          const def = expr.name.definition?.()
-          if (!member(expr.name, def.orig)) return
-          const referenced = def.references.length - def.replaced
-          if (!referenced) return
-          const declared = def.orig.length - def.eliminated
-          if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
-            return make_node('AST_SymbolRef', expr.name, expr.name)
-          }
-        } else {
-          const lhs = expr[is_ast_assign(expr) ? 'left' : 'expression']
-          return !is_ref_of(lhs, AST_SymbolConst) &&
-                      !is_ref_of(lhs, AST_SymbolLet) && lhs
-        }
-        return undefined
-      }
-
-      function get_rvalue (expr: AST_Node) {
-        return expr[is_ast_assign(expr) ? 'right' : 'value']
-      }
-
-      function get_lvalues (expr: AST_Node) {
-        const lvalues = new Map()
-        if (is_ast_unary(expr)) return lvalues
-        var tw = new TreeWalker(function (node: AST_Node) {
-          let sym = node
-          while (is_ast_prop_access(sym)) sym = sym.expression
-          if (is_ast_symbol_ref(sym) || is_ast_this(sym)) {
-            lvalues.set(sym.name, lvalues.get(sym.name) || is_modified(compressor, tw, node, node, 0))
-          }
-        })
-        get_rvalue(expr).walk(tw)
-        return lvalues
-      }
-
-      function remove_candidate (expr: AST_Node) {
-        if (is_ast_symbol_funarg(expr.name)) {
-          const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
-          const index = argnames.indexOf(expr.name)
-          if (index < 0) {
-            iife.args.length = Math.min(iife.args.length, argnames.length - 1)
-          } else {
-            const args = iife.args
-            if (args[index]) {
-              args[index] = make_node('AST_Number', args[index], {
-                value: 0
-              })
-            }
-          }
-          return true
-        }
-        let found = false
-        return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
-          if (found) return node
-          if (node === expr || node.body === expr) {
-            found = true
-            if (is_ast_var_def(node)) {
-              node.value = is_ast_symbol_const(node.name)
-                ? make_node('AST_Undefined', node.value) // `const` always needs value.
-                : null
-              return node
-            }
-            return in_list ? MAP.skip : null
-          }
-        }, function (node: AST_Node) {
-          if (is_ast_sequence(node)) {
-            switch (node.expressions.length) {
-              case 0: return null
-              case 1: return node.expressions[0]
-            }
-          }
-        }))
-      }
-
-      function is_lhs_local (lhs: AST_Node) {
-        while (is_ast_prop_access(lhs)) lhs = lhs.expression
-        return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === scope && !(in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
-      }
-
-      function value_has_side_effects (expr: AST_Node) {
-        if (is_ast_unary(expr)) return unary_side_effects.has(expr.operator)
-        return get_rvalue(expr).has_side_effects(compressor)
-      }
-
-      function replace_all_symbols () {
-        if (side_effects) return false
-        if (value_def) return true
-        if (is_ast_symbol_ref(lhs)) {
-          const def = lhs.definition?.()
-          if (def.references.length - def.replaced == (is_ast_var_def(candidate) ? 1 : 2)) {
-            return true
-          }
-        }
-        return false
-      }
-
-      function may_modify (sym: AST_Symbol) {
-        if (!sym.definition) return true // AST_Destructuring
-        const def = sym.definition?.()
-        if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
-        if (def.scope.get_defun_scope() !== scope) return true
-        return !def.references.every((ref) => {
-          let s = ref.scope.get_defun_scope()
-          // "block" scope within AST_Catch
-          if (s.TYPE == 'Scope') s = s.parent_scope
-          return s === scope
-        })
-      }
-
-      function side_effects_external (node: AST_Node, lhs?: boolean): boolean {
-        if (is_ast_assign(node)) return side_effects_external(node.left, true)
-        if (is_ast_unary(node)) return side_effects_external(node.expression, true)
-        if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
-        if (lhs) {
-          if (is_ast_dot(node)) return side_effects_external(node.expression, true)
-          if (is_ast_sub(node)) return side_effects_external(node.expression, true)
-          if (is_ast_symbol_ref(node)) return node.definition?.().scope !== scope
-        }
-        return false
-      }
-    }
-
-    function eliminate_spurious_blocks (statements: AST_Statement[]) {
+  // Tighten a bunch of statements together. Used whenever there is a block.
+  tighten_body (compressor: Compressor) {
+    const { scope } = this.find_loop_scope_try(compressor)
+    let max_iter = 10
+    const eliminate_spurious_blocks = (statements: AST_Statement[]) => {
       const seen_dirs: any[] = []
       for (let i = 0; i < statements.length;) {
         const stat = statements[i]
         if (is_ast_block_statement(stat) && stat.body.every(can_be_evicted_from_block)) {
-          CHANGED = true
+          this.CHANGED = true
           eliminate_spurious_blocks(stat.body)
           statements.splice(i, 1, ...stat.body)
           i += stat.body.length
         } else if (is_ast_empty_statement(stat)) {
-          CHANGED = true
+          this.CHANGED = true
           statements.splice(i, 1)
         } else if (is_ast_directive(stat)) {
           if (!seen_dirs.includes(stat.value)) {
             i++
             seen_dirs.push(stat.value)
           } else {
-            CHANGED = true
+            this.CHANGED = true
             statements.splice(i, 1)
           }
         } else i++
       }
     }
 
-    function handle_if_return (statements: AST_Statement[], compressor: Compressor) {
+    const handle_if_return = (statements: AST_Statement[], compressor: Compressor) => {
       const self = compressor.self()
       const multiple_if_returns = has_multiple_if_returns(statements)
       const in_lambda = is_ast_lambda(self)
@@ -816,12 +797,12 @@ export default class AST_Block extends AST_Statement {
 
         if (in_lambda && !next && is_ast_return(stat)) {
           if (!stat.value) {
-            CHANGED = true
+            this.CHANGED = true
             statements.splice(i, 1)
             continue
           }
           if (is_ast_unary_prefix(stat.value) && stat.value.operator == 'void') {
-            CHANGED = true
+            this.CHANGED = true
             statements[i] = make_node('AST_SimpleStatement', stat, {
               body: stat.value.expression
             }) as AST_SimpleStatement
@@ -835,7 +816,7 @@ export default class AST_Block extends AST_Statement {
             if (ab.label) {
               remove(ab.label.thedef.references, ab)
             }
-            CHANGED = true
+            this.CHANGED = true
             stat = stat.clone()
             stat.condition = stat.condition.negate(compressor)
             var body = as_statement_array_with_return(stat.body, ab)
@@ -854,7 +835,7 @@ export default class AST_Block extends AST_Statement {
             if (ab.label) {
               remove(ab.label.thedef.references, ab)
             }
-            CHANGED = true
+            this.CHANGED = true
             stat = stat.clone()
             stat.body = make_node('AST_BlockStatement', stat.body, {
               body: as_statement_array(stat.body).concat(extract_functions())
@@ -874,7 +855,7 @@ export default class AST_Block extends AST_Statement {
           // pretty silly case, but:
           // if (foo()) return; return; ==> foo(); return;
           if (!value && !stat.alternative && (in_lambda && !next || is_ast_return(next) && !next.value)) {
-            CHANGED = true
+            this.CHANGED = true
             statements[i] = make_node('AST_SimpleStatement', stat.condition, {
               body: stat.condition
             }) as AST_SimpleStatement
@@ -883,7 +864,7 @@ export default class AST_Block extends AST_Statement {
           // ---
           // if (foo()) return x; return y; ==> return foo() ? x : y;
           if (value && !stat.alternative && is_ast_return(next) && next.value) {
-            CHANGED = true
+            this.CHANGED = true
             stat = stat.clone()
             stat.alternative = next
             statements[i] = stat.transform(compressor)
@@ -893,7 +874,7 @@ export default class AST_Block extends AST_Statement {
           // ---
           // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
           if (value && !stat.alternative && (!next && in_lambda && multiple_if_returns || is_ast_return(next))) {
-            CHANGED = true
+            this.CHANGED = true
             stat = stat.clone()
             stat.alternative = next || make_node('AST_Return', stat, {
               value: null
@@ -910,7 +891,7 @@ export default class AST_Block extends AST_Statement {
           // the example code.
           const prev = statements[prev_index(i)]
           if (compressor.option('sequences') && in_lambda && !stat.alternative && is_ast_if(prev) && is_ast_return(prev.body) && next_index(j) == statements.length && is_ast_simple_statement(next)) {
-            CHANGED = true
+            this.CHANGED = true
             stat = stat.clone()
             stat.alternative = make_node('AST_BlockStatement', next, {
               body: [
@@ -997,7 +978,7 @@ export default class AST_Block extends AST_Statement {
       }
     }
 
-    function eliminate_dead_code (statements: AST_Statement[], compressor: Compressor) {
+    const eliminate_dead_code = (statements: AST_Statement[], compressor: Compressor) => {
       let has_quit: AST_Statement[] = []
       const self = compressor.self()
       for (var i = 0, n = 0, len = statements.length; i < len; i++) {
@@ -1021,7 +1002,7 @@ export default class AST_Block extends AST_Statement {
         }
       }
       statements.length = n
-      CHANGED = n != len
+      this.CHANGED = n != len
       if (has_quit) {
         has_quit.forEach(function (stat: AST_Statement) {
           extract_declarations_from_unreachable_code(compressor, stat, statements)
@@ -1029,13 +1010,7 @@ export default class AST_Block extends AST_Statement {
       }
     }
 
-    function declarations_only (node: AST_Node) {
-      return node.definitions.every((var_def) =>
-        !var_def.value
-      )
-    }
-
-    function sequencesize (statements: AST_Statement[], compressor: Compressor) {
+    const sequencesize = (statements: AST_Statement[], compressor: Compressor) => {
       if (statements.length < 2) return
       let seq: any[] = []; let n = 0
       function push_seq () {
@@ -1061,29 +1036,13 @@ export default class AST_Block extends AST_Statement {
       }
       push_seq()
       statements.length = n
-      if (n != len) CHANGED = true
+      if (n != len) this.CHANGED = true
     }
 
-    function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
-      if (!(is_ast_block_statement(block))) return block
-      let stat: any = null
-      for (let i = 0, len = block.body.length; i < len; i++) {
-        const line = block.body[i]
-        if (is_ast_var(line) && declarations_only(line)) {
-          decls.push(line)
-        } else if (stat) {
-          return false
-        } else {
-          stat = line
-        }
-      }
-      return stat
-    }
-
-    function sequencesize_2 (statements: AST_Statement[], compressor: Compressor) {
-      function cons_seq (right: AST_Node) {
+    const sequencesize_2 = (statements: AST_Statement[], compressor: Compressor) => {
+      const cons_seq = (right: AST_Node) => {
         n--
-        CHANGED = true
+        this.CHANGED = true
         const left = prev.body
         return make_sequence(left, [left, right]).transform(compressor)
       }
@@ -1110,7 +1069,7 @@ export default class AST_Block extends AST_Statement {
                 else {
                   stat.init = prev.body
                   n--
-                  CHANGED = true
+                  this.CHANGED = true
                 }
               }
             }
@@ -1142,7 +1101,7 @@ export default class AST_Block extends AST_Statement {
             i += len
             n += len + 1
             prev = null
-            CHANGED = true
+            this.CHANGED = true
             continue
           }
         }
@@ -1150,6 +1109,127 @@ export default class AST_Block extends AST_Statement {
         prev = is_ast_simple_statement(stat) ? stat : null
       }
       statements.length = n
+    }
+
+    const join_consecutive_vars = (statements: AST_Statement[]) => {
+      let defs: any
+      const extract_object_assignments = (value: AST_Node) => {
+        statements[++j] = stat
+        const exprs = join_object_assignments(prev, value)
+        if (exprs) {
+          this.CHANGED = true
+          if (exprs.length) {
+            return make_sequence(value, exprs)
+          } else if (is_ast_sequence(value)) {
+            return value.tail_node().left
+          } else {
+            return value.left
+          }
+        }
+        return value
+      }
+
+      for (var i = 0, j = -1, len = statements.length; i < len; i++) {
+        var stat: any = statements[i]
+        var prev: any = statements[j]
+        if (is_ast_definitions(stat)) {
+          if (prev && prev.TYPE == stat.TYPE) {
+            prev.definitions = prev.definitions.concat(stat.definitions)
+            this.CHANGED = true
+          } else if (defs && defs.TYPE == stat.TYPE && declarations_only(stat)) {
+            defs.definitions = defs.definitions.concat(stat.definitions)
+            this.CHANGED = true
+          } else {
+            statements[++j] = stat
+            defs = stat
+          }
+        } else if (is_ast_exit(stat)) {
+          stat.value = extract_object_assignments(stat.value)
+        } else if (is_ast_for(stat)) {
+          var exprs = join_object_assignments(prev, stat.init)
+          if (exprs) {
+            this.CHANGED = true
+            stat.init = exprs.length ? make_sequence(stat.init, exprs) : null
+            statements[++j] = stat
+          } else if (is_ast_var(prev) && (!stat.init || stat.init.TYPE == prev.TYPE)) {
+            if (stat.init) {
+              prev.definitions = prev.definitions.concat(stat.init.definitions)
+            }
+            stat.init = prev
+            statements[j] = stat
+            this.CHANGED = true
+          } else if (defs && stat.init && defs.TYPE == stat.init.TYPE && declarations_only(stat.init)) {
+            defs.definitions = defs.definitions.concat(stat.init.definitions)
+            stat.init = null
+            statements[++j] = stat
+            this.CHANGED = true
+          } else {
+            statements[++j] = stat
+          }
+        } else if (is_ast_for_in(stat)) {
+          stat.object = extract_object_assignments(stat.object)
+        } else if (is_ast_if(stat)) {
+          stat.condition = extract_object_assignments(stat.condition)
+        } else if (is_ast_simple_statement(stat)) {
+          exprs = join_object_assignments(prev, stat.body)
+          if (exprs) {
+            this.CHANGED = true
+            if (!exprs.length) continue
+            stat.body = make_sequence(stat.body, exprs)
+          }
+          statements[++j] = stat
+        } else if (is_ast_switch(stat)) {
+          stat.expression = extract_object_assignments(stat.expression)
+        } else if (is_ast_with(stat)) {
+          stat.expression = extract_object_assignments(stat.expression)
+        } else {
+          statements[++j] = stat
+        }
+      }
+      statements.length = j + 1
+    }
+
+    do {
+      this.CHANGED = false
+      eliminate_spurious_blocks(this.body)
+      if (compressor.option('dead_code')) {
+        eliminate_dead_code(this.body, compressor)
+      }
+      if (compressor.option('if_return')) {
+        handle_if_return(this.body, compressor)
+      }
+      if (compressor.sequences_limit > 0) {
+        sequencesize(this.body, compressor)
+        sequencesize_2(this.body, compressor)
+      }
+      if (compressor.option('join_vars')) {
+        join_consecutive_vars(this.body)
+      }
+      if (compressor.option('collapse_vars')) {
+        this.collapse(this.body, compressor)
+      }
+    } while (this.CHANGED && max_iter-- > 0)
+
+    function declarations_only (node: AST_Node) {
+      return node.definitions.every((var_def) =>
+        !var_def.value
+      )
+    }
+
+    function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
+      if (!(is_ast_block_statement(block))) return block
+      let stat: any = null
+      for (let i = 0, len = block.body.length; i < len; i++) {
+        const line = block.body[i]
+        if (is_ast_var(line) && declarations_only(line)) {
+          decls.push(line)
+        } else if (stat) {
+          return false
+        } else {
+          stat = line
+        }
+      }
+      return stat
     }
 
     function join_object_assignments (defn: AST_Node, body: AST_Node) {
@@ -1203,84 +1283,6 @@ export default class AST_Block extends AST_Statement {
         trimmed = true
       } while (exprs.length)
       return trimmed && exprs
-    }
-
-    function join_consecutive_vars (statements: AST_Statement[]) {
-      let defs: any
-      for (var i = 0, j = -1, len = statements.length; i < len; i++) {
-        var stat: any = statements[i]
-        var prev: any = statements[j]
-        if (is_ast_definitions(stat)) {
-          if (prev && prev.TYPE == stat.TYPE) {
-            prev.definitions = prev.definitions.concat(stat.definitions)
-            CHANGED = true
-          } else if (defs && defs.TYPE == stat.TYPE && declarations_only(stat)) {
-            defs.definitions = defs.definitions.concat(stat.definitions)
-            CHANGED = true
-          } else {
-            statements[++j] = stat
-            defs = stat
-          }
-        } else if (is_ast_exit(stat)) {
-          stat.value = extract_object_assignments(stat.value)
-        } else if (is_ast_for(stat)) {
-          var exprs = join_object_assignments(prev, stat.init)
-          if (exprs) {
-            CHANGED = true
-            stat.init = exprs.length ? make_sequence(stat.init, exprs) : null
-            statements[++j] = stat
-          } else if (is_ast_var(prev) && (!stat.init || stat.init.TYPE == prev.TYPE)) {
-            if (stat.init) {
-              prev.definitions = prev.definitions.concat(stat.init.definitions)
-            }
-            stat.init = prev
-            statements[j] = stat
-            CHANGED = true
-          } else if (defs && stat.init && defs.TYPE == stat.init.TYPE && declarations_only(stat.init)) {
-            defs.definitions = defs.definitions.concat(stat.init.definitions)
-            stat.init = null
-            statements[++j] = stat
-            CHANGED = true
-          } else {
-            statements[++j] = stat
-          }
-        } else if (is_ast_for_in(stat)) {
-          stat.object = extract_object_assignments(stat.object)
-        } else if (is_ast_if(stat)) {
-          stat.condition = extract_object_assignments(stat.condition)
-        } else if (is_ast_simple_statement(stat)) {
-          exprs = join_object_assignments(prev, stat.body)
-          if (exprs) {
-            CHANGED = true
-            if (!exprs.length) continue
-            stat.body = make_sequence(stat.body, exprs)
-          }
-          statements[++j] = stat
-        } else if (is_ast_switch(stat)) {
-          stat.expression = extract_object_assignments(stat.expression)
-        } else if (is_ast_with(stat)) {
-          stat.expression = extract_object_assignments(stat.expression)
-        } else {
-          statements[++j] = stat
-        }
-      }
-      statements.length = j + 1
-
-      function extract_object_assignments (value: AST_Node) {
-        statements[++j] = stat
-        const exprs = join_object_assignments(prev, value)
-        if (exprs) {
-          CHANGED = true
-          if (exprs.length) {
-            return make_sequence(value, exprs)
-          } else if (is_ast_sequence(value)) {
-            return value.tail_node().left
-          } else {
-            return value.left
-          }
-        }
-        return value
-      }
     }
   }
 
