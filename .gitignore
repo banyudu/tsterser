@@ -13,3 +13,5 @@ tools/**/*.js
 
 main.js
 tsconfig.tsbuildinfo
+
+.eslintcache

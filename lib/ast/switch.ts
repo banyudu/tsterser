@@ -45,7 +45,9 @@ export default class AST_Switch extends AST_Block {
     const body: any[] = []
     let default_branch
     let exact_match
-    for (var i = 0, len = self.body.length; i < len && !exact_match; i++) {
+    let i
+    let len
+    for (i = 0, len = self.body.length; i < len && !exact_match; i++) {
       branch = self.body[i]
       if (is_ast_default(branch)) {
         if (!default_branch) {
@@ -100,7 +102,7 @@ export default class AST_Switch extends AST_Block {
     }
     if (body.length == 1 && (body[0] === exact_match || body[0] === default_branch)) {
       let has_break = false
-      var tw = new TreeWalker(function (node: AST_Node) {
+      const tw = new TreeWalker(function (node: AST_Node) {
         if (has_break ||
                   is_ast_lambda(node) ||
                   is_ast_simple_statement(node)) return true

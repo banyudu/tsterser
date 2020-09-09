@@ -736,7 +736,7 @@ export default class AST_Block extends AST_Statement {
     const self = compressor.self()
     const in_lambda = is_ast_lambda(self)
     const multiple_if_returns = has_multiple_if_returns(this.body)
-    for (var i = this.body.length; --i >= 0;) {
+    for (let i = this.body.length; --i >= 0;) {
       let stat: any = this.body[i]
       const j = this.next_index(i)
       const next = this.body[j]

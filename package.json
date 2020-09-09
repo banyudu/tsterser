@@ -66,7 +66,7 @@
     "test": "npm run build -- --configTest && node test/run-tests.js",
     "test:compress": "npm run build -- --configTest && node test/compress.js",
     "test:mocha": "npm run build -- --configTest && node test/mocha.js",
-    "lint": "eslint .",
+    "lint": "eslint . --cache",
     "lint:quiet": "npm run lint -- --quiet",
     "lint:fix": "npm run lint -- --quiet --fix",
     "lint:fixOne": "eslint  --ext .js,.jsx,.ts,.tsx --quiet --fix",

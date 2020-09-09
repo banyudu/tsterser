@@ -1,4 +1,4 @@
-export var domprops = [
+export const domprops = [
   '$&',
   "$'",
   '$*',

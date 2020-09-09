@@ -111,8 +111,8 @@ export default class AST_Binary extends AST_Node {
           }
           break
         case '&&':
-        case '||':
-          var lhs = self.left
+        case '||': {
+          let lhs = self.left
           if (lhs.operator == self.operator) {
             lhs = lhs.right
           }
@@ -139,6 +139,7 @@ export default class AST_Binary extends AST_Node {
             return combined
           }
           break
+        }
       }
     }
     if (self.operator == '+' && compressor.in_boolean_context()) {
@@ -696,7 +697,8 @@ export default class AST_Binary extends AST_Node {
         const assign = this.operator == '=' && is_ast_symbol_ref(this.left)
         let x = this.right.expressions
         const last = x.length - 1
-        for (var i = 0; i < last; i++) {
+        let i
+        for (i = 0; i < last; i++) {
           if (!assign && x[i].has_side_effects(compressor)) break
         }
         if (i == last) {

@@ -543,7 +543,7 @@ export class OutputStream {
       printed_comments.add(comments)
 
       if (return_with_value) {
-        var tw = new TreeWalker((node: AST_Node) => {
+        const tw = new TreeWalker((node: AST_Node) => {
           const parent: AST_Node = tw.parent()
           if (parent?._prepend_comments_check(node)) {
             if (!node.start) return undefined

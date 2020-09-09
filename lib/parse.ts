@@ -845,6 +845,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
       forward(2)
       skip_line_comment('comment5')
     }
+    let ch
     for (;;) {
       skip_whitespace()
       start_token()
@@ -860,7 +861,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
           continue
         }
       }
-      var ch = peek()
+      ch = peek()
       if (!ch) return token('eof')
       const code = ch.charCodeAt(0)
       switch (code) {
@@ -944,7 +945,7 @@ const UNARY_PREFIX = makePredicate([
   '+'
 ])
 
-var UNARY_POSTFIX = makePredicate(['--', '++'])
+const UNARY_POSTFIX = makePredicate(['--', '++'])
 
 const ASSIGNMENT = makePredicate(['=', '+=', '-=', '/=', '*=', '**=', '%=', '>>=', '<<=', '>>>=', '|=', '^=', '&='])
 
@@ -1111,10 +1112,10 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  var statement = embed_tokens(function (is_export_default: boolean, is_for_body: boolean, is_if_body: boolean) {
+  const statement = embed_tokens(function (is_export_default: boolean, is_for_body: boolean, is_if_body: boolean) {
     handle_regexp()
     switch (S.token?.type) {
-      case 'string':
+      case 'string': {
         if (S.in_directives) {
           const token = peek()
           if (!S.token?.raw.includes('\\') &&
@@ -1127,8 +1128,10 @@ export function parse ($TEXT: string, opt?: any) {
             S.in_directives = false
           }
         }
-        var dir = S.in_directives; var stat = simple_statement()
+        const dir = S.in_directives
+        const stat = simple_statement()
         return dir && is_ast_string(stat.body) ? new AST_Directive(stat.body) : stat
+      }
       case 'template_head':
       case 'num':
       case 'big_int':
@@ -1190,17 +1193,17 @@ export function parse ($TEXT: string, opt?: any) {
             semicolon()
             return new AST_Debugger({})
 
-          case 'do':
+          case 'do': {
             next()
-            var body = in_loop(statement)
+            const body = in_loop(statement)
             expect_token('keyword', 'while')
-            var condition = parenthesised()
+            const condition = parenthesised()
             semicolon(true)
             return new AST_Do({
               body: body,
               condition: condition
             })
-
+          }
           case 'while':
             next()
             return new AST_While({
@@ -1468,7 +1471,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var function_ = function (CTOR: typeof AST_Defun | typeof AST_Function, is_generator_property: boolean, is_async: boolean, is_export_default?: boolean) {
+  const function_ = function (CTOR: typeof AST_Defun | typeof AST_Function, is_generator_property: boolean, is_async: boolean, is_export_default?: boolean) {
     const in_statement = CTOR === AST_Defun
     const is_generator = is('operator', '*')
     if (is_generator) {
@@ -1505,7 +1508,7 @@ export function parse ($TEXT: string, opt?: any) {
     let default_assignment: false | AST_Token = false
     let spread: false | AST_Token = false
     let strict_mode = !!strict
-    var tracker = {
+    const tracker = {
       add_parameter: function (token: AST_Token) {
         if (parameters.has(token.value)) {
           if (duplicate === false) {

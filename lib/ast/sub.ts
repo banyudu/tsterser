@@ -30,8 +30,8 @@ export default class AST_Sub extends AST_PropAccess {
     let expr = this.expression
     let prop: AST_Node = this.property
     let property: any
+    let key = prop.evaluate(compressor)
     if (compressor.option('properties')) {
-      var key = prop.evaluate(compressor)
       if (key !== prop) {
         if (typeof key === 'string') {
           if (key == 'undefined') {
@@ -121,7 +121,8 @@ export default class AST_Sub extends AST_PropAccess {
       if (safe_to_flatten(retValue, compressor)) {
         let flatten = true
         const values: any[] = []
-        for (var i = elements.length; --i > index;) {
+        let i
+        for (i = elements.length; --i > index;) {
           const value = elements[i].drop_side_effect_free(compressor)
           if (value) {
             values.unshift(value)

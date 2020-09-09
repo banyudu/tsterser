@@ -360,6 +360,7 @@ export function defaults (args: any, defs: AnyObject, croak?: boolean): typeof a
 }
 
 export const MAP = (function () {
+  const skip = {}
   function MAP (a: any[] | AnyObject, f: Function, backwards?: boolean) {
     const ret: any[] = []; const top: any[] = []; let i: string | number
     function doit () {
@@ -398,7 +399,7 @@ export const MAP = (function () {
   MAP.at_top = function (val: any) { return new AtTop(val) }
   MAP.splice = function (val: any) { return new Splice(val) }
   MAP.last = function (val: any) { return new Last(val) }
-  var skip = MAP.skip = {}
+  MAP.skip = skip
   return MAP
 })()
 
@@ -624,7 +625,7 @@ export function from_moz (node?: MozillaAst) {
   return ret
 }
 
-var MOZ_TO_ME: any = {
+const MOZ_TO_ME: any = {
   Program: function (M: MozillaAst) {
     return new AST_Toplevel({
       start: my_start_token(M),
@@ -1743,7 +1744,7 @@ export function make_node_from_constant (val: any, orig: AST_Node) {
 
 export function has_break_or_continue (loop: AST_Node, parent?: AST_Node) {
   let found = false
-  var tw = new TreeWalker(function (node: AST_Node) {
+  const tw = new TreeWalker(function (node: AST_Node) {
     if (found || is_ast_scope(node)) return true
     if (is_ast_loop_control(node) && tw.loopcontrol_target(node) === loop) {
       return (found = true)
