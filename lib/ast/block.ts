@@ -114,6 +114,9 @@ export default class AST_Block extends AST_Statement {
   block_scope?: AST_Scope
   expression: any
   CHANGED: boolean = false
+  private compressor_scope: AST_Scope | undefined
+  private in_loop: boolean = false
+  private in_try: boolean = false
 
   protected _block_aborts () {
     for (let i = 0; i < this.body.length; i++) {
@@ -169,6 +172,33 @@ export default class AST_Block extends AST_Statement {
     }
   }
 
+  private has_overlapping_symbol (fn: AST_Scope, arg: AST_Node, fn_strict: boolean) {
+    let found = false; let scan_this = !(is_ast_arrow(fn))
+    arg.walk(new TreeWalker((node: AST_Node, descend) => {
+      if (found) return true
+      if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
+        let s = node.definition?.().scope
+        if (s !== this.compressor_scope) {
+          while ((s = s.parent_scope)) {
+            if (s === this.compressor_scope) return true
+          }
+        }
+        return (found = true)
+      }
+      if ((fn_strict || scan_this) && is_ast_this(node)) {
+        return (found = true)
+      }
+      if (is_ast_scope(node) && !(is_ast_arrow(node))) {
+        const prev = scan_this
+        scan_this = false
+        descend()
+        scan_this = prev
+        return true
+      }
+    }))
+    return found
+  }
+
   // Search from right to left for assignment-like expressions:
   // - `var a = x;`
   // - `a = x;`
@@ -177,12 +207,88 @@ export default class AST_Block extends AST_Statement {
   // to fold assignment into the site for compression.
   // Will not attempt to collapse assignments into or past code blocks
   // which are not sequentially executed, e.g. loops and conditionals.
-  collapse (statements: AST_Statement[], compressor: Compressor) {
-    const { in_loop, in_try, scope } = this.find_loop_scope_try(compressor)
-    if (scope.pinned()) return statements
+  collapse (compressor: Compressor) {
+    if (this.compressor_scope.pinned()) return this.body
     let args = null
     const candidates: any[] = []
-    let stat_index = statements.length
+    let stat_index = this.body.length
+
+    const extract_args = () => {
+      const fn = compressor.self()
+      const iife = compressor.parent()
+      if (is_func_expr(fn) && !fn.name && !fn.uses_arguments && !fn.pinned() && is_ast_call(iife) && iife.expression === fn && iife.args.every((arg) => !(is_ast_expansion(arg)))) {
+        let fn_strict = compressor.has_directive('use strict')
+        if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
+        const len = fn.argnames.length
+        args = iife.args.slice(len)
+        const names = new Set()
+        for (let i = len; --i >= 0;) {
+          const sym = fn.argnames[i]
+          let arg: any = iife.args[i]
+          // The following two line fix is a duplicate of the fix at
+          // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
+          // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
+          // Might be doing the exact same thing.
+          const def = (sym as any).definition?.()
+          const is_reassigned = def && def.orig.length > 1
+          if (is_reassigned) continue
+          args.unshift(make_node('AST_VarDef', sym, {
+            name: sym,
+            value: arg
+          }))
+          if (names.has(sym.name)) continue
+          names.add(sym.name)
+          if (is_ast_expansion(sym)) {
+            const elements = iife.args.slice(i)
+            if (elements.every((arg) =>
+              !this.has_overlapping_symbol(fn as any, arg, fn_strict)
+            )) {
+              candidates.unshift([make_node('AST_VarDef', sym, {
+                name: sym.expression,
+                value: make_node('AST_Array', iife, {
+                  elements: elements
+                })
+              })])
+            }
+          } else {
+            if (!arg) {
+              arg = make_node('AST_Undefined', sym).transform(compressor)
+            } else if (is_ast_lambda(arg) && arg.pinned?.() || this.has_overlapping_symbol(fn as any, arg, fn_strict)) {
+              arg = null
+            }
+            if (arg) {
+              candidates.unshift([make_node('AST_VarDef', sym, { name: sym, value: arg })])
+            }
+          }
+        }
+      }
+    }
+
+    const may_modify = (sym: AST_Symbol) => {
+      if (!sym.definition) return true // AST_Destructuring
+      const def = sym.definition?.()
+      if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
+      if (def.scope.get_defun_scope() !== this.compressor_scope) return true
+      return !def.references.every((ref) => {
+        let s = ref.scope.get_defun_scope()
+        // "block" scope within AST_Catch
+        if (s.TYPE == 'Scope') s = s.parent_scope
+        return s === this.compressor_scope
+      })
+    }
+
+    const side_effects_external = (node: AST_Node, lhs?: boolean): boolean => {
+      if (is_ast_assign(node)) return side_effects_external(node.left, true)
+      if (is_ast_unary(node)) return side_effects_external(node.expression, true)
+      if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
+      if (lhs) {
+        if (is_ast_dot(node)) return side_effects_external(node.expression, true)
+        if (is_ast_sub(node)) return side_effects_external(node.expression, true)
+        if (is_ast_symbol_ref(node)) return node.definition?.().scope !== this.compressor_scope
+      }
+      return false
+    }
+
     var scanner = new TreeTransformer((node: AST_Node) => {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
@@ -279,7 +385,7 @@ export default class AST_Block extends AST_Statement {
         is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
         is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
         (sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
-        may_throw && (in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
+        may_throw && (this.in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
         stop_after = node
         if (is_ast_scope(node)) abort = true
       }
@@ -311,6 +417,10 @@ export default class AST_Block extends AST_Statement {
       // Skip (non-executed) functions and (leading) default case in switch statements
       if (is_ast_default(node) || is_ast_scope(node)) return node
     })
+    const is_lhs_local = (lhs: AST_Node) => {
+      while (is_ast_prop_access(lhs)) lhs = lhs.expression
+      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === this.compressor_scope && !(this.in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
+    }
     while (--stat_index >= 0) {
       // Treat parameters as collapsible in IIFE, i.e.
       //   function(a, b){ ... }(x());
@@ -319,7 +429,7 @@ export default class AST_Block extends AST_Statement {
       if (stat_index == 0 && compressor.option('unused')) extract_args()
       // Find collapsible assignments
       var hit_stack: any[] = []
-      extract_candidates(statements[stat_index])
+      extract_candidates(this.body[stat_index])
       while (candidates.length > 0) {
         hit_stack = candidates.pop()
         var hit_index = 0
@@ -350,8 +460,8 @@ export default class AST_Block extends AST_Statement {
           can_replace = true
         }
         if (!abort) {
-          for (let i = stat_index; i < statements.length; i++) {
-            statements[i].transform(scanner)
+          for (let i = stat_index; i < this.body.length; i++) {
+            this.body[i].transform(scanner)
           }
         }
         if (value_def) {
@@ -362,14 +472,14 @@ export default class AST_Block extends AST_Statement {
             hit_index = 0
             hit = funarg
             if (!abort) {
-              for (let i = stat_index; i < statements.length; i++) {
-                statements[i].transform(multi_replacer)
+              for (let i = stat_index; i < this.body.length; i++) {
+                this.body[i].transform(multi_replacer)
               }
             }
             value_def.single_use = false
           }
         }
-        if (replaced && !remove_candidate(candidate)) statements.splice(stat_index, 1)
+        if (replaced && !remove_candidate(compressor, candidate, this.body[stat_index])) this.body.splice(stat_index, 1)
       }
     }
 
@@ -395,94 +505,6 @@ export default class AST_Block extends AST_Statement {
         }
         abort = true
         return node
-      }
-    }
-
-    function redefined_within_scope (def: SymbolDef, scope: AST_Scope) {
-      if (def.global) return false
-      let cur_scope = def.scope
-      while (cur_scope && cur_scope !== scope) {
-        if (cur_scope.variables.has(def.name)) return true
-        cur_scope = cur_scope.parent_scope
-      }
-      return false
-    }
-
-    function has_overlapping_symbol (fn: AST_Scope, arg: AST_Node, fn_strict: boolean) {
-      let found = false; let scan_this = !(is_ast_arrow(fn))
-      arg.walk(new TreeWalker(function (node: AST_Node, descend) {
-        if (found) return true
-        if (is_ast_symbol_ref(node) && (fn.variables.has(node.name) || redefined_within_scope(node.definition?.(), fn))) {
-          let s = node.definition?.().scope
-          if (s !== scope) {
-            while ((s = s.parent_scope)) {
-              if (s === scope) return true
-            }
-          }
-          return (found = true)
-        }
-        if ((fn_strict || scan_this) && is_ast_this(node)) {
-          return (found = true)
-        }
-        if (is_ast_scope(node) && !(is_ast_arrow(node))) {
-          const prev = scan_this
-          scan_this = false
-          descend()
-          scan_this = prev
-          return true
-        }
-      }))
-      return found
-    }
-
-    function extract_args () {
-      const fn = compressor.self()
-      const iife = compressor.parent()
-      if (is_func_expr(fn) && !fn.name && !fn.uses_arguments && !fn.pinned() && is_ast_call(iife) && iife.expression === fn && iife.args.every((arg) => !(is_ast_expansion(arg)))) {
-        let fn_strict = compressor.has_directive('use strict')
-        if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
-        const len = fn.argnames.length
-        args = iife.args.slice(len)
-        const names = new Set()
-        for (let i = len; --i >= 0;) {
-          const sym = fn.argnames[i]
-          let arg: any = iife.args[i]
-          // The following two line fix is a duplicate of the fix at
-          // https://github.com/terser/terser/commit/011d3eb08cefe6922c7d1bdfa113fc4aeaca1b75
-          // This might mean that these two pieces of code (one here in collapse_vars and another in reduce_vars
-          // Might be doing the exact same thing.
-          const def = (sym as any).definition?.()
-          const is_reassigned = def && def.orig.length > 1
-          if (is_reassigned) continue
-          args.unshift(make_node('AST_VarDef', sym, {
-            name: sym,
-            value: arg
-          }))
-          if (names.has(sym.name)) continue
-          names.add(sym.name)
-          if (is_ast_expansion(sym)) {
-            const elements = iife.args.slice(i)
-            if (elements.every((arg) =>
-              !has_overlapping_symbol(fn as any, arg, fn_strict)
-            )) {
-              candidates.unshift([make_node('AST_VarDef', sym, {
-                name: sym.expression,
-                value: make_node('AST_Array', iife, {
-                  elements: elements
-                })
-              })])
-            }
-          } else {
-            if (!arg) {
-              arg = make_node('AST_Undefined', sym).transform(compressor)
-            } else if (is_ast_lambda(arg) && arg.pinned?.() || has_overlapping_symbol(fn as any, arg, fn_strict)) {
-              arg = null
-            }
-            if (arg) {
-              candidates.unshift([make_node('AST_VarDef', sym, { name: sym, value: arg })])
-            }
-          }
-        }
       }
     }
 
@@ -651,50 +673,6 @@ export default class AST_Block extends AST_Statement {
       return lvalues
     }
 
-    function remove_candidate (expr: AST_Node) {
-      if (is_ast_symbol_funarg(expr.name)) {
-        const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
-        const index = argnames.indexOf(expr.name)
-        if (index < 0) {
-          iife.args.length = Math.min(iife.args.length, argnames.length - 1)
-        } else {
-          const args = iife.args
-          if (args[index]) {
-            args[index] = make_node('AST_Number', args[index], {
-              value: 0
-            })
-          }
-        }
-        return true
-      }
-      let found = false
-      return statements[stat_index].transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
-        if (found) return node
-        if (node === expr || node.body === expr) {
-          found = true
-          if (is_ast_var_def(node)) {
-            node.value = is_ast_symbol_const(node.name)
-              ? make_node('AST_Undefined', node.value) // `const` always needs value.
-              : null
-            return node
-          }
-          return in_list ? MAP.skip : null
-        }
-      }, function (node: AST_Node) {
-        if (is_ast_sequence(node)) {
-          switch (node.expressions.length) {
-            case 0: return null
-            case 1: return node.expressions[0]
-          }
-        }
-      }))
-    }
-
-    function is_lhs_local (lhs: AST_Node) {
-      while (is_ast_prop_access(lhs)) lhs = lhs.expression
-      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === scope && !(in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
-    }
-
     function value_has_side_effects (expr: AST_Node) {
       if (is_ast_unary(expr)) return unary_side_effects.has(expr.operator)
       return get_rvalue(expr).has_side_effects(compressor)
@@ -711,579 +689,453 @@ export default class AST_Block extends AST_Statement {
       }
       return false
     }
-
-    function may_modify (sym: AST_Symbol) {
-      if (!sym.definition) return true // AST_Destructuring
-      const def = sym.definition?.()
-      if (def.orig.length == 1 && is_ast_symbol_defun(def.orig[0])) return false
-      if (def.scope.get_defun_scope() !== scope) return true
-      return !def.references.every((ref) => {
-        let s = ref.scope.get_defun_scope()
-        // "block" scope within AST_Catch
-        if (s.TYPE == 'Scope') s = s.parent_scope
-        return s === scope
-      })
-    }
-
-    function side_effects_external (node: AST_Node, lhs?: boolean): boolean {
-      if (is_ast_assign(node)) return side_effects_external(node.left, true)
-      if (is_ast_unary(node)) return side_effects_external(node.expression, true)
-      if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
-      if (lhs) {
-        if (is_ast_dot(node)) return side_effects_external(node.expression, true)
-        if (is_ast_sub(node)) return side_effects_external(node.expression, true)
-        if (is_ast_symbol_ref(node)) return node.definition?.().scope !== scope
-      }
-      return false
-    }
   }
 
-  find_loop_scope_try (compressor: Compressor) {
-    let in_loop: boolean
-    let in_try: boolean
-    let scope = compressor.find_parent(AST_Scope).get_defun_scope()
+  private find_loop_scope_try (compressor: Compressor) {
+    this.compressor_scope = compressor.find_parent(AST_Scope).get_defun_scope()
     let node = compressor.self(); let level = 0
     do {
       if (is_ast_catch(node) || is_ast_finally(node)) {
         level++
       } else if (is_ast_iteration_statement(node)) {
-        in_loop = true
+        this.in_loop = true
       } else if (is_ast_scope(node)) {
-        scope = node
+        this.compressor_scope = node
         break
       } else if (is_ast_try(node)) {
-        in_try = true
+        this.in_try = true
       }
     } while ((node = compressor.parent(level++)))
-    return { in_loop, in_try, scope }
+  }
+
+  private eliminate_spurious_blocks (statements: AST_Statement[]) {
+    const seen_dirs: any[] = []
+    for (let i = 0; i < statements.length;) {
+      const stat = statements[i]
+      if (is_ast_block_statement(stat) && stat.body.every(can_be_evicted_from_block)) {
+        this.CHANGED = true
+        this.eliminate_spurious_blocks(stat.body)
+        statements.splice(i, 1, ...stat.body)
+        i += stat.body.length
+      } else if (is_ast_empty_statement(stat)) {
+        this.CHANGED = true
+        statements.splice(i, 1)
+      } else if (is_ast_directive(stat)) {
+        if (!seen_dirs.includes(stat.value)) {
+          i++
+          seen_dirs.push(stat.value)
+        } else {
+          this.CHANGED = true
+          statements.splice(i, 1)
+        }
+      } else i++
+    }
+  }
+
+  private handle_if_return (compressor: Compressor) {
+    const self = compressor.self()
+    const in_lambda = is_ast_lambda(self)
+    const multiple_if_returns = has_multiple_if_returns(this.body)
+    for (var i = this.body.length; --i >= 0;) {
+      let stat: any = this.body[i]
+      const j = this.next_index(i)
+      const next = this.body[j]
+
+      if (in_lambda && !next && is_ast_return(stat)) {
+        if (!stat.value) {
+          this.CHANGED = true
+          this.body.splice(i, 1)
+          continue
+        }
+        if (is_ast_unary_prefix(stat.value) && stat.value.operator == 'void') {
+          this.CHANGED = true
+          this.body[i] = make_node('AST_SimpleStatement', stat, {
+            body: stat.value.expression
+          }) as AST_SimpleStatement
+          continue
+        }
+      }
+
+      if (is_ast_if(stat)) {
+        let ab = aborts(stat.body)
+        if (this.can_merge_flow(ab, compressor, i)) {
+          if (ab.label) {
+            remove(ab.label.thedef.references, ab)
+          }
+          this.CHANGED = true
+          stat = stat.clone()
+          stat.condition = stat.condition.negate(compressor)
+          var body = as_statement_array_with_return(stat.body, ab)
+          stat.body = make_node('AST_BlockStatement', stat, {
+            body: as_statement_array(stat.alternative).concat(this.extract_functions(i))
+          })
+          stat.alternative = make_node('AST_BlockStatement', stat, {
+            body: body
+          })
+          this.body[i] = stat.transform(compressor)
+          continue
+        }
+
+        ab = aborts(stat.alternative)
+        if (this.can_merge_flow(ab, compressor, i)) {
+          if (ab.label) {
+            remove(ab.label.thedef.references, ab)
+          }
+          this.CHANGED = true
+          stat = stat.clone()
+          stat.body = make_node('AST_BlockStatement', stat.body, {
+            body: as_statement_array(stat.body).concat(this.extract_functions(i))
+          })
+          body = as_statement_array_with_return(stat.alternative, ab)
+          stat.alternative = make_node('AST_BlockStatement', stat.alternative, {
+            body: body
+          })
+          this.body[i] = stat.transform(compressor)
+          continue
+        }
+      }
+
+      if (is_ast_if(stat) && is_ast_return(stat.body)) {
+        const value = stat.body.value
+        // ---
+        // pretty silly case, but:
+        // if (foo()) return; return; ==> foo(); return;
+        if (!value && !stat.alternative && (in_lambda && !next || is_ast_return(next) && !next.value)) {
+          this.CHANGED = true
+          this.body[i] = make_node('AST_SimpleStatement', stat.condition, {
+            body: stat.condition
+          }) as AST_SimpleStatement
+          continue
+        }
+        // ---
+        // if (foo()) return x; return y; ==> return foo() ? x : y;
+        if (value && !stat.alternative && is_ast_return(next) && next.value) {
+          this.CHANGED = true
+          stat = stat.clone()
+          stat.alternative = next
+          this.body[i] = stat.transform(compressor)
+          this.body.splice(j, 1)
+          continue
+        }
+        // ---
+        // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
+        if (value && !stat.alternative && (!next && in_lambda && multiple_if_returns || is_ast_return(next))) {
+          this.CHANGED = true
+          stat = stat.clone()
+          stat.alternative = next || make_node('AST_Return', stat, {
+            value: null
+          })
+          this.body[i] = stat.transform(compressor)
+          if (next) this.body.splice(j, 1)
+          continue
+        }
+        // ---
+        // if (a) return b; if (c) return d; e; ==> return a ? b : c ? d : void e;
+        //
+        // if sequences is not enabled, this can lead to an endless loop (issue #866).
+        // however, with sequences on this helps producing slightly better output for
+        // the example code.
+        const prev = this.body[this.prev_index(i)]
+        if (compressor.option('sequences') && in_lambda && !stat.alternative && is_ast_if(prev) && is_ast_return(prev.body) && this.next_index(j) == this.body.length && is_ast_simple_statement(next)) {
+          this.CHANGED = true
+          stat = stat.clone()
+          stat.alternative = make_node('AST_BlockStatement', next, {
+            body: [
+              next,
+              make_node('AST_Return', next, {
+                value: null
+              })
+            ]
+          })
+          this.body[i] = stat.transform(compressor)
+          this.body.splice(j, 1)
+          continue
+        }
+      }
+    }
+  }
+
+  can_merge_flow (ab: AST_Node, compressor: Compressor, i: number) {
+    const self = compressor.self()
+    const in_lambda = is_ast_lambda(self)
+    if (!ab) return false
+    for (let j = i + 1, len = this.body.length; j < len; j++) {
+      const stat = this.body[j]
+      if (is_ast_const(stat) || is_ast_let(stat)) return false
+    }
+    const lct = is_ast_loop_control(ab) ? compressor.loopcontrol_target(ab) : null
+    return is_ast_return(ab) && in_lambda && is_return_void(ab.value) ||
+              is_ast_continue(ab) && self === loop_body(lct) ||
+              is_ast_break(ab) && is_ast_block_statement(lct) && self === lct
+  }
+
+  private extract_functions (i: number) {
+    const tail = this.body.slice(i + 1)
+    this.body.length = i + 1
+    return tail.filter((stat) => {
+      if (is_ast_defun(stat)) {
+        this.body.push(stat)
+        return false
+      }
+      return true
+    })
+  }
+
+  private next_index (i: number) {
+    for (var j = i + 1, len = this.body.length; j < len; j++) {
+      const stat = this.body[j]
+      if (!(is_ast_var(stat) && declarations_only(stat))) {
+        break
+      }
+    }
+    return j
+  }
+
+  private prev_index (i: number) {
+    for (var j = i; --j >= 0;) {
+      const stat = this.body[j]
+      if (!(is_ast_var(stat) && declarations_only(stat))) {
+        break
+      }
+    }
+    return j
+  }
+
+  private eliminate_dead_code (statements: AST_Statement[], compressor: Compressor) {
+    let has_quit: AST_Statement[] = []
+    const self = compressor.self()
+    for (var i = 0, n = 0, len = statements.length; i < len; i++) {
+      const stat = statements[i]
+      if (is_ast_loop_control(stat)) {
+        const lct = compressor.loopcontrol_target(stat)
+        if (is_ast_break(stat) && !(is_ast_iteration_statement(lct)) && loop_body(lct) === self ||
+            is_ast_continue(stat) && loop_body(lct) === self) {
+          if (stat.label) {
+            remove<any>(stat.label.thedef.references, stat)
+          }
+        } else {
+          statements[n++] = stat
+        }
+      } else {
+        statements[n++] = stat
+      }
+      if (aborts(stat)) {
+        has_quit = statements.slice(i + 1)
+        break
+      }
+    }
+    statements.length = n
+    this.CHANGED = n != len
+    if (has_quit) {
+      has_quit.forEach(function (stat: AST_Statement) {
+        extract_declarations_from_unreachable_code(compressor, stat, statements)
+      })
+    }
+  }
+
+  private sequencesize (compressor: Compressor) {
+    if (this.body.length < 2) return
+    let seq: any[] = []; let n = 0
+    const push_seq = () => {
+      if (!seq.length) return
+      const body = make_sequence(seq[0], seq)
+      this.body[n++] = make_node('AST_SimpleStatement', body, { body: body }) as AST_SimpleStatement
+      seq = []
+    }
+    for (var i = 0, len = this.body.length; i < len; i++) {
+      const stat = this.body[i]
+      if (is_ast_simple_statement(stat)) {
+        if (seq.length >= compressor.sequences_limit) push_seq()
+        let body = stat.body
+        if (seq.length > 0) body = body.drop_side_effect_free(compressor)
+        if (body) merge_sequence(seq, body)
+      } else if (is_ast_definitions(stat) && declarations_only(stat) ||
+                is_ast_defun(stat)) {
+        this.body[n++] = stat
+      } else {
+        push_seq()
+        this.body[n++] = stat
+      }
+    }
+    push_seq()
+    this.body.length = n
+    if (n != len) this.CHANGED = true
+  }
+
+  private sequencesize_2 (compressor: Compressor) {
+    const cons_seq = (right: AST_Node) => {
+      n--
+      this.CHANGED = true
+      const left = prev.body
+      return make_sequence(left, [left, right]).transform(compressor)
+    }
+    var n = 0
+    let prev: AST_Node | undefined
+    for (let i = 0; i < this.body.length; i++) {
+      const stat = this.body[i]
+      if (prev) {
+        if (is_ast_exit(stat)) {
+          stat.value = cons_seq(stat.value || make_node('AST_Undefined', stat).transform(compressor))
+        } else if (is_ast_for(stat)) {
+          if (!(is_ast_definitions(stat.init))) {
+            const abort = walk(prev.body, (node: AST_Node) => {
+              if (is_ast_scope(node)) return true
+              if (
+                is_ast_binary(node) &&
+                                node.operator === 'in'
+              ) {
+                return walk_abort
+              }
+            })
+            if (!abort) {
+              if (stat.init) stat.init = cons_seq(stat.init)
+              else {
+                stat.init = prev.body
+                n--
+                this.CHANGED = true
+              }
+            }
+          }
+        } else if (is_ast_for_in(stat)) {
+          if (!(is_ast_const(stat.init)) && !(is_ast_let(stat.init))) {
+            stat.object = cons_seq(stat.object)
+          }
+        } else if (is_ast_if(stat)) {
+          stat.condition = cons_seq(stat.condition)
+        } else if (is_ast_switch(stat)) {
+          stat.expression = cons_seq(stat.expression)
+        } else if (is_ast_with(stat)) {
+          stat.expression = cons_seq(stat.expression)
+        }
+      }
+      if (compressor.option('conditionals') && is_ast_if(stat)) {
+        const decls: any[] = []
+        const body = to_simple_statement(stat.body, decls)
+        const alt = to_simple_statement(stat.alternative as any, decls)
+        if (body !== false && alt !== false && decls.length > 0) {
+          const len = decls.length
+          decls.push(make_node('AST_If', stat, {
+            condition: stat.condition,
+            body: body || make_node('AST_EmptyStatement', stat.body),
+            alternative: alt
+          }))
+          decls.unshift(n, 1);
+          [].splice.apply(this.body, decls as any) // TODO: check type
+          i += len
+          n += len + 1
+          prev = null
+          this.CHANGED = true
+          continue
+        }
+      }
+      this.body[n++] = stat
+      prev = is_ast_simple_statement(stat) ? stat : null
+    }
+    this.body.length = n
+  }
+
+  private join_consecutive_vars (compressor: Compressor) {
+    let defs: any
+    const extract_object_assignments = (value: AST_Node) => {
+      this.body[++j] = stat
+      const exprs = join_object_assignments(prev, value, compressor, this.compressor_scope)
+      if (exprs) {
+        this.CHANGED = true
+        if (exprs.length) {
+          return make_sequence(value, exprs)
+        } else if (is_ast_sequence(value)) {
+          return value.tail_node().left
+        } else {
+          return value.left
+        }
+      }
+      return value
+    }
+
+    for (var i = 0, j = -1, len = this.body.length; i < len; i++) {
+      var stat: any = this.body[i]
+      var prev: any = this.body[j]
+      if (is_ast_definitions(stat)) {
+        if (prev && prev.TYPE == stat.TYPE) {
+          prev.definitions = prev.definitions.concat(stat.definitions)
+          this.CHANGED = true
+        } else if (defs && defs.TYPE == stat.TYPE && declarations_only(stat)) {
+          defs.definitions = defs.definitions.concat(stat.definitions)
+          this.CHANGED = true
+        } else {
+          this.body[++j] = stat
+          defs = stat
+        }
+      } else if (is_ast_exit(stat)) {
+        stat.value = extract_object_assignments(stat.value)
+      } else if (is_ast_for(stat)) {
+        var exprs = join_object_assignments(prev, stat.init, compressor, this.compressor_scope)
+        if (exprs) {
+          this.CHANGED = true
+          stat.init = exprs.length ? make_sequence(stat.init, exprs) : null
+          this.body[++j] = stat
+        } else if (is_ast_var(prev) && (!stat.init || stat.init.TYPE == prev.TYPE)) {
+          if (stat.init) {
+            prev.definitions = prev.definitions.concat(stat.init.definitions)
+          }
+          stat.init = prev
+          this.body[j] = stat
+          this.CHANGED = true
+        } else if (defs && stat.init && defs.TYPE == stat.init.TYPE && declarations_only(stat.init)) {
+          defs.definitions = defs.definitions.concat(stat.init.definitions)
+          stat.init = null
+          this.body[++j] = stat
+          this.CHANGED = true
+        } else {
+          this.body[++j] = stat
+        }
+      } else if (is_ast_for_in(stat)) {
+        stat.object = extract_object_assignments(stat.object)
+      } else if (is_ast_if(stat)) {
+        stat.condition = extract_object_assignments(stat.condition)
+      } else if (is_ast_simple_statement(stat)) {
+        exprs = join_object_assignments(prev, stat.body, compressor, this.compressor_scope)
+        if (exprs) {
+          this.CHANGED = true
+          if (!exprs.length) continue
+          stat.body = make_sequence(stat.body, exprs)
+        }
+        this.body[++j] = stat
+      } else if (is_ast_switch(stat)) {
+        stat.expression = extract_object_assignments(stat.expression)
+      } else if (is_ast_with(stat)) {
+        stat.expression = extract_object_assignments(stat.expression)
+      } else {
+        this.body[++j] = stat
+      }
+    }
+    this.body.length = j + 1
   }
 
   // Tighten a bunch of statements together. Used whenever there is a block.
   tighten_body (compressor: Compressor) {
-    const { scope } = this.find_loop_scope_try(compressor)
+    this.find_loop_scope_try(compressor)
     let max_iter = 10
-    const eliminate_spurious_blocks = (statements: AST_Statement[]) => {
-      const seen_dirs: any[] = []
-      for (let i = 0; i < statements.length;) {
-        const stat = statements[i]
-        if (is_ast_block_statement(stat) && stat.body.every(can_be_evicted_from_block)) {
-          this.CHANGED = true
-          eliminate_spurious_blocks(stat.body)
-          statements.splice(i, 1, ...stat.body)
-          i += stat.body.length
-        } else if (is_ast_empty_statement(stat)) {
-          this.CHANGED = true
-          statements.splice(i, 1)
-        } else if (is_ast_directive(stat)) {
-          if (!seen_dirs.includes(stat.value)) {
-            i++
-            seen_dirs.push(stat.value)
-          } else {
-            this.CHANGED = true
-            statements.splice(i, 1)
-          }
-        } else i++
-      }
-    }
-
-    const handle_if_return = (statements: AST_Statement[], compressor: Compressor) => {
-      const self = compressor.self()
-      const multiple_if_returns = has_multiple_if_returns(statements)
-      const in_lambda = is_ast_lambda(self)
-      for (var i = statements.length; --i >= 0;) {
-        let stat: any = statements[i]
-        const j = next_index(i)
-        const next = statements[j]
-
-        if (in_lambda && !next && is_ast_return(stat)) {
-          if (!stat.value) {
-            this.CHANGED = true
-            statements.splice(i, 1)
-            continue
-          }
-          if (is_ast_unary_prefix(stat.value) && stat.value.operator == 'void') {
-            this.CHANGED = true
-            statements[i] = make_node('AST_SimpleStatement', stat, {
-              body: stat.value.expression
-            }) as AST_SimpleStatement
-            continue
-          }
-        }
-
-        if (is_ast_if(stat)) {
-          let ab = aborts(stat.body)
-          if (can_merge_flow(ab)) {
-            if (ab.label) {
-              remove(ab.label.thedef.references, ab)
-            }
-            this.CHANGED = true
-            stat = stat.clone()
-            stat.condition = stat.condition.negate(compressor)
-            var body = as_statement_array_with_return(stat.body, ab)
-            stat.body = make_node('AST_BlockStatement', stat, {
-              body: as_statement_array(stat.alternative).concat(extract_functions())
-            })
-            stat.alternative = make_node('AST_BlockStatement', stat, {
-              body: body
-            })
-            statements[i] = stat.transform(compressor)
-            continue
-          }
-
-          ab = aborts(stat.alternative)
-          if (can_merge_flow(ab)) {
-            if (ab.label) {
-              remove(ab.label.thedef.references, ab)
-            }
-            this.CHANGED = true
-            stat = stat.clone()
-            stat.body = make_node('AST_BlockStatement', stat.body, {
-              body: as_statement_array(stat.body).concat(extract_functions())
-            })
-            body = as_statement_array_with_return(stat.alternative, ab)
-            stat.alternative = make_node('AST_BlockStatement', stat.alternative, {
-              body: body
-            })
-            statements[i] = stat.transform(compressor)
-            continue
-          }
-        }
-
-        if (is_ast_if(stat) && is_ast_return(stat.body)) {
-          const value = stat.body.value
-          // ---
-          // pretty silly case, but:
-          // if (foo()) return; return; ==> foo(); return;
-          if (!value && !stat.alternative && (in_lambda && !next || is_ast_return(next) && !next.value)) {
-            this.CHANGED = true
-            statements[i] = make_node('AST_SimpleStatement', stat.condition, {
-              body: stat.condition
-            }) as AST_SimpleStatement
-            continue
-          }
-          // ---
-          // if (foo()) return x; return y; ==> return foo() ? x : y;
-          if (value && !stat.alternative && is_ast_return(next) && next.value) {
-            this.CHANGED = true
-            stat = stat.clone()
-            stat.alternative = next
-            statements[i] = stat.transform(compressor)
-            statements.splice(j, 1)
-            continue
-          }
-          // ---
-          // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
-          if (value && !stat.alternative && (!next && in_lambda && multiple_if_returns || is_ast_return(next))) {
-            this.CHANGED = true
-            stat = stat.clone()
-            stat.alternative = next || make_node('AST_Return', stat, {
-              value: null
-            })
-            statements[i] = stat.transform(compressor)
-            if (next) statements.splice(j, 1)
-            continue
-          }
-          // ---
-          // if (a) return b; if (c) return d; e; ==> return a ? b : c ? d : void e;
-          //
-          // if sequences is not enabled, this can lead to an endless loop (issue #866).
-          // however, with sequences on this helps producing slightly better output for
-          // the example code.
-          const prev = statements[prev_index(i)]
-          if (compressor.option('sequences') && in_lambda && !stat.alternative && is_ast_if(prev) && is_ast_return(prev.body) && next_index(j) == statements.length && is_ast_simple_statement(next)) {
-            this.CHANGED = true
-            stat = stat.clone()
-            stat.alternative = make_node('AST_BlockStatement', next, {
-              body: [
-                next,
-                make_node('AST_Return', next, {
-                  value: null
-                })
-              ]
-            })
-            statements[i] = stat.transform(compressor)
-            statements.splice(j, 1)
-            continue
-          }
-        }
-      }
-
-      function has_multiple_if_returns (statements: AST_Statement[]) {
-        let n = 0
-        for (let i = statements.length; --i >= 0;) {
-          const stat = statements[i]
-          if (is_ast_if(stat) && is_ast_return(stat.body)) {
-            if (++n > 1) return true
-          }
-        }
-        return false
-      }
-
-      function is_return_void (value: AST_Node | undefined) {
-        return !value || is_ast_unary_prefix(value) && value.operator == 'void'
-      }
-
-      function can_merge_flow (ab: AST_Node) {
-        if (!ab) return false
-        for (let j = i + 1, len = statements.length; j < len; j++) {
-          const stat = statements[j]
-          if (is_ast_const(stat) || is_ast_let(stat)) return false
-        }
-        const lct = is_ast_loop_control(ab) ? compressor.loopcontrol_target(ab) : null
-        return is_ast_return(ab) && in_lambda && is_return_void(ab.value) ||
-                  is_ast_continue(ab) && self === loop_body(lct) ||
-                  is_ast_break(ab) && is_ast_block_statement(lct) && self === lct
-      }
-
-      function extract_functions () {
-        const tail = statements.slice(i + 1)
-        statements.length = i + 1
-        return tail.filter(function (stat) {
-          if (is_ast_defun(stat)) {
-            statements.push(stat)
-            return false
-          }
-          return true
-        })
-      }
-
-      function as_statement_array_with_return (node: AST_Node, ab: AST_Binary) {
-        const body = as_statement_array(node).slice(0, -1)
-        if (ab.value) {
-          body.push(make_node('AST_SimpleStatement', ab.value, {
-            body: ab.value.expression
-          }) as AST_SimpleStatement)
-        }
-        return body
-      }
-
-      function next_index (i: number) {
-        for (var j = i + 1, len = statements.length; j < len; j++) {
-          const stat = statements[j]
-          if (!(is_ast_var(stat) && declarations_only(stat))) {
-            break
-          }
-        }
-        return j
-      }
-
-      function prev_index (i: number) {
-        for (var j = i; --j >= 0;) {
-          const stat = statements[j]
-          if (!(is_ast_var(stat) && declarations_only(stat))) {
-            break
-          }
-        }
-        return j
-      }
-    }
-
-    const eliminate_dead_code = (statements: AST_Statement[], compressor: Compressor) => {
-      let has_quit: AST_Statement[] = []
-      const self = compressor.self()
-      for (var i = 0, n = 0, len = statements.length; i < len; i++) {
-        const stat = statements[i]
-        if (is_ast_loop_control(stat)) {
-          const lct = compressor.loopcontrol_target(stat)
-          if (is_ast_break(stat) && !(is_ast_iteration_statement(lct)) && loop_body(lct) === self ||
-              is_ast_continue(stat) && loop_body(lct) === self) {
-            if (stat.label) {
-              remove<any>(stat.label.thedef.references, stat)
-            }
-          } else {
-            statements[n++] = stat
-          }
-        } else {
-          statements[n++] = stat
-        }
-        if (aborts(stat)) {
-          has_quit = statements.slice(i + 1)
-          break
-        }
-      }
-      statements.length = n
-      this.CHANGED = n != len
-      if (has_quit) {
-        has_quit.forEach(function (stat: AST_Statement) {
-          extract_declarations_from_unreachable_code(compressor, stat, statements)
-        })
-      }
-    }
-
-    const sequencesize = (statements: AST_Statement[], compressor: Compressor) => {
-      if (statements.length < 2) return
-      let seq: any[] = []; let n = 0
-      function push_seq () {
-        if (!seq.length) return
-        const body = make_sequence(seq[0], seq)
-        statements[n++] = make_node('AST_SimpleStatement', body, { body: body }) as AST_SimpleStatement
-        seq = []
-      }
-      for (var i = 0, len = statements.length; i < len; i++) {
-        const stat = statements[i]
-        if (is_ast_simple_statement(stat)) {
-          if (seq.length >= compressor.sequences_limit) push_seq()
-          let body = stat.body
-          if (seq.length > 0) body = body.drop_side_effect_free(compressor)
-          if (body) merge_sequence(seq, body)
-        } else if (is_ast_definitions(stat) && declarations_only(stat) ||
-                  is_ast_defun(stat)) {
-          statements[n++] = stat
-        } else {
-          push_seq()
-          statements[n++] = stat
-        }
-      }
-      push_seq()
-      statements.length = n
-      if (n != len) this.CHANGED = true
-    }
-
-    const sequencesize_2 = (statements: AST_Statement[], compressor: Compressor) => {
-      const cons_seq = (right: AST_Node) => {
-        n--
-        this.CHANGED = true
-        const left = prev.body
-        return make_sequence(left, [left, right]).transform(compressor)
-      }
-      var n = 0
-      let prev: AST_Node | undefined
-      for (let i = 0; i < statements.length; i++) {
-        const stat = statements[i]
-        if (prev) {
-          if (is_ast_exit(stat)) {
-            stat.value = cons_seq(stat.value || make_node('AST_Undefined', stat).transform(compressor))
-          } else if (is_ast_for(stat)) {
-            if (!(is_ast_definitions(stat.init))) {
-              const abort = walk(prev.body, (node: AST_Node) => {
-                if (is_ast_scope(node)) return true
-                if (
-                  is_ast_binary(node) &&
-                                  node.operator === 'in'
-                ) {
-                  return walk_abort
-                }
-              })
-              if (!abort) {
-                if (stat.init) stat.init = cons_seq(stat.init)
-                else {
-                  stat.init = prev.body
-                  n--
-                  this.CHANGED = true
-                }
-              }
-            }
-          } else if (is_ast_for_in(stat)) {
-            if (!(is_ast_const(stat.init)) && !(is_ast_let(stat.init))) {
-              stat.object = cons_seq(stat.object)
-            }
-          } else if (is_ast_if(stat)) {
-            stat.condition = cons_seq(stat.condition)
-          } else if (is_ast_switch(stat)) {
-            stat.expression = cons_seq(stat.expression)
-          } else if (is_ast_with(stat)) {
-            stat.expression = cons_seq(stat.expression)
-          }
-        }
-        if (compressor.option('conditionals') && is_ast_if(stat)) {
-          const decls: any[] = []
-          const body = to_simple_statement(stat.body, decls)
-          const alt = to_simple_statement(stat.alternative as any, decls)
-          if (body !== false && alt !== false && decls.length > 0) {
-            const len = decls.length
-            decls.push(make_node('AST_If', stat, {
-              condition: stat.condition,
-              body: body || make_node('AST_EmptyStatement', stat.body),
-              alternative: alt
-            }))
-            decls.unshift(n, 1);
-            [].splice.apply(statements, decls as any) // TODO: check type
-            i += len
-            n += len + 1
-            prev = null
-            this.CHANGED = true
-            continue
-          }
-        }
-        statements[n++] = stat
-        prev = is_ast_simple_statement(stat) ? stat : null
-      }
-      statements.length = n
-    }
-
-    const join_consecutive_vars = (statements: AST_Statement[]) => {
-      let defs: any
-      const extract_object_assignments = (value: AST_Node) => {
-        statements[++j] = stat
-        const exprs = join_object_assignments(prev, value)
-        if (exprs) {
-          this.CHANGED = true
-          if (exprs.length) {
-            return make_sequence(value, exprs)
-          } else if (is_ast_sequence(value)) {
-            return value.tail_node().left
-          } else {
-            return value.left
-          }
-        }
-        return value
-      }
-
-      for (var i = 0, j = -1, len = statements.length; i < len; i++) {
-        var stat: any = statements[i]
-        var prev: any = statements[j]
-        if (is_ast_definitions(stat)) {
-          if (prev && prev.TYPE == stat.TYPE) {
-            prev.definitions = prev.definitions.concat(stat.definitions)
-            this.CHANGED = true
-          } else if (defs && defs.TYPE == stat.TYPE && declarations_only(stat)) {
-            defs.definitions = defs.definitions.concat(stat.definitions)
-            this.CHANGED = true
-          } else {
-            statements[++j] = stat
-            defs = stat
-          }
-        } else if (is_ast_exit(stat)) {
-          stat.value = extract_object_assignments(stat.value)
-        } else if (is_ast_for(stat)) {
-          var exprs = join_object_assignments(prev, stat.init)
-          if (exprs) {
-            this.CHANGED = true
-            stat.init = exprs.length ? make_sequence(stat.init, exprs) : null
-            statements[++j] = stat
-          } else if (is_ast_var(prev) && (!stat.init || stat.init.TYPE == prev.TYPE)) {
-            if (stat.init) {
-              prev.definitions = prev.definitions.concat(stat.init.definitions)
-            }
-            stat.init = prev
-            statements[j] = stat
-            this.CHANGED = true
-          } else if (defs && stat.init && defs.TYPE == stat.init.TYPE && declarations_only(stat.init)) {
-            defs.definitions = defs.definitions.concat(stat.init.definitions)
-            stat.init = null
-            statements[++j] = stat
-            this.CHANGED = true
-          } else {
-            statements[++j] = stat
-          }
-        } else if (is_ast_for_in(stat)) {
-          stat.object = extract_object_assignments(stat.object)
-        } else if (is_ast_if(stat)) {
-          stat.condition = extract_object_assignments(stat.condition)
-        } else if (is_ast_simple_statement(stat)) {
-          exprs = join_object_assignments(prev, stat.body)
-          if (exprs) {
-            this.CHANGED = true
-            if (!exprs.length) continue
-            stat.body = make_sequence(stat.body, exprs)
-          }
-          statements[++j] = stat
-        } else if (is_ast_switch(stat)) {
-          stat.expression = extract_object_assignments(stat.expression)
-        } else if (is_ast_with(stat)) {
-          stat.expression = extract_object_assignments(stat.expression)
-        } else {
-          statements[++j] = stat
-        }
-      }
-      statements.length = j + 1
-    }
-
     do {
       this.CHANGED = false
-      eliminate_spurious_blocks(this.body)
+      this.eliminate_spurious_blocks(this.body)
       if (compressor.option('dead_code')) {
-        eliminate_dead_code(this.body, compressor)
+        this.eliminate_dead_code(this.body, compressor)
       }
       if (compressor.option('if_return')) {
-        handle_if_return(this.body, compressor)
+        this.handle_if_return(compressor)
       }
       if (compressor.sequences_limit > 0) {
-        sequencesize(this.body, compressor)
-        sequencesize_2(this.body, compressor)
+        this.sequencesize(compressor)
+        this.sequencesize_2(compressor)
       }
       if (compressor.option('join_vars')) {
-        join_consecutive_vars(this.body)
+        this.join_consecutive_vars(compressor)
       }
       if (compressor.option('collapse_vars')) {
-        this.collapse(this.body, compressor)
+        this.collapse(compressor)
       }
     } while (this.CHANGED && max_iter-- > 0)
-
-    function declarations_only (node: AST_Node) {
-      return node.definitions.every((var_def) =>
-        !var_def.value
-      )
-    }
-
-    function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
-      if (!(is_ast_block_statement(block))) return block
-      let stat: any = null
-      for (let i = 0, len = block.body.length; i < len; i++) {
-        const line = block.body[i]
-        if (is_ast_var(line) && declarations_only(line)) {
-          decls.push(line)
-        } else if (stat) {
-          return false
-        } else {
-          stat = line
-        }
-      }
-      return stat
-    }
-
-    function join_object_assignments (defn: AST_Node, body: AST_Node) {
-      if (!(is_ast_definitions(defn))) return
-      const def = defn.definitions[defn.definitions.length - 1]
-      if (!(is_ast_object(def.value))) return
-      let exprs
-      if (is_ast_assign(body)) {
-        exprs = [body]
-      } else if (is_ast_sequence(body)) {
-        exprs = body.expressions.slice()
-      }
-      if (!exprs) return
-      let trimmed = false
-      do {
-        const node = exprs[0]
-        if (!(is_ast_assign(node))) break
-        if (node.operator != '=') break
-        if (!(is_ast_prop_access(node.left))) break
-        const sym = node.left.expression
-        if (!(is_ast_symbol_ref(sym))) break
-        if (def.name.name != sym.name) break
-        if (!node.right.is_constant_expression(scope)) break
-        var prop: any = node.left.property
-        if (is_ast_node(prop)) {
-          prop = prop.evaluate?.(compressor)
-        }
-        if (is_ast_node(prop)) break
-        prop = '' + prop
-        const diff = compressor.option('ecma') < 2015 &&
-                  compressor.has_directive('use strict') ? function (node: AST_Node) {
-            return node.key != prop && (node.key && node.key.name != prop)
-          } : function (node: AST_Node) {
-            return node.key && node.key.name != prop
-          }
-        if (!def.value.properties.every(diff)) break
-        const p = def.value.properties.filter(function (p) { return p.key === prop })[0]
-        if (!p) {
-          def.value.properties.push(make_node('AST_ObjectKeyVal', node, {
-            key: prop,
-            value: node.right
-          }))
-        } else {
-          p.value = new AST_Sequence({
-            start: p.start,
-            expressions: [p.value.clone(), node.right.clone()],
-            end: p.end
-          })
-        }
-        exprs.shift()
-        trimmed = true
-      } while (exprs.length)
-      return trimmed && exprs
-    }
   }
 
   static documentation = 'A body of statements (usually braced)'
@@ -1311,4 +1163,153 @@ function loop_body (x: any) {
     return is_ast_block_statement(x.body) ? x.body : x
   }
   return x
+}
+
+function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
+  if (!(is_ast_block_statement(block))) return block
+  let stat: any = null
+  for (let i = 0, len = block.body.length; i < len; i++) {
+    const line = block.body[i]
+    if (is_ast_var(line) && declarations_only(line)) {
+      decls.push(line)
+    } else if (stat) {
+      return false
+    } else {
+      stat = line
+    }
+  }
+  return stat
+}
+
+function join_object_assignments (defn: AST_Node, body: AST_Node, compressor: Compressor, compressor_scope: AST_Scope) {
+  if (!(is_ast_definitions(defn))) return
+  const def = defn.definitions[defn.definitions.length - 1]
+  if (!(is_ast_object(def.value))) return
+  let exprs
+  if (is_ast_assign(body)) {
+    exprs = [body]
+  } else if (is_ast_sequence(body)) {
+    exprs = body.expressions.slice()
+  }
+  if (!exprs) return
+  let trimmed = false
+  do {
+    const node = exprs[0]
+    if (!(is_ast_assign(node))) break
+    if (node.operator != '=') break
+    if (!(is_ast_prop_access(node.left))) break
+    const sym = node.left.expression
+    if (!(is_ast_symbol_ref(sym))) break
+    if (def.name.name != sym.name) break
+    if (!node.right.is_constant_expression(compressor_scope)) break
+    var prop: any = node.left.property
+    if (is_ast_node(prop)) {
+      prop = prop.evaluate?.(compressor)
+    }
+    if (is_ast_node(prop)) break
+    prop = '' + prop
+    const diff = compressor.option('ecma') < 2015 &&
+              compressor.has_directive('use strict') ? function (node: AST_Node) {
+        return node.key != prop && (node.key && node.key.name != prop)
+      } : function (node: AST_Node) {
+        return node.key && node.key.name != prop
+      }
+    if (!def.value.properties.every(diff)) break
+    const p = def.value.properties.filter(function (p) { return p.key === prop })[0]
+    if (!p) {
+      def.value.properties.push(make_node('AST_ObjectKeyVal', node, {
+        key: prop,
+        value: node.right
+      }))
+    } else {
+      p.value = new AST_Sequence({
+        start: p.start,
+        expressions: [p.value.clone(), node.right.clone()],
+        end: p.end
+      })
+    }
+    exprs.shift()
+    trimmed = true
+  } while (exprs.length)
+  return trimmed && exprs
+}
+
+function declarations_only (node: AST_Node) {
+  return node.definitions.every((var_def) =>
+    !var_def.value
+  )
+}
+
+function redefined_within_scope (def: SymbolDef, scope: AST_Scope) {
+  if (def.global) return false
+  let cur_scope = def.scope
+  while (cur_scope && cur_scope !== scope) {
+    if (cur_scope.variables.has(def.name)) return true
+    cur_scope = cur_scope.parent_scope
+  }
+  return false
+}
+
+function has_multiple_if_returns (statements: AST_Statement[]) {
+  let n = 0
+  for (let i = statements.length; --i >= 0;) {
+    const stat = statements[i]
+    if (is_ast_if(stat) && is_ast_return(stat.body)) {
+      if (++n > 1) return true
+    }
+  }
+  return false
+}
+
+function is_return_void (value: AST_Node | undefined) {
+  return !value || is_ast_unary_prefix(value) && value.operator == 'void'
+}
+
+function as_statement_array_with_return (node: AST_Node, ab: AST_Binary) {
+  const body = as_statement_array(node).slice(0, -1)
+  if (ab.value) {
+    body.push(make_node('AST_SimpleStatement', ab.value, {
+      body: ab.value.expression
+    }) as AST_SimpleStatement)
+  }
+  return body
+}
+
+function remove_candidate (compressor: Compressor, expr: AST_Node, statement: AST_Statement) {
+  if (is_ast_symbol_funarg(expr.name)) {
+    const iife = compressor.parent(); const argnames = (compressor.self() as any).argnames
+    const index = argnames.indexOf(expr.name)
+    if (index < 0) {
+      iife.args.length = Math.min(iife.args.length, argnames.length - 1)
+    } else {
+      const args = iife.args
+      if (args[index]) {
+        args[index] = make_node('AST_Number', args[index], {
+          value: 0
+        })
+      }
+    }
+    return true
+  }
+  let found = false
+  return statement.transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
+    if (found) return node
+    if (node === expr || node.body === expr) {
+      found = true
+      if (is_ast_var_def(node)) {
+        node.value = is_ast_symbol_const(node.name)
+          ? make_node('AST_Undefined', node.value) // `const` always needs value.
+          : null
+        return node
+      }
+      return in_list ? MAP.skip : null
+    }
+  }, function (node: AST_Node) {
+    if (is_ast_sequence(node)) {
+      switch (node.expressions.length) {
+        case 0: return null
+        case 1: return node.expressions[0]
+      }
+    }
+  }))
 }
