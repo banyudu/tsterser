@@ -1541,29 +1541,21 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       // Stop immediately if these node types are encountered
       const parent = scanner.parent()
       if (is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left) ||
-                is_ast_await(node) ||
-                is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
-                is_ast_debugger(node) ||
-                is_ast_destructuring(node) ||
-                is_ast_expansion(node) &&
-                   is_ast_symbol(node.expression) &&
-                   node.expression.definition?.().references.length > 1 ||
-                is_ast_iteration_statement(node) && !(is_ast_for(node)) ||
-                is_ast_loop_control(node) ||
-                is_ast_try(node) ||
-                is_ast_with(node) ||
-                is_ast_yield(node) ||
-                is_ast_export(node) ||
-                is_ast_class(node) ||
-                is_ast_for(parent) && node !== parent.init ||
-                !replace_all &&
-                    (
-                      is_ast_symbol_ref(node) &&
-                        !node.is_declared(compressor) &&
-                        !pure_prop_access_globals.has(node as any)) || // TODO: check type
-                is_ast_symbol_ref(node) &&
-                    is_ast_call(parent) &&
-                    has_annotation(parent, _NOINLINE)
+        is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
+        is_ast_debugger(node) ||
+        is_ast_destructuring(node) ||
+        is_ast_expansion(node) && is_ast_symbol(node.expression) && node.expression.definition?.().references.length > 1 ||
+        is_ast_iteration_statement(node) && !(is_ast_for(node)) ||
+        is_ast_loop_control(node) ||
+        is_ast_try(node) ||
+        is_ast_with(node) ||
+        is_ast_yield(node) ||
+        is_ast_export(node) ||
+        is_ast_class(node) ||
+        is_ast_for(parent) && node !== parent.init ||
+        !replace_all && (is_ast_symbol_ref(node) && !node.is_declared(compressor) && !pure_prop_access_globals.has(node as any)) ||
+        is_ast_await(node as any) ||
+        is_ast_symbol_ref(node) && is_ast_call(parent) && has_annotation(parent, _NOINLINE)
       ) {
         abort = true
         return node
