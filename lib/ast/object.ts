@@ -15,7 +15,7 @@ import {
   do_list,
   to_moz,
   first_in_statement,
-  print_braced_empty, is_ast_expansion, is_ast_object, is_ast_symbol, is_ast_constant, is_ast_node, is_ast_string, is_ast_function
+  is_ast_expansion, is_ast_object, is_ast_symbol, is_ast_constant, is_ast_node, is_ast_string, is_ast_function
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
@@ -158,7 +158,7 @@ export default class AST_Object extends AST_Node {
         })
         output.newline()
       })
-    } else print_braced_empty(this, output)
+    } else this.print_braced_empty(output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

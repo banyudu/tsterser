@@ -1,6 +1,6 @@
 import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
-import { list_overhead, print_braced } from '../utils'
+import { list_overhead } from '../utils'
 
 export default class AST_Finally extends AST_Block {
   argname: any
@@ -12,7 +12,7 @@ export default class AST_Finally extends AST_Block {
   _codegen (output: OutputStream) {
     output.print('finally')
     output.space()
-    print_braced(this, output)
+    this.print_braced(output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

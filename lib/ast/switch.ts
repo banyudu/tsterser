@@ -10,7 +10,6 @@ import {
   best_of_expression,
   extract_declarations_from_unreachable_code,
   aborts,
-  print_braced_empty,
   make_node,
   anySideEffect,
   do_list,
@@ -184,7 +183,7 @@ export default class AST_Switch extends AST_Block {
     })
     output.space()
     const last = this.body.length - 1
-    if (last < 0) print_braced_empty(this, output)
+    if (last < 0) this.print_braced_empty(output)
     else {
       output.with_block(() => {
         (this.body as any[]).forEach(function (branch, i) {

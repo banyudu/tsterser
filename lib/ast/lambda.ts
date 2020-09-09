@@ -6,7 +6,7 @@ import AST_Scope, { AST_Scope_Props } from './scope'
 import AST_SymbolFunarg from './symbol-funarg'
 import TreeWalker from '../tree-walker'
 
-import { push, pop, is_ast_call, is_ast_expansion, reset_variables, make_node, mark, tighten_body, To_Moz_FunctionExpression, walk, do_list, print_braced, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
+import { push, pop, is_ast_call, is_ast_expansion, reset_variables, make_node, mark, tighten_body, To_Moz_FunctionExpression, walk, do_list, is_ast_this, is_ast_scope, is_ast_destructuring, is_ast_node, is_ast_symbol, is_ast_arrow } from '../utils'
 
 import { walk_abort, INLINED, clear_flag } from '../constants'
 import Compressor from '../compressor'
@@ -186,7 +186,7 @@ export default class AST_Lambda extends AST_Scope {
       })
     })
     output.space()
-    print_braced(self as any, output, true)
+    this.print_braced(output, true)
   }
 
   _codegen (output: OutputStream) {

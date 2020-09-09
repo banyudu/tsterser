@@ -5,7 +5,7 @@ import AST_SymbolCatch from './symbol-catch'
 import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
-import { list_overhead, do_list, to_moz, to_moz_block, print_braced } from '../utils'
+import { list_overhead, do_list, to_moz, to_moz_block } from '../utils'
 import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
@@ -60,7 +60,7 @@ export default class AST_Catch extends AST_Block {
       })
     }
     output.space()
-    print_braced(this, output)
+    this.print_braced(output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

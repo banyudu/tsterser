@@ -6,7 +6,6 @@ import {
   list_overhead,
   lambda_modifiers,
   left_is_object,
-  print_braced,
   to_moz, is_ast_prop_access, is_ast_binary, is_ast_assign, is_ast_unary, is_ast_call, is_ast_symbol, is_ast_return
 } from '../utils'
 import { AST_Scope } from '.'
@@ -92,7 +91,7 @@ export default class AST_Arrow extends AST_Lambda {
                 returned.print?.(output)
       }
     } else {
-      print_braced(self, output)
+      this.print_braced(output)
     }
     if (needs_parens) { output.print(')') }
   }

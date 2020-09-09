@@ -23,6 +23,7 @@ import {
   FROM_MOZ_STACK,
   is_ast_call,
   is_ast_assign,
+  display_body,
   is_ast_binary,
   skip_string,
   is_ast_conditional,
@@ -58,6 +59,23 @@ export default class AST_Node extends AST {
   block_scope?: AST_Scope | null
 
   _codegen (output: OutputStream) {}
+
+  protected print_braced_empty (output: OutputStream) {
+    const self: AST_Node = this
+    output.print('{')
+    output.with_indent(output.next_indent(), function () {
+      output.append_comments(self, true)
+    })
+    output.print('}')
+  }
+
+  print_braced (output: OutputStream, allow_directives?: boolean) {
+    if ((this.body as any[]).length > 0) {
+      output.with_block(() => {
+        display_body(this.body, false, output, !!allow_directives)
+      })
+    } else this.print_braced_empty(output)
+  }
 
   protected needsParens (output: OutputStream) {
     const p = output.parent()

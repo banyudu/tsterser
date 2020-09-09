@@ -1617,18 +1617,12 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       // but are otherwise not safe to scan into or beyond them.
       let sym
       if (is_ast_call(node) ||
-                is_ast_exit(node) &&
-                    (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
-                is_ast_prop_access(node) &&
-                    (side_effects || node.expression.may_throw_on_access(compressor)) ||
-                is_ast_symbol_ref(node) &&
-                    (lvalues.get(node.name) || side_effects && may_modify(node)) ||
-                is_ast_var_def(node) && node.value &&
-                    (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
-                (sym = is_lhs(node.left, node)) &&
-                    (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
-                may_throw &&
-                    (in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
+        is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
+        is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor)) ||
+        is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
+        is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
+        (sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
+        may_throw && (in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
         stop_after = node
         if (is_ast_scope(node)) abort = true
       }
@@ -1787,14 +1781,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     function extract_args () {
       const fn = compressor.self()
       const iife = compressor.parent()
-      if (is_func_expr(fn) &&
-                !fn.name &&
-                !fn.uses_arguments &&
-                !fn.pinned() &&
-                is_ast_call(iife) &&
-                iife.expression === fn &&
-                iife.args.every((arg) => !(is_ast_expansion(arg)))
-      ) {
+      if (is_func_expr(fn) && !fn.name && !fn.uses_arguments && !fn.pinned() && is_ast_call(iife) && iife.expression === fn && iife.args.every((arg) => !(is_ast_expansion(arg)))) {
         let fn_strict = compressor.has_directive('use strict')
         if (fn_strict && !member(fn_strict, fn.body)) fn_strict = false
         const len = fn.argnames.length
@@ -1831,16 +1818,11 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
           } else {
             if (!arg) {
               arg = make_node('AST_Undefined', sym).transform(compressor)
-            } else if (is_ast_lambda(arg) && arg.pinned?.() ||
-                            has_overlapping_symbol(fn as any, arg, fn_strict)
-            ) {
+            } else if (is_ast_lambda(arg) && arg.pinned?.() || has_overlapping_symbol(fn as any, arg, fn_strict)) {
               arg = null
             }
             if (arg) {
-              candidates.unshift([make_node('AST_VarDef', sym, {
-                name: sym,
-                value: arg
-              })])
+              candidates.unshift([make_node('AST_VarDef', sym, { name: sym, value: arg })])
             }
           }
         }
@@ -1924,9 +1906,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
     function find_stop (node: AST_Node, level: number, write_only?: boolean): AST_Node | null {
       const parent = scanner.parent(level)
       if (is_ast_assign(parent)) {
-        if (write_only &&
-                    !(is_ast_prop_access(parent.left) ||
-                        lvalues.has((parent.left as any).name))) {
+        if (write_only && !(is_ast_prop_access(parent.left) || lvalues.has((parent.left as any).name))) {
           return find_stop(parent, level + 1, write_only)
         }
         return node
@@ -1985,8 +1965,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         const referenced = def.references.length - def.replaced
         if (!referenced) return
         const declared = def.orig.length - def.eliminated
-        if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) ||
-                    (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
+        if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
           return make_node('AST_SymbolRef', expr.name, expr.name)
         }
       } else {
@@ -2056,12 +2035,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
 
     function is_lhs_local (lhs: AST_Node) {
       while (is_ast_prop_access(lhs)) lhs = lhs.expression
-      return is_ast_symbol_ref(lhs) &&
-                lhs.definition?.().scope === scope &&
-                !(in_loop &&
-                    (lvalues.has(lhs.name) ||
-                        is_ast_unary(candidate) ||
-                        is_ast_assign(candidate) && candidate.operator != '='))
+      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === scope && !(in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
     }
 
     function value_has_side_effects (expr: AST_Node) {
@@ -2199,8 +2173,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         // ---
         // pretty silly case, but:
         // if (foo()) return; return; ==> foo(); return;
-        if (!value && !stat.alternative &&
-                    (in_lambda && !next || is_ast_return(next) && !next.value)) {
+        if (!value && !stat.alternative && (in_lambda && !next || is_ast_return(next) && !next.value)) {
           CHANGED = true
           statements[i] = make_node('AST_SimpleStatement', stat.condition, {
             body: stat.condition
@@ -2219,9 +2192,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         }
         // ---
         // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
-        if (value && !stat.alternative &&
-                    (!next && in_lambda && multiple_if_returns ||
-                        is_ast_return(next))) {
+        if (value && !stat.alternative && (!next && in_lambda && multiple_if_returns || is_ast_return(next))) {
           CHANGED = true
           stat = stat.clone()
           stat.alternative = next || make_node('AST_Return', stat, {
@@ -2238,9 +2209,7 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
         // however, with sequences on this helps producing slightly better output for
         // the example code.
         const prev = statements[prev_index(i)]
-        if (compressor.option('sequences') && in_lambda && !stat.alternative &&
-                    is_ast_if(prev) && is_ast_return(prev.body) &&
-                    next_index(j) == statements.length && is_ast_simple_statement(next)) {
+        if (compressor.option('sequences') && in_lambda && !stat.alternative && is_ast_if(prev) && is_ast_return(prev.body) && next_index(j) == statements.length && is_ast_simple_statement(next)) {
           CHANGED = true
           stat = stat.clone()
           stat.alternative = make_node('AST_BlockStatement', next, {
@@ -2335,11 +2304,8 @@ export function tighten_body (statements: AST_Statement[], compressor: Compresso
       const stat = statements[i]
       if (is_ast_loop_control(stat)) {
         const lct = compressor.loopcontrol_target(stat)
-        if (is_ast_break(stat) &&
-                        !(is_ast_iteration_statement(lct)) &&
-                        loop_body(lct) === self ||
-                    is_ast_continue(stat) &&
-                        loop_body(lct) === self) {
+        if (is_ast_break(stat) && !(is_ast_iteration_statement(lct)) && loop_body(lct) === self ||
+            is_ast_continue(stat) && loop_body(lct) === self) {
           if (stat.label) {
             remove<any>(stat.label.thedef.references, stat)
           }
@@ -2968,14 +2934,6 @@ export function trim (nodes: any[], compressor: Compressor, first_in_statement?:
   return changed ? ret.length ? ret : null : nodes
 }
 
-export function print_braced_empty (self: AST_Node, output: OutputStream) {
-  output.print('{')
-  output.with_indent(output.next_indent(), function () {
-    output.append_comments(self, true)
-  })
-  output.print('}')
-}
-
 // ["p"]:1 ---> p:1
 // [42]:1 ---> 42:1
 export function lift_key (self: AST_ObjectProperty, compressor: Compressor): AST_ObjectProperty {
@@ -3062,15 +3020,7 @@ export function is_empty (thing: any) {
 
 /* -----[ if ]----- */
 export function blockStateMentCodeGen (self: AST_Block, output: OutputStream) {
-  print_braced(self, output)
-}
-
-export function print_braced (self: AST_Block, output: OutputStream, allow_directives?: boolean) {
-  if ((self.body as any[]).length > 0) {
-    output.with_block(function () {
-      display_body((self.body as any[]), false, output, !!allow_directives)
-    })
-  } else print_braced_empty(self, output)
+  self.print_braced(output)
 }
 
 export function display_body (body: any[], is_toplevel: boolean, output: OutputStream, allow_directives: boolean) {

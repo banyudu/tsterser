@@ -4,7 +4,7 @@ import AST_Block, { AST_Block_Props } from './block'
 import Compressor from '../compressor'
 import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
-import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, print_braced, to_moz_block, to_moz } from '../utils'
+import { tighten_body, extract_declarations_from_unreachable_code, make_node, is_empty, anySideEffect, anyMayThrow, reset_block_variables, push, walk_body, pop, list_overhead, do_list, to_moz_block, to_moz } from '../utils'
 import { AST_Finally, AST_Catch } from '.'
 import { MozillaAst } from '../types'
 
@@ -98,7 +98,7 @@ export default class AST_Try extends AST_Block {
   _codegen (output: OutputStream) {
     output.print('try')
     output.space()
-    print_braced(this, output)
+    this.print_braced(output)
     if (this.bcatch) {
       output.space()
       this.bcatch.print(output)
