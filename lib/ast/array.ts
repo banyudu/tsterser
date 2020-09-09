@@ -3,17 +3,7 @@ import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_Destructuring from './destructuring'
 import { MozillaAst } from '../types'
-import {
-  literals_in_boolean_context,
-  inline_array_like_spread,
-  trim,
-  list_overhead,
-  do_list,
-  to_moz,
-  make_sequence,
-  anyMayThrow,
-  anySideEffect, is_ast_hole
-} from '../utils'
+import { trim, list_overhead, do_list, to_moz, make_sequence, anyMayThrow, anySideEffect, is_ast_hole } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Array extends AST_Node {
@@ -29,11 +19,11 @@ export default class AST_Array extends AST_Node {
   }
 
   _optimize (compressor: Compressor): any {
-    const optimized = literals_in_boolean_context(this, compressor)
+    const optimized = this.literals_in_boolean_context(compressor)
     if (optimized !== this) {
       return optimized
     }
-    return inline_array_like_spread(this, compressor, this.elements)
+    return this.inline_array_like_spread(compressor, this.elements)
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {

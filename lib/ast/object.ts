@@ -5,7 +5,6 @@ import AST_Destructuring from './destructuring'
 import { MozillaAst } from '../types'
 
 import {
-  literals_in_boolean_context,
   trim,
   make_sequence,
   anyMayThrow,
@@ -32,7 +31,7 @@ export default class AST_Object extends AST_Node {
   }
 
   _optimize (compressor: Compressor): any {
-    const optimized = literals_in_boolean_context(this, compressor)
+    const optimized = this.literals_in_boolean_context(compressor)
     if (optimized !== this) {
       return optimized
     }

@@ -1,7 +1,7 @@
 import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
-import { lift_key, make_sequence, to_moz, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val } from '../utils'
+import { is_ast_constant, is_ast_string, is_ast_number, is_ast_class_property, make_node, make_sequence, to_moz, is_ast_node, is_ast_symbol, is_ast_symbol_ref, is_ast_class, is_ast_object_key_val } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
@@ -12,8 +12,34 @@ export default class AST_ObjectProperty extends AST_Node {
 
   computed_key () { return false }
 
+  // ["p"]:1 ---> p:1
+  // [42]:1 ---> 42:1
+  protected lift_key (compressor: Compressor): AST_ObjectProperty {
+    if (!compressor.option('computed_props')) return this
+    // save a comparison in the typical case
+    if (!(is_ast_constant(this.key))) return this
+    // whitelist acceptable props as not all AST_Constants are true constants
+    if (is_ast_string(this.key) || is_ast_number(this.key)) {
+      if (this.key.value === '__proto__') return this
+      if (this.key.value == 'constructor' &&
+              is_ast_class(compressor.parent())) return this
+      if (is_ast_object_key_val(this)) {
+        this.key = this.key.value
+      } else if (is_ast_class_property(this)) {
+        this.key = make_node('AST_SymbolClassProperty', this.key, {
+          name: this.key.value
+        })
+      } else {
+        this.key = make_node('AST_SymbolMethod', this.key, {
+          name: this.key.value
+        })
+      }
+    }
+    return this
+  }
+
   _optimize (compressor: Compressor): AST_ObjectProperty {
-    return lift_key(this, compressor)
+    return this.lift_key(compressor)
   }
 
   drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {

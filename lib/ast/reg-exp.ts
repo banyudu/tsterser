@@ -2,7 +2,7 @@ import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Constant, { AST_Constant_Props } from './constant'
-import { regexp_source_fix, sort_regexp_flags, literals_in_boolean_context } from '../utils'
+import { regexp_source_fix, sort_regexp_flags } from '../utils'
 import { MozillaAst } from '../types'
 
 const r_slash_script = /(<\s*\/\s*script)/i
@@ -11,7 +11,7 @@ const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 export default class AST_RegExp extends AST_Constant {
   value: RegExp
   _optimize (compressor: Compressor): any {
-    return literals_in_boolean_context(this, compressor)
+    return this.literals_in_boolean_context(compressor)
   }
 
   _eval (compressor: Compressor) {

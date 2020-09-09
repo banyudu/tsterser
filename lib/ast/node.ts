@@ -12,6 +12,10 @@ import {
   equivalent_to,
   is_strict,
   base54,
+  best_of,
+  is_ast_expansion,
+  make_sequence,
+  make_node,
   is_ast_scope,
   is_ast_directive,
   is_ast_symbol,
@@ -21,6 +25,7 @@ import {
   is_ast_destructuring,
   set_moz_loc,
   FROM_MOZ_STACK,
+  is_ast_array,
   is_ast_call,
   is_ast_assign,
   display_body,
@@ -75,6 +80,33 @@ export default class AST_Node extends AST {
         display_body(this.body, false, output, !!allow_directives)
       })
     } else this.print_braced_empty(output)
+  }
+
+  protected literals_in_boolean_context (compressor: Compressor) {
+    if (compressor.in_boolean_context()) {
+      return best_of(compressor, this, make_sequence(this, [
+        this,
+        make_node('AST_True', this)
+      ]).optimize(compressor))
+    }
+    return this
+  }
+
+  protected inline_array_like_spread (compressor: Compressor, elements: any[]) {
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i]
+      if (is_ast_expansion(el)) {
+        const expr = el.expression
+        if (is_ast_array(expr)) {
+          elements.splice(i, 1, ...expr.elements)
+          // Step back one, as the element at i is now new.
+          i--
+        }
+        // In array-like spread, spreading a non-iterable value is TypeError.
+        // We therefore can’t optimize anything else, unlike with object spread.
+      }
+    }
+    return this
   }
 
   protected needsParens (output: OutputStream) {

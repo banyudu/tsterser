@@ -2,7 +2,7 @@ import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Call, { AST_Call_Props } from './call'
-import { is_undeclared_ref, callCodeGen, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
+import { is_undeclared_ref, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
   _optimize (compressor: Compressor): any {
@@ -39,7 +39,7 @@ export default class AST_New extends AST_Call {
   _codegen (output: OutputStream) {
     output.print('new')
     output.space()
-    callCodeGen(this, output)
+    this.callCodeGen(output)
   }
 
   add_source_map (output: OutputStream) { output.add_mapping(this.start) }

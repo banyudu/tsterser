@@ -2,7 +2,7 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_ObjectMethodProperty, { AST_ObjectMethodProperty_Props } from './object-method-property'
 import Compressor from '../compressor'
-import { to_moz, key_size, static_size, make_node, lift_key, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
+import { to_moz, key_size, static_size, make_node, lambda_modifiers, is_ast_object, is_ast_symbol_method, is_ast_return, is_ast_symbol, is_ast_symbol_ref } from '../utils'
 import AST_Arrow from './arrow'
 import { MozillaAst } from '../types'
 
@@ -14,7 +14,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
   key: AST_Node
 
   _optimize (compressor: Compressor): AST_ConciseMethod {
-    lift_key(this, compressor)
+    this.lift_key(compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
           is_ast_object(compressor.parent()) &&

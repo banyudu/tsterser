@@ -1373,16 +1373,6 @@ export function best_of_string (a: string[]) {
   return best
 }
 
-export function literals_in_boolean_context (self: AST_Node, compressor: Compressor) {
-  if (compressor.in_boolean_context()) {
-    return best_of(compressor, self, make_sequence(self, [
-      self,
-      make_node('AST_True', self)
-    ]).optimize(compressor))
-  }
-  return self
-}
-
 export function make_sequence (orig: AST_Node, expressions: Array<AST_Node | undefined>) {
   if (expressions.length == 1) return expressions[0]
   if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
@@ -2898,23 +2888,6 @@ export function has_break_or_continue (loop: AST_Node, parent?: AST_Node) {
   return found
 }
 
-export function inline_array_like_spread (self: AST_Node, compressor: Compressor, elements: any[]) {
-  for (let i = 0; i < elements.length; i++) {
-    const el = elements[i]
-    if (is_ast_expansion(el)) {
-      const expr = el.expression
-      if (is_ast_array(expr)) {
-        elements.splice(i, 1, ...expr.elements)
-        // Step back one, as the element at i is now new.
-        i--
-      }
-      // In array-like spread, spreading a non-iterable value is TypeError.
-      // We therefore can’t optimize anything else, unlike with object spread.
-    }
-  }
-  return self
-}
-
 // Drop side-effect-free elements from an array of expressions.
 // Returns an array of expressions with side-effects or null
 // if all elements were dropped. Note: original array may be
@@ -2932,32 +2905,6 @@ export function trim (nodes: any[], compressor: Compressor, first_in_statement?:
     }
   }
   return changed ? ret.length ? ret : null : nodes
-}
-
-// ["p"]:1 ---> p:1
-// [42]:1 ---> 42:1
-export function lift_key (self: AST_ObjectProperty, compressor: Compressor): AST_ObjectProperty {
-  if (!compressor.option('computed_props')) return self
-  // save a comparison in the typical case
-  if (!(is_ast_constant(self.key))) return self
-  // whitelist acceptable props as not all AST_Constants are true constants
-  if (is_ast_string(self.key) || is_ast_number(self.key)) {
-    if (self.key.value === '__proto__') return self
-    if (self.key.value == 'constructor' &&
-            is_ast_class(compressor.parent())) return self
-    if (is_ast_object_key_val(self)) {
-      self.key = self.key.value
-    } else if (is_ast_class_property(self)) {
-      self.key = make_node('AST_SymbolClassProperty', self.key, {
-        name: self.key.value
-      })
-    } else {
-      self.key = make_node('AST_SymbolMethod', self.key, {
-        name: self.key.value
-      })
-    }
-  }
-  return self
 }
 
 export function print_property_name (key: string, quote: string, output: OutputStream) {
@@ -3016,11 +2963,6 @@ export function is_empty (thing: any) {
   if (is_ast_empty_statement(thing)) return true
   if (is_ast_block_statement(thing)) return thing.body.length == 0
   return false
-}
-
-/* -----[ if ]----- */
-export function blockStateMentCodeGen (self: AST_Block, output: OutputStream) {
-  self.print_braced(output)
 }
 
 export function display_body (body: any[], is_toplevel: boolean, output: OutputStream, allow_directives: boolean) {
@@ -3482,20 +3424,6 @@ export function left_is_object (node: AST_Node): boolean {
   if (is_ast_binary(node)) return left_is_object(node.left)
   if (is_ast_unary_postfix(node)) return left_is_object(node.expression)
   return false
-}
-
-export function callCodeGen (self: AST_Call, output: OutputStream) {
-  self.expression.print(output)
-  if (is_ast_new(self) && self.args.length === 0) { return }
-  if (is_ast_call(self.expression) || is_ast_lambda(self.expression)) {
-    output.add_mapping(self.start)
-  }
-  output.with_parens(function () {
-    self.args.forEach(function (expr, i) {
-      if (i) output.comma()
-      expr.print(output)
-    })
-  })
 }
 
 export function to_moz_block (node: AST_Node) {

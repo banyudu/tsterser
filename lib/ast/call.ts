@@ -4,7 +4,6 @@ import AST_Array from './array'
 import Compressor from '../compressor'
 
 import {
-  blockStateMentCodeGen,
   is_reachable,
   retain_top_func,
   best_of,
@@ -22,14 +21,13 @@ import {
   do_list,
   to_moz,
   list_overhead,
-  callCodeGen,
   regexp_source_fix,
   make_node_from_constant,
   base54,
   make_sequence,
   walk,
   has_annotation,
-  inline_array_like_spread, is_ast_expansion, is_ast_string, is_ast_return, is_ast_var, is_ast_default_assign, is_ast_scope, is_ast_catch, is_ast_lambda, is_ast_prop_access, is_ast_dot, is_ast_new, is_ast_symbol_ref, is_ast_simple_statement, is_ast_empty_statement, is_ast_destructuring, is_ast_iteration_statement, is_ast_node, is_ast_export, is_ast_function, is_ast_number, is_ast_toplevel, is_ast_assign, is_ast_array, is_ast_symbol_funarg, is_ast_call, is_ast_class, is_ast_block
+  is_ast_expansion, is_ast_string, is_ast_return, is_ast_var, is_ast_default_assign, is_ast_scope, is_ast_catch, is_ast_lambda, is_ast_prop_access, is_ast_dot, is_ast_new, is_ast_symbol_ref, is_ast_simple_statement, is_ast_empty_statement, is_ast_destructuring, is_ast_iteration_statement, is_ast_node, is_ast_export, is_ast_function, is_ast_number, is_ast_toplevel, is_ast_assign, is_ast_array, is_ast_symbol_funarg, is_ast_call, is_ast_class, is_ast_block
 } from '../utils'
 
 import {
@@ -63,11 +61,25 @@ export default class AST_Call extends AST_Node {
     return this.TYPE == 'Call' && this.expression === node
   }
 
+  protected callCodeGen (output: OutputStream) {
+    this.expression.print(output)
+    if (is_ast_new(this) && this.args.length === 0) { return }
+    if (is_ast_call(this.expression) || is_ast_lambda(this.expression)) {
+      output.add_mapping(this.start)
+    }
+    output.with_parens(() => {
+      this.args.forEach(function (expr, i) {
+        if (i) output.comma()
+        expr.print(output)
+      })
+    })
+  }
+
   _optimize (compressor: Compressor): any {
     const self: any = this
     const exp = self.expression
     let fn = exp
-    inline_array_like_spread(self, compressor, self.args)
+    this.inline_array_like_spread(compressor, self.args)
     const simple_args = self.args.every((arg: any) =>
       !(is_ast_expansion(arg))
     )
@@ -382,7 +394,7 @@ export default class AST_Call extends AST_Node {
             }
           })
           const code2 = GetOutputStream()
-          blockStateMentCodeGen.call(fun, fun, code2)
+          fun.print_braced(code2)
           self.args = [
             make_node('AST_String', self, {
               value: fun.argnames.map(function (arg: any) {
@@ -909,7 +921,7 @@ export default class AST_Call extends AST_Node {
   }
 
   _codegen (output: OutputStream) {
-    return callCodeGen(this, output)
+    return this.callCodeGen(output)
   }
 
   static documentation = 'A function call expression'
