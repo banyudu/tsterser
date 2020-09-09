@@ -11,7 +11,6 @@ import {
   pop,
   is_nullish_check,
   to_moz,
-  needsParens,
   maintain_this_binding, is_ast_sequence, is_ast_true, is_ast_false, is_ast_expansion, is_ast_symbol_ref, is_ast_constant, is_ast_unary_prefix, is_ast_assign, is_ast_call, is_ast_conditional, is_ast_binary
 } from '../utils'
 
@@ -410,7 +409,7 @@ export default class AST_Conditional extends AST_Node {
     }
   }
 
-  needs_parens = needsParens
+  needs_parens = this.needsParens
   _codegen (output: OutputStream) {
     this.condition.print(output)
     output.space()

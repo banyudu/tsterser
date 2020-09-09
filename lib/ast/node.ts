@@ -11,17 +11,34 @@ import {
   string_template,
   equivalent_to,
   is_strict,
+  base54,
+  is_ast_scope,
+  is_ast_directive,
+  is_ast_symbol,
+  is_ast_dot,
+  is_ast_sub,
   walk_parent,
+  is_ast_destructuring,
   set_moz_loc,
   FROM_MOZ_STACK,
+  is_ast_call,
+  is_ast_assign,
+  is_ast_binary,
+  skip_string,
+  is_ast_conditional,
   setFromMozStack,
-  print,
   basic_negation,
+  is_ast_unary,
   from_moz, is_ast_constant, is_ast_reg_exp, is_ast_unary_prefix
 } from '../utils'
 
 import Compressor from '../compressor'
 import { MozillaAst } from '../types'
+
+export let printMangleOptions: any
+export function setPrintMangleOptions (val: any) {
+  printMangleOptions = val
+}
 
 export default class AST_Node extends AST {
   start: AST_Token
@@ -39,6 +56,25 @@ export default class AST_Node extends AST {
   scope: any
   name: any
   block_scope?: AST_Scope | null
+
+  _codegen (output: OutputStream) {}
+
+  protected needsParens (output: OutputStream) {
+    const p = output.parent()
+    // !(a = false) → true
+    if (is_ast_unary(p)) { return true }
+    // 1 + (a = 2) + 3 → 6, side effect setting a = 2
+    if (is_ast_binary(p) && !(is_ast_assign(p))) { return true }
+    // (a = func)() —or— new (a = Object)()
+    if (is_ast_call(p) && p.expression === this) { return true }
+    // (a = foo) ? bar : baz
+    if (is_ast_conditional(p) && p.condition === this) { return true }
+    // (a = foo)["prop"] —or— (a = foo).prop
+    if (p?._needs_parens(this)) { return true }
+    // ({a, b} = {a: 1, b: 2}), a destructuring assignment
+    if (is_ast_assign(this) && is_ast_destructuring(this.left) && !this.left.is_array) { return true }
+    return false
+  }
 
   _prepend_comments_check (node: AST_Node) {
     return false
@@ -226,11 +262,47 @@ export default class AST_Node extends AST {
     return this._print(output, force_parens)
   }
 
-  _print = print
   print_to_string (options?: any) {
     const output = GetOutputStream(options)
     this.print(output)
     return output.get()
+  }
+
+  _print (output: OutputStream, force_parens?: boolean) {
+    const generator = this._codegen.bind(this)
+    if (is_ast_scope(this)) {
+      output.active_scope = this
+    } else if (!output.use_asm && is_ast_directive(this) && this.value == 'use asm') {
+      output.use_asm = output.active_scope
+    }
+    const doit = () => {
+      output.prepend_comments(this)
+      this.add_source_map(output)
+      generator(output)
+      output.append_comments(this)
+    }
+    output.push_node(this)
+    if (force_parens || this.needs_parens(output)) {
+      output.with_parens(doit)
+    } else {
+      doit()
+    }
+    output.pop_node()
+    if (this === output.use_asm as any) {
+      output.use_asm = null
+    }
+
+    if (printMangleOptions) {
+      if (is_ast_symbol(this) && !this.unmangleable(printMangleOptions)) {
+        base54.consider(this.name, -1)
+      } else if (printMangleOptions.properties) {
+        if (is_ast_dot(this)) {
+          base54.consider(this.property, -1)
+        } else if (is_ast_sub(this)) {
+          skip_string(this.property)
+        }
+      }
+    }
   }
 
   needs_parens (output: OutputStream): boolean { return false }

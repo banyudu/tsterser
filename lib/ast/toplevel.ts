@@ -1,5 +1,5 @@
 import AST_Symbol from './symbol'
-import AST_Node from './node'
+import AST_Node, { setPrintMangleOptions } from './node'
 import { OutputStream } from '../output'
 import AST_Scope, { AST_Scope_Props } from './scope'
 import Compressor from '../compressor'
@@ -28,7 +28,6 @@ import { parse, RESERVED_WORDS } from '../parse'
 import { MozillaAst } from '../types'
 
 export let function_defs: Set<any> | null = null
-export let printMangleOptions: any
 export let unmangleable_names: Set<any> | null = null
 
 export default class AST_Toplevel extends AST_Scope {
@@ -200,11 +199,11 @@ export default class AST_Toplevel extends AST_Scope {
 
   add_source_map () { }
   compute_char_frequency (options: any) {
-    printMangleOptions = this._default_mangler_options(options)
+    setPrintMangleOptions(this._default_mangler_options(options))
     try {
       base54.consider(this.print_to_string(), 1)
     } finally {
-      printMangleOptions = undefined
+      setPrintMangleOptions(undefined)
     }
     base54.sort()
   }

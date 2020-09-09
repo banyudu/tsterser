@@ -198,7 +198,7 @@ import {
   AST_SwitchBranch
 } from './ast'
 
-import { printMangleOptions, unmangleable_names, function_defs } from './ast/toplevel'
+import { unmangleable_names, function_defs } from './ast/toplevel'
 
 import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
@@ -2846,7 +2846,7 @@ export function walk (node: AST_Node, cb: Function, to_visit: AST_Node[] = [node
       continue
     }
 
-        node?._children_backwards(push)
+    node?._children_backwards(push)
   }
   return false
 }
@@ -2938,15 +2938,6 @@ export function has_break_or_continue (loop: AST_Node, parent?: AST_Node) {
   tw.push(loop)
   loop.body.walk(tw)
   return found
-}
-
-export function block_aborts (this: any) {
-  for (let i = 0; i < this.body.length; i++) {
-    if (aborts(this.body[i])) {
-      return this.body[i]
-    }
-  }
-  return null
 }
 
 export function inline_array_like_spread (self: AST_Node, compressor: Compressor, elements: any[]) {
@@ -3165,22 +3156,6 @@ export function skip_string (node: AST_Node) {
   }
 }
 
-export function needsParens (this: AST_Node, output: OutputStream) {
-  const p = output.parent()
-  // !(a = false) → true
-  if (is_ast_unary(p)) { return true }
-  // 1 + (a = 2) + 3 → 6, side effect setting a = 2
-  if (is_ast_binary(p) && !(is_ast_assign(p))) { return true }
-  // (a = func)() —or— new (a = Object)()
-  if (is_ast_call(p) && p.expression === this) { return true }
-  // (a = foo) ? bar : baz
-  if (is_ast_conditional(p) && p.condition === this) { return true }
-  // (a = foo)["prop"] —or— (a = foo).prop
-  if (p?._needs_parens(this)) { return true }
-  // ({a, b} = {a: 1, b: 2}), a destructuring assignment
-  if (is_ast_assign(this) && is_ast_destructuring(this.left) && !this.left.is_array) { return true }
-  return false
-}
 export function next_mangled (scope: AST_Scope, options: any) {
   const ext = scope.enclosed
   while (true) {
@@ -3243,9 +3218,7 @@ export function safe_to_assign (tw: TreeWalker, def: SymbolDef, scope: AST_Scope
     return is_ast_node(value) && def.fixed.parent_scope === scope
   }
   return def.orig.every((sym: AST_Symbol) => {
-    return !(is_ast_symbol_const(sym) ||
-            is_ast_symbol_defun(sym) ||
-            is_ast_symbol_lambda(sym))
+    return !(is_ast_symbol_const(sym) || is_ast_symbol_defun(sym) || is_ast_symbol_lambda(sym))
   })
 }
 
@@ -3271,9 +3244,7 @@ export function ref_once (tw: TreeWalker, compressor: Compressor, def: SymbolDef
 
 export function is_immutable (value: any) {
   if (!value) return false
-  return value.is_constant() ||
-        is_ast_lambda(value) ||
-        is_ast_this(value)
+  return value.is_constant() || is_ast_lambda(value) || is_ast_this(value)
 }
 
 export function mark_escaped (tw: TreeWalker, d: any, scope: AST_Scope, node: AST_Node, value: any, level: number, depth: number) {
@@ -3380,19 +3351,14 @@ export function is_iife_call (node: AST_Node): boolean {
 }
 
 export function is_object (node: AST_Node) {
-  return is_ast_array(node) ||
-        is_ast_lambda(node) ||
-        is_ast_object(node) ||
-        is_ast_class(node)
+  return is_ast_array(node) || is_ast_lambda(node) || is_ast_object(node) || is_ast_class(node)
 }
 
 export function within_array_or_object_literal (compressor: Compressor) {
   let node; let level = 0
   while ((node = compressor.parent(level++))) {
     if (is_ast_statement(node)) return false
-    if (is_ast_array(node) ||
-            is_ast_object_key_val(node) ||
-            is_ast_object(node)) {
+    if (is_ast_array(node) || is_ast_object_key_val(node) || is_ast_object(node)) {
       return true
     }
   }
@@ -3561,43 +3527,6 @@ export function is_reachable (self: AST_Node, defs: SymbolDef[]) {
       return true
     }
   })
-}
-
-export function print (this: AST_Node, output: OutputStream, force_parens?: boolean) {
-  const self: any = this; const generator = self._codegen.bind(self)
-  if (is_ast_scope(self)) {
-    output.active_scope = self
-  } else if (!output.use_asm && is_ast_directive(self) && self.value == 'use asm') {
-    output.use_asm = output.active_scope
-  }
-  function doit () {
-    output.prepend_comments(self)
-    self.add_source_map(output)
-    generator(output)
-    output.append_comments(self)
-  }
-  output.push_node(self)
-  if (force_parens || self.needs_parens(output)) {
-    output.with_parens(doit)
-  } else {
-    doit()
-  }
-  output.pop_node()
-  if (self === output.use_asm) {
-    output.use_asm = null
-  }
-
-  if (printMangleOptions) {
-    if (is_ast_symbol(this) && !this.unmangleable(printMangleOptions)) {
-      base54.consider(this.name, -1)
-    } else if (printMangleOptions.properties) {
-      if (is_ast_dot(this)) {
-        base54.consider(this.property, -1)
-      } else if (is_ast_sub(this)) {
-        skip_string(this.property)
-      }
-    }
-  }
 }
 
 // Returns whether the leftmost item in the expression is an object

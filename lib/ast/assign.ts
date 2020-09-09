@@ -15,7 +15,6 @@ import {
   to_moz,
   mark_escaped,
   suppress,
-  needsParens,
   is_ast_symbol_ref,
   is_ast_try,
   is_ast_prop_access,
@@ -196,7 +195,7 @@ export default class AST_Assign extends AST_Binary {
     }
   }
 
-  needs_parens = needsParens
+  needs_parens = this.needsParens
   static documentation = 'An assignment expression — `a = b + 5`'
 
   static PROPS = AST_Binary.PROPS

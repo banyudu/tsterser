@@ -9,6 +9,7 @@ import {
   reset_block_variables,
   list_overhead,
   to_moz,
+  aborts,
   do_list
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
@@ -18,6 +19,15 @@ export default class AST_Block extends AST_Statement {
   body: AST_Statement[]
   block_scope?: AST_Scope
   expression: any
+
+  protected _block_aborts () {
+    for (let i = 0; i < this.body.length; i++) {
+      if (aborts(this.body[i])) {
+        return this.body[i]
+      }
+    }
+    return null
+  }
 
   _optimize (compressor: Compressor): AST_Block {
     tighten_body(this.body, compressor)

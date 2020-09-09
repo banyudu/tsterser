@@ -2,7 +2,7 @@ import AST_Node from './node'
 import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Block, { AST_Block_Props } from './block'
-import { tighten_body, can_be_evicted_from_block, block_aborts, to_moz, make_node, blockStateMentCodeGen, is_ast_if, is_ast_const, is_ast_let, is_ast_class } from '../utils'
+import { tighten_body, can_be_evicted_from_block, to_moz, make_node, blockStateMentCodeGen, is_ast_if, is_ast_const, is_ast_let, is_ast_class } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
   _optimize (compressor: Compressor): any {
@@ -21,7 +21,7 @@ export default class AST_BlockStatement extends AST_Block {
     return this
   }
 
-  aborts = block_aborts
+  aborts = this._block_aborts
   _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'BlockStatement',
