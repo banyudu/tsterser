@@ -13,12 +13,12 @@
         "@typescript-eslint/restrict-plus-operands": "off",
         "new-cap": "warn",
         "no-fallthrough": "off",
-        "@typescript-eslint/brace-style": "warn",
         "@typescript-eslint/no-this-alias": "warn",
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/consistent-type-assertions": "warn",
         "@typescript-eslint/no-throw-literal": "off",
         "no-void": "warn",
+        "no-var": "error",
         "import/no-cycle": "error"
     }
 }

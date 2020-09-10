@@ -2303,9 +2303,10 @@ export function parse ($TEXT: string, opt?: any) {
     expect('{')
     while (!is('punc', '}')) {
       if (first) first = false; else expect(',')
-      if (!options.strict && is('punc', '}'))
-      // allow trailing comma
-      { break }
+      if (!options.strict && is('punc', '}')) {
+        // allow trailing comma
+        break
+      }
 
       start = S.token
       if (start?.type == 'expand') {

@@ -13,10 +13,12 @@ export default class AST_BigInt extends AST_Constant {
 
   shallow_cmp_props: any = { value: 'eq' }
 
-  _to_mozilla_ast (parent: AST_Node): any { return {
-    type: 'BigIntLiteral',
-    value: this.value
-  } }
+  _to_mozilla_ast (parent: AST_Node): any {
+    return {
+      type: 'BigIntLiteral',
+      value: this.value
+    }
+  }
 
   _codegen (output: OutputStream) {
     output.print(this.getValue() + 'n')
