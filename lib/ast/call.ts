@@ -197,8 +197,8 @@ export default class AST_Call extends AST_Node {
               }).optimize(compressor)
             }
             break
-          case 'RegExp':
-            var params: any[] = []
+          case 'RegExp': {
+            const params: any[] = []
             if (self.args.length >= 1 &&
                   self.args.length <= 2 &&
                   self.args.every((arg: any) => {
@@ -223,6 +223,7 @@ export default class AST_Call extends AST_Node {
               })
             }
             break
+          }
         }
       } else if (is_ast_dot(exp)) {
         switch (exp.property) {
@@ -336,8 +337,8 @@ export default class AST_Call extends AST_Node {
               }).optimize(compressor)
             }
             break
-          case 'call':
-            var func = exp.expression
+          case 'call': {
+            let func = exp.expression
             if (is_ast_symbol_ref(func)) {
               func = func.fixed_value()
             }
@@ -354,6 +355,7 @@ export default class AST_Call extends AST_Node {
               })).optimize(compressor)
             }
             break
+          }
         }
       }
     }
@@ -460,10 +462,10 @@ export default class AST_Call extends AST_Node {
         return (self.args[0] || make_node('AST_Undefined')).optimize(compressor)
       }
     }
+    let in_loop: any
+    let level = -1
+    let scope: any
     if (can_inline) {
-      var scope: any
-      var in_loop: any
-      var level = -1
       let def: any
       let returned_value: any
       let nearest_scope: any
@@ -699,7 +701,8 @@ export default class AST_Call extends AST_Node {
 
     function flatten_args (decls: any, expressions: AST_Node[]) {
       const len = fn.argnames.length
-      for (var i = self.args.length; --i >= len;) {
+      let i
+      for (i = self.args.length; --i >= len;) {
         expressions.push(self.args[i])
       }
       for (i = len; --i >= 0;) {
@@ -725,7 +728,7 @@ export default class AST_Call extends AST_Node {
         if (!(is_ast_var(stat))) continue
         for (let j = 0, defs = stat.definitions.length; j < defs; j++) {
           const var_def = stat.definitions[j]
-          var name = var_def.name
+          const name = var_def.name
           append_var(decls, expressions, name, var_def.value)
           if (in_loop && fn.argnames.every((argname: any) =>
             argname.name != name.name

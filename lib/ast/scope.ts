@@ -102,7 +102,7 @@ export default class AST_Scope extends AST_Block {
 
   process_expression (insert: boolean, compressor?: Compressor) {
     const self: AST_Scope = this
-    var tt = new TreeTransformer(function (node: AST_Node) {
+    const tt = new TreeTransformer(function (node: AST_Node) {
       if (insert && is_ast_simple_statement(node)) {
         return make_node('AST_Return', node, {
           value: node.body
@@ -177,7 +177,7 @@ export default class AST_Scope extends AST_Block {
     // pass 1: find out which symbols are directly used in
     // this scope (not in nested scopes).
     let scope: any = this
-    var tw = new TreeWalker(function (node: AST_Node, descend) {
+    let tw = new TreeWalker(function (node: AST_Node, descend) {
       if (is_ast_lambda(node) && node.uses_arguments && !tw.has_directive('use strict')) {
         node.argnames.forEach(function (argname) {
           if (!(is_ast_symbol_declaration(argname))) return
@@ -271,7 +271,7 @@ export default class AST_Scope extends AST_Block {
       }
     })
     // pass 3: we should drop declarations not in_use
-    var tt = new TreeTransformer(
+    const tt = new TreeTransformer(
       function before (this: AST_Node, node: AST_Node, descend: Function, in_list: boolean) {
         const parent = tt.parent()
         let def
@@ -566,7 +566,7 @@ export default class AST_Scope extends AST_Block {
         }
       })
       hoist_vars = hoist_vars && var_decl > 1
-      var tt = new TreeTransformer(
+      const tt = new TreeTransformer(
         function before (node: AST_Node) {
           if (node !== self) {
             if (is_ast_directive(node)) {
@@ -626,12 +626,10 @@ export default class AST_Scope extends AST_Block {
           // try to merge in assignments
           for (let i = 0; i < self.body.length;) {
             if (is_ast_simple_statement(self.body[i])) {
-              const expr = self.body[i].body; var sym; var assign
-              if (is_ast_assign(expr) &&
-                              expr.operator == '=' &&
-                              is_ast_symbol((sym = expr.left)) &&
-                              vars.has(sym.name)
-              ) {
+              const expr = self.body[i].body
+              let sym
+              let assign
+              if (is_ast_assign(expr) && expr.operator == '=' && is_ast_symbol((sym = expr.left)) && vars.has(sym.name)) {
                 const def = vars.get(sym.name)
                 if (def.value) break
                 def.value = expr.right
@@ -688,7 +686,7 @@ export default class AST_Scope extends AST_Block {
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     const top_retain = is_ast_toplevel(self) && compressor.top_retain || (() => false)
     const defs_by_id = new Map()
-    var hoister = new TreeTransformer(function (this: AST_Scope, node: AST_Node, descend: Function) {
+    const hoister = new TreeTransformer(function (this: AST_Scope, node: AST_Node, descend: Function) {
       if (is_ast_definitions(node) &&
               is_ast_export(hoister.parent())) return node
       if (is_ast_var_def(node)) {
@@ -907,7 +905,7 @@ export default class AST_Scope extends AST_Block {
     let defun: any = null
     let in_destructuring: any = null
     const for_scopes: any[] = []
-    var tw = new TreeWalker((node: AST_Node, descend) => {
+    let tw = new TreeWalker((node: AST_Node, descend) => {
       if (node.is_block_scope()) {
         const save_scope = scope
         node.block_scope = scope = new AST_Scope(node)

@@ -2043,7 +2043,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  var var_ = function (no_in?: boolean) {
+  const var_ = function (no_in?: boolean) {
     return new AST_Var({
       start: prev(),
       definitions: vardefs(no_in, 'var'),
@@ -2051,7 +2051,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var let_ = function (no_in?: boolean) {
+  const let_ = function (no_in?: boolean) {
     return new AST_Let({
       start: prev(),
       definitions: vardefs(no_in, 'let'),
@@ -2059,7 +2059,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  var const_ = function (no_in?: boolean) {
+  const const_ = function (no_in?: boolean) {
     return new AST_Const({
       start: prev(),
       definitions: vardefs(no_in, 'const'),
@@ -2142,7 +2142,7 @@ export function parse ($TEXT: string, opt?: any) {
     return ex.to_fun_args(croak)
   }
 
-  var expr_atom = function (allow_calls: boolean, allow_arrows: boolean = false): AST_Node {
+  const expr_atom = function (allow_calls: boolean, allow_arrows: boolean = false): AST_Node {
     if (is('operator', 'new')) {
       return new_(allow_calls)
     }
@@ -2154,13 +2154,13 @@ export function parse ($TEXT: string, opt?: any) {
             as_atom_node()
     if (is('punc')) {
       switch (S.token?.value) {
-        case '(':
+        case '(': {
           if (async && !allow_calls) break
-          var exprs = params_or_seq_(allow_arrows, !async)
+          const exprs = params_or_seq_(allow_arrows, !async)
           if (allow_arrows && is('arrow', '=>')) {
             return arrow_function(start, exprs.map(to_fun_args), !!async)
           }
-          var ex = async ? new AST_Call({
+          const ex = async ? new AST_Call({
             expression: async,
             args: exprs
           }) : exprs.length == 1 ? exprs[0] : new AST_Sequence({
@@ -2182,7 +2182,7 @@ export function parse ($TEXT: string, opt?: any) {
             startToken.comments_after = ex.start.comments_after
           }
           ex.start = start
-          var end: any = prev()
+          const end: any = prev()
           if (ex.end) {
             end.comments_before = ex.end.comments_before
             ex.end.comments_after.push(...end.comments_after)
@@ -2191,6 +2191,7 @@ export function parse ($TEXT: string, opt?: any) {
           ex.end = end
           if (is_ast_call(ex)) annotate(ex)
           return subscripts(ex, allow_calls)
+        }
         case '[':
           return subscripts(array_(), allow_calls)
         case '{':
@@ -2286,7 +2287,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  var array_ = embed_tokens(function () {
+  const array_ = embed_tokens(function () {
     expect('[')
     return new AST_Array({
       elements: expr_list(']', !options.strict, true)
@@ -2297,7 +2298,7 @@ export function parse ($TEXT: string, opt?: any) {
     return function_(AST_Accessor, is_generator, is_async)
   })
 
-  var object_or_destructuring_ = embed_tokens(function object_or_destructuring_ () {
+  const object_or_destructuring_ = embed_tokens(function object_or_destructuring_ () {
     let start = S.token; let first = true; const a: any[] = []
     expect('{')
     while (!is('punc', '}')) {
@@ -2318,7 +2319,7 @@ export function parse ($TEXT: string, opt?: any) {
       }
 
       const name = as_property_name()
-      var value
+      let value
 
       // Check property and fetch value
       if (!is('punc', ':')) {
@@ -2439,7 +2440,7 @@ export function parse ($TEXT: string, opt?: any) {
     let is_async = false
     let is_static = false
     let is_generator = false
-    var property_token = start
+    let property_token = start
     if (is_class && name === 'static' && !is('punc', '(')) {
       is_static = true
       property_token = S.token
@@ -2832,7 +2833,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  var subscripts = function (expr: AST_Node, allow_calls: boolean): AST_Node {
+  const subscripts = function (expr: AST_Node, allow_calls: boolean): AST_Node {
     const start = expr.start
     if (is('punc', '.')) {
       next()
@@ -2898,7 +2899,7 @@ export function parse ($TEXT: string, opt?: any) {
     return args
   }
 
-  var maybe_unary = function (allow_calls: boolean, allow_arrows?: boolean) {
+  const maybe_unary = function (allow_calls: boolean, allow_arrows?: boolean) {
     const start = S.token
     if (start.type == 'name' && start.value == 'await') {
       if (is_in_async()) {
@@ -2941,7 +2942,7 @@ export function parse ($TEXT: string, opt?: any) {
     return new CTOR({ operator: op, expression: expr })
   }
 
-  var expr_op = function (left: any, min_prec: number, no_in: boolean): any {
+  const expr_op = function (left: any, min_prec: number, no_in: boolean): any {
     let op = is('operator') ? S.token?.value : null
     if (op == 'in' && no_in) op = null
     if (op == '**' && is_ast_unary_prefix(left) &&
@@ -3033,7 +3034,7 @@ export function parse ($TEXT: string, opt?: any) {
   }
 
   // In ES6, AssignmentExpression can also be an ArrowFunction
-  var maybe_assign = function (no_in: boolean): AST_Node {
+  const maybe_assign = function (no_in: boolean): AST_Node {
     handle_regexp()
     const start = S.token
 
@@ -3065,7 +3066,7 @@ export function parse ($TEXT: string, opt?: any) {
     return left
   }
 
-  var expression = function (commas?: boolean, no_in?: boolean) {
+  const expression = function (commas?: boolean, no_in?: boolean) {
     const start = S.token
     const exprs: any[] = []
     while (true) {

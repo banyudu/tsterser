@@ -289,7 +289,7 @@ export default class AST_Block extends AST_Statement {
       return false
     }
 
-    var scanner = new TreeTransformer((node: AST_Node) => {
+    const scanner = new TreeTransformer((node: AST_Node) => {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
       if (!hit) {
@@ -380,7 +380,7 @@ export default class AST_Block extends AST_Statement {
       // but are otherwise not safe to scan into or beyond them.
       let sym
       if (is_ast_call(node) ||
-        is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs as any)) ||
+        is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs)) ||
         is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor)) ||
         is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
         is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
@@ -395,7 +395,7 @@ export default class AST_Block extends AST_Statement {
       if (stop_after === node) abort = true
       if (stop_if_hit === node) stop_if_hit = null
     })
-    var multi_replacer = new TreeTransformer(function (node: AST_Node) {
+    const multi_replacer = new TreeTransformer(function (node: AST_Node) {
       if (abort) return node
       // Skip nodes before `candidate` as quickly as possible
       if (!hit) {
@@ -421,6 +421,25 @@ export default class AST_Block extends AST_Statement {
       while (is_ast_prop_access(lhs)) lhs = lhs.expression
       return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === this.compressor_scope && !(this.in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
     }
+    let hit_stack: any[]
+    let candidate: any
+    let stop_after: any
+    let stop_if_hit: any
+    let hit_index: number = 0
+    let replace_all: any
+    let lhs_local: any
+    let side_effects: any
+    let may_throw: any
+    let abort: any
+    let funarg: any
+    let hit: any
+    let lhs: any
+    let can_replace: any
+    let value_def: any
+    let replaced: any
+    let lvalues: any
+    let def: any
+
     while (--stat_index >= 0) {
       // Treat parameters as collapsible in IIFE, i.e.
       //   function(a, b){ ... }(x());
@@ -428,29 +447,29 @@ export default class AST_Block extends AST_Statement {
       //   var a = x(), b = undefined;
       if (stat_index == 0 && compressor.option('unused')) extract_args()
       // Find collapsible assignments
-      var hit_stack: any[] = []
+      hit_stack = []
       extract_candidates(this.body[stat_index])
       while (candidates.length > 0) {
         hit_stack = candidates.pop()
-        var hit_index = 0
-        var candidate = hit_stack[hit_stack.length - 1]
-        var value_def: any = null
-        var stop_after: any = null
-        var stop_if_hit: any = null
-        var lhs: AST_Node | undefined = get_lhs(candidate)
+        hit_index = 0
+        candidate = hit_stack[hit_stack.length - 1]
+        value_def = null
+        stop_after = null
+        stop_if_hit = null
+        lhs = get_lhs(candidate)
         if (!lhs || is_lhs_read_only(lhs) || lhs.has_side_effects(compressor)) continue
         // Locate symbols which may execute code outside of scanning range
-        var lvalues = get_lvalues(candidate)
-        var lhs_local = is_lhs_local(lhs)
+        lvalues = get_lvalues(candidate)
+        lhs_local = is_lhs_local(lhs)
         if (is_ast_symbol_ref(lhs)) lvalues.set(lhs.name, false)
-        var side_effects = value_has_side_effects(candidate)
-        var replace_all = replace_all_symbols()
-        var may_throw = candidate.may_throw(compressor)
-        var funarg = is_ast_symbol_funarg(candidate.name)
-        var hit = funarg
-        var abort = false
-        var replaced: any = 0
-        var can_replace = !args || !hit
+        side_effects = value_has_side_effects(candidate)
+        replace_all = replace_all_symbols()
+        may_throw = candidate.may_throw(compressor)
+        funarg = is_ast_symbol_funarg(candidate.name)
+        hit = funarg
+        abort = false
+        replaced = 0
+        can_replace = !args || !hit
         if (!can_replace && args) {
           if (!abort) {
             for (let j = (compressor.self() as any).argnames.lastIndexOf(candidate.name) + 1; j < args.length; j++) {
@@ -465,7 +484,7 @@ export default class AST_Block extends AST_Statement {
           }
         }
         if (value_def) {
-          var def = candidate.name.definition?.()
+          def = candidate.name.definition?.()
           if (abort && def.references.length - def.replaced > replaced) replaced = false
           else {
             abort = false
