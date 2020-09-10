@@ -287,5 +287,5 @@ function make_then (self: AST_If, output: OutputStream) {
 
 export interface AST_If_Props extends AST_StatementWithBody_Props {
   condition?: AST_Node | undefined
-  alternative?: AST_Statement | undefined | undefined
+  alternative?: AST_Statement | undefined
 }

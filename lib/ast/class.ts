@@ -183,7 +183,7 @@ export default class AST_Class extends AST_Scope {
 }
 
 export interface AST_Class_Props extends AST_Scope_Props {
-  name?: AST_SymbolClass|AST_SymbolDefClass | undefined | undefined
+  name?: AST_SymbolClass|AST_SymbolDefClass | undefined
   extends?: AST_Node | undefined
   properties?: AST_ObjectProperty[] | undefined
 }

@@ -167,9 +167,9 @@ export default class AST_Export extends AST_Statement {
 }
 
 export interface AST_Export_Props extends AST_Statement_Props {
-  exported_definition?: AST_Defun|AST_Definitions|AST_DefClass | undefined | undefined
-  exported_value?: AST_Node | undefined | undefined
+  exported_definition?: AST_Defun|AST_Definitions|AST_DefClass | undefined
+  exported_value?: AST_Node | undefined
   is_default?: boolean
   exported_names?: AST_NameMapping[] | null
-  module_name?: AST_String | undefined | undefined
+  module_name?: AST_String | undefined
 }

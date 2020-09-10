@@ -53,5 +53,5 @@ export default class AST_Exit extends AST_Jump {
 }
 
 export interface AST_Exit_Props extends AST_Jump_Props {
-  value?: AST_Node | undefined | undefined
+  value?: AST_Node | undefined
 }

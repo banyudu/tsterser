@@ -207,8 +207,8 @@ export default class AST_Block extends AST_Statement {
   // to fold assignment into the site for compression.
   // Will not attempt to collapse assignments into or past code blocks
   // which are not sequentially executed, e.g. loops and conditionals.
-  collapse (compressor: Compressor) {
-    if (this.compressor_scope.pinned()) return this.body
+  private collapse (compressor: Compressor) {
+    if (this.compressor_scope?.pinned()) return this.body
     let args = null
     const candidates: any[] = []
     let stat_index = this.body.length
@@ -656,7 +656,7 @@ export default class AST_Block extends AST_Statement {
       return (value_def = def)
     }
 
-    function get_lhs (expr: AST_Node): AST_Node | undefined {
+    function get_lhs (expr: AST_Node): AST_Node | undefined | false {
       if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
         const def = expr.name.definition?.()
         if (!member(expr.name, def.orig)) return
@@ -668,8 +668,7 @@ export default class AST_Block extends AST_Statement {
         }
       } else {
         const lhs = expr[is_ast_assign(expr) ? 'left' : 'expression']
-        return !is_ref_of(lhs, AST_SymbolConst) &&
-                    !is_ref_of(lhs, AST_SymbolLet) && lhs
+        return !is_ref_of(lhs, AST_SymbolConst) && !is_ref_of(lhs, AST_SymbolLet) && lhs
       }
       return undefined
     }
@@ -711,7 +710,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   private find_loop_scope_try (compressor: Compressor) {
-    this.compressor_scope = compressor.find_parent(AST_Scope).get_defun_scope()
+    this.compressor_scope = compressor.find_parent(AST_Scope)?.get_defun_scope()
     let node = compressor.self(); let level = 0
     do {
       if (is_ast_catch(node) || is_ast_finally(node)) {
@@ -995,10 +994,10 @@ export default class AST_Block extends AST_Statement {
     const cons_seq = (right: AST_Node) => {
       n--
       this.CHANGED = true
-      const left = prev.body
-      return make_sequence(left, [left, right]).transform(compressor)
+      const left = prev?.body
+      return make_sequence(left, [left, right])?.transform(compressor)
     }
-    let prev: AST_Node | undefined
+    let prev: AST_Node | undefined | null
     for (let i = 0; i < this.body.length; i++) {
       const stat = this.body[i]
       if (prev) {
@@ -1215,7 +1214,7 @@ function to_simple_statement (block: AST_Block, decls: AST_Var[]) {
   return stat
 }
 
-function join_object_assignments (defn: AST_Node, body: AST_Node, compressor: Compressor, compressor_scope: AST_Scope) {
+function join_object_assignments (defn: AST_Node, body: AST_Node, compressor: Compressor, compressor_scope: AST_Scope | undefined) {
   if (!(is_ast_definitions(defn))) return
   const def = defn.definitions[defn.definitions.length - 1]
   if (!(is_ast_object(def.value))) return
@@ -1269,7 +1268,7 @@ function join_object_assignments (defn: AST_Node, body: AST_Node, compressor: Co
 }
 
 function declarations_only (node: AST_Node) {
-  return node.definitions.every((var_def) =>
+  return node.definitions?.every((var_def) =>
     !var_def.value
   )
 }

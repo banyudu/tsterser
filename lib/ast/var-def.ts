@@ -11,7 +11,7 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_VarDef extends AST_Node {
   name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
-  value: AST_Node | undefined
+  value: AST_Node | undefined | null
   eliminated: number
   replaced: number
 
@@ -107,6 +107,6 @@ export default class AST_VarDef extends AST_Node {
 }
 
 export interface AST_VarDef_Props extends AST_Node_Props {
-  name?: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar | undefined
-  value?: AST_Node | undefined | undefined
+  name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
+  value: AST_Node | undefined
 }

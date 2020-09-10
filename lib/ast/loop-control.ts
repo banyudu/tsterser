@@ -43,5 +43,5 @@ export default class AST_LoopControl extends AST_Jump {
 }
 
 export interface AST_LoopControl_Props extends AST_Jump_Props {
-  label?: AST_LabelRef | undefined | undefined
+  label?: AST_LabelRef | undefined
 }
