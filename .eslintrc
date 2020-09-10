@@ -19,7 +19,6 @@
         "@typescript-eslint/consistent-type-assertions": "warn",
         "@typescript-eslint/no-throw-literal": "off",
         "no-void": "warn",
-        // "no-var": "error",
         "import/no-cycle": "error"
     }
 }

@@ -681,7 +681,7 @@ export default class AST_Block extends AST_Statement {
     function get_lvalues (expr: AST_Node) {
       const lvalues = new Map()
       if (is_ast_unary(expr)) return lvalues
-      var tw = new TreeWalker(function (node: AST_Node) {
+      const tw = new TreeWalker(function (node: AST_Node) {
         let sym = node
         while (is_ast_prop_access(sym)) sym = sym.expression
         if (is_ast_symbol_ref(sym) || is_ast_this(sym)) {
@@ -775,6 +775,7 @@ export default class AST_Block extends AST_Statement {
         }
       }
 
+      let body: any
       if (is_ast_if(stat)) {
         let ab = aborts(stat.body)
         if (this.can_merge_flow(ab, compressor, i)) {
@@ -784,7 +785,7 @@ export default class AST_Block extends AST_Statement {
           this.CHANGED = true
           stat = stat.clone()
           stat.condition = stat.condition.negate(compressor)
-          var body = as_statement_array_with_return(stat.body, ab)
+          body = as_statement_array_with_return(stat.body, ab)
           stat.body = make_node('AST_BlockStatement', stat, {
             body: as_statement_array(stat.alternative).concat(this.extract_functions(i))
           })
@@ -901,7 +902,9 @@ export default class AST_Block extends AST_Statement {
   }
 
   private next_index (i: number) {
-    for (var j = i + 1, len = this.body.length; j < len; j++) {
+    let j: number = i + 1
+    const len = this.body.length
+    for (; j < len; j++) {
       const stat = this.body[j]
       if (!(is_ast_var(stat) && declarations_only(stat))) {
         break
@@ -911,7 +914,8 @@ export default class AST_Block extends AST_Statement {
   }
 
   private prev_index (i: number) {
-    for (var j = i; --j >= 0;) {
+    let j = i
+    for (; --j >= 0;) {
       const stat = this.body[j]
       if (!(is_ast_var(stat) && declarations_only(stat))) {
         break
@@ -923,7 +927,10 @@ export default class AST_Block extends AST_Statement {
   private eliminate_dead_code (statements: AST_Statement[], compressor: Compressor) {
     let has_quit: AST_Statement[] = []
     const self = compressor.self()
-    for (var i = 0, n = 0, len = statements.length; i < len; i++) {
+    let i = 0
+    let n = 0
+    const len = statements.length
+    for (; i < len; i++) {
       const stat = statements[i]
       if (is_ast_loop_control(stat)) {
         const lct = compressor.loopcontrol_target(stat)
@@ -961,7 +968,9 @@ export default class AST_Block extends AST_Statement {
       this.body[n++] = make_node('AST_SimpleStatement', body, { body: body }) as AST_SimpleStatement
       seq = []
     }
-    for (var i = 0, len = this.body.length; i < len; i++) {
+    let i = 0
+    const len = this.body.length
+    for (; i < len; i++) {
       const stat = this.body[i]
       if (is_ast_simple_statement(stat)) {
         if (seq.length >= compressor.sequences_limit) push_seq()
@@ -982,13 +991,13 @@ export default class AST_Block extends AST_Statement {
   }
 
   private sequencesize_2 (compressor: Compressor) {
+    let n = 0
     const cons_seq = (right: AST_Node) => {
       n--
       this.CHANGED = true
       const left = prev.body
       return make_sequence(left, [left, right]).transform(compressor)
     }
-    var n = 0
     let prev: AST_Node | undefined
     for (let i = 0; i < this.body.length; i++) {
       const stat = this.body[i]
@@ -1071,9 +1080,15 @@ export default class AST_Block extends AST_Statement {
       return value
     }
 
-    for (var i = 0, j = -1, len = this.body.length; i < len; i++) {
-      var stat: any = this.body[i]
-      var prev: any = this.body[j]
+    let i = 0
+    let j = -1
+    let stat: any
+    let prev: any
+    const len = this.body.length
+    for (; i < len; i++) {
+      stat = this.body[i]
+      prev = this.body[j]
+      let exprs: any
       if (is_ast_definitions(stat)) {
         if (prev && prev.TYPE == stat.TYPE) {
           prev.definitions = prev.definitions.concat(stat.definitions)
@@ -1088,7 +1103,7 @@ export default class AST_Block extends AST_Statement {
       } else if (is_ast_exit(stat)) {
         stat.value = extract_object_assignments(stat.value)
       } else if (is_ast_for(stat)) {
-        var exprs = join_object_assignments(prev, stat.init, compressor, this.compressor_scope)
+        exprs = join_object_assignments(prev, stat.init, compressor, this.compressor_scope)
         if (exprs) {
           this.CHANGED = true
           stat.init = exprs.length ? make_sequence(stat.init, exprs) : null
@@ -1221,7 +1236,7 @@ function join_object_assignments (defn: AST_Node, body: AST_Node, compressor: Co
     if (!(is_ast_symbol_ref(sym))) break
     if (def.name.name != sym.name) break
     if (!node.right.is_constant_expression(compressor_scope)) break
-    var prop: any = node.left.property
+    let prop: any = node.left.property
     if (is_ast_node(prop)) {
       prop = prop.evaluate?.(compressor)
     }
