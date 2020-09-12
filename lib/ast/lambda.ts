@@ -157,7 +157,7 @@ export default class AST_Lambda extends AST_Scope {
     return To_Moz_FunctionExpression(this, parent)
   }
 
-  _do_print (output: OutputStream, nokeyword?: boolean) {
+  _do_print (output: OutputStream, nokeyword: boolean = false) {
     const self = this
     if (!nokeyword) {
       if (self.async) {

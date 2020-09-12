@@ -17,7 +17,7 @@ export default class AST_Statement extends AST_Node {
     throw new Error('Cannot negate a statement')
   }
 
-  clone (deep?: boolean): AST_Node {
+  clone (deep: boolean = false): AST_Node {
     const clone = this._clone(deep)
     if (this.block_scope) {
       // TODO this is sometimes undefined during compression.

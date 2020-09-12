@@ -24,7 +24,7 @@ export default class SymbolDef {
   should_replace: any
   single_use: string | boolean | undefined
   fixed: any
-  constructor (scope: any | null, orig: { name: string }, init?: boolean) {
+  constructor (scope: any | null, orig: { name: string }, init?: any) {
     this.name = orig.name
     this.orig = [orig]
     this.init = init

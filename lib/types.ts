@@ -173,14 +173,14 @@ export interface MozillaAst {
   start?: MozillaAst | number
   superClass?: MozillaAst
   prefix?: boolean
-  arguments?: MozillaAst[]
+  arguments?: Array<MozillaAst | null>
   callee?: MozillaAst
   operator?: string
   param?: MozillaAst
   delegate?: boolean
   await?: boolean
   update?: MozillaAst
-  cases?: MozillaAst[]
+  cases?: Array<MozillaAst | null>
   discriminant?: MozillaAst
   init?: MozillaAst
   label?: MozillaAst
@@ -191,23 +191,23 @@ export interface MozillaAst {
   local?: MozillaAst
   specifiers?: MozillaAst[]
   test?: MozillaAst
-  declarations?: MozillaAst[]
+  declarations?: Array<MozillaAst | null>
   regex?: any
   raw?: any
   declaration?: MozillaAst
   source?: MozillaAst | null
   method?: boolean
-  consequent?: MozillaAst[] | MozillaAst
+  consequent?: Array<MozillaAst | null> | MozillaAst
   type: string
-  body?: MozillaAst | MozillaAst[]
-  elements?: MozillaAst[]
-  properties?: MozillaAst[]
+  body?: MozillaAst | Array<MozillaAst | null>
+  elements?: Array<MozillaAst | null>
+  properties?: Array<MozillaAst | null>
   left?: MozillaAst
   right?: MozillaAst
   argument?: MozillaAst
-  expressions?: MozillaAst[]
+  expressions?: Array<MozillaAst | null>
   value?: any
-  quasis?: MozillaAst[]
+  quasis?: Array<MozillaAst | null>
   quasi?: MozillaAst
   tag?: MozillaAst
   id?: MozillaAst | null
@@ -215,7 +215,7 @@ export interface MozillaAst {
   generator?: boolean
   async?: boolean
   expression?: MozillaAst | null
-  handlers?: MozillaAst[]
+  handlers?: Array<MozillaAst | null>
   guardedHandlers?: any[]
   block?: MozillaAst
   key?: MozillaAst
@@ -231,11 +231,11 @@ export interface MozillaAst {
 }
 
 export interface MozillaAstArrayPattern extends MozillaAst {
-  elements: MozillaAst[]
+  elements: Array<MozillaAst | null>
 }
 
 export interface MozillaAstArrayExpression extends MozillaAst {
-  elements: MozillaAst[]
+  elements: Array<MozillaAst | null>
 }
 
 export interface MozillaAstObjectPattern extends MozillaAst {
@@ -247,11 +247,11 @@ export interface MozillaAstObjectExpression extends MozillaAst {
 }
 
 export interface MozillaAstTemplateLiteral extends MozillaAst {
-  expressions: MozillaAst[]
+  expressions: Array<MozillaAst | null>
 }
 
 export interface MozillaAstSequenceExpression extends MozillaAst {
-  expressions: MozillaAst[]
+  expressions: Array<MozillaAst | null>
 }
 
 export interface MozillaAstProperty extends MozillaAst {
@@ -267,7 +267,7 @@ export interface MozillaAstFieldDefinition extends MozillaAst {
 }
 
 export interface MozillaAstFunctionDeclaration extends MozillaAst {
-  params: MozillaAst[]
+  params: Array<MozillaAst | null>
 }
 
 export interface MozillaAstFunctionExpression extends MozillaAst {
@@ -275,7 +275,7 @@ export interface MozillaAstFunctionExpression extends MozillaAst {
 }
 
 export interface MozillaAstArrowFunctionExpression extends MozillaAst {
-  params: MozillaAst[]
+  params: Array<MozillaAst | null>
 }
 
 export interface MozillaAstMemberExpression extends MozillaAst {
@@ -283,7 +283,7 @@ export interface MozillaAstMemberExpression extends MozillaAst {
 }
 
 export interface MozillaAstVariableDeclaration extends MozillaAst {
-  declarations: MozillaAst[]
+  declarations: Array<MozillaAst | null>
 }
 
 export interface MozillaAstImportDeclaration extends MozillaAst {
@@ -296,13 +296,13 @@ export interface MozillaAstMetaProperty extends MozillaAst {
 }
 
 export interface MozillaAstSwitchStatement extends MozillaAst {
-  cases: MozillaAst[]
+  cases: Array<MozillaAst | null>
 }
 
 export interface MozillaAstNewExpression extends MozillaAst {
-  arguments: MozillaAst[]
+  arguments: Array<MozillaAst | null>
 }
 
 export interface MozillaAstCallExpression extends MozillaAst {
-  arguments: MozillaAst[]
+  arguments: Array<MozillaAst | null>
 }

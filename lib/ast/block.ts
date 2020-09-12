@@ -277,7 +277,7 @@ export default class AST_Block extends AST_Statement {
       })
     }
 
-    const side_effects_external = (node: AST_Node, lhs?: boolean): boolean => {
+    const side_effects_external = (node: AST_Node, lhs: boolean = false): boolean => {
       if (is_ast_assign(node)) return side_effects_external(node.left, true)
       if (is_ast_unary(node)) return side_effects_external(node.expression, true)
       if (is_ast_var_def(node)) return !!node.value && side_effects_external(node.value)
@@ -601,7 +601,7 @@ export default class AST_Block extends AST_Statement {
       hit_stack.pop()
     }
 
-    function find_stop (node: AST_Node, level: number, write_only?: boolean): AST_Node | null {
+    function find_stop (node: AST_Node, level: number, write_only: boolean = false): AST_Node | null {
       const parent = scanner.parent(level)
       if (is_ast_assign(parent)) {
         if (write_only && !(is_ast_prop_access(parent.left) || lvalues.has((parent.left as any).name))) {

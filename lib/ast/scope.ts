@@ -846,7 +846,7 @@ export default class AST_Scope extends AST_Block {
     return def
   }
 
-  def_variable (symbol: any, init?: boolean) {
+  def_variable (symbol: any, init?: any) {
     let def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
@@ -873,7 +873,7 @@ export default class AST_Scope extends AST_Block {
     return self
   }
 
-  clone (deep?: boolean) {
+  clone (deep: boolean = false) {
     const node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)

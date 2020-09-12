@@ -394,7 +394,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   function peek () { return get_full_char(S.text, S.pos) }
 
-  function next (signal_eof?: boolean, in_string?: boolean) {
+  function next (signal_eof?: boolean, in_string: boolean = false) {
     let ch = get_full_char(S.text, S.pos++)
     if (signal_eof && !ch) { throw EX_EOF }
     if (NEWLINE_CHARS.has(ch)) {
@@ -447,7 +447,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   let prev_was_dot = false
   let previous_token: any = null
-  function token (type: string, value?: string | number | object, is_comment?: boolean) {
+  function token (type: string, value?: string | number | object, is_comment: boolean = false) {
     S.regex_allowed = ((type == 'operator' && !UNARY_POSTFIX.has(value as string)) ||
                            (type == 'keyword' && KEYWORDS_BEFORE_EXPRESSION.has(value as string)) ||
                            (type == 'punc' && PUNC_BEFORE_EXPRESSION.has(value as string))) ||
@@ -549,7 +549,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
     return ch >= '0' && ch <= '7'
   }
 
-  function read_escaped_char (in_string: boolean, strict_hex: boolean, template_string?: boolean) {
+  function read_escaped_char (in_string: boolean, strict_hex: boolean, template_string: boolean = false) {
     const ch = next(true, in_string)
     switch (ch.charCodeAt(0)) {
       case 110 : return '\n'
@@ -1083,7 +1083,7 @@ export function parse ($TEXT: string, opt?: any) {
     return S.in_async === S.in_function
   }
 
-  function semicolon (optional?: boolean) {
+  function semicolon (optional: boolean = false) {
     if (is('punc', ';')) next()
     else if (!optional && !can_insert_semicolon()) unexpected()
   }
@@ -1471,7 +1471,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const function_ = function (CTOR: typeof AST_Defun | typeof AST_Function, is_generator_property: boolean, is_async: boolean, is_export_default?: boolean) {
+  const function_ = function (CTOR: typeof AST_Defun | typeof AST_Function, is_generator_property: boolean, is_async: boolean, is_export_default: boolean = false) {
     const in_statement = CTOR === AST_Defun
     const is_generator = is('operator', '*')
     if (is_generator) {
@@ -2043,7 +2043,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  const var_ = function (no_in?: boolean) {
+  const var_ = function (no_in: boolean = false) {
     return new AST_Var({
       start: prev(),
       definitions: vardefs(no_in, 'var'),
@@ -2051,7 +2051,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const let_ = function (no_in?: boolean) {
+  const let_ = function (no_in: boolean = false) {
     return new AST_Let({
       start: prev(),
       definitions: vardefs(no_in, 'let'),
@@ -2059,7 +2059,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  const const_ = function (no_in?: boolean) {
+  const const_ = function (no_in: boolean = false) {
     return new AST_Const({
       start: prev(),
       definitions: vardefs(no_in, 'const'),
@@ -2269,7 +2269,7 @@ export function parse ($TEXT: string, opt?: any) {
     })
   }
 
-  function expr_list (closing: string, allow_trailing_comma: boolean, allow_empty?: boolean) {
+  function expr_list (closing: string, allow_trailing_comma: boolean, allow_empty: boolean = false) {
     let first = true; const a: any[] = []
     while (!is('punc', closing)) {
       if (first) first = false; else expect(',')
@@ -2410,7 +2410,7 @@ export function parse ($TEXT: string, opt?: any) {
     } as any)
   }
 
-  function concise_method_or_getset (name: any, start: AST_Token, is_class?: boolean) {
+  function concise_method_or_getset (name: any, start: AST_Token, is_class: boolean = false) {
     const get_method_name_ast = function (name: any, start: AST_Token) {
       if (typeof name === 'string' || typeof name === 'number') {
         return new AST_SymbolMethod({
@@ -2798,7 +2798,7 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  function as_symbol (type: typeof AST_Symbol, noerror?: boolean): AST_Symbol {
+  function as_symbol (type: typeof AST_Symbol, noerror: boolean = false): AST_Symbol {
     if (!is('name')) {
       if (!noerror) croak('Name expected')
       return null as any
@@ -2900,7 +2900,7 @@ export function parse ($TEXT: string, opt?: any) {
     return args
   }
 
-  const maybe_unary = function (allow_calls: boolean, allow_arrows?: boolean) {
+  const maybe_unary = function (allow_calls: boolean, allow_arrows: boolean = false) {
     const start = S.token
     if (start.type == 'name' && start.value == 'await') {
       if (is_in_async()) {
@@ -3067,7 +3067,7 @@ export function parse ($TEXT: string, opt?: any) {
     return left
   }
 
-  const expression = function (commas?: boolean, no_in?: boolean) {
+  const expression = function (commas?: boolean, no_in: boolean = false) {
     const start = S.token
     const exprs: any[] = []
     while (true) {

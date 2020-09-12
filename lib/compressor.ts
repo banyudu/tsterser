@@ -64,7 +64,7 @@ export default class Compressor extends TreeWalker {
   sequences_limit: number
   warnings_produced: AnyObject
   evaluated_regexps: Map<any, any>
-  constructor (options: any, false_by_default?: boolean) {
+  constructor (options: any, false_by_default: boolean = false) {
     super()
     if (options.defaults !== undefined && !options.defaults) false_by_default = true
     this.options = defaults(options, {

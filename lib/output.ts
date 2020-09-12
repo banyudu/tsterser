@@ -118,7 +118,7 @@ export class OutputStream {
     }
   }
 
-  indent (half?: boolean) {
+  indent (half: boolean = false) {
     if (this.options.beautify) {
       this.print(this._make_indent(half ? 0.5 : 0))
     }
@@ -200,7 +200,7 @@ export class OutputStream {
     }
   }
 
-  to_utf8 (str: string, identifier?: boolean) {
+  to_utf8 (str: string, identifier: boolean = false) {
     if (this.options.ascii_only) {
       if (this.options.ecma as number >= 2015) {
         str = str.replace(/[\ud800-\udbff][\udc00-\udfff]/g, (ch) => {
@@ -228,7 +228,7 @@ export class OutputStream {
     }
   }
 
-  append_comments (node: AST_Node, tail?: boolean) {
+  append_comments (node: AST_Node, tail: boolean = false) {
     if (!this.readonly && this._comment_filter !== (() => false)) {
       const self = this
       const token = node.end
@@ -306,7 +306,7 @@ export class OutputStream {
     this.print(';')
   }
 
-  print_string (str: string, quote?: string, escape_directive?: boolean) {
+  print_string (str: string, quote?: string, escape_directive: boolean = false) {
     const encoded = this.encode_string(str, quote)
     if (escape_directive && !encoded.includes('\\')) {
     // Insert semicolons to break directive prologue

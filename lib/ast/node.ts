@@ -74,7 +74,7 @@ export default class AST_Node extends AST {
     output.print('}')
   }
 
-  print_braced (output: OutputStream, allow_directives?: boolean) {
+  print_braced (output: OutputStream, allow_directives: boolean = false) {
     if ((this.body as any[]).length > 0) {
       output.with_block(() => {
         display_body(this.body, false, output, !!allow_directives)
@@ -225,7 +225,7 @@ export default class AST_Node extends AST {
   }
 
   is_block_scope () { return false }
-  _clone (deep?: boolean) {
+  _clone (deep: boolean = false) {
     if (deep) {
       const self = this.clone()
       return self.transform(new TreeTransformer(function (node: AST_Node) {
@@ -237,7 +237,7 @@ export default class AST_Node extends AST {
     return new this.CTOR(this)
   }
 
-  clone (deep?: boolean): AST_Node {
+  clone (deep: boolean = false): AST_Node {
     return this._clone(deep)
   }
 
@@ -266,7 +266,7 @@ export default class AST_Node extends AST {
     return size
   }
 
-  transform (tw: TreeTransformer, in_list?: boolean) {
+  transform (tw: TreeTransformer, in_list: boolean = false) {
     let transformed: any | undefined
     tw.push(this)
     if (tw.before) transformed = tw.before(this, (_node: AST_Node, tw: TreeTransformer) => this._transform(tw), in_list)
@@ -308,7 +308,7 @@ export default class AST_Node extends AST {
     return true
   }
 
-  print (output: OutputStream, force_parens?: boolean) {
+  print (output: OutputStream, force_parens: boolean = false) {
     return this._print(output, force_parens)
   }
 
@@ -318,7 +318,7 @@ export default class AST_Node extends AST {
     return output.get()
   }
 
-  _print (output: OutputStream, force_parens?: boolean) {
+  _print (output: OutputStream, force_parens: boolean = false) {
     const generator = this._codegen.bind(this)
     if (is_ast_scope(this)) {
       output.active_scope = this

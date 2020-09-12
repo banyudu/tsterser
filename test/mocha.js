@@ -14,7 +14,8 @@ var Mocha = process.env.CI || process.argv.length > 2
     : require("mochallel");
 
 var mocha = new Mocha({
-    timeout: 5000
+    timeout: 5000,
+    bail: process.env.TEST_FAIL_FAST
 });
 var testDir = path.join(__dirname, "mocha");
 

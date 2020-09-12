@@ -335,7 +335,7 @@ export class DefaultsError extends Error {
   }
 }
 
-export function defaults (args: any, defs: AnyObject, croak?: boolean): typeof args {
+export function defaults (args: any, defs: AnyObject, croak: boolean = false): typeof args {
   if (args === true) { args = {} }
   const ret = args || {}
   if (croak) {
@@ -361,7 +361,7 @@ export function defaults (args: any, defs: AnyObject, croak?: boolean): typeof a
 
 export const MAP = (function () {
   const skip = {}
-  function MAP (a: any[] | AnyObject, f: Function, backwards?: boolean) {
+  function MAP (a: any[] | AnyObject, f: Function, backwards: boolean = false) {
     const ret: any[] = []; const top: any[] = []; let i: string | number
     function doit () {
       let val: any = f((a as any)[i], i)
