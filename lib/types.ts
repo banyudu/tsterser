@@ -223,7 +223,7 @@ export interface MozillaAst {
   kind?: string
   computed?: boolean
   name?: any
-  finalizer?: MozillaAst
+  finalizer?: MozillaAst | null
   property?: MozillaAst
   object?: MozillaAst
   static?: boolean

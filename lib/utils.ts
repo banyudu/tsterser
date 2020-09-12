@@ -1363,8 +1363,8 @@ export function best_of_string (a: string[]) {
   return best
 }
 
-export function make_sequence (orig: AST_Node, expressions: Array<AST_Node | undefined>) {
-  if (expressions.length == 1) return expressions[0]
+export function make_sequence (orig: AST_Node, expressions: Array<AST_Node | undefined>): AST_Node {
+  if (expressions.length == 1) return expressions[0] as any
   if (expressions.length == 0) throw new Error('trying to create a sequence with length zero!')
   return make_node('AST_Sequence', orig, {
     expressions: expressions.reduce(merge_sequence, [])
@@ -2097,7 +2097,7 @@ export function is_iife_call (node: AST_Node): boolean {
   // Used to determine whether the node can benefit from negation.
   // Not the case with arrow functions (you need an extra set of parens).
   if (node.TYPE != 'Call') return false
-  return is_ast_function(node.expression) || is_iife_call(node.expression)
+  return is_ast_function(node.expression) || (node.expression != null && is_iife_call(node.expression))
 }
 
 export function is_object (node: AST_Node) {
@@ -2279,7 +2279,7 @@ export function is_reachable (self: AST_Node, defs: SymbolDef[]) {
 export function left_is_object (node: AST_Node): boolean {
   if (is_ast_object(node)) return true
   if (is_ast_sequence(node)) return left_is_object(node.expressions[0])
-  if (node.TYPE === 'Call') return left_is_object(node.expression)
+  if (node.TYPE === 'Call') return node.expression != null && left_is_object(node.expression)
   if (is_ast_prefixed_template_string(node)) return left_is_object(node.prefix)
   if (is_ast_dot(node) || is_ast_sub(node)) return left_is_object(node.expression)
   if (is_ast_conditional(node)) return left_is_object(node.condition)
@@ -2311,7 +2311,7 @@ export function To_Moz_FunctionExpression (M: AST_Lambda, parent: any): MozillaA
     ? parent.is_generator : M.is_generator
   return {
     type: 'FunctionExpression',
-    id: to_moz(M.name),
+    id: M.name ? to_moz(M.name) : null,
     params: M.argnames.map(to_moz),
     generator: is_generator,
     async: M.async,

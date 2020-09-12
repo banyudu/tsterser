@@ -80,9 +80,9 @@ export default class AST_Unary extends AST_Node {
       if (is_ast_sequence(this.expression)) {
         const x = this.expression.expressions.slice()
         const e = this.clone()
-        e.expression = x.pop()
+        e.expression = x.pop() ?? null
         x.push(e)
-        return make_sequence(this, x).optimize(compressor)
+        return make_sequence(this, x)?.optimize(compressor)
       }
     }
     return this

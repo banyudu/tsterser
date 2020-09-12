@@ -32,13 +32,13 @@ export default class AST_Try extends AST_Block {
 
   may_throw (compressor: Compressor) {
     return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
-              this.bfinally?.may_throw(compressor)
+              !!this.bfinally?.may_throw(compressor)
   }
 
   has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.body, compressor) ||
-              this.bcatch?.has_side_effects(compressor) ||
-              this.bfinally?.has_side_effects(compressor)
+              !!this.bcatch?.has_side_effects(compressor) ||
+              !!this.bfinally?.has_side_effects(compressor)
   }
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
@@ -91,7 +91,7 @@ export default class AST_Try extends AST_Block {
       block: to_moz_block(this),
       handler: to_moz(this.bcatch),
       guardedHandlers: [],
-      finalizer: to_moz(this.bfinally)
+      finalizer: this.bfinally ? to_moz(this.bfinally) : null
     }
   }
 

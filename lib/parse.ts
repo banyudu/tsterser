@@ -2930,7 +2930,7 @@ export function parse ($TEXT: string, opt?: any) {
   }
 
   function make_unary (CTOR: typeof AST_Unary, token: AST_Token, expr: AST_Node) {
-    const op = token.value
+    const op = token.value ?? ''
     switch (op) {
       case '++':
       case '--':
@@ -3002,16 +3002,18 @@ export function parse ($TEXT: string, opt?: any) {
     } else if (is_ast_array(node)) {
       const names: any[] = []
 
-      for (let i = 0; i < node.elements.length; i++) {
+      const elements = node.elements
+      for (let i = 0; i < elements.length; i++) {
         // Only allow expansion as last element
-        if (is_ast_expansion(node.elements[i])) {
-          if (i + 1 !== node.elements.length) {
-            token_error(node.elements[i].start, 'Spread must the be last element in destructuring array')
+        const element = elements[i]
+        if (is_ast_expansion(element)) {
+          if (i + 1 !== elements.length) {
+            token_error(elements[i].start, 'Spread must the be last element in destructuring array')
           }
-          node.elements[i].expression = to_destructuring(node.elements[i].expression)
+          element.expression = to_destructuring(element.expression)
         }
 
-        names.push(to_destructuring(node.elements[i]))
+        names.push(to_destructuring(element))
       }
 
       node = new AST_Destructuring({

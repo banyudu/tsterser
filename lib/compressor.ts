@@ -140,7 +140,7 @@ export default class Compressor extends TreeWalker {
       this.pure_funcs = pure_funcs
     } else {
       this.pure_funcs = pure_funcs ? function (node: AST_Node) {
-        return !pure_funcs?.includes(node.expression.print_to_string())
+        return !pure_funcs?.includes(node.expression?.print_to_string())
       } : () => true
     }
     let top_retain = this.options.top_retain
