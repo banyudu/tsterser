@@ -36,7 +36,7 @@ export default class AST_Yield extends AST_Node {
   _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'YieldExpression',
-      argument: to_moz(this.expression),
+      argument: this.expression ? to_moz(this.expression) : null,
       delegate: this.is_star
     }
   }
@@ -56,7 +56,7 @@ export default class AST_Yield extends AST_Node {
     // (yield x).foo
     // (yield x)['foo']
     if (p?._needs_parens(this)) { return true }
-    return undefined
+    return false
   }
 
   _codegen (output: OutputStream) {

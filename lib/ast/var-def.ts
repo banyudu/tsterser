@@ -8,6 +8,7 @@ import Compressor from '../compressor'
 import { suppress, safe_to_assign, mark, to_moz, parenthesize_for_noin, is_ast_destructuring, is_ast_for, is_ast_for_in } from '../utils'
 import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
+import { MozillaAst } from '../types'
 
 export default class AST_VarDef extends AST_Node {
   name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
@@ -72,11 +73,11 @@ export default class AST_VarDef extends AST_Node {
     if (this.value) this.value = this.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclarator',
       id: to_moz(this.name),
-      init: to_moz(this.value)
+      init: this.value ? to_moz(this.value) : null
     }
   }
 
@@ -108,5 +109,5 @@ export default class AST_VarDef extends AST_Node {
 
 export interface AST_VarDef_Props extends AST_Node_Props {
   name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
-  value: AST_Node | undefined
+  value: AST_Node | null
 }

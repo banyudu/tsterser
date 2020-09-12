@@ -13,7 +13,7 @@ export default class AST_Statement extends AST_Node {
   }
 
   aborts (): any { return null }
-  negate (): any {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     throw new Error('Cannot negate a statement')
   }
 

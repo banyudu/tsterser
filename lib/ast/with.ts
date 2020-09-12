@@ -56,5 +56,5 @@ export default class AST_With extends AST_StatementWithBody {
 }
 
 export interface AST_With_Props extends AST_StatementWithBody_Props {
-  expression?: AST_Node | undefined
+  expression: AST_Node
 }

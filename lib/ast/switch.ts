@@ -56,12 +56,12 @@ export default class AST_Switch extends AST_Block {
           eliminate_branch(branch, body[body.length - 1])
         }
       } else if (!(is_ast_node(value))) {
-        let exp = branch.expression.evaluate(compressor)
+        let exp = branch.expression?.evaluate(compressor)
         if (!(is_ast_node(exp)) && exp !== value) {
           eliminate_branch(branch, body[body.length - 1])
           continue
         }
-        if (is_ast_node(exp)) exp = branch.expression.tail_node().evaluate(compressor)
+        if (is_ast_node(exp)) exp = branch.expression?.tail_node().evaluate(compressor)
         if (exp === value) {
           exact_match = branch
           if (default_branch) {

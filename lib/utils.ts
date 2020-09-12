@@ -1516,7 +1516,7 @@ export function do_list (list: any[], tw: TreeTransformer) {
 // we shouldn't compress (1,func)(something) to
 // func(something) because that changes the meaning of
 // the func (becomes lexical instead of global).
-export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AST_Node | undefined) {
+export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AST_Node) {
   if (is_ast_unary_prefix(parent) && parent.operator == 'delete' ||
         is_ast_call(parent) && parent.expression === orig &&
             (is_ast_prop_access(val) || is_ast_symbol_ref(val) && val.name == 'eval')) {

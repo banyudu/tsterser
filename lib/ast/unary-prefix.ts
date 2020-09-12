@@ -114,7 +114,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this
   }
 
-  negate (): AST_Node {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     if (this.operator == '!') { return this.expression }
     return basic_negation(this)
   }

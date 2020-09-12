@@ -167,7 +167,7 @@ export default class AST_Node extends AST {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node | null {
     return this
   }
 

@@ -35,7 +35,7 @@ export default class AST_Function extends AST_Lambda {
     return self
   }
 
-  drop_side_effect_free (): AST_Function { return null }
+  drop_side_effect_free (): AST_Function { return null as any }
 
   _eval (compressor: Compressor) {
     if (compressor.option('unsafe')) {
@@ -49,7 +49,7 @@ export default class AST_Function extends AST_Lambda {
     return this
   }
 
-  negate (): AST_Node {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 

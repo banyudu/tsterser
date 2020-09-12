@@ -32,7 +32,7 @@ export default class AST_BigInt extends AST_Constant {
         return true
       }
     }
-    return undefined
+    return false
   }
 
   static documentation = 'A big int literal'

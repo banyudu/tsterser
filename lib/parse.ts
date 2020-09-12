@@ -1527,7 +1527,7 @@ export function parse ($TEXT: string, opt?: any) {
                 }
                 break
               default:
-                if (RESERVED_WORDS.has(token.value)) {
+                if (token.value && RESERVED_WORDS.has(token.value)) {
                   unexpected()
                 }
             }
@@ -1622,7 +1622,7 @@ export function parse ($TEXT: string, opt?: any) {
     return param
   }
 
-  function binding_element (used_parameters: any, symbol_type: any) {
+  function binding_element (used_parameters: any, symbol_type: any): AST_Symbol | AST_Destructuring {
     const elements: any[] = []
     let first = true
     let is_expand = false
@@ -1791,6 +1791,7 @@ export function parse ($TEXT: string, opt?: any) {
     } else {
       croak('Invalid function parameter')
     }
+    return undefined as any
   }
 
   function params_or_seq_ (allow_arrows: boolean, maybe_sequence: boolean) {
@@ -2024,7 +2025,7 @@ export function parse ($TEXT: string, opt?: any) {
           value: is('operator', '=') ? (expect_token('operator', '='), expression(false, no_in)) : null,
           end: prev()
         })
-      } else {
+      } else if (sym_type) {
         def = new AST_VarDef({
           start: S.token,
           name: as_symbol(sym_type),
@@ -2230,6 +2231,7 @@ export function parse ($TEXT: string, opt?: any) {
       return subscripts(as_atom_node() as any, allow_calls)
     }
     unexpected()
+    return undefined as any
   }
 
   function template_string (_arg: any) {
@@ -2592,9 +2594,9 @@ export function parse ($TEXT: string, opt?: any) {
       } else {
         foreign_name = make_symbol(foreign_type)
       }
-    } else if (is_import) {
+    } else if (is_import && foreign_name) {
       name = new type(foreign_name)
-    } else {
+    } else if (!is_import && name) {
       foreign_name = new foreign_type(name)
     }
 

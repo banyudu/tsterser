@@ -75,5 +75,5 @@ export default class AST_RegExp extends AST_Constant {
 }
 
 export interface AST_RegExp_Props extends AST_Constant_Props {
-  value?: RegExp | undefined
+  value: RegExp
 }

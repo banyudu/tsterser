@@ -20,7 +20,7 @@ export default class AST_Symbol extends AST_Node {
 
   mark_enclosed () {
     const def = this.definition()
-    let s = this.scope
+    let s: AST_Scope | undefined = this.scope
     while (s) {
       push_uniq(s.enclosed, def)
       if (s === def.scope) break

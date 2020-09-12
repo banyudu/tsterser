@@ -86,7 +86,7 @@ export default class AST_Sequence extends AST_Node {
 
   negate (compressor: Compressor): AST_Node {
     const expressions = this.expressions.slice()
-    expressions.push(expressions.pop().negate(compressor))
+    expressions.push(expressions.pop()?.negate(compressor) as any)
     return make_sequence(this, expressions)
   }
 

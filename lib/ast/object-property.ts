@@ -42,7 +42,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return this.lift_key(compressor)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node {
+  drop_side_effect_free (compressor: Compressor, first_in_statement?: Function | boolean): AST_Node | null {
     const key = is_ast_object_key_val(this) && is_ast_node(this.key) && this.key.drop_side_effect_free(compressor, first_in_statement)
     const value = this.value.drop_side_effect_free(compressor, first_in_statement)
     if (key && value) {

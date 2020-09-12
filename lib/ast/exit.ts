@@ -4,16 +4,14 @@ import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Exit extends AST_Jump {
-  value: AST_Node | undefined
+  value: AST_Node | undefined | null
 
   _prepend_comments_check (node: AST_Node) {
     return true
   }
 
   walkInner () {
-    const result: AST_Node[] = []
-    result.push(this.value)
-    return result
+    return this.value ? [this.value] : []
   }
 
   _children_backwards (push: Function) {

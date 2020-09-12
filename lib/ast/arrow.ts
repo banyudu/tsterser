@@ -8,11 +8,12 @@ import {
   left_is_object,
   to_moz, is_ast_prop_access, is_ast_binary, is_ast_assign, is_ast_unary, is_ast_call, is_ast_symbol, is_ast_return
 } from '../utils'
-import { AST_Scope } from '.'
+import AST_Scope from './scope'
+import Compressor from '../compressor'
 
 export default class AST_Arrow extends AST_Lambda {
   drop_side_effect_free (): any { return null }
-  negate (): AST_Node {
+  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 

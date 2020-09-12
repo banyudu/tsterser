@@ -56,7 +56,7 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
   constructor (args: AST_ObjectGetter_Props) {
     super(args)
     this.quote = args.quote
-    this.static = args.static
+    this.static = args.static ?? false
   }
 }
 

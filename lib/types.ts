@@ -182,7 +182,7 @@ export interface MozillaAst {
   update?: MozillaAst
   cases?: Array<MozillaAst | null>
   discriminant?: MozillaAst
-  init?: MozillaAst
+  init?: MozillaAst | null
   label?: MozillaAst
   exported?: MozillaAst
   alternate?: MozillaAst
