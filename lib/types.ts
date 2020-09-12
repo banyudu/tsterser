@@ -195,7 +195,7 @@ export interface MozillaAst {
   regex?: any
   raw?: any
   declaration?: MozillaAst
-  source?: MozillaAst
+  source?: MozillaAst | null
   method?: boolean
   consequent?: MozillaAst[] | MozillaAst
   type: string
@@ -211,7 +211,7 @@ export interface MozillaAst {
   quasi?: MozillaAst
   tag?: MozillaAst
   id?: MozillaAst | null
-  params?: MozillaAst[]
+  params?: Array<MozillaAst | null>
   generator?: boolean
   async?: boolean
   expression?: MozillaAst | null

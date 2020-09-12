@@ -80,7 +80,7 @@ export default class AST_Sequence extends AST_Node {
     return anyMayThrow(this.expressions, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.expressions, compressor)
   }
 

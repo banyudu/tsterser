@@ -136,7 +136,7 @@ export default class AST_Block extends AST_Statement {
     return anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.body, compressor)
   }
 

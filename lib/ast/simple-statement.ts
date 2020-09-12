@@ -32,7 +32,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 

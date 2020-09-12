@@ -65,7 +65,7 @@ export default class AST_Object extends AST_Node {
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.properties, compressor)
   }
 

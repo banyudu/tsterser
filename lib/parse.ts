@@ -1831,7 +1831,7 @@ export function parse ($TEXT: string, opt?: any) {
     return a
   }
 
-  function _function_body (block: boolean, generator: boolean, is_async: boolean, name?: AST_Symbol, args?: AST_Symbol[]) {
+  function _function_body (block: boolean, generator: boolean, is_async: boolean, name?: AST_Symbol | null, args?: AST_Symbol[]) {
     const loop = S.in_loop
     const labels = S.labels
     const current_generator = S.in_generator
@@ -2798,10 +2798,10 @@ export function parse ($TEXT: string, opt?: any) {
     }
   }
 
-  function as_symbol (type: typeof AST_Symbol | null, noerror?: boolean) {
+  function as_symbol (type: typeof AST_Symbol, noerror?: boolean): AST_Symbol {
     if (!is('name')) {
       if (!noerror) croak('Name expected')
-      return null
+      return null as any
     }
     const sym = _make_symbol(type)
     _verify_symbol(sym)

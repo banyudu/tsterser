@@ -172,7 +172,7 @@ export default class AST_Node extends AST {
   }
 
   may_throw (compressor: Compressor) { return true }
-  has_side_effects (compressor: Compressor) { return true }
+  has_side_effects (compressor?: Compressor) { return true }
   _eval (compressor?: Compressor, depth?: number): any { return this }
   is_constant_expression (scope?: AST_Scope) { return false }
   negate (compressor: Compressor, first_in_statement?: Function | boolean) {

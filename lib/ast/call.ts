@@ -793,7 +793,7 @@ export default class AST_Call extends AST_Node {
           anyMayThrow(this.expression.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     if (!this.is_expr_pure(compressor) &&
           (!this.expression.is_call_pure(compressor) ||
               this.expression.has_side_effects(compressor))) {

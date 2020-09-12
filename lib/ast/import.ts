@@ -9,7 +9,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Import extends AST_Node {
-  imported_name: AST_SymbolImport
+  imported_name: AST_SymbolImport | null
   module_name: AST_String
   imported_names: AST_NameMapping[]
 
@@ -150,7 +150,7 @@ export default class AST_Import extends AST_Node {
 }
 
 export interface AST_Import_Props extends AST_Node_Props {
-  imported_name?: AST_SymbolImport | undefined
-  imported_names?: AST_NameMapping[] | undefined
-  module_name?: AST_String | undefined
+  imported_name: AST_SymbolImport | null
+  imported_names: AST_NameMapping[] | null
+  module_name: AST_String | null
 }

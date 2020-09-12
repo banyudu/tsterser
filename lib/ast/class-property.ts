@@ -40,7 +40,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     )
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return (
       this.computed_key() && this.key.has_side_effects(compressor) ||
               this.static && this.value && this.value.has_side_effects(compressor)

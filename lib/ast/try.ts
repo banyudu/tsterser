@@ -35,7 +35,7 @@ export default class AST_Try extends AST_Block {
               this.bfinally?.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.body, compressor) ||
               this.bcatch?.has_side_effects(compressor) ||
               this.bfinally?.has_side_effects(compressor)

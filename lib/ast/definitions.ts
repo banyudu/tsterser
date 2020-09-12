@@ -20,7 +20,7 @@ export default class AST_Definitions extends AST_Statement {
     return anyMayThrow(this.definitions, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return anySideEffect(this.definitions, compressor)
   }
 

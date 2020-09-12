@@ -3,7 +3,7 @@ import Compressor from '../compressor'
 
 export default class AST_SymbolClassProperty extends AST_Symbol {
   may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor: Compressor) { return false }
+  has_side_effects (compressor?: Compressor) { return false }
   // TODO take propmangle into account
   _size (): number {
     return this.name.length

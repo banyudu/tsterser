@@ -186,7 +186,7 @@ export default class AST_Sub extends AST_PropAccess {
           property.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     const property = this.property
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||

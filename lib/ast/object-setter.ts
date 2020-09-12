@@ -23,7 +23,7 @@ export default class AST_ObjectSetter extends AST_ObjectMethodProperty {
     return this.computed_key() && this.key.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   }
 

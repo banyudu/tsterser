@@ -568,7 +568,7 @@ export default class AST_Binary extends AST_Node {
           this.right.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return this.left.has_side_effects(compressor) ||
           this.right.has_side_effects(compressor)
   }

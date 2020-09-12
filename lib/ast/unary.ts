@@ -33,7 +33,7 @@ export default class AST_Unary extends AST_Node {
     return this.expression.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return unary_side_effects.has(this.operator) ||
           this.expression.has_side_effects(compressor)
   }

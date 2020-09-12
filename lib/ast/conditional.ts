@@ -329,7 +329,7 @@ export default class AST_Conditional extends AST_Node {
           this.alternative.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (compressor?: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.consequent.has_side_effects(compressor) ||
           this.alternative.has_side_effects(compressor)

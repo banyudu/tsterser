@@ -461,7 +461,7 @@ export class OutputStream {
     }
 
     if (this._mapping_token) {
-      this._mappings.push({
+      this._mappings?.push({
         token: this._mapping_token,
         name: this._mapping_name,
         line: this._current_line,

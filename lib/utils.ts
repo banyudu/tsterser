@@ -616,9 +616,9 @@ export function set_moz_loc (mynode: AST_Node, moznode: MozillaAst): MozillaAst 
   return moznode
 }
 
-export let FROM_MOZ_STACK: Array<MozillaAst | undefined> = []
+export let FROM_MOZ_STACK: Array<MozillaAst | undefined | null> = []
 
-export function from_moz (node?: MozillaAst) {
+export function from_moz (node?: MozillaAst | null) {
   FROM_MOZ_STACK.push(node)
   const ret = node != null ? MOZ_TO_ME[node.type](node) : null
   FROM_MOZ_STACK.pop()
@@ -1267,7 +1267,7 @@ export function To_Moz_Unary (M: MozillaAst) {
   return new (prefix ? AST_UnaryPrefix : AST_UnaryPostfix)({
     start: my_start_token(M),
     end: my_end_token(M),
-    operator: M.operator,
+    operator: M.operator as any,
     expression: from_moz(M.argument)
   })
 }
@@ -1426,9 +1426,7 @@ export function best_of_expression (ast1: AST_Node, ast2: AST_Node) {
 export function is_undefined (node: AST_Node, compressor?: Compressor) {
   return has_flag(node, UNDEFINED) ||
         is_ast_undefined(node) ||
-        is_ast_unary_prefix(node) &&
-            node.operator == 'void' &&
-            !node.expression.has_side_effects(compressor)
+        is_ast_unary_prefix(node) && node.operator == 'void' && !node.expression.has_side_effects(compressor)
 }
 
 export function force_statement (stat: AST_Node, output: OutputStream) {
@@ -1456,7 +1454,7 @@ export function anyMayThrow (list: any[], compressor: Compressor) {
   return false
 }
 
-export function anySideEffect (list: any[], compressor: Compressor) {
+export function anySideEffect (list: any[], compressor?: Compressor) {
   for (let i = list.length; --i >= 0;) {
     if (list[i].has_side_effects(compressor)) { return true }
   }
@@ -2122,11 +2120,7 @@ export function is_nullish (node: AST_Node): boolean {
   return (
     is_ast_null(node) ||
         is_undefined(node) ||
-        (
-          is_ast_symbol_ref(node) &&
-            is_ast_node((fixed = node.definition?.().fixed)) &&
-            is_nullish(fixed)
-        )
+        (is_ast_symbol_ref(node) && is_ast_node((fixed = node.definition?.().fixed)) && is_nullish(fixed))
   ) as any
 }
 
