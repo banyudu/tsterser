@@ -997,7 +997,7 @@ export default class AST_Block extends AST_Statement {
       const left = prev?.body
       return make_sequence(left, [left, right])?.transform(compressor)
     }
-    let prev: AST_Node | undefined | null
+    let prev: AST_Node | null = null
     for (let i = 0; i < this.body.length; i++) {
       const stat = this.body[i]
       if (prev) {

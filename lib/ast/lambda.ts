@@ -18,7 +18,7 @@ import { MozillaAst } from '../types'
 export default class AST_Lambda extends AST_Scope {
   argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
   uses_arguments: boolean
-  name: AST_SymbolDeclaration | undefined | null
+  name: AST_SymbolDeclaration | null
   is_generator: boolean
   async: boolean
 
@@ -215,7 +215,7 @@ export default class AST_Lambda extends AST_Scope {
 }
 
 export interface AST_Lambda_Props extends AST_Scope_Props {
-  name?: AST_SymbolDeclaration | undefined | null
+  name?: AST_SymbolDeclaration | null
   argnames?: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign> | undefined
   uses_arguments?: boolean | undefined
   is_generator?: boolean | undefined
