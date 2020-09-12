@@ -49,7 +49,7 @@ export function setPrintMangleOptions (val: any) {
 export default class AST_Node extends AST {
   start: AST_Token
   end: AST_Token
-  expression: AST_Node
+  expression: AST_Node | null
   label?: any
   type: string
   left: AST_Node

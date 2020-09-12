@@ -140,11 +140,11 @@ export default class AST_Unary extends AST_Node {
   constructor (args: AST_Unary_Props) {
     super(args)
     this.operator = args.operator
-    this.expression = args.expression
+    this.expression = args.expression as any
   }
 }
 
 export interface AST_Unary_Props extends AST_Node_Props {
   operator: string
-  expression?: AST_Node | undefined
+  expression: AST_Node | null
 }

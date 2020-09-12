@@ -85,8 +85,8 @@ export default function SourceMap (options: SourceMapOptions) {
       name = info.name || name
     }
     generator.addMapping({
-      generated: { line: gen_line + options.dest_line_diff, column: gen_col },
-      original: { line: orig_line + options.orig_line_diff, column: orig_col },
+      generated: { line: gen_line + (options.dest_line_diff ?? NaN), column: gen_col },
+      original: { line: orig_line + (options.orig_line_diff ?? NaN), column: orig_col },
       source: source,
       name: name
     })

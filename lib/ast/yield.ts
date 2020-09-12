@@ -17,9 +17,7 @@ export default class AST_Yield extends AST_Node {
   }
 
   walkInner () {
-    const result: AST_Node[] = []
-    result.push(this.expression)
-    return result
+    return this.expression ? [this.expression] : []
   }
 
   _children_backwards (push: Function) {

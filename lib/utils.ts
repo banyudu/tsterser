@@ -1286,13 +1286,13 @@ export function setFromMozStack (val: MozillaAst[]) {
   FROM_MOZ_STACK = val
 }
 
-export function to_moz (node?: AST_Node | null): MozillaAst | null {
+export function to_moz (node: AST_Node): MozillaAst {
   if (TO_MOZ_STACK === null) { TO_MOZ_STACK = [] }
   TO_MOZ_STACK.push(node)
   const ast = node != null ? node.to_mozilla_ast(TO_MOZ_STACK[TO_MOZ_STACK.length - 2]) : null
   TO_MOZ_STACK.pop()
   if (TO_MOZ_STACK.length === 0) { TO_MOZ_STACK = null }
-  return ast
+  return ast as any
 }
 
 let TO_MOZ_STACK: Array<any | null> | null = null
