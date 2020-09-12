@@ -141,7 +141,7 @@ export default class AST_Switch extends AST_Block {
           anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
   }

@@ -38,7 +38,7 @@ export default class AST_Class extends AST_Scope {
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     if (this.extends?.has_side_effects(compressor)) {
       return true
     }

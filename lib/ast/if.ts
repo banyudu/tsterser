@@ -168,7 +168,7 @@ export default class AST_If extends AST_StatementWithBody {
           this.alternative?.may_throw(compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.body?.has_side_effects(compressor) ||
           this.alternative?.has_side_effects(compressor)

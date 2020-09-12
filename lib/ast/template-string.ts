@@ -77,7 +77,7 @@ export default class AST_TemplateString extends AST_Node {
     return values && make_sequence(this, values)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.segments, compressor)
   }
 

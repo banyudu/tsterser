@@ -203,7 +203,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 

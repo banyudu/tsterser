@@ -2,13 +2,14 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_Exit, { AST_Exit_Props } from './exit'
 import { to_moz } from '../utils'
+import { MozillaAst } from '../types'
 
 export default class AST_Throw extends AST_Exit {
   _size = () => 6
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'ThrowStatement',
-      argument: to_moz(this.value)
+      argument: this.value ? to_moz(this.value) : null
     }
   }
 

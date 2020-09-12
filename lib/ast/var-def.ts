@@ -21,7 +21,7 @@ export default class AST_VarDef extends AST_Node {
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.value as any
   }
 

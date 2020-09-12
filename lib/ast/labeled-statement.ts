@@ -27,7 +27,7 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 

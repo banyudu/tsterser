@@ -35,7 +35,7 @@ export default class AST_Array extends AST_Node {
     return anyMayThrow(this.elements, compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return anySideEffect(this.elements, compressor)
   }
 

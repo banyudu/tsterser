@@ -204,7 +204,7 @@ export interface MozillaAst {
   properties?: Array<MozillaAst | null>
   left?: MozillaAst
   right?: MozillaAst
-  argument?: MozillaAst
+  argument?: MozillaAst | null
   expressions?: Array<MozillaAst | null>
   value?: any
   quasis?: Array<MozillaAst | null>

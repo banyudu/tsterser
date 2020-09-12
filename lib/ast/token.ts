@@ -40,7 +40,7 @@ export default class AST_Token extends AST {
       this.comments_after = args.comments_after ?? []
       this.file = args.file
       this.raw = args.raw
-      this.quote = args.quote
+      this.quote = args.quote ?? ''
       this.end = args.end
     }
   }
@@ -49,17 +49,17 @@ export default class AST_Token extends AST {
 export interface AST_Token_Props {
   type?: string | undefined
   value?: string | undefined
-  line?: number | undefined
-  col?: number | undefined
-  pos?: number | undefined
-  endline?: number | null | undefined
-  endpos?: number | null | undefined
+  line: number
+  col: number
+  pos: number
+  endline: number
+  endpos: number
   nlb?: boolean | undefined
   comments_before?: Comment[] | undefined
   comments_after?: Comment[] | undefined
-  file?: string | undefined
-  raw?: string | undefined
+  file: string
+  raw: string
   quote?: string | undefined
-  end?: any | undefined
-  endcol?: number | null
+  end?: any
+  endcol: number
 }

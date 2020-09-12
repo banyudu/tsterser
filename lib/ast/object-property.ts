@@ -56,7 +56,7 @@ export default class AST_ObjectProperty extends AST_Node {
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects (compressor?: Compressor) {
+  has_side_effects (compressor: Compressor) {
     return (
       this.computed_key() && is_ast_node(this.key) && this.key.has_side_effects(compressor) ||
               this.value.has_side_effects(compressor)

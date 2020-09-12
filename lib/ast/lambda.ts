@@ -33,7 +33,7 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor?: Compressor) { return false }
+  has_side_effects (compressor: Compressor) { return false }
   _eval (compressor: Compressor) { return this }
 
   is_constant_expression (scope: AST_Scope) {
