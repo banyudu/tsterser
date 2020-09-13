@@ -118,7 +118,7 @@ export default class AST_PropAccess extends AST_Node {
         return undefined
       })
     }
-    return undefined
+    return false
   }
 
   static documentation = 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`'

@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ForIn extends AST_IterationStatement {
-  init?: AST_Node | undefined
+  init: AST_Node
   object: AST_Node
   await: boolean
 
@@ -88,6 +88,6 @@ export default class AST_ForIn extends AST_IterationStatement {
 }
 
 export interface AST_ForIn_Props extends AST_IterationStatement_Props {
-  init?: AST_Node | undefined
-  object?: AST_Node | undefined
+  init: AST_Node
+  object: AST_Node
 }

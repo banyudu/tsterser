@@ -33,7 +33,7 @@ export default class AST_New extends AST_Call {
         is_ast_call(p) && p.expression === this)) { // (new foo)(bar)
       return true
     }
-    return undefined
+    return false
   }
 
   _codegen (output: OutputStream) {

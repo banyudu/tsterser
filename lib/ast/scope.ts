@@ -1127,9 +1127,9 @@ export default class AST_Scope extends AST_Block {
           const name = node.name
           const refs = node.thedef.references
           const scope = node.scope.get_defun_scope()
-          const def = scope.find_variable(name) ||
+          const def = scope?.find_variable(name) ||
                         toplevel.globals.get(name) ||
-                        scope.def_variable(node)
+                        scope?.def_variable(node)
           refs.forEach(function (ref: any) {
             ref.thedef = def
             ref.reference()

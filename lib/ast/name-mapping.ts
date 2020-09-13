@@ -74,6 +74,6 @@ export default class AST_NameMapping extends AST_Node {
 }
 
 export interface AST_NameMapping_Props extends AST_Node_Props {
-  foreign_name: AST_SymbolExportForeign|AST_SymbolImportForeign | undefined
-  name: AST_SymbolExport|AST_SymbolImport | undefined
+  foreign_name: AST_SymbolExportForeign | AST_SymbolImportForeign
+  name: AST_SymbolExport | AST_SymbolImport
 }

@@ -27,7 +27,7 @@ export default class AST_Number extends AST_Constant {
         return true
       }
     }
-    return undefined
+    return false
   }
 
   _codegen (output: OutputStream) {

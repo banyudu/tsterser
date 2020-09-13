@@ -402,7 +402,7 @@ export default class AST_Node extends AST {
     const save_stack = FROM_MOZ_STACK
     setFromMozStack([])
     const ast = from_moz(node)
-    setFromMozStack(save_stack)
+    setFromMozStack(save_stack as any)
     return ast
   }
 
@@ -416,8 +416,8 @@ export default class AST_Node extends AST {
 
   constructor (args: AST_Node_Props) {
     super()
-    this.start = args?.start
-    this.end = args?.end
+    this.start = args?.start as any
+    this.end = args?.end as any
   }
 }
 

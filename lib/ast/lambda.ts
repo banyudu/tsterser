@@ -47,7 +47,7 @@ export default class AST_Lambda extends AST_Scope {
     if (this.uses_arguments) {
       descend()
       pop(tw)
-      return
+      return false
     }
     let iife: any
     if (!this.name &&

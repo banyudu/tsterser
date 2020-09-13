@@ -202,7 +202,7 @@ export interface MozillaAst {
   body?: MozillaAst | Array<MozillaAst | null>
   elements?: Array<MozillaAst | null>
   properties?: Array<MozillaAst | null>
-  left?: MozillaAst
+  left?: MozillaAst | null
   right?: MozillaAst
   argument?: MozillaAst | null
   expressions?: Array<MozillaAst | null>
