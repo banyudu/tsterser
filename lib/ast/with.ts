@@ -25,7 +25,7 @@ export default class AST_With extends AST_StatementWithBody {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'WithStatement',
       object: to_moz(this.expression),

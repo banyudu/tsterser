@@ -485,7 +485,7 @@ export class OutputStream {
   }
 
   readonly: boolean
-  _comment_filter (comment: Comment) { return false } // Default case, throw all comments away
+  _comment_filter (_comment: Comment) { return false } // Default case, throw all comments away
 
   colon () {
     this.print(':')

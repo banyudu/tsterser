@@ -33,7 +33,7 @@ export default class AST_Yield extends AST_Node {
     if (this.expression) this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'YieldExpression',
       argument: this.expression ? to_moz(this.expression) : null,

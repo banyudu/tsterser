@@ -1748,6 +1748,7 @@ export function has_break_or_continue (loop: AST_Node, parent?: AST_Node) {
     if (is_ast_loop_control(node) && tw.loopcontrol_target(node) === loop) {
       return (found = true)
     }
+    return undefined
   })
   if (is_ast_labeled_statement(parent)) tw.push(parent)
   tw.push(loop)
@@ -2262,6 +2263,7 @@ export function is_reachable (self: AST_Node, defs: SymbolDef[]) {
     if (is_ast_symbol_ref(node) && member(node.definition?.(), defs)) {
       return walk_abort
     }
+    return undefined
   }
 
   return walk_parent(self, (node: AST_Node, info: any) => {
@@ -2273,6 +2275,7 @@ export function is_reachable (self: AST_Node, defs: SymbolDef[]) {
       }
       return true
     }
+    return undefined
   })
 }
 

@@ -41,7 +41,7 @@ export default class AST_While extends AST_DWLoop {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'WhileStatement',
       test: to_moz(this.condition),
