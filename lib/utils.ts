@@ -1426,7 +1426,7 @@ export function best_of_expression (ast1: AST_Node, ast2: AST_Node) {
 export function is_undefined (node: AST_Node, compressor?: Compressor) {
   return has_flag(node, UNDEFINED) ||
         is_ast_undefined(node) ||
-        is_ast_unary_prefix(node) && node.operator == 'void' && !node.expression.has_side_effects(compressor)
+        is_ast_unary_prefix(node) && node.operator == 'void' && !node.expression.has_side_effects(compressor as any)
 }
 
 export function force_statement (stat: AST_Node, output: OutputStream) {

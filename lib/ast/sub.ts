@@ -134,7 +134,7 @@ export default class AST_Sub extends AST_PropAccess {
           if (!flatten) values.unshift(retValue)
           let shouldBreak = false
           while (--i >= 0) {
-            let value = elements[i]
+            let value: AST_Node | null = elements[i]
             if (is_ast_expansion(value)) {
               shouldBreak = true
               break
@@ -169,7 +169,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
+  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node | null {
     const prop = this.property
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)

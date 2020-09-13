@@ -44,9 +44,9 @@ export default class AST_Sequence extends AST_Node {
       let first = first_in_statement(compressor)
       const last = self.expressions.length - 1
       self.expressions.forEach(function (expr: AST_Node, index: number) {
-        if (index < last) expr = expr.drop_side_effect_free(compressor, first)
-        if (expr) {
-          merge_sequence(expressions, expr)
+        const tmp = (index < last) ? expr.drop_side_effect_free(compressor, first) : expr
+        if (tmp) {
+          merge_sequence(expressions, tmp)
           first = false
         }
       })

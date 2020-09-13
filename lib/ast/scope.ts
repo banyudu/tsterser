@@ -673,7 +673,7 @@ export default class AST_Scope extends AST_Block {
   }
 
   make_var_name (prefix: string) {
-    const var_names = this.var_names()
+    const var_names = this.var_names() ?? new Set()
     prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
     let name = prefix
     for (let i = 0; var_names.has(name); i++) name = prefix + '$' + i
@@ -809,7 +809,7 @@ export default class AST_Scope extends AST_Block {
     const new_scope_enclosed_set = new Set(scope.enclosed)
     const scope_ancestry = (() => {
       const ancestry: any[] = []
-      let cur: AST_Scope = this
+      let cur: AST_Scope | undefined = this
       do {
         ancestry.push(cur)
       } while ((cur = cur.parent_scope))
@@ -866,8 +866,8 @@ export default class AST_Scope extends AST_Block {
   }
 
   get_defun_scope () {
-    let self: AST_Scope = this
-    while (self.is_block_scope()) {
+    let self: AST_Scope | undefined = this
+    while (self?.is_block_scope()) {
       self = self.parent_scope
     }
     return self
