@@ -111,7 +111,7 @@ import {
 
 export default class AST_Block extends AST_Statement {
   body: AST_Statement[]
-  block_scope?: AST_Scope
+  block_scope: AST_Scope | undefined
   expression: any
   CHANGED: boolean = false
   private compressor_scope: AST_Scope | undefined
@@ -364,7 +364,7 @@ export default class AST_Block extends AST_Statement {
             if (funarg && is_identifier_atom(value)) {
               return value?.transform(compressor)
             } else {
-              return maintain_this_binding(parent, node, value)
+              return maintain_this_binding(parent, node, value as any)
             }
           }
           return make_node('AST_Assign', candidate, {
@@ -656,12 +656,12 @@ export default class AST_Block extends AST_Statement {
       return (value_def = def)
     }
 
-    function get_lhs (expr: AST_Node): AST_Node | undefined | false {
+    function get_lhs (expr: AST_Node): AST_Node | null | false {
       if (is_ast_var_def(expr) && is_ast_symbol_declaration(expr.name)) {
         const def = expr.name.definition?.()
-        if (!member(expr.name, def.orig)) return
+        if (!member(expr.name, def.orig)) return false
         const referenced = def.references.length - def.replaced
-        if (!referenced) return
+        if (!referenced) return false
         const declared = def.orig.length - def.eliminated
         if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
           return make_node('AST_SymbolRef', expr.name, expr.name)
@@ -670,7 +670,7 @@ export default class AST_Block extends AST_Statement {
         const lhs = expr[is_ast_assign(expr) ? 'left' : 'expression']
         return !is_ref_of(lhs, AST_SymbolConst) && !is_ref_of(lhs, AST_SymbolLet) && lhs
       }
-      return undefined
+      return false
     }
 
     function get_rvalue (expr: AST_Node) {
@@ -1100,7 +1100,7 @@ export default class AST_Block extends AST_Statement {
           defs = stat
         }
       } else if (is_ast_exit(stat)) {
-        stat.value = extract_object_assignments(stat.value)
+        stat.value = extract_object_assignments(stat.value as any)
       } else if (is_ast_for(stat)) {
         exprs = join_object_assignments(prev, stat.init, compressor, this.compressor_scope)
         if (exprs) {
@@ -1180,8 +1180,8 @@ export default class AST_Block extends AST_Statement {
   static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
   constructor (args: AST_Block_Props) {
     super(args)
-    this.body = args.body
-    this.block_scope = args.block_scope
+    this.body = args.body ?? []
+    this.block_scope = args.block_scope ?? undefined
   }
 }
 
@@ -1294,7 +1294,7 @@ function has_multiple_if_returns (statements: AST_Statement[]) {
   return false
 }
 
-function is_return_void (value: AST_Node | undefined) {
+function is_return_void (value: AST_Node | undefined | null) {
   return !value || is_ast_unary_prefix(value) && value.operator == 'void'
 }
 

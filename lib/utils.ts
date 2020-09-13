@@ -403,11 +403,11 @@ export const MAP = (function () {
   return MAP
 })()
 
-export function make_node (ctorName: keyof typeof AST_DICT, orig?: AST_Node | AnyObject, props?: AnyObject): AST_Node {
+export function make_node (ctorName: keyof typeof AST_DICT, orig?: AST_Node | AnyObject | null, props?: AnyObject): AST_Node {
   return make_ast_node(AST_DICT[ctorName] as any, orig, props)
 }
 
-export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: AST_Node | AnyObject, props?: any): T {
+export function make_ast_node<T extends AST_Node> (CTOR: new (props: any) => T, orig?: AST_Node | AnyObject | null, props?: any): T {
   return new CTOR(Object.assign({}, props, { start: props?.start || orig?.start, end: props?.end || orig?.end }))
 }
 
@@ -1487,7 +1487,7 @@ export function reset_def (compressor: Compressor, def: SymbolDef) {
   }
 }
 
-export function is_identifier_atom (node: AST_Node | undefined): boolean {
+export function is_identifier_atom (node: AST_Node | undefined | null): boolean {
   return is_ast_infinity(node) ||
         is_ast_na_n(node) ||
         is_ast_undefined(node)
@@ -1555,6 +1555,7 @@ export function is_ref_of (ref: any, type: typeof AST_Node) {
   for (let i = orig.length; --i >= 0;) {
     if (orig[i] instanceof type) return true
   }
+  return false
 }
 
 export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_Node, value: any, level: number, immutable?: undefined): boolean {

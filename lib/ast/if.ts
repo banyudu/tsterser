@@ -9,7 +9,7 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_If extends AST_StatementWithBody {
   condition: AST_Node
-  alternative: AST_Statement | undefined
+  alternative: AST_Statement | null
 
   _in_boolean_context (context: AST_Node) {
     return this.condition === context
@@ -223,7 +223,7 @@ export default class AST_If extends AST_StatementWithBody {
       type: 'IfStatement',
       test: to_moz(this.condition),
       consequent: to_moz(this.body),
-      alternate: to_moz(this.alternative)
+      alternate: this.alternative ? to_moz(this.alternative) : null
     }
   }
 
@@ -255,7 +255,7 @@ export default class AST_If extends AST_StatementWithBody {
   constructor (args: AST_If_Props) {
     super(args)
     this.condition = args.condition
-    this.alternative = args.alternative
+    this.alternative = args.alternative ?? null
   }
 }
 
@@ -286,6 +286,6 @@ function make_then (self: AST_If, output: OutputStream) {
 }
 
 export interface AST_If_Props extends AST_StatementWithBody_Props {
-  condition?: AST_Node | undefined
+  condition: AST_Node
   alternative?: AST_Statement | undefined
 }

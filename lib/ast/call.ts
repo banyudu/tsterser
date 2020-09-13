@@ -765,10 +765,10 @@ export default class AST_Call extends AST_Node {
   drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
-        let exprs = this.args.slice()
+        const exprs: any[] = this.args.slice()
         exprs.unshift(this.expression.expression)
-        exprs = trim(exprs, compressor, first_in_statement)
-        return exprs && make_sequence(this, exprs)
+        const tmp = trim(exprs, compressor, first_in_statement)
+        return tmp && make_sequence(this, tmp)
       }
       if (is_func_expr(this.expression) &&
               (!this.expression.name || !this.expression.name.definition?.().references.length)) {
@@ -944,7 +944,7 @@ export default class AST_Call extends AST_Node {
 }
 
 export interface AST_Call_Props extends AST_Node_Props {
-  expression?: AST_Node | undefined
-  args?: AST_Node[] | undefined
+  expression: AST_Node
+  args: AST_Node[]
   _annotations?: number | undefined
 }

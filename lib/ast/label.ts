@@ -21,11 +21,9 @@ export default class AST_Label extends AST_Symbol {
   static PROPS = AST_Symbol.PROPS.concat(['references'])
   constructor (args: AST_Label_Props) {
     super(args)
-    this.references = args.references
     this.initialize()
   }
 }
 
 export interface AST_Label_Props extends AST_Symbol_Props {
-  references?: AST_LoopControl[] | undefined
 }
