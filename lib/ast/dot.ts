@@ -176,6 +176,7 @@ export default class AST_Dot extends AST_PropAccess {
   constructor (args: AST_Dot_Props) {
     super(args)
     this.quote = args.quote
+    this.property = args.property
   }
 }
 

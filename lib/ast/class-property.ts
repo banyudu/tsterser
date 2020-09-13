@@ -108,10 +108,12 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     super(args)
     this.static = args.static ?? false
     this.quote = args.quote ?? ''
+    this.key = args.key
   }
 }
 
 export interface AST_ClassProperty_Props extends AST_ObjectProperty_Props {
   static?: boolean | undefined
   quote?: string | undefined
+  key: AST_Node
 }

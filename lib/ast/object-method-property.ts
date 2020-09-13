@@ -25,6 +25,13 @@ export default class AST_ObjectMethodProperty extends AST_ObjectProperty {
     }
     self.value._do_print(output, true)
   }
+
+  constructor (args: AST_ObjectMethodProperty_Props) {
+    super(args)
+    this.value = args.value
+  }
 }
 
-export interface AST_ObjectMethodProperty_Props extends AST_ObjectProperty_Props { }
+export interface AST_ObjectMethodProperty_Props extends AST_ObjectProperty_Props {
+  value: AST_Accessor
+}

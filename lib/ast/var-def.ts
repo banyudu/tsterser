@@ -13,8 +13,8 @@ import { MozillaAst } from '../types'
 export default class AST_VarDef extends AST_Node {
   name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
   value: AST_Node | null
-  eliminated: number
-  replaced: number
+  eliminated: number = 0
+  replaced: number = 0
 
   may_throw (compressor: Compressor) {
     if (!this.value) return false

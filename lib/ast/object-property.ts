@@ -8,7 +8,7 @@ export default class AST_ObjectProperty extends AST_Node {
   key: AST_Node | string
   value: AST_Node
   quote: any
-  static: boolean
+  static: boolean = false
 
   computed_key () { return false }
 

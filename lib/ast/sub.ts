@@ -221,6 +221,10 @@ export default class AST_Sub extends AST_PropAccess {
   static documentation = 'Index-style property access, i.e. `a["foo"]`'
 
   static PROPS = AST_PropAccess.PROPS
+  constructor (args: AST_PropAccess_Props) {
+    super(args)
+    this.property = args.property
+  }
 }
 
 export interface AST_Sub_Props extends AST_PropAccess_Props {

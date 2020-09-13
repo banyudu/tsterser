@@ -116,9 +116,11 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   constructor (args: AST_ObjectKeyVal_Props) {
     super(args)
     this.quote = args.quote ?? ''
+    this.value = args.value
   }
 }
 
 export interface AST_ObjectKeyVal_Props extends AST_ObjectProperty_Props {
   quote?: string | undefined
+  value: AST_Node
 }

@@ -57,10 +57,14 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
     super(args)
     this.quote = args.quote
     this.static = args.static ?? false
+    this.key = args.key
+    this.value = args.value
   }
 }
 
 export interface AST_ObjectGetter_Props extends AST_ObjectMethodProperty_Props {
   quote?: string|undefined | undefined
   static?: boolean | undefined
+  key: AST_Node
+  value: AST_Accessor
 }

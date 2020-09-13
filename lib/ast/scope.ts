@@ -57,7 +57,7 @@ export default class AST_Scope extends AST_Block {
   globals: any
   _added_var_names?: Set<any>
   protected _var_name_cache: any
-  _block_scope: boolean
+  _block_scope: boolean = false
   variables: Map<string, SymbolDef>
   functions: Map<string, SymbolDef>
   uses_with: boolean

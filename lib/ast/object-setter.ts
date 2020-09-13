@@ -1,5 +1,4 @@
 import AST_Node from './node'
-import AST_Accessor from './accessor'
 import { OutputStream } from '../output'
 import AST_ObjectMethodProperty, { AST_ObjectMethodProperty_Props } from './object-method-property'
 import Compressor from '../compressor'
@@ -9,7 +8,6 @@ export default class AST_ObjectSetter extends AST_ObjectMethodProperty {
   quote: string|undefined
   static: boolean
   key: AST_Node
-  value: AST_Accessor
 
   _to_mozilla_ast_kind (): string | undefined {
     return 'set'
@@ -56,10 +54,12 @@ export default class AST_ObjectSetter extends AST_ObjectMethodProperty {
     super(args)
     this.quote = args.quote
     this.static = args.static ?? false
+    this.key = args.key
   }
 }
 
 export interface AST_ObjectSetter_Props extends AST_ObjectMethodProperty_Props {
   quote: string|undefined | undefined
   static: boolean | undefined
+  key: AST_Node
 }

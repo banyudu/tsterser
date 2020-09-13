@@ -8,10 +8,6 @@ export default class AST_Label extends AST_Symbol {
 
   // labels are always mangleable
   unmangleable () { return false }
-  initialize () {
-    this.references = []
-    this.thedef = this
-  }
 
   static documentation = 'Symbol naming a label (declaration)'
   static propdoc = {
@@ -21,7 +17,8 @@ export default class AST_Label extends AST_Symbol {
   static PROPS = AST_Symbol.PROPS.concat(['references'])
   constructor (args: AST_Label_Props) {
     super(args)
-    this.initialize()
+    this.references = []
+    this.thedef = this
   }
 }
 

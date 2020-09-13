@@ -113,6 +113,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     this.static = args.static ?? false
     this.is_generator = args.is_generator ?? false
     this.async = args.async ?? false
+    this.key = args.key
   }
 }
 
@@ -121,4 +122,5 @@ export interface AST_ConciseMethod_Props extends AST_ObjectMethodProperty_Props 
   static?: boolean | undefined
   is_generator?: boolean | undefined
   async?: boolean | undefined
+  key: AST_Node
 }

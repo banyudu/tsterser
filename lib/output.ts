@@ -88,7 +88,7 @@ export class OutputStream {
   private _need_space = false
   private _newline_insert = -1
   private _last = ''
-  private _mapping_token: AST_Token | false
+  private _mapping_token: AST_Token | false = false
   private _mapping_name: string | undefined
   private _indentation = 0
   private _current_col = 0
@@ -132,7 +132,7 @@ export class OutputStream {
     }
   }
 
-  _mappings: any[] | null
+  _mappings: any[] | null = null
 
   _ensure_line_len () {
     if (this.options.max_line_len) {

@@ -9,7 +9,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_ForIn extends AST_IterationStatement {
   init: AST_Node
   object: AST_Node
-  await: boolean
+  await: boolean = false
 
   reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
