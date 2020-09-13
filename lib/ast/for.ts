@@ -192,7 +192,7 @@ function if_break_in_loop (self: AST_For, compressor: Compressor) {
         self.condition = first.condition.negate(compressor)
       }
       drop_it(first.alternative)
-    } else if (is_break(first.alternative)) {
+    } else if (first.alternative && is_break(first.alternative)) {
       if (self.condition) {
         self.condition = make_node('AST_Binary', self.condition, {
           left: self.condition,

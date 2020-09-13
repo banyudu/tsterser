@@ -894,8 +894,8 @@ const MOZ_TO_ME: any = {
   },
 
   ImportDeclaration: function (M: MozillaAstImportDeclaration) {
-    let imported_name = null
-    let imported_names: any[] | null = null
+    let imported_name: any = null
+    let imported_names: any = null
     M.specifiers.forEach(function (specifier) {
       if (specifier.type === 'ImportSpecifier') {
         if (!imported_names) { imported_names = [] }

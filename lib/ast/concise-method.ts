@@ -10,7 +10,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
   async: boolean
   is_generator: boolean
   static: boolean
-  quote: string|undefined
+  quote: string
   key: AST_Node
 
   _optimize (compressor: Compressor): AST_ConciseMethod {
@@ -109,10 +109,10 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
   static PROPS = AST_ObjectMethodProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
   constructor (args: AST_ConciseMethod_Props) {
     super(args)
-    this.quote = args.quote
-    this.static = args.static
-    this.is_generator = args.is_generator
-    this.async = args.async
+    this.quote = args.quote ?? ''
+    this.static = args.static ?? false
+    this.is_generator = args.is_generator ?? false
+    this.async = args.async ?? false
   }
 }
 

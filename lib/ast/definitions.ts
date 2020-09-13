@@ -26,7 +26,7 @@ export default class AST_Definitions extends AST_Statement {
 
   to_assignments (compressor: Compressor) {
     const reduce_vars = compressor.option('reduce_vars')
-    const assignments = this.definitions.reduce(function (a, def) {
+    const assignments = this.definitions.reduce(function (a: any[], def) {
       if (def.value && !(is_ast_destructuring(def.name))) {
         const name = make_node('AST_SymbolRef', def.name, def.name) as AST_SymbolRef
         a.push(make_node('AST_Assign', def, {
@@ -129,5 +129,5 @@ export default class AST_Definitions extends AST_Statement {
 }
 
 export interface AST_Definitions_Props extends AST_Statement_Props {
-  definitions?: AST_VarDef[] | undefined
+  definitions: AST_VarDef[]
 }

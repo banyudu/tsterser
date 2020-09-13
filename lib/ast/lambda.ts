@@ -206,18 +206,18 @@ export default class AST_Lambda extends AST_Scope {
   static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
   constructor (args: AST_Lambda_Props) {
     super(args)
-    this.name = args.name
+    this.name = args.name ?? null
     this.argnames = args.argnames
-    this.uses_arguments = args.uses_arguments
-    this.is_generator = args.is_generator
-    this.async = args.async
+    this.uses_arguments = args.uses_arguments ?? false
+    this.is_generator = args.is_generator ?? false
+    this.async = args.async ?? false
   }
 }
 
 export interface AST_Lambda_Props extends AST_Scope_Props {
   name?: AST_SymbolDeclaration | null
-  argnames?: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign> | undefined
-  uses_arguments?: boolean | undefined
-  is_generator?: boolean | undefined
-  async?: boolean | undefined
+  argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
+  uses_arguments?: boolean
+  is_generator?: boolean
+  async?: boolean
 }

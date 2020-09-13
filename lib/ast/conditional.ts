@@ -48,7 +48,7 @@ export default class AST_Conditional extends AST_Node {
     // This looks like lift_sequences(), should probably be under "sequences"
     if (is_ast_sequence(self.condition)) {
       const expressions = self.condition.expressions.slice()
-      self.condition = expressions.pop()
+      self.condition = expressions.pop() as any
       expressions.push(self)
       return make_sequence(self, expressions)
     }
@@ -438,7 +438,7 @@ export default class AST_Conditional extends AST_Node {
 }
 
 export interface AST_Conditional_Props extends AST_Node_Props {
-  condition?: AST_Node | undefined
-  consequent?: AST_Node | undefined
-  alternative?: AST_Node | undefined
+  condition: AST_Node
+  consequent: AST_Node
+  alternative: AST_Node
 }

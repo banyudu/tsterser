@@ -150,7 +150,7 @@ export default class AST_Import extends AST_Node {
 }
 
 export interface AST_Import_Props extends AST_Node_Props {
-  imported_name: AST_SymbolImport | null
-  imported_names: AST_NameMapping[] | null
-  module_name: AST_String | null
+  imported_name: AST_SymbolImport
+  imported_names: AST_NameMapping[]
+  module_name: AST_String
 }

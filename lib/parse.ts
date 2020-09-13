@@ -2602,8 +2602,8 @@ export function parse ($TEXT: string, opt?: any) {
 
     return new AST_NameMapping({
       start: start,
-      foreign_name: foreign_name,
-      name: name,
+      foreign_name: foreign_name as any,
+      name: name as any,
       end: prev()
     })
   }

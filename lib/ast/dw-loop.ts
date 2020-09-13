@@ -21,5 +21,5 @@ export default class AST_DWLoop extends AST_IterationStatement {
 }
 
 export interface AST_DWLoop_Props extends AST_IterationStatement_Props {
-  condition?: AST_Node | undefined
+  condition: AST_Node
 }
