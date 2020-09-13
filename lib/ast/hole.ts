@@ -7,7 +7,7 @@ export default class AST_Hole extends AST_Atom {
 
   value = (function () {}())
 
-  to_mozilla_ast (): MozillaAst { return null }
+  to_mozilla_ast (): MozillaAst { return null as any }
 
   _size = () => 0 // comma is taken into account
 

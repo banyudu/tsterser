@@ -118,5 +118,5 @@ export default class AST_Array extends AST_Node {
 }
 
 export interface AST_Array_Props extends AST_Node_Props {
-  elements?: AST_Node[] | undefined
+  elements: AST_Node[]
 }

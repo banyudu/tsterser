@@ -8,7 +8,7 @@ import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {
-  quote: string
+  quote?: string
   property: string
 
   _prepend_comments_check (node: AST_Node) {

@@ -1,9 +1,5 @@
 import AST_Class, { AST_Class_Props } from './class'
 export default class AST_DefClass extends AST_Class {
-  name: any
-  extends: any
-  properties: any[]
-
   static documentation = 'A class definition'
 
   static PROPS = AST_Class.PROPS

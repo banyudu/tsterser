@@ -18,7 +18,7 @@ import {
   MozillaAstTemplateLiteral,
   MozillaAstArrowFunctionExpression,
   MozillaAstFieldDefinition,
-  MozillaAstProperty
+  MozillaAstProperty, MozillaAstBinaryExpression, MozillaAstLogicalExpression, MozillaAstAssignmentExpression
 } from './types'
 import { OutputStream } from './output'
 /***********************************************************************
@@ -1162,21 +1162,21 @@ const MOZ_TO_ME: any = {
     start: my_start_token(M),
     end: my_end_token(M)
   }),
-  BinaryExpression: (M: MozillaAst) => new AST_Binary({
+  BinaryExpression: (M: MozillaAstBinaryExpression) => new AST_Binary({
     start: my_start_token(M),
     end: my_end_token(M),
     operator: M.operator,
     left: from_moz(M.left),
     right: from_moz(M.right)
   }),
-  LogicalExpression: (M: MozillaAst) => new AST_Binary({
+  LogicalExpression: (M: MozillaAstLogicalExpression) => new AST_Binary({
     start: my_start_token(M),
     end: my_end_token(M),
     operator: M.operator,
     left: from_moz(M.left),
     right: from_moz(M.right)
   }),
-  AssignmentExpression: (M: MozillaAst) => new AST_Assign({
+  AssignmentExpression: (M: MozillaAstAssignmentExpression) => new AST_Assign({
     start: my_start_token(M),
     end: my_end_token(M),
     operator: M.operator,

@@ -11,7 +11,7 @@ export default class AST_Continue extends AST_LoopControl {
   _to_mozilla_ast (parent: AST_Node): any {
     return {
       type: 'ContinueStatement',
-      label: to_moz(this.label)
+      label: this.label ? to_moz(this.label) : null
     }
   }
 

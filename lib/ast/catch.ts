@@ -10,7 +10,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Catch extends AST_Block {
-  argname: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
+  argname?: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
   walkInner () {
     const result: AST_Node[] = []
@@ -45,7 +45,7 @@ export default class AST_Catch extends AST_Block {
   _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return {
       type: 'CatchClause',
-      param: to_moz(this.argname),
+      param: this.argname ? to_moz(this.argname) : null,
       guard: null,
       body: to_moz_block(this)
     } as any
@@ -56,7 +56,7 @@ export default class AST_Catch extends AST_Block {
     if (this.argname) {
       output.space()
       output.with_parens(() => {
-        this.argname.print(output)
+        this.argname?.print(output)
       })
     }
     output.space()

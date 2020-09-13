@@ -689,7 +689,7 @@ export default class AST_Binary extends AST_Node {
       if (is_ast_sequence(this.left)) {
         const x = this.left.expressions.slice()
         const e = this.clone()
-        e.left = x.pop()
+        e.left = x.pop() as any
         x.push(e)
         return make_sequence(this, x).optimize(compressor)
       }
@@ -704,7 +704,7 @@ export default class AST_Binary extends AST_Node {
         if (i == last) {
           x = x.slice()
           const e = this.clone()
-          e.right = x.pop()
+          e.right = x.pop() as any
           x.push(e)
           return make_sequence(this, x).optimize(compressor)
         } else if (i > 0) {
@@ -803,7 +803,7 @@ export default class AST_Binary extends AST_Node {
         return true
       }
     }
-    return undefined
+    return false
   }
 
   _codegen (output: OutputStream) {
@@ -850,7 +850,7 @@ export default class AST_Binary extends AST_Node {
 }
 
 export interface AST_Binary_Props extends AST_Node_Props {
-  operator?: string | undefined
-  left?: AST_Node | undefined
-  right?: AST_Node | undefined
+  operator: string
+  left: AST_Node
+  right: AST_Node
 }

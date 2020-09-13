@@ -65,5 +65,5 @@ export default class AST_Await extends AST_Node {
 }
 
 export interface AST_Await_Props extends AST_Node_Props {
-  expression?: AST_Node | undefined
+  expression: AST_Node
 }

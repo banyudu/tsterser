@@ -80,7 +80,7 @@ export default class AST_Export extends AST_Statement {
       if (this.exported_names[0].name.name === '*') {
         return {
           type: 'ExportAllDeclaration',
-          source: to_moz(this.module_name)
+          source: this.module_name ? to_moz(this.module_name) : null
         }
       }
       return {
@@ -92,13 +92,14 @@ export default class AST_Export extends AST_Statement {
             local: to_moz(name_mapping.name)
           }
         }),
-        declaration: to_moz(this.exported_definition),
-        source: to_moz(this.module_name)
+        declaration: this.exported_definition ? to_moz(this.exported_definition) : null,
+        source: this.module_name ? to_moz(this.module_name) : null
       }
     }
+    const decl = this.exported_value ?? this.exported_definition
     return {
       type: this.is_default ? 'ExportDefaultDeclaration' : 'ExportNamedDeclaration',
-      declaration: to_moz(this.exported_value ?? this.exported_definition)
+      declaration: decl ? to_moz(decl) : null
     }
   }
 

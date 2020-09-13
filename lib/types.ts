@@ -171,7 +171,7 @@ export interface MozillaAst {
   loc?: any
   range?: [number, number]
   start?: MozillaAst | number
-  superClass?: MozillaAst
+  superClass?: MozillaAst | null
   prefix?: boolean
   arguments?: Array<MozillaAst | null>
   callee?: MozillaAst
@@ -194,7 +194,7 @@ export interface MozillaAst {
   declarations?: Array<MozillaAst | null>
   regex?: any
   raw?: any
-  declaration?: MozillaAst
+  declaration?: MozillaAst | null
   source?: MozillaAst | null
   method?: boolean
   consequent?: Array<MozillaAst | null> | MozillaAst
@@ -305,4 +305,16 @@ export interface MozillaAstNewExpression extends MozillaAst {
 
 export interface MozillaAstCallExpression extends MozillaAst {
   arguments: Array<MozillaAst | null>
+}
+
+export interface MozillaAstBinaryExpression extends MozillaAst {
+  operator: string
+}
+
+export interface MozillaAstLogicalExpression extends MozillaAst {
+  operator: string
+}
+
+export interface MozillaAstAssignmentExpression extends MozillaAst {
+  operator: string
 }

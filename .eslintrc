@@ -15,6 +15,7 @@
         "no-fallthrough": "off",
         "@typescript-eslint/no-this-alias": "warn",
         "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/prefer-nullish-coalescing": "warn",
         "@typescript-eslint/consistent-type-assertions": "warn",
         "@typescript-eslint/no-throw-literal": "off",
         "no-void": "warn",

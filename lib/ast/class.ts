@@ -11,7 +11,7 @@ import { TreeTransformer } from '../../main'
 import { MozillaAst } from '../types'
 
 export default class AST_Class extends AST_Scope {
-  extends: AST_Node
+  extends?: AST_Node
   properties: AST_ObjectProperty[]
   name: AST_SymbolClass|AST_SymbolDefClass | undefined
 
@@ -114,7 +114,7 @@ export default class AST_Class extends AST_Scope {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
-      superClass: to_moz(this.extends),
+      superClass: this.extends ? to_moz(this.extends) : null,
       id: this.name ? to_moz(this.name) : null,
       body: {
         type: 'ClassBody',
@@ -185,5 +185,5 @@ export default class AST_Class extends AST_Scope {
 export interface AST_Class_Props extends AST_Scope_Props {
   name?: AST_SymbolClass|AST_SymbolDefClass | undefined
   extends?: AST_Node | undefined
-  properties?: AST_ObjectProperty[] | undefined
+  properties: AST_ObjectProperty[]
 }
