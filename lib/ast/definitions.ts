@@ -11,7 +11,7 @@ import { MozillaAst } from '../types'
 export default class AST_Definitions extends AST_Statement {
   definitions: AST_VarDef[]
 
-  _optimize (compressor: Compressor): any {
+  _optimize (_compressor: Compressor): any {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
     return this
   }
@@ -94,7 +94,7 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = do_list(this.definitions, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'var',

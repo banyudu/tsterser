@@ -32,9 +32,9 @@ export default class AST_Lambda extends AST_Scope {
     return this
   }
 
-  may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor: Compressor) { return false }
-  _eval (compressor: Compressor) { return this }
+  may_throw (_compressor: Compressor) { return false }
+  has_side_effects (_compressor: Compressor) { return false }
+  _eval (_compressor: Compressor) { return this }
 
   is_constant_expression (scope: AST_Scope) {
     return this.all_refs_local(scope)

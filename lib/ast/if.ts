@@ -218,7 +218,7 @@ export default class AST_If extends AST_StatementWithBody {
     if (this.alternative) this.alternative = this.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'IfStatement',
       test: to_moz(this.condition),

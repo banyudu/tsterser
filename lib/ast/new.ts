@@ -19,7 +19,7 @@ export default class AST_New extends AST_Call {
     return 6 + list_overhead(this.args)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'NewExpression',
       callee: to_moz(this.expression),

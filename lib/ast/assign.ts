@@ -132,7 +132,7 @@ export default class AST_Assign extends AST_Binary {
     return this.left.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) { return true }
+  has_side_effects (_compressor: Compressor) { return true }
   is_string (compressor: Compressor) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   }
@@ -146,7 +146,7 @@ export default class AST_Assign extends AST_Binary {
     return this.operator == '=' && this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     const node = this
     if (is_ast_destructuring(node.left)) {
       suppress(node.left)
@@ -186,7 +186,7 @@ export default class AST_Assign extends AST_Binary {
           this.right._dot_throw(compressor)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'AssignmentExpression',
       operator: this.operator,

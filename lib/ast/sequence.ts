@@ -135,7 +135,7 @@ export default class AST_Sequence extends AST_Node {
       : [new AST_Number({ value: 0 })]
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'SequenceExpression',
       expressions: this.expressions.map(to_moz)

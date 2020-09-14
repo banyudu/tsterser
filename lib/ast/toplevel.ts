@@ -35,14 +35,14 @@ export default class AST_Toplevel extends AST_Scope {
   globals: Map<any, any>
   mangled_names: Set<any> = new Set()
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     this.globals.forEach(function (def: SymbolDef) {
       reset_def(compressor, def)
     })
     reset_variables(tw, compressor, this)
   }
 
-  resolve_defines (this: AST_Toplevel, compressor: Compressor) {
+  resolve_defines (compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
     return this.transform(new TreeTransformer(function (this: any, node: AST_Node) {
@@ -188,7 +188,7 @@ export default class AST_Toplevel extends AST_Scope {
     return list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return to_moz_scope('Program', this)
   }
 

@@ -8,8 +8,8 @@ export default class AST_Constant extends AST_Node {
   literal?: any
 
   drop_side_effect_free (): any { return null }
-  may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor: Compressor) { return false }
+  may_throw (_compressor: Compressor) { return false }
+  has_side_effects (_compressor: Compressor) { return false }
   _eval (_arg: any) {
     return this.getValue()
   }
@@ -20,7 +20,7 @@ export default class AST_Constant extends AST_Node {
     return this.value
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return To_Moz_Literal(this)
   }
 

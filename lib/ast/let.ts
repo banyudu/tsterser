@@ -5,7 +5,7 @@ import { def_size, to_moz } from '../utils'
 import { MozillaAst } from '../types'
 
 export default class AST_Let extends AST_Definitions {
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'let',

@@ -42,7 +42,7 @@ export default class AST_Catch extends AST_Block {
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'CatchClause',
       param: this.argname ? to_moz(this.argname) : null,

@@ -861,7 +861,7 @@ export default class AST_Scope extends AST_Block {
     return (symbol.thedef = def)
   }
 
-  next_mangled (options: any, def: SymbolDef) {
+  next_mangled (options: any, _def: SymbolDef) {
     return next_mangled(this, options)
   }
 

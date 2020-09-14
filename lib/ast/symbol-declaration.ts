@@ -6,9 +6,9 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
   init?: any
   thedef: any
 
-  may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor: Compressor) { return false }
-  _find_defs (compressor: Compressor, suffix: string) {
+  may_throw (_compressor: Compressor) { return false }
+  has_side_effects (_compressor: Compressor) { return false }
+  _find_defs (compressor: Compressor, _suffix: string) {
     if (!this.global()) return
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
   }

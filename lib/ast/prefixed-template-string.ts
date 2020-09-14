@@ -12,7 +12,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: AST_TemplateString
   prefix: AST_SymbolRef|AST_PropAccess
 
-  _optimize (compressor: Compressor): any {
+  _optimize (_compressor: Compressor): any {
     return this
   }
 
@@ -34,7 +34,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     this.template_string = this.template_string.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'TaggedTemplateExpression',
       tag: to_moz(this.prefix),

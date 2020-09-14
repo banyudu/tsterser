@@ -140,7 +140,7 @@ export default class AST_Block extends AST_Statement {
     return anySideEffect(this.body, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (_tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
   }
 
@@ -156,7 +156,7 @@ export default class AST_Block extends AST_Statement {
     while (i--) push(this.body[i])
   }
 
-  _size (info: any) {
+  _size (_info: any) {
     return 2 + list_overhead(this.body)
   }
 
@@ -165,7 +165,7 @@ export default class AST_Block extends AST_Statement {
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
@@ -1325,7 +1325,7 @@ function remove_candidate (compressor: Compressor, expr: AST_Node, statement: AS
     return true
   }
   let found = false
-  return statement.transform(new TreeTransformer(function (node: AST_Node, descend: Function, in_list: boolean) {
+  return statement.transform(new TreeTransformer(function (node: AST_Node, _descend: Function, in_list: boolean) {
     if (found) return node
     if (node === expr || node.body === expr) {
       found = true

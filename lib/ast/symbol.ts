@@ -60,7 +60,7 @@ export default class AST_Symbol extends AST_Node {
     name: 'eq'
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const def = this.definition()
     return {
       type: 'Identifier',

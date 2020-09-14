@@ -30,7 +30,7 @@ export default class AST_Binary extends AST_Node {
     return this.left === node
   }
 
-  _in_boolean_context_next (context: AST_Node): boolean {
+  _in_boolean_context_next (_context: AST_Node): boolean {
     if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
       return true
     }
@@ -670,7 +670,7 @@ export default class AST_Binary extends AST_Node {
               this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, _compressor: Compressor) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)
@@ -757,7 +757,7 @@ export default class AST_Binary extends AST_Node {
     this.right = this.right.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',

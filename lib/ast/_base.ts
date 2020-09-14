@@ -1,5 +1,5 @@
 export default class AST {
-  isAst (type: string) {
+  isAst (_type: string) {
     return false
   }
 

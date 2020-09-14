@@ -1,7 +1,7 @@
 import AST_Atom, { AST_Atom_Props } from './atom'
 import { MozillaAst } from '../types'
 export default class AST_Hole extends AST_Atom {
-  to_fun_args (croak: Function): any {
+  to_fun_args (_croak: Function): any {
     return this
   }
 

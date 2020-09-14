@@ -75,7 +75,7 @@ export default class AST_Export extends AST_Statement {
     if (this.module_name) this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.exported_names.length > 0) {
       if (this.exported_names[0].name.name === '*') {
         return {

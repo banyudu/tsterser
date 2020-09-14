@@ -131,7 +131,7 @@ export default class AST_Object extends AST_Node {
     this.properties = do_list(this.properties, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ObjectExpression',
       properties: this.properties.map(to_moz)

@@ -21,7 +21,7 @@ export default class AST_Return extends AST_Exit {
     return this.value ? 7 : 6
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ReturnStatement',
       argument: this.value ? to_moz(this.value) : null

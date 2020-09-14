@@ -6,7 +6,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Exit extends AST_Jump {
   value: AST_Node | undefined | null
 
-  _prepend_comments_check (node: AST_Node) {
+  _prepend_comments_check (_node: AST_Node) {
     return true
   }
 

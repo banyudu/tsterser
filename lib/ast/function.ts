@@ -49,7 +49,7 @@ export default class AST_Function extends AST_Lambda {
     return this
   }
 
-  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
+  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 

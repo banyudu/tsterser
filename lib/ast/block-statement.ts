@@ -22,7 +22,7 @@ export default class AST_BlockStatement extends AST_Block {
   }
 
   aborts = this._block_aborts
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)

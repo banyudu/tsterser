@@ -21,7 +21,7 @@ export default class AST_VarDef extends AST_Node {
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  has_side_effects (_compressor: Compressor) {
     return this.value as any
   }
 
@@ -73,7 +73,7 @@ export default class AST_VarDef extends AST_Node {
     if (this.value) this.value = this.value.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclarator',
       id: to_moz(this.name),

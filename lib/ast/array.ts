@@ -81,7 +81,7 @@ export default class AST_Array extends AST_Node {
     this.elements = do_list(this.elements, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ArrayExpression',
       elements: this.elements.map(to_moz)

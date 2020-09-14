@@ -901,7 +901,7 @@ export default class AST_Call extends AST_Node {
     this.args = do_list(this.args, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'CallExpression',
       callee: to_moz(this.expression),

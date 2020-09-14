@@ -13,7 +13,7 @@ export default class AST_Import extends AST_Node {
   module_name: AST_String
   imported_names: AST_NameMapping[]
 
-  _optimize (compressor: Compressor): any {
+  _optimize (_compressor: Compressor): any {
     return this
   }
 
@@ -69,7 +69,7 @@ export default class AST_Import extends AST_Node {
     this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const specifiers: any[] = []
     if (this.imported_name) {
       specifiers.push({

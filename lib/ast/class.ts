@@ -15,7 +15,7 @@ export default class AST_Class extends AST_Scope {
   properties: AST_ObjectProperty[]
   name: AST_SymbolClass|AST_SymbolDefClass | undefined
 
-  _optimize (compressor: Compressor): any {
+  _optimize (_compressor: Compressor): any {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return this
@@ -110,7 +110,7 @@ export default class AST_Class extends AST_Scope {
     extends: 'exist'
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,

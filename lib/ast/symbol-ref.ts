@@ -33,7 +33,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
 
-  to_fun_args (croak: Function): any {
+  to_fun_args (_croak: Function): any {
     return new AST_SymbolFunarg({
       name: this.name,
       start: this.start,
@@ -236,7 +236,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     if (HOP(defines, name)) return to_node(defines[name], this)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     const d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&

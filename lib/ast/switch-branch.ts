@@ -8,7 +8,7 @@ export default class AST_SwitchBranch extends AST_Block {
   aborts = this._block_aborts
   is_block_scope (): boolean { return false }
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'SwitchCase',
       test: to_moz(this.expression),

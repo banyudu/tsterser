@@ -53,7 +53,7 @@ export default class AST_For extends AST_IterationStatement {
     return if_break_in_loop(this, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     if (this.init) this.init.walk(tw)
     const saved_loop = tw.in_loop
@@ -103,7 +103,7 @@ export default class AST_For extends AST_IterationStatement {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ForStatement',
       init: to_moz(this.init),

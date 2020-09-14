@@ -11,7 +11,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   object: AST_Node
   await: boolean = false
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     suppress(this.init)
     this.object.walk(tw)
@@ -46,7 +46,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ForInStatement',
       left: to_moz(this.init),

@@ -38,7 +38,7 @@ export default class AST_Conditional extends AST_Node {
     return false
   }
 
-  _in_boolean_context_next (context: AST_Node): boolean {
+  _in_boolean_context_next (_context: AST_Node): boolean {
     return true
   }
 
@@ -400,7 +400,7 @@ export default class AST_Conditional extends AST_Node {
     this.alternative = this.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ConditionalExpression',
       test: to_moz(this.condition),

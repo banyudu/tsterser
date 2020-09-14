@@ -6,7 +6,7 @@ import { MozillaAst } from '../types'
 
 export default class AST_Throw extends AST_Exit {
   _size = () => 6
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ThrowStatement',
       argument: this.value ? to_moz(this.value) : null

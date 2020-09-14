@@ -109,7 +109,7 @@ export default class AST_TemplateString extends AST_Node {
     this.segments = do_list(this.segments, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const quasis: any[] = []
     const expressions: any[] = []
     for (let i = 0; i < this.segments.length; i++) {

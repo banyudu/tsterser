@@ -8,12 +8,12 @@ export default class AST_Statement extends AST_Node {
   body: any
   block_scope?: AST_Scope
 
-  _eval (compressor: Compressor): any {
+  _eval (_compressor: Compressor): any {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
   }
 
   aborts (): any { return null }
-  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
+  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     throw new Error('Cannot negate a statement')
   }
 

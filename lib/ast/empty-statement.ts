@@ -3,8 +3,8 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 
 export default class AST_EmptyStatement extends AST_Statement {
-  may_throw (compressor: Compressor) { return false }
-  has_side_effects (compressor: Compressor) { return false }
+  may_throw (_compressor: Compressor) { return false }
+  has_side_effects (_compressor: Compressor) { return false }
   shallow_cmp_props: any = {}
   _to_mozilla_ast (): any {
     return { type: 'EmptyStatement' }

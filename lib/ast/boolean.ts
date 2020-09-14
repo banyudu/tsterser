@@ -43,7 +43,7 @@ export default class AST_Boolean extends AST_Atom {
     return this
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return To_Moz_Literal(this)
   }
 

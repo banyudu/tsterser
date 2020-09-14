@@ -9,7 +9,7 @@ import { MozillaAst } from '../types'
 export default class AST_SimpleStatement extends AST_Statement {
   body: any | undefined
 
-  _in_boolean_context (context: AST_Node) {
+  _in_boolean_context (_context: AST_Node) {
     return true
   }
 
@@ -51,7 +51,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(this.body) // TODO: check type

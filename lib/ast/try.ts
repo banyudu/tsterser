@@ -41,7 +41,7 @@ export default class AST_Try extends AST_Block {
               !!this.bfinally?.has_side_effects(compressor)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     push(tw)
     walk_body(this, tw)
@@ -85,7 +85,7 @@ export default class AST_Try extends AST_Block {
     if (this.bfinally) this.bfinally = this.bfinally.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'TryStatement',
       block: to_moz_block(this),

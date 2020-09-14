@@ -4,7 +4,7 @@ import { OutputStream } from '../output'
 import AST_Unary, { AST_Unary_Props } from './unary'
 
 export default class AST_UnaryPostfix extends AST_Unary {
-  _prepend_comments_check (node: AST_Node) {
+  _prepend_comments_check (_node: AST_Node) {
     return true
   }
 

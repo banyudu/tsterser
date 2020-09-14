@@ -95,7 +95,7 @@ export default class AST_Destructuring extends AST_Node {
     this.names = do_list(this.names, tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.is_array) {
       return {
         type: 'ArrayPattern',

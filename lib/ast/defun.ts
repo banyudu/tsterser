@@ -8,7 +8,7 @@ export default class AST_Defun extends AST_Lambda {
     return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'FunctionDeclaration',
       id: to_moz(this.name),

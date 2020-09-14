@@ -8,7 +8,7 @@ export default class AST_Break extends AST_LoopControl {
     return this.label ? 6 : 5
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BreakStatement',
       label: this.label ? to_moz(this.label) : null

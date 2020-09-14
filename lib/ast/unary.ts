@@ -109,7 +109,7 @@ export default class AST_Unary extends AST_Node {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,

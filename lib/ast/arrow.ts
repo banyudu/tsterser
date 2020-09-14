@@ -13,7 +13,7 @@ import Compressor from '../compressor'
 
 export default class AST_Arrow extends AST_Lambda {
   drop_side_effect_free (): any { return null }
-  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
+  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 
@@ -23,7 +23,7 @@ export default class AST_Arrow extends AST_Lambda {
     this.uses_arguments = false
   }
 
-  _size (info?: any): number {
+  _size (_info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (!(this.argnames.length === 1 && is_ast_symbol(this.argnames[0]))) {
@@ -34,7 +34,7 @@ export default class AST_Arrow extends AST_Lambda {
     return lambda_modifiers(this) + args_and_arrow + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node): any {
+  _to_mozilla_ast (_parent: AST_Node): any {
     const body = {
       type: 'BlockStatement',
       body: this.body.map(to_moz)

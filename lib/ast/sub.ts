@@ -17,7 +17,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this.expression === node
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),
