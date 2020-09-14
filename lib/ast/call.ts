@@ -394,6 +394,7 @@ export default class AST_Call extends AST_Node {
               fun = node
               return walk_abort
             }
+            return undefined
           })
           const code2 = GetOutputStream()
           fun.print_braced(code2)
@@ -534,6 +535,7 @@ export default class AST_Call extends AST_Node {
           expression: (stat.body).clone(true)
         })
       }
+      return undefined
     }
 
     function can_flatten_body (stat: any) {
@@ -600,6 +602,7 @@ export default class AST_Call extends AST_Node {
           })
           return true
         }
+        return undefined
       }
       for (let i = 0; i < self.args.length; i++) {
         walk(self.args[i], value_walker)

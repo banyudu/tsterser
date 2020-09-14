@@ -195,6 +195,7 @@ export default class AST_Block extends AST_Statement {
         scan_this = prev
         return true
       }
+      return undefined
     }))
     return found
   }
@@ -525,6 +526,7 @@ export default class AST_Block extends AST_Statement {
         abort = true
         return node
       }
+      return undefined
     }
 
     function extract_candidates (expr: AST_Node) {
@@ -707,6 +709,7 @@ export default class AST_Block extends AST_Statement {
       }
       return false
     }
+    return undefined
   }
 
   private find_loop_scope_try (compressor: Compressor) {
@@ -1013,6 +1016,7 @@ export default class AST_Block extends AST_Statement {
               ) {
                 return walk_abort
               }
+              return undefined
             })
             if (!abort) {
               if (stat.init) stat.init = cons_seq(stat.init)
@@ -1337,6 +1341,7 @@ function remove_candidate (compressor: Compressor, expr: AST_Node, statement: AS
       }
       return in_list ? MAP.skip : null
     }
+    return undefined
   }, function (node: AST_Node) {
     if (is_ast_sequence(node)) {
       switch (node.expressions.length) {
@@ -1344,5 +1349,6 @@ function remove_candidate (compressor: Compressor, expr: AST_Node, statement: AS
         case 1: return node.expressions[0]
       }
     }
+    return undefined
   }))
 }

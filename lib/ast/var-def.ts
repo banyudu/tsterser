@@ -46,6 +46,7 @@ export default class AST_VarDef extends AST_Node {
         d.fixed = false
       }
     }
+    return undefined
   }
 
   walkInner () {

@@ -804,6 +804,7 @@ const MOZ_TO_ME: any = {
       args.quote = M.computed ? '"' : null
       return new AST_ConciseMethod(args)
     }
+    return undefined
   },
   MethodDefinition: function (M: MozillaAstMethodDefinition) {
     const args: any = {
@@ -1001,6 +1002,7 @@ const MOZ_TO_ME: any = {
         end: my_end_token(M)
       })
     }
+    return undefined
   },
   Identifier: function (M: MozillaAst) {
     const p = FROM_MOZ_STACK[FROM_MOZ_STACK.length - 2]
@@ -1025,6 +1027,7 @@ const MOZ_TO_ME: any = {
         name: M.name
       })
     }
+    return undefined
   },
   BigIntLiteral (M: MozillaAst) {
     return new AST_BigInt({
@@ -1503,6 +1506,7 @@ export function walk_body (node: AST_Node, visitor: TreeWalker): void {
 export function is_lhs (node: AST_Node, parent: AST_Node) {
   if (is_ast_unary(parent) && unary_side_effects.has(parent.operator)) return parent.expression
   if (is_ast_assign(parent) && parent.left === node) return node
+  return undefined
 }
 
 export const list_overhead = (array: any[]) => array.length && array.length - 1
@@ -1638,6 +1642,7 @@ export function extract_declarations_from_unreachable_code (compressor: Compress
     if (is_ast_scope(node)) {
       return true
     }
+    return undefined
   })
 }
 

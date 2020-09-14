@@ -1313,6 +1313,7 @@ export function parse ($TEXT: string, opt?: any) {
       }
     }
     unexpected()
+    return undefined
   })
 
   function labeled_statement () {
@@ -2530,6 +2531,7 @@ export function parse ($TEXT: string, opt?: any) {
         } as any)
       }
     }
+    return undefined
   }
 
   function import_ () {

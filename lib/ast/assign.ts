@@ -101,6 +101,7 @@ export default class AST_Assign extends AST_Binary {
           if (may_throw && parent.bcatch) return true
         }
       }
+      return undefined
     }
   }
 

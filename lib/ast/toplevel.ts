@@ -102,6 +102,7 @@ export default class AST_Toplevel extends AST_Scope {
           }
         }
       }
+      return undefined
     }))
   }
 
@@ -327,6 +328,7 @@ export default class AST_Toplevel extends AST_Scope {
       if (!(options.ie8 || options.safari10) && is_ast_symbol_catch(node)) {
         to_mangle.push(node.definition())
       }
+      return undefined
     })
 
     this.walk(tw)

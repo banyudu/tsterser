@@ -12,6 +12,7 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
     if (!node.label) {
       return this
     }
+    return undefined
   }
 
   is_block_scope () { return true }

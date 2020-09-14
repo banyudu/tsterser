@@ -90,6 +90,7 @@ export default class AST_Lambda extends AST_Scope {
       ) {
         return true
       }
+      return undefined
     })
   }
 

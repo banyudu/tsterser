@@ -89,6 +89,7 @@ export default class AST_PropAccess extends AST_Node {
         }
       }
     }
+    return undefined
   }
 
   shallow_cmp_props: any = {}

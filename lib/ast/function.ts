@@ -29,6 +29,7 @@ export default class AST_Function extends AST_Lambda {
           !self.pinned()) {
       const has_special_symbol = walk(self, (node: AST_Node) => {
         if (is_ast_this(node)) return walk_abort
+        return undefined
       })
       if (!has_special_symbol) return make_node('AST_Arrow', self, self).optimize(compressor)
     }

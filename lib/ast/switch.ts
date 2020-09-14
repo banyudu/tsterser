@@ -25,6 +25,7 @@ export default class AST_Switch extends AST_Block {
     if (is_ast_break(node) && !node.label) {
       return this
     }
+    return undefined
   }
 
   _optimize (compressor: Compressor): any {
@@ -107,6 +108,7 @@ export default class AST_Switch extends AST_Block {
                   is_ast_lambda(node) ||
                   is_ast_simple_statement(node)) return true
         if (is_ast_break(node) && tw.loopcontrol_target(node) === self) { has_break = true }
+        return undefined
       })
       self.walk(tw)
       if (!has_break) {

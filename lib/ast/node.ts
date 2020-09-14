@@ -232,6 +232,7 @@ export default class AST_Node extends AST {
         if (node !== self) {
           return node.clone(true)
         }
+        return undefined
       }))
     }
     return new this.CTOR(this)

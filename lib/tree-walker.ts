@@ -67,6 +67,7 @@ export default class TreeWalker {
       const x = stack[i]
       if (x instanceof type) return x
     }
+    return undefined
   }
 
   has_directive (type: string): any {

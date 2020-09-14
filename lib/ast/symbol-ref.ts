@@ -189,6 +189,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     function has_symbol_ref (value: AST_Node) {
       return walk(value, (node: AST_Node) => {
         if (is_ast_symbol_ref(node)) return walk_abort
+        return undefined
       })
     }
   }

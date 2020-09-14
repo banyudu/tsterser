@@ -296,6 +296,7 @@ export default class AST_Conditional extends AST_Node {
           return i
         }
       }
+      return undefined
     }
   }
 

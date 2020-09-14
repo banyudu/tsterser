@@ -204,6 +204,7 @@ export default class Compressor extends TreeWalker {
         return false
       }
     }
+    return undefined
   }
 
   compress (toplevel: AST_Toplevel) {

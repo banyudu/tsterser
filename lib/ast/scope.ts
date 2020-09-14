@@ -96,6 +96,7 @@ export default class AST_Scope extends AST_Block {
         result = false
         return walk_abort
       }
+      return undefined
     })
     return result
   }
@@ -162,6 +163,7 @@ export default class AST_Scope extends AST_Block {
       if (is_ast_unary(node) && has_flag(node, WRITE_ONLY)) {
         return node.expression
       }
+      return undefined
     }
     const in_use_ids = new Map()
     const fixed_ids = new Map()
@@ -423,6 +425,7 @@ export default class AST_Scope extends AST_Block {
               }
               sym.eliminated++
             }
+            return undefined
           })
           if (head.length > 0 || tail.length > 0) {
             node.definitions = head.concat(tail)
@@ -540,6 +543,7 @@ export default class AST_Scope extends AST_Block {
         scope = save_scope
         return true
       }
+      return undefined
     }
   }
 
@@ -564,6 +568,7 @@ export default class AST_Scope extends AST_Block {
           ++var_decl
           return true
         }
+        return undefined
       })
       hoist_vars = hoist_vars && var_decl > 1
       const tt = new TreeTransformer(
@@ -604,6 +609,7 @@ export default class AST_Scope extends AST_Block {
             }
             if (is_ast_scope(node)) { return node } // to avoid descending in nested scopes
           }
+          return undefined
         }
       )
       self = self.transform(tt)
@@ -742,6 +748,7 @@ export default class AST_Scope extends AST_Block {
         self.enclosed.push(def)
         return new_var
       }
+      return undefined
     })
     return self.transform(hoister)
   }
@@ -1053,6 +1060,7 @@ export default class AST_Scope extends AST_Block {
                     node.start.pos
         )
       }
+      return undefined
     })
     this.walk(tw)
 
@@ -1117,6 +1125,7 @@ export default class AST_Scope extends AST_Block {
           s = s.parent_scope
         }
       }
+      return undefined
     })
     this.walk(tw)
 
@@ -1138,6 +1147,7 @@ export default class AST_Scope extends AST_Block {
           node.reference()
           return true
         }
+        return undefined
       })
     }
 
