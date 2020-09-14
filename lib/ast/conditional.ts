@@ -92,8 +92,8 @@ export default class AST_Conditional extends AST_Node {
           consequent.operator == alternative.operator &&
           consequent.left.equivalent_to(alternative.left) &&
           (!self.condition.has_side_effects(compressor) ||
-              consequent.operator == '=' &&
-                  !consequent.left.has_side_effects(compressor))) {
+              (consequent.operator == '=' &&
+                  !consequent.left.has_side_effects(compressor)))) {
       return make_node('AST_Assign', self, {
         operator: consequent.operator,
         left: consequent.left,
@@ -264,9 +264,9 @@ export default class AST_Conditional extends AST_Node {
     // AST_True or !0
     function is_true (node: AST_Node) {
       return is_ast_true(node) ||
-              in_bool &&
+              (in_bool &&
                   is_ast_constant(node) &&
-                  node.getValue() ||
+                  node.getValue()) ||
               (is_ast_unary_prefix(node) &&
                   node.operator == '!' &&
                   is_ast_constant(node.expression) &&
@@ -275,9 +275,9 @@ export default class AST_Conditional extends AST_Node {
     // AST_False or !1
     function is_false (node: AST_Node) {
       return is_ast_false(node) ||
-              in_bool &&
+              (in_bool &&
                   is_ast_constant(node) &&
-                  !node.getValue() ||
+                  !node.getValue()) ||
               (is_ast_unary_prefix(node) &&
                   node.operator == '!' &&
                   is_ast_constant(node.expression) &&

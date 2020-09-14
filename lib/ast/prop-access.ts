@@ -67,7 +67,7 @@ export default class AST_PropAccess extends AST_Node {
         if ('' + (is_ast_concise_method(prop) ? prop.key.name : prop.key) == key) {
           if (!props.every((prop: any) => {
             return is_ast_object_key_val(prop) ||
-                          arrows && is_ast_concise_method(prop) && !prop.is_generator
+                          (arrows && is_ast_concise_method(prop) && !prop.is_generator)
           })) break
           if (!safe_to_flatten(prop.value, compressor)) break
           return make_node('AST_Sub', this, {

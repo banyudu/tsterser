@@ -9,7 +9,6 @@
         "@typescript-eslint/strict-boolean-expressions": "off",
         "eqeqeq": "warn",
         "camelcase": "off",
-        "no-mixed-operators": "warn",
         "@typescript-eslint/restrict-plus-operands": "off",
         "new-cap": "warn",
         "no-fallthrough": "off",

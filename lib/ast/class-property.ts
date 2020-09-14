@@ -35,15 +35,15 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
 
   may_throw (compressor: Compressor) {
     return (
-      this.computed_key() && this.key.may_throw(compressor) ||
-              this.static && this.value && this.value.may_throw(compressor)
+      (this.computed_key() && this.key.may_throw(compressor)) ||
+              (this.static && this.value && this.value.may_throw(compressor))
     )
   }
 
   has_side_effects (compressor: Compressor) {
     return (
-      this.computed_key() && this.key.has_side_effects(compressor) ||
-              this.static && this.value && this.value.has_side_effects(compressor)
+      (this.computed_key() && this.key.has_side_effects(compressor)) ||
+              (this.static && this.value && this.value.has_side_effects(compressor))
     )
   }
 

@@ -58,15 +58,15 @@ export default class SymbolDef {
     const firstOrig = this.orig[0]
     if (in_function_defs(this.id) && keep_name(options.keep_fnames, firstOrig.name)) return true
 
-    return this.global && !options.toplevel ||
+    return (this.global && !options.toplevel) ||
             (this.export & MASK_EXPORT_DONT_MANGLE) ||
             this.undeclared ||
-            !options.eval && this.scope.pinned() ||
-            (is_ast_symbol_lambda(firstOrig) ||
-            is_ast_symbol_defun(firstOrig)) && keep_name(options.keep_fnames, firstOrig.name) ||
+            (!options.eval && this.scope.pinned()) ||
+            ((is_ast_symbol_lambda(firstOrig) ||
+            is_ast_symbol_defun(firstOrig)) && keep_name(options.keep_fnames, firstOrig.name)) ||
             is_ast_symbol_method(firstOrig) ||
-            (is_ast_symbol_class(firstOrig) ||
-              is_ast_symbol_def_class(firstOrig)) && keep_name(options.keep_classnames, firstOrig.name)
+            ((is_ast_symbol_class(firstOrig) ||
+              is_ast_symbol_def_class(firstOrig)) && keep_name(options.keep_classnames, firstOrig.name))
   }
 
   mangle (options: any) {

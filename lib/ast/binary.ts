@@ -46,8 +46,8 @@ export default class AST_Binary extends AST_Node {
     function reversible () {
       return self.left.is_constant() ||
               self.right.is_constant() ||
-              !self.left.has_side_effects(compressor) &&
-                  !self.right.has_side_effects(compressor)
+              (!self.left.has_side_effects(compressor) &&
+                  !self.right.has_side_effects(compressor))
     }
     function reverse (op?: any) {
       if (reversible()) {
@@ -120,8 +120,8 @@ export default class AST_Binary extends AST_Node {
               lhs.operator == (self.operator == '&&' ? '!==' : '===') &&
               is_ast_binary(self.right) &&
               lhs.operator == self.right.operator &&
-              (is_undefined(lhs.left, compressor) && is_ast_null(self.right.left) ||
-                  is_ast_null(lhs.left) && is_undefined(self.right.left, compressor)) &&
+              ((is_undefined(lhs.left, compressor) && is_ast_null(self.right.left)) ||
+                  (is_ast_null(lhs.left) && is_undefined(self.right.left, compressor))) &&
               !lhs.right.has_side_effects(compressor) &&
               lhs.right.equivalent_to(self.right.right)) {
             let combined = make_node('AST_Binary', self, {
@@ -224,7 +224,7 @@ export default class AST_Binary extends AST_Node {
             }
           } else if (!(is_ast_node(rr))) {
             const parent = compressor.parent()
-            if (parent.operator == '&&' && parent.left === compressor.self() || compressor.in_boolean_context()) {
+            if ((parent.operator == '&&' && parent.left === compressor.self()) || compressor.in_boolean_context()) {
               compressor.warn('Dropping side-effect-free && [{file}:{line},{col}]', self.start)
               return self.left.optimize(compressor)
             }
@@ -258,7 +258,7 @@ export default class AST_Binary extends AST_Node {
           const rr = self.right.evaluate(compressor)
           if (!rr) {
             const parent = compressor.parent()
-            if (parent.operator == '||' && parent.left === compressor.self() || compressor.in_boolean_context()) {
+            if ((parent.operator == '||' && parent.left === compressor.self()) || compressor.in_boolean_context()) {
               compressor.warn('Dropping side-effect-free || [{file}:{line},{col}]', self.start)
               return self.left.optimize(compressor)
             }
@@ -658,16 +658,16 @@ export default class AST_Binary extends AST_Node {
   }
 
   is_number (compressor: Compressor) {
-    return binary.has(this.operator) || this.operator == '+' &&
+    return binary.has(this.operator) || (this.operator == '+' &&
           this.left.is_number(compressor) &&
-          this.right.is_number(compressor)
+          this.right.is_number(compressor))
   }
 
   is_boolean () {
     return binary_bool.has(this.operator) ||
-          lazy_op.has(this.operator) &&
+          (lazy_op.has(this.operator) &&
               this.left.is_boolean() &&
-              this.right.is_boolean()
+              this.right.is_boolean())
   }
 
   reduce_vars (tw: TreeWalker, _descend: Function, _compressor: Compressor) {

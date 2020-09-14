@@ -262,7 +262,7 @@ export default class AST_If extends AST_StatementWithBody {
 function make_then (self: AST_If, output: OutputStream) {
   let b: any = self.body
   if (output.option('braces') ||
-        output.option('ie8') && is_ast_do(b)) { return make_block(b, output) }
+        (output.option('ie8') && is_ast_do(b))) { return make_block(b, output) }
   // The squeezer replaces "block"-s that contain only a single
   // statement with the statement itself; technically, the AST
   // is correct, but this can create problems when we output an

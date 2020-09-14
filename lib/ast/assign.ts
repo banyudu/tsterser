@@ -65,8 +65,8 @@ export default class AST_Assign extends AST_Binary {
             right: self.right
           }).optimize(compressor)
         }
-      } while (is_ast_binary(parent) && parent.right === node ||
-              is_ast_sequence(parent) && parent.tail_node() === node)
+      } while ((is_ast_binary(parent) && parent.right === node) ||
+              (is_ast_sequence(parent) && parent.tail_node() === node))
     }
     self = self.lift_sequences(compressor)
     if (self.operator == '=' && is_ast_symbol_ref(self.left) && is_ast_binary(self.right)) {
@@ -108,9 +108,9 @@ export default class AST_Assign extends AST_Binary {
   drop_side_effect_free (compressor: Compressor): any {
     let left = this.left
     if (left.has_side_effects(compressor) ||
-          compressor.has_directive('use strict') &&
+          (compressor.has_directive('use strict') &&
               is_ast_prop_access(left) &&
-              left.expression.is_constant()) {
+              left.expression.is_constant())) {
       return this
     }
     set_flag(this, WRITE_ONLY)
@@ -140,7 +140,7 @@ export default class AST_Assign extends AST_Binary {
 
   is_number (compressor: Compressor) {
     return binary.has(this.operator.slice(0, -1)) ||
-          this.operator == '=' && this.right.is_number(compressor)
+          (this.operator == '=' && this.right.is_number(compressor))
   }
 
   is_boolean () {

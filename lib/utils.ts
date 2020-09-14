@@ -1015,8 +1015,8 @@ const MOZ_TO_ME: any = {
                 : p.type === 'FunctionDeclaration' ? (p.id === M ? AST_SymbolDefun : AST_SymbolFunarg)
                   : p.type === 'ArrowFunctionExpression' ? ((p as MozillaAstArrowFunctionExpression).params.includes(M)) ? AST_SymbolFunarg : AST_SymbolRef
                     : p.type === 'ClassExpression' ? (p.id === M ? AST_SymbolClass : AST_SymbolRef)
-                      : p.type === 'Property' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolMethod)
-                        : p.type === 'FieldDefinition' ? (p.key === M && p.computed || p.value === M ? AST_SymbolRef : AST_SymbolClassProperty)
+                      : p.type === 'Property' ? ((p.key === M && p.computed) || p.value === M ? AST_SymbolRef : AST_SymbolMethod)
+                        : p.type === 'FieldDefinition' ? ((p.key === M && p.computed) || p.value === M ? AST_SymbolRef : AST_SymbolClassProperty)
                           : p.type === 'ClassDeclaration' ? (p.id === M ? AST_SymbolDefClass : AST_SymbolRef)
                             : p.type === 'MethodDefinition' ? (p.computed ? AST_SymbolRef : AST_SymbolMethod)
                               : p.type === 'CatchClause' ? AST_SymbolCatch
@@ -1429,7 +1429,7 @@ export function best_of_expression (ast1: AST_Node, ast2: AST_Node) {
 export function is_undefined (node: AST_Node, compressor?: Compressor) {
   return has_flag(node, UNDEFINED) ||
         is_ast_undefined(node) ||
-        is_ast_unary_prefix(node) && node.operator == 'void' && !node.expression.has_side_effects(compressor as any)
+        (is_ast_unary_prefix(node) && node.operator == 'void' && !node.expression.has_side_effects(compressor as any))
 }
 
 export function force_statement (stat: AST_Node, output: OutputStream) {
@@ -1521,9 +1521,9 @@ export function do_list (list: any[], tw: TreeTransformer) {
 // func(something) because that changes the meaning of
 // the func (becomes lexical instead of global).
 export function maintain_this_binding (parent: AST_Node, orig: AST_Node, val: AST_Node) {
-  if (is_ast_unary_prefix(parent) && parent.operator == 'delete' ||
-        is_ast_call(parent) && parent.expression === orig &&
-            (is_ast_prop_access(val) || is_ast_symbol_ref(val) && val.name == 'eval')) {
+  if ((is_ast_unary_prefix(parent) && parent.operator == 'delete') ||
+        (is_ast_call(parent) && parent.expression === orig &&
+            (is_ast_prop_access(val) || (is_ast_symbol_ref(val) && val.name == 'eval')))) {
     return make_sequence(orig, [
       make_node('AST_Number', orig, { value: 0 }),
       val
@@ -1573,7 +1573,7 @@ export function is_modified (compressor: Compressor, tw: TreeWalker, node: AST_N
         !(is_ast_class(value)) &&
         !parent.is_expr_pure?.(compressor) &&
         (!(is_ast_function(value)) ||
-            !(is_ast_new(parent)) && value.contains_this?.())) {
+            (!(is_ast_new(parent)) && value.contains_this?.()))) {
     return true
   }
   if (is_ast_array(parent)) {
@@ -1691,7 +1691,7 @@ export function read_property (obj: any, key: any) {
       }
     }
   }
-  return is_ast_symbol_ref(value) && value.fixed_value() || value
+  return (is_ast_symbol_ref(value) && value.fixed_value()) || value
 }
 
 export function get_value (key: AST_Node) {
@@ -2010,20 +2010,20 @@ export function mark_escaped (tw: TreeWalker, d: any, scope: AST_Scope, node: AS
     if (value.is_constant()) return
     if (is_ast_class_expression(value)) return
   }
-  if (is_ast_assign(parent) && parent.operator == '=' && node === parent.right ||
-        is_ast_call(parent) && (node !== parent.expression || is_ast_new(parent)) ||
-        is_ast_exit(parent) && node === parent.value && node.scope !== d.scope ||
-        is_ast_var_def(parent) && node === parent.value ||
-        is_ast_yield(parent) && node === parent.value && node.scope !== d.scope) {
+  if ((is_ast_assign(parent) && parent.operator == '=' && node === parent.right) ||
+        (is_ast_call(parent) && (node !== parent.expression || is_ast_new(parent))) ||
+        (is_ast_exit(parent) && node === parent.value && node.scope !== d.scope) ||
+        (is_ast_var_def(parent) && node === parent.value) ||
+        (is_ast_yield(parent) && node === parent.value && node.scope !== d.scope)) {
     if (depth > 1 && !(value?.is_constant_expression(scope))) depth = 1
     if (!d.escaped || d.escaped > depth) d.escaped = depth
     return
   } else if (is_ast_array(parent) ||
         is_ast_await(parent) ||
-        is_ast_binary(parent) && lazy_op.has(parent.operator) ||
-        is_ast_conditional(parent) && node !== parent.condition ||
+        (is_ast_binary(parent) && lazy_op.has(parent.operator)) ||
+        (is_ast_conditional(parent) && node !== parent.condition) ||
         is_ast_expansion(parent) ||
-        is_ast_sequence(parent) && node === parent.tail_node?.()) {
+        (is_ast_sequence(parent) && node === parent.tail_node?.())) {
     mark_escaped(tw, d, scope, parent, parent, level + 1, depth)
   } else if (is_ast_object_key_val(parent) && node === parent.value) {
     const obj = tw.parent(level + 1)
@@ -2375,8 +2375,8 @@ export function in_function_defs (id: any) {
 
 const shallow_cmp = (node1: AST_Node | null, node2: AST_Node | null) => {
   return (
-    node1 === null && node2 === null ||
-        node1?.TYPE === node2?.TYPE && node1?.shallow_cmp(node2)
+    (node1 === null && node2 === null) ||
+        (node1?.TYPE === node2?.TYPE && node1?.shallow_cmp(node2))
   )
 }
 

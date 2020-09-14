@@ -30,7 +30,7 @@ export default class AST_New extends AST_Call {
   needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (this.args.length === 0 && (is_ast_prop_access(p) || // (new Date).getTime(), (new Date)["getTime"]()
-        is_ast_call(p) && p.expression === this)) { // (new foo)(bar)
+        (is_ast_call(p) && p.expression === this))) { // (new foo)(bar)
       return true
     }
     return false

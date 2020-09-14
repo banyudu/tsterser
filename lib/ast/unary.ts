@@ -120,14 +120,14 @@ export default class AST_Unary extends AST_Node {
 
   needs_parens (output: OutputStream): boolean {
     const p = output.parent()
-    return is_ast_prop_access(p) && p.expression === this ||
-            is_ast_call(p) && p.expression === this ||
-            is_ast_binary(p) &&
+    return (is_ast_prop_access(p) && p.expression === this) ||
+            (is_ast_call(p) && p.expression === this) ||
+            (is_ast_binary(p) &&
                 p.operator === '**' &&
                 is_ast_unary_prefix(this) &&
                 p.left === this &&
                 this.operator !== '++' &&
-                this.operator !== '--'
+                this.operator !== '--')
   }
 
   static documentation = 'Base class for unary expressions'

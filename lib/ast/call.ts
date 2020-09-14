@@ -478,10 +478,10 @@ export default class AST_Call extends AST_Node {
               (returned_value = can_flatten_body(stat)) &&
               (exp === fn ||
                   has_annotation(self, _INLINE) ||
-                  compressor.option('unused') &&
+                  (compressor.option('unused') &&
                       (def = exp.definition?.()).references.length == 1 &&
                       !recursive_ref(compressor, def) &&
-                      fn.is_constant_expression(exp.scope)) &&
+                      fn.is_constant_expression(exp.scope))) &&
               !has_annotation(self, _PURE | _NOINLINE) &&
               !fn.contains_this() &&
               can_inject_symbols() &&
@@ -914,8 +914,8 @@ export default class AST_Call extends AST_Node {
 
   needs_parens (output: OutputStream): boolean {
     const p = output.parent(); let p1
-    if (is_ast_new(p) && p.expression === this ||
-            is_ast_export(p) && p.is_default && is_ast_function(this.expression)) { return true }
+    if ((is_ast_new(p) && p.expression === this) ||
+            (is_ast_export(p) && p.is_default && is_ast_function(this.expression))) { return true }
 
     // workaround for Safari bug.
     // https://bugs.webkit.org/show_bug.cgi?id=123506

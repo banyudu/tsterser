@@ -655,7 +655,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
       raw += ch
       if (ch == '\\') {
         const tmp = S.pos
-        const prev_is_tag = previous_token && (previous_token.type === 'name' || previous_token.type === 'punc' && (previous_token.value === ')' || previous_token.value === ']'))
+        const prev_is_tag = previous_token && (previous_token.type === 'name' || (previous_token.type === 'punc' && (previous_token.value === ')' || previous_token.value === ']')))
         ch = read_escaped_char(true, !prev_is_tag, true)
         raw += S.text.substr(tmp, S.pos - tmp)
       }
@@ -2704,9 +2704,9 @@ export function parse ($TEXT: string, opt?: any) {
     let exported_value
     let exported_definition
     if (is('punc', '{') ||
-            is_default &&
+            (is_default &&
                 (is('keyword', 'class') || is('keyword', 'function')) &&
-                is_token(peek(), 'punc')) {
+                is_token(peek(), 'punc'))) {
       exported_value = expression(false)
       semicolon()
     } else if (is_ast_definitions((node = statement(is_default))) && is_default) {

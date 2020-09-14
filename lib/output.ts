@@ -107,7 +107,7 @@ export class OutputStream {
   }
 
   _make_indent (back: number) {
-    return ' '.repeat((this.options.indent_start as number) + this._indentation - back * (this.options.indent_level as number))
+    return ' '.repeat((this.options.indent_start as number) + this._indentation - (back * (this.options.indent_level as number)))
   }
 
   semicolon () {
@@ -422,7 +422,7 @@ export class OutputStream {
     if (this._might_need_semicolon) {
       this._might_need_semicolon = false
 
-      if (prev === ':' && ch === '}' || (!ch || !';}'.includes(ch)) && prev !== ';') {
+      if ((prev === ':' && ch === '}') || ((!ch || !';}'.includes(ch)) && prev !== ';')) {
         if (this.options.semicolons || requireSemicolonChars.has(ch)) {
           this._OUTPUT += ';'
           this._current_col++

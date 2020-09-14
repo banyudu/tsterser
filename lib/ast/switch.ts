@@ -90,8 +90,8 @@ export default class AST_Switch extends AST_Block {
     while ((branch = body[body.length - 1])) {
       const stat = branch.body[branch.body.length - 1]
       if (is_ast_break(stat) && compressor.loopcontrol_target(stat) === self) { branch.body.pop() }
-      if (branch.body.length || is_ast_case(branch) &&
-              (default_branch || branch.expression.has_side_effects(compressor))) break
+      if (branch.body.length || (is_ast_case(branch) &&
+              (default_branch || branch.expression.has_side_effects(compressor)))) break
       if (body.pop() === default_branch) default_branch = null
     }
     if (body.length == 0) {

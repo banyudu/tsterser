@@ -49,7 +49,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
             is_ast_conditional(tag) ||
             is_ast_sequence(tag) ||
             is_ast_unary(tag) ||
-            is_ast_dot(tag) && is_ast_object(tag.expression)
+            (is_ast_dot(tag) && is_ast_object(tag.expression))
     if (parenthesize_tag) output.print('(')
     this.prefix.print(output)
     if (parenthesize_tag) output.print(')')

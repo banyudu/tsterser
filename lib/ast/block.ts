@@ -254,7 +254,7 @@ export default class AST_Block extends AST_Statement {
           } else {
             if (!arg) {
               arg = make_node('AST_Undefined', sym).transform(compressor)
-            } else if (is_ast_lambda(arg) && arg.pinned?.() || this.has_overlapping_symbol(fn as any, arg, fn_strict)) {
+            } else if ((is_ast_lambda(arg) && arg.pinned?.()) || this.has_overlapping_symbol(fn as any, arg, fn_strict)) {
               arg = null
             }
             if (arg) {
@@ -304,31 +304,31 @@ export default class AST_Block extends AST_Statement {
       }
       // Stop immediately if these node types are encountered
       const parent = scanner.parent()
-      if (is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left) ||
-        is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression) ||
+      if ((is_ast_assign(node) && node.operator != '=' && lhs.equivalent_to(node.left)) ||
+        (is_ast_call(node) && is_ast_prop_access(lhs) && lhs.equivalent_to(node.expression)) ||
         is_ast_debugger(node) ||
         is_ast_destructuring(node) ||
-        is_ast_expansion(node) && is_ast_symbol(node.expression) && node.expression.definition?.().references.length > 1 ||
-        is_ast_iteration_statement(node) && !(is_ast_for(node)) ||
+        (is_ast_expansion(node) && is_ast_symbol(node.expression) && node.expression.definition?.().references.length > 1) ||
+        (is_ast_iteration_statement(node) && !(is_ast_for(node))) ||
         is_ast_loop_control(node) ||
         is_ast_try(node) ||
         is_ast_with(node) ||
         is_ast_yield(node) ||
         is_ast_export(node) ||
         is_ast_class(node) ||
-        is_ast_for(parent) && node !== parent.init ||
-        !replace_all && (is_ast_symbol_ref(node) && !node.is_declared(compressor) && !pure_prop_access_globals.has(node as any)) ||
+        (is_ast_for(parent) && node !== parent.init) ||
+        (!replace_all && (is_ast_symbol_ref(node) && !node.is_declared(compressor) && !pure_prop_access_globals.has(node as any))) ||
         is_ast_await(node as any) ||
-        is_ast_symbol_ref(node) && is_ast_call(parent) && has_annotation(parent, _NOINLINE)
+        (is_ast_symbol_ref(node) && is_ast_call(parent) && has_annotation(parent, _NOINLINE))
       ) {
         abort = true
         return node
       }
       // Stop only if candidate is found within conditional branches
       if (!stop_if_hit && (!lhs_local || !replace_all) &&
-                (is_ast_binary(parent) && lazy_op.has(parent.operator) && parent.left !== node ||
-                    is_ast_conditional(parent) && parent.condition !== node ||
-                    is_ast_if(parent) && parent.condition !== node)) {
+                ((is_ast_binary(parent) && lazy_op.has(parent.operator) && parent.left !== node) ||
+                    (is_ast_conditional(parent) && parent.condition !== node) ||
+                    (is_ast_if(parent) && parent.condition !== node))) {
         stop_if_hit = parent
       }
       // Replace variable with assignment when found
@@ -381,12 +381,12 @@ export default class AST_Block extends AST_Statement {
       // but are otherwise not safe to scan into or beyond them.
       let sym
       if (is_ast_call(node) ||
-        is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs)) ||
-        is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor)) ||
-        is_ast_symbol_ref(node) && (lvalues.get(node.name) || side_effects && may_modify(node)) ||
-        is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || side_effects && may_modify(node.name as any)) ||
-        (sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name)) ||
-        may_throw && (this.in_try ? node.has_side_effects(compressor) : side_effects_external(node))) {
+        (is_ast_exit(node) && (side_effects || is_ast_prop_access(lhs) || may_modify(lhs))) ||
+        (is_ast_prop_access(node) && (side_effects || node.expression.may_throw_on_access(compressor))) ||
+        (is_ast_symbol_ref(node) && (lvalues.get(node.name) || (side_effects && may_modify(node)))) ||
+        (is_ast_var_def(node) && node.value && (lvalues.has(node.name.name) || (side_effects && may_modify(node.name as any)))) ||
+        ((sym = is_lhs(node.left, node)) && (is_ast_prop_access(sym) || lvalues.has(sym.name))) ||
+        (may_throw && (this.in_try ? node.has_side_effects(compressor) : side_effects_external(node)))) {
         stop_after = node
         if (is_ast_scope(node)) abort = true
       }
@@ -420,7 +420,7 @@ export default class AST_Block extends AST_Statement {
     })
     const is_lhs_local = (lhs: AST_Node) => {
       while (is_ast_prop_access(lhs)) lhs = lhs.expression
-      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === this.compressor_scope && !(this.in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || is_ast_assign(candidate) && candidate.operator != '='))
+      return is_ast_symbol_ref(lhs) && lhs.definition?.().scope === this.compressor_scope && !(this.in_loop && (lvalues.has(lhs.name) || is_ast_unary(candidate) || (is_ast_assign(candidate) && candidate.operator != '=')))
     }
     let hit_stack: any[]
     let candidate: any
@@ -665,7 +665,7 @@ export default class AST_Block extends AST_Statement {
         const referenced = def.references.length - def.replaced
         if (!referenced) return false
         const declared = def.orig.length - def.eliminated
-        if (declared > 1 && !(is_ast_symbol_funarg(expr.name)) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
+        if ((declared > 1 && !(is_ast_symbol_funarg(expr.name))) || (referenced > 1 ? mangleable_var(expr) : !compressor.exposed(def))) {
           return make_node('AST_SymbolRef', expr.name, expr.name)
         }
       } else {
@@ -822,7 +822,7 @@ export default class AST_Block extends AST_Statement {
         // ---
         // pretty silly case, but:
         // if (foo()) return; return; ==> foo(); return;
-        if (!value && !stat.alternative && (in_lambda && !next || is_ast_return(next) && !next.value)) {
+        if (!value && !stat.alternative && ((in_lambda && !next) || (is_ast_return(next) && !next.value))) {
           this.CHANGED = true
           this.body[i] = make_node('AST_SimpleStatement', stat.condition, {
             body: stat.condition
@@ -841,7 +841,7 @@ export default class AST_Block extends AST_Statement {
         }
         // ---
         // if (foo()) return x; [ return ; ] ==> return foo() ? x : undefined;
-        if (value && !stat.alternative && (!next && in_lambda && multiple_if_returns || is_ast_return(next))) {
+        if (value && !stat.alternative && ((!next && in_lambda && multiple_if_returns) || is_ast_return(next))) {
           this.CHANGED = true
           stat = stat.clone()
           stat.alternative = next || make_node('AST_Return', stat, {
@@ -886,9 +886,9 @@ export default class AST_Block extends AST_Statement {
       if (is_ast_const(stat) || is_ast_let(stat)) return false
     }
     const lct = is_ast_loop_control(ab) ? compressor.loopcontrol_target(ab) : null
-    return is_ast_return(ab) && in_lambda && is_return_void(ab.value) ||
-              is_ast_continue(ab) && self === loop_body(lct) ||
-              is_ast_break(ab) && is_ast_block_statement(lct) && self === lct
+    return (is_ast_return(ab) && in_lambda && is_return_void(ab.value)) ||
+              (is_ast_continue(ab) && self === loop_body(lct)) ||
+              (is_ast_break(ab) && is_ast_block_statement(lct) && self === lct)
   }
 
   private extract_functions (i: number) {
@@ -936,8 +936,8 @@ export default class AST_Block extends AST_Statement {
       const stat = statements[i]
       if (is_ast_loop_control(stat)) {
         const lct = compressor.loopcontrol_target(stat)
-        if (is_ast_break(stat) && !(is_ast_iteration_statement(lct)) && loop_body(lct) === self ||
-            is_ast_continue(stat) && loop_body(lct) === self) {
+        if ((is_ast_break(stat) && !(is_ast_iteration_statement(lct)) && loop_body(lct) === self) ||
+            (is_ast_continue(stat) && loop_body(lct) === self)) {
           if (stat.label) {
             remove<any>(stat.label.thedef.references, stat)
           }
@@ -979,7 +979,7 @@ export default class AST_Block extends AST_Statement {
         let body = stat.body
         if (seq.length > 0) body = body.drop_side_effect_free(compressor)
         if (body) merge_sequence(seq, body)
-      } else if (is_ast_definitions(stat) && declarations_only(stat) ||
+      } else if ((is_ast_definitions(stat) && declarations_only(stat)) ||
                 is_ast_defun(stat)) {
         this.body[n++] = stat
       } else {
@@ -1299,7 +1299,7 @@ function has_multiple_if_returns (statements: AST_Statement[]) {
 }
 
 function is_return_void (value: AST_Node | undefined | null) {
-  return !value || is_ast_unary_prefix(value) && value.operator == 'void'
+  return !value || (is_ast_unary_prefix(value) && value.operator == 'void')
 }
 
 function as_statement_array_with_return (node: AST_Node, ab: AST_Binary) {

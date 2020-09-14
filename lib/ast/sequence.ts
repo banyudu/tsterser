@@ -156,7 +156,7 @@ export default class AST_Sequence extends AST_Node {
             is_ast_arrow(p) || // x => (x, x)
             is_ast_default_assign(p) || // x => (x = (0, function(){}))
             is_ast_expansion(p) || // [...(a, b)]
-            is_ast_for_of(p) && this === p.object || // for (e of (foo, bar)) {}
+            (is_ast_for_of(p) && this === p.object) || // for (e of (foo, bar)) {}
             is_ast_yield(p) || // yield (foo, bar)
             is_ast_export(p) // export default (foo, bar)
   }

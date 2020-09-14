@@ -125,7 +125,7 @@ export default class AST_Scope extends AST_Block {
           })
         })
       }
-      if (is_ast_class(node) || is_ast_lambda(node) && (node) !== self) {
+      if (is_ast_class(node) || (is_ast_lambda(node) && (node) !== self)) {
         return node
       }
       if (is_ast_block(node)) {
@@ -193,7 +193,7 @@ export default class AST_Scope extends AST_Block {
       if (is_ast_defun(node) || is_ast_def_class(node)) {
         const node_def = node.name?.definition?.()
         const in_export = is_ast_export(tw.parent())
-        if (in_export || !drop_funcs && scope === self) {
+        if (in_export || (!drop_funcs && scope === self)) {
           if (node_def.global && !in_use_ids.has(node_def.id)) {
             in_use_ids.set(node_def.id, node_def)
           }
@@ -283,7 +283,7 @@ export default class AST_Scope extends AST_Block {
             def = sym.definition?.()
             const in_use = in_use_ids.has(def.id)
             if (is_ast_assign(node)) {
-              if (!in_use || fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node) {
+              if (!in_use || (fixed_ids.has(def.id) && fixed_ids.get(def.id) !== node)) {
                 return maintain_this_binding(parent, node, node.right.transform(tt))
               }
             } else if (!in_use) {
@@ -295,10 +295,10 @@ export default class AST_Scope extends AST_Block {
         }
         if (scope !== self) return
         if (node.name &&
-                  (is_ast_class_expression(node) &&
-                      !keep_name(compressor.option('keep_classnames'), (def = node.name?.definition?.()).name) ||
-                  is_ast_function(node) &&
-                      !keep_name(compressor.option('keep_fnames'), (def = node.name?.definition?.()).name))) {
+                  ((is_ast_class_expression(node) &&
+                      !keep_name(compressor.option('keep_classnames'), (def = node.name?.definition?.()).name)) ||
+                  (is_ast_function(node) &&
+                      !keep_name(compressor.option('keep_fnames'), (def = node.name?.definition?.()).name)))) {
           // any declarations with same name will overshadow
           // name of this anonymous function and can therefore
           // never be used anywhere
@@ -332,7 +332,7 @@ export default class AST_Scope extends AST_Block {
         }
         if ((is_ast_defun(node) || is_ast_def_class(node)) && node !== self) {
           const def = node.name?.definition?.()
-          const keep = def.global && !drop_funcs || in_use_ids.has(def.id)
+          const keep = (def.global && !drop_funcs) || in_use_ids.has(def.id)
           if (!keep) {
             compressor[node.name?.unreferenced() ? 'warn' : 'info']('Dropping unused function {name} [{file}:{line},{col}]', template(node.name))
             def.eliminated++
@@ -363,10 +363,10 @@ export default class AST_Scope extends AST_Block {
               : def.name.definition?.()
             if (drop_block && sym.global) return tail.push(def)
             if (!(drop_vars || drop_block) ||
-                is_ast_destructuring(def.name) &&
+                (is_ast_destructuring(def.name) &&
                               (def.name.names.length ||
                                   def.name.is_array ||
-                                  compressor.option('pure_getters') != true) ||
+                                  compressor.option('pure_getters') != true)) ||
                           in_use_ids.has(sym.id)
             ) {
               if (def.value && fixed_ids.has(sym.id) && fixed_ids.get(sym.id) !== def) {
@@ -690,7 +690,7 @@ export default class AST_Scope extends AST_Block {
   hoist_properties (compressor: Compressor) {
     const self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
-    const top_retain = is_ast_toplevel(self) && compressor.top_retain || (() => false)
+    const top_retain = (is_ast_toplevel(self) && compressor.top_retain) || (() => false)
     const defs_by_id = new Map()
     const hoister = new TreeTransformer(function (this: AST_Scope, node: AST_Node, descend: Function) {
       if (is_ast_definitions(node) &&
@@ -1100,7 +1100,7 @@ export default class AST_Scope extends AST_Block {
           }
         }
         let sym
-        if (is_ast_name_mapping(tw.parent()) && tw.parent(1).module_name ||
+        if ((is_ast_name_mapping(tw.parent()) && tw.parent(1).module_name) ||
                     !(sym = node.scope.find_variable(name))) {
           sym = toplevel.def_global?.(node)
           if (is_ast_symbol_export(node)) sym.export = MASK_EXPORT_DONT_MANGLE

@@ -92,8 +92,8 @@ export default class AST_UnaryPrefix extends AST_Unary {
     if (compressor.option('typeofs') &&
           this.operator == 'typeof' &&
           (is_ast_lambda(e) ||
-              is_ast_symbol_ref(e) &&
-                  is_ast_lambda(e.fixed_value()))) {
+              (is_ast_symbol_ref(e) &&
+                  is_ast_lambda(e.fixed_value())))) {
       return typeof function () {}
     }
     if (!non_converting_unary.has(this.operator)) depth++

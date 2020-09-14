@@ -137,10 +137,10 @@ export default class AST_Export extends AST_Statement {
       output.space()
       this.module_name.print(output)
     }
-    if (this.exported_value &&
+    if ((this.exported_value &&
                 !(is_ast_defun(this.exported_value) ||
                     is_ast_function(this.exported_value) ||
-                    is_ast_class(this.exported_value)) ||
+                    is_ast_class(this.exported_value))) ||
             this.module_name != undefined || this.exported_names.length > 0
     ) {
       output.semicolon()

@@ -65,8 +65,8 @@ export default class AST_SymbolRef extends AST_Symbol {
       }
       let fixed = this.fixed_value()
       let single_use: any = def.single_use &&
-              !(is_ast_call(parent) &&
-                  (parent.is_expr_pure(compressor)) ||
+              !((is_ast_call(parent) &&
+                  (parent.is_expr_pure(compressor))) ||
                       has_annotation(parent, _NOINLINE))
       if (single_use && (is_ast_lambda(fixed) || is_ast_class(fixed))) {
         if (retain_top_func(fixed, compressor)) {
@@ -93,16 +93,16 @@ export default class AST_SymbolRef extends AST_Symbol {
       if (single_use && is_ast_lambda(fixed)) {
         const block_scope = find_scope(compressor)
         single_use =
-                  def.scope === this.scope &&
-                      !scope_encloses_variables_in_this_scope(block_scope, fixed) ||
-                  is_ast_call(parent) &&
+                  (def.scope === this.scope &&
+                      !scope_encloses_variables_in_this_scope(block_scope, fixed)) ||
+                  (is_ast_call(parent) &&
                       parent.expression === this &&
-                      !scope_encloses_variables_in_this_scope(block_scope, fixed)
+                      !scope_encloses_variables_in_this_scope(block_scope, fixed))
       }
       if (single_use && is_ast_class(fixed)) {
         const extends_inert = !fixed.extends ||
-                  !fixed.extends.may_throw(compressor) &&
-                      !fixed.extends.has_side_effects(compressor)
+                  (!fixed.extends.may_throw(compressor) &&
+                      !fixed.extends.has_side_effects(compressor))
         single_use = extends_inert &&
                   !fixed.properties.some(prop =>
                     prop.may_throw(compressor) || prop.has_side_effects(compressor)
@@ -260,9 +260,9 @@ export default class AST_SymbolRef extends AST_Symbol {
               ref_once(tw, compressor, d)
       ) {
         d.single_use =
-                  is_ast_lambda(fixed_value) && !fixed_value.pinned?.() ||
+                  (is_ast_lambda(fixed_value) && !fixed_value.pinned?.()) ||
                   is_ast_class(fixed_value) ||
-                  d.scope === this.scope && fixed_value.is_constant_expression()
+                  (d.scope === this.scope && fixed_value.is_constant_expression())
       } else {
         d.single_use = false
       }
@@ -289,7 +289,7 @@ export default class AST_SymbolRef extends AST_Symbol {
 
   is_declared (compressor: Compressor) {
     return !this.definition?.().undeclared ||
-          compressor.option('unsafe') && global_names.has(this.name)
+          (compressor.option('unsafe') && global_names.has(this.name))
   }
 
   is_immutable () {

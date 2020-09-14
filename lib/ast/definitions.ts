@@ -111,7 +111,7 @@ export default class AST_Definitions extends AST_Statement {
     })
     const p = output.parent()
     const in_for = is_ast_for(p) || is_ast_for_in(p)
-    const output_semicolon = !in_for || p && p.init !== this
+    const output_semicolon = !in_for || (p && p.init !== this)
     if (output_semicolon) { output.semicolon() }
   }
 

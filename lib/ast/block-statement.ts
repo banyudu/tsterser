@@ -9,9 +9,9 @@ export default class AST_BlockStatement extends AST_Block {
     this.tighten_body(compressor)
     switch (this.body.length) {
       case 1:
-        if (!compressor.has_directive('use strict') &&
+        if ((!compressor.has_directive('use strict') &&
               is_ast_if(compressor.parent()) &&
-              can_be_extracted_from_if_block(this.body[0]) ||
+              can_be_extracted_from_if_block(this.body[0])) ||
               can_be_evicted_from_block(this.body[0])) {
           return this.body[0]
         }
