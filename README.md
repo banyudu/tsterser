@@ -28,8 +28,11 @@ Terser/Uglifyjs 是前端领域广泛使用的代码压缩工具，但其在代�
 - [x] 将AST相关类定义统一，梳理类定义，删除类工厂
 - [x] 将AST相关的类拆分成小文件，每个文件一个类，并解决循环依赖问题
 - [x] 删除 instanceOf / isAst 操作，改为实例方法实现
-- [ ] 添加类型信息
-- [ ] 消除any类型，启用noImplicitAny等校验
+- [x] 添加类型信息
+- [x] 启用noImplicitAny等strict校验
+- [ ] 消除any类型
+- [ ] 添加private/public/protected信息
+- [ ] 重构在Rust中无等价对应写法的写法
 
 ## 使用说明
 [使用说明](./terser.md)
