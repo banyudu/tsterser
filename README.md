@@ -17,7 +17,7 @@ Terser/Uglifyjs 是前端领域广泛使用的代码压缩工具，但其在代�
 ## 项目目标
 
 - 将代码(不包含测试用例)全部转为Typescript语言。
-- 消除Any类型，并启用严格的类型检查。为切换到强类型语言做准备。
+- 消除Any类型, 并启用严格的类型检查。为切换到强类型语言做准备。
 
 ## 当前进展
 
@@ -31,7 +31,7 @@ Terser/Uglifyjs 是前端领域广泛使用的代码压缩工具，但其在代�
 - [x] 添加类型信息
 - [x] 启用noImplicitAny等strict校验
 - [ ] 消除any类型
-- [ ] 添加private/public/protected信息
+- [x] 添加private/public/protected信息
 - [ ] 重构在Rust中无等价对应写法的写法
 
 ## 使用说明
