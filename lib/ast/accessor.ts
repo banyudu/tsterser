@@ -17,9 +17,9 @@ export default class AST_Accessor extends AST_Lambda {
     return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  static documentation = 'A setter/getter function.  The `name` property is always null.'
+  public static documentation = 'A setter/getter function.  The `name` property is always null.'
 
-  static PROPS = AST_Lambda.PROPS
+  public static PROPS =AST_Lambda.PROPS
 }
 
 export interface AST_Accessor_Props extends AST_Lambda_Props {

@@ -19,9 +19,9 @@ export default class AST_Break extends AST_LoopControl {
     this._do_print(output, 'break')
   }
 
-  static documentation = 'A `break` statement'
+  public static documentation = 'A `break` statement'
 
-  static PROPS = AST_LoopControl.PROPS
+  public static PROPS =AST_LoopControl.PROPS
 }
 
 export interface AST_Break_Props extends AST_LoopControl_Props {

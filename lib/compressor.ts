@@ -57,14 +57,14 @@ import SymbolDef from './symbol-def'
 import TreeWalker from './tree-walker'
 
 export default class Compressor extends TreeWalker {
-  options: any
-  pure_funcs: any
-  top_retain: ((def: any) => any) | undefined
-  toplevel: { funcs: any, vars: any }
-  sequences_limit: number
-  warnings_produced: AnyObject
-  evaluated_regexps: Map<any, any>
-  constructor (options: any, false_by_default: boolean = false) {
+  public options: any
+  public pure_funcs: any
+  public top_retain: ((def: any) => any) | undefined
+  public toplevel: { funcs: any, vars: any }
+  public sequences_limit: number
+  public warnings_produced: AnyObject
+  public evaluated_regexps: Map<any, any>
+  public constructor (options: any, false_by_default: boolean = false) {
     super()
     if (options.defaults !== undefined && !options.defaults) false_by_default = true
     this.options = defaults(options, {

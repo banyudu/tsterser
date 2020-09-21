@@ -21,9 +21,9 @@ export default class AST_Let extends AST_Definitions {
     this._do_print(output, 'let')
   }
 
-  static documentation = 'A `let` statement'
+  public static documentation = 'A `let` statement'
 
-  static PROPS = AST_Definitions.PROPS
+  public static PROPS =AST_Definitions.PROPS
 }
 
 export interface AST_Let_Props extends AST_Definitions_Props {

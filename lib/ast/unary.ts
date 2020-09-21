@@ -8,8 +8,8 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Unary extends AST_Node {
-  operator: string
-  expression: AST_Node
+  public operator: string
+  public expression: AST_Node
   public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
@@ -104,7 +104,7 @@ export default class AST_Unary extends AST_Node {
     return this.operator.length
   }
 
-  shallow_cmp_props: any = { operator: 'eq' }
+  public shallow_cmp_props: any = { operator: 'eq' }
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
@@ -130,14 +130,14 @@ export default class AST_Unary extends AST_Node {
                 this.operator !== '--')
   }
 
-  static documentation = 'Base class for unary expressions'
-  static propdoc = {
+  public static documentation = 'Base class for unary expressions'
+  public static propdoc ={
     operator: '[string] the operator',
     expression: '[AST_Node] expression that this unary operator applies to'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['operator', 'expression'])
-  constructor (args: AST_Unary_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['operator', 'expression'])
+  public constructor (args: AST_Unary_Props) {
     super(args)
     this.operator = args.operator
     this.expression = args.expression as any

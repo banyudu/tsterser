@@ -7,7 +7,7 @@ import { trim, list_overhead, do_list, to_moz, make_sequence, anyMayThrow, anySi
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Array extends AST_Node {
-  elements: AST_Node[]
+  public elements: AST_Node[]
 
   public to_fun_args (croak: Function): any {
     return new AST_Destructuring({
@@ -76,7 +76,7 @@ export default class AST_Array extends AST_Node {
     return 2 + list_overhead(this.elements)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.elements = do_list(this.elements, tw)
   }
@@ -105,13 +105,13 @@ export default class AST_Array extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'An array literal'
-  static propdoc = {
+  public static documentation = 'An array literal'
+  public static propdoc ={
     elements: '[AST_Node*] array of elements'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['elements'])
-  constructor (args: AST_Array_Props) { // eslint-disable-line
+  public static PROPS =AST_Node.PROPS.concat(['elements'])
+  public constructor (args: AST_Array_Props) { // eslint-disable-line
     super(args)
     this.elements = args.elements
   }

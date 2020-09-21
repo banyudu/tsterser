@@ -7,9 +7,9 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ForIn extends AST_IterationStatement {
-  init: AST_Node
-  object: AST_Node
-  await: boolean = false
+  public init: AST_Node
+  public object: AST_Node
+  public await: boolean = false
 
   public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
@@ -38,8 +38,8 @@ export default class AST_ForIn extends AST_IterationStatement {
     if (this.init) push(this.init)
   }
 
-  _size = () => 8
-  shallow_cmp_props: any = {}
+  public _size = () => 8
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.init = this.init?.transform(tw) || null
     this.object = this.object.transform(tw)
@@ -73,14 +73,14 @@ export default class AST_ForIn extends AST_IterationStatement {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `for ... in` statement'
-  static propdoc = {
+  public static documentation = 'A `for ... in` statement'
+  public static propdoc ={
     init: '[AST_Node] the `for/in` initialization code',
     object: "[AST_Node] the object that we're looping through"
   } as any
 
-  static PROPS = AST_IterationStatement.PROPS.concat(['init', 'object'])
-  constructor (args: AST_ForIn_Props) {
+  public static PROPS =AST_IterationStatement.PROPS.concat(['init', 'object'])
+  public constructor (args: AST_ForIn_Props) {
     super(args)
     this.init = args.init
     this.object = args.object

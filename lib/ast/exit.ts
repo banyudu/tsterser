@@ -4,7 +4,7 @@ import AST_Jump, { AST_Jump_Props } from './jump'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Exit extends AST_Jump {
-  value: AST_Node | undefined | null
+  public value: AST_Node | undefined | null
 
   public _prepend_comments_check (_node: AST_Node) {
     return true
@@ -38,13 +38,13 @@ export default class AST_Exit extends AST_Jump {
     output.semicolon()
   }
 
-  static documentation = 'Base class for “exits” (`return` and `throw`)'
-  static propdoc = {
+  public static documentation = 'Base class for “exits” (`return` and `throw`)'
+  public static propdoc ={
     value: '[AST_Node?] the value returned or thrown by this statement; could be null for AST_Return'
   }
 
-  static PROPS = AST_Jump.PROPS.concat(['value'])
-  constructor (args: AST_Exit_Props) {
+  public static PROPS =AST_Jump.PROPS.concat(['value'])
+  public constructor (args: AST_Exit_Props) {
     super(args)
     this.value = args.value
   }

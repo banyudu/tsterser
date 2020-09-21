@@ -110,10 +110,10 @@ import {
 } from '../constants'
 
 export default class AST_Block extends AST_Statement {
-  body: AST_Statement[]
-  block_scope: AST_Scope | undefined
-  expression: any
-  CHANGED: boolean = false
+  public body: AST_Statement[]
+  public block_scope: AST_Scope | undefined
+  public expression: any
+  public CHANGED: boolean = false
   private compressor_scope: AST_Scope | undefined
   private in_loop: boolean = false
   private in_try: boolean = false
@@ -160,7 +160,7 @@ export default class AST_Block extends AST_Statement {
     return 2 + list_overhead(this.body)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.body = do_list(this.body, tw)
   }
@@ -1175,14 +1175,14 @@ export default class AST_Block extends AST_Statement {
     } while (this.CHANGED && max_iter-- > 0)
   }
 
-  static documentation = 'A body of statements (usually braced)'
-  static propdoc = {
+  public static documentation = 'A body of statements (usually braced)'
+  public static propdoc ={
     body: '[AST_Statement*] an array of statements',
     block_scope: '[AST_Scope] the block scope'
   } as any
 
-  static PROPS = AST_Statement.PROPS.concat(['body', 'block_scope'])
-  constructor (args: AST_Block_Props) {
+  public static PROPS =AST_Statement.PROPS.concat(['body', 'block_scope'])
+  public constructor (args: AST_Block_Props) {
     super(args)
     this.body = args.body ?? []
     this.block_scope = args.block_scope ?? undefined

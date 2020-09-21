@@ -11,10 +11,10 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_VarDef extends AST_Node {
-  name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
-  value: AST_Node | null
-  eliminated: number = 0
-  replaced: number = 0
+  public name: AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar
+  public value: AST_Node | null
+  public eliminated: number = 0
+  public replaced: number = 0
 
   public may_throw (compressor: Compressor) {
     if (!this.value) return false
@@ -65,7 +65,7 @@ export default class AST_VarDef extends AST_Node {
     return this.value ? 1 : 0
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     value: 'exist'
   }
 
@@ -94,14 +94,14 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  static documentation = 'A variable declaration; only appears in a AST_Definitions node'
-  static propdoc = {
+  public static documentation = 'A variable declaration; only appears in a AST_Definitions node'
+  public static propdoc ={
     name: '[AST_Destructuring|AST_SymbolConst|AST_SymbolLet|AST_SymbolVar] name of the variable',
     value: "[AST_Node?] initializer, or null of there's no initializer"
   }
 
-  static PROPS = AST_Node.PROPS.concat(['name', 'value'])
-  constructor (args: AST_VarDef_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['name', 'value'])
+  public constructor (args: AST_VarDef_Props) {
     super(args)
     this.name = args.name
     this.value = args.value

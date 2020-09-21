@@ -20,11 +20,11 @@ export default class AST_NaN extends AST_Atom {
     return this
   }
 
-  value = 0 / 0
-  _size = () => 3
-  static documentation: 'The impossible value'
+  public value = 0 / 0
+  public _size = () => 3
+  public static documentation: 'The impossible value'
 
-  static PROPS = AST_Atom.PROPS
+  public static PROPS =AST_Atom.PROPS
 }
 
 export interface AST_NaN_Props extends AST_Atom_Props {

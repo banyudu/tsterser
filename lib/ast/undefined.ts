@@ -28,11 +28,11 @@ export default class AST_Undefined extends AST_Atom {
   }
 
   public _dot_throw () { return true }
-  value = (function () {}())
-  _size = () => 6 // "void 0"
-  static documentation: 'The `undefined` value'
+  public value = (function () {}())
+  public _size = () => 6 // "void 0"
+  public static documentation: 'The `undefined` value'
 
-  static PROPS = AST_Atom.PROPS
+  public static PROPS =AST_Atom.PROPS
 }
 
 export interface AST_Undefined_Props extends AST_Atom_Props {

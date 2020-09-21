@@ -4,7 +4,7 @@ import AST_Accessor from './accessor'
 import { is_ast_symbol_method, print_property_name, is_ast_node } from '../utils'
 
 export default class AST_ObjectMethodProperty extends AST_ObjectProperty {
-  value: AST_Accessor
+  public value: AST_Accessor
   protected _print_getter_setter (type: string, output: OutputStream) {
     const self = this
     if (self.static) {
@@ -26,7 +26,7 @@ export default class AST_ObjectMethodProperty extends AST_ObjectProperty {
     self.value._do_print(output, true)
   }
 
-  constructor (args: AST_ObjectMethodProperty_Props) {
+  public constructor (args: AST_ObjectMethodProperty_Props) {
     super(args)
     this.value = args.value
   }

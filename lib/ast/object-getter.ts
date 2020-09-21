@@ -6,10 +6,10 @@ import Compressor from '../compressor'
 import { key_size, static_size, is_ast_symbol_method } from '../utils'
 
 export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
-  static: boolean
-  quote: string|undefined
-  key: AST_Node
-  value: AST_Accessor
+  public static: boolean
+  public quote: string|undefined
+  public key: AST_Node
+  public value: AST_Accessor
 
   public _to_mozilla_ast_kind (): string | undefined {
     return 'get'
@@ -36,7 +36,7 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
     return 5 + static_size(this.static) + key_size(this.key)
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     static: 'eq'
   }
 
@@ -45,15 +45,15 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
-  static propdoc = {
+  public static propdoc ={
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static getter (classes only)'
   }
 
-  static documentation = 'An object getter property'
+  public static documentation = 'An object getter property'
 
-  static PROPS = AST_ObjectMethodProperty.PROPS.concat(['quote', 'static'])
-  constructor (args: AST_ObjectGetter_Props) {
+  public static PROPS =AST_ObjectMethodProperty.PROPS.concat(['quote', 'static'])
+  public constructor (args: AST_ObjectGetter_Props) {
     super(args)
     this.quote = args.quote
     this.static = args.static ?? false

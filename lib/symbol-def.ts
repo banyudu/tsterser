@@ -3,28 +3,28 @@ import { MASK_EXPORT_DONT_MANGLE } from './constants'
 import { MangleOptions } from './types'
 
 export default class SymbolDef {
-  name: string
-  orig: any[]
-  init: boolean
-  eliminated: number
-  assignments: number
-  scope: any
-  replaced: number
-  global: boolean
-  export: number
-  mangled_name: any
-  undeclared: boolean
-  id: number
-  static next_id: any
-  chained: boolean
-  direct_access: boolean
-  escaped: number
-  recursive_refs: number
-  references: any[]
-  should_replace: any
-  single_use: string | boolean | undefined
-  fixed: any
-  constructor (scope: any | null, orig: { name: string }, init?: any) {
+  public name: string
+  public orig: any[]
+  public init: boolean
+  public eliminated: number
+  public assignments: number
+  public scope: any
+  public replaced: number
+  public global: boolean
+  public export: number
+  public mangled_name: any
+  public undeclared: boolean
+  public id: number
+  public static next_id: any
+  public chained: boolean
+  public direct_access: boolean
+  public escaped: number
+  public recursive_refs: number
+  public references: any[]
+  public should_replace: any
+  public single_use: string | boolean | undefined
+  public fixed: any
+  public constructor (scope: any | null, orig: { name: string }, init?: any) {
     this.name = orig.name
     this.orig = [orig]
     this.init = init

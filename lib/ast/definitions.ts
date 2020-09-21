@@ -9,7 +9,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Definitions extends AST_Statement {
-  definitions: AST_VarDef[]
+  public definitions: AST_VarDef[]
 
   protected _optimize (_compressor: Compressor): any {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
@@ -89,7 +89,7 @@ export default class AST_Definitions extends AST_Statement {
     while (i--) push(this.definitions[i])
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.definitions = do_list(this.definitions, tw)
   }
@@ -116,13 +116,13 @@ export default class AST_Definitions extends AST_Statement {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
-  static propdoc = {
+  public static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
+  public static propdoc ={
     definitions: '[AST_VarDef*] array of variable definitions'
   }
 
-  static PROPS = AST_Statement.PROPS.concat(['definitions'])
-  constructor (args: AST_Definitions_Props) {
+  public static PROPS =AST_Statement.PROPS.concat(['definitions'])
+  public constructor (args: AST_Definitions_Props) {
     super(args)
     this.definitions = args.definitions
   }

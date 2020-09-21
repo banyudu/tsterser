@@ -3,8 +3,8 @@ import AST_Block, { AST_Block_Props } from './block'
 import { list_overhead } from '../utils'
 
 export default class AST_Finally extends AST_Block {
-  argname: any
-  shallow_cmp_props: any = {}
+  public argname: any
+  public shallow_cmp_props: any = {}
   public _size (): number {
     return 7 + list_overhead(this.body)
   }
@@ -16,10 +16,10 @@ export default class AST_Finally extends AST_Block {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
+  public static documentation = 'A `finally` node; only makes sense as part of a `try` statement'
 
-  static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args: AST_Finally_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['argname'])
+  public constructor (args: AST_Finally_Props) {
     super(args)
     this.argname = args.argname
   }

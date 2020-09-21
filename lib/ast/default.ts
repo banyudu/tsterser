@@ -20,9 +20,9 @@ export default class AST_Default extends AST_SwitchBranch {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `default` switch branch'
+  public static documentation = 'A `default` switch branch'
 
-  static PROPS = AST_SwitchBranch.PROPS
+  public static PROPS =AST_SwitchBranch.PROPS
 }
 
 export interface AST_Default_Props extends AST_SwitchBranch_Props {

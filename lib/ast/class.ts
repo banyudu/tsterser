@@ -11,9 +11,9 @@ import { TreeTransformer } from '../../main'
 import { MozillaAst } from '../types'
 
 export default class AST_Class extends AST_Scope {
-  extends?: AST_Node
-  properties: AST_ObjectProperty[]
-  name: AST_SymbolClass|AST_SymbolDefClass | undefined
+  public extends?: AST_Node
+  public properties: AST_ObjectProperty[]
+  public name: AST_SymbolClass|AST_SymbolDefClass | undefined
 
   protected _optimize (_compressor: Compressor): any {
     // HACK to avoid compress failure.
@@ -105,7 +105,7 @@ export default class AST_Class extends AST_Scope {
     this.properties = do_list(this.properties, tw)
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     name: 'exist',
     extends: 'exist'
   }
@@ -165,16 +165,16 @@ export default class AST_Class extends AST_Scope {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static propdoc = {
+  public static propdoc ={
     name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
     extends: '[AST_Node]? optional parent class',
     properties: '[AST_ObjectProperty*] array of properties'
   }
 
-  static documentation = 'An ES6 class'
+  public static documentation = 'An ES6 class'
 
-  static PROPS = AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
-  constructor (args: AST_Class_Props) {
+  public static PROPS =AST_Scope.PROPS.concat(['name', 'extends', 'properties'])
+  public constructor (args: AST_Class_Props) {
     super(args)
     this.name = args.name
     this.extends = args.extends

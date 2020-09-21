@@ -16,11 +16,11 @@ import { TreeTransformer } from '../../main'
 import { MozillaAst } from '../types'
 
 export default class AST_Lambda extends AST_Scope {
-  argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
-  uses_arguments: boolean
-  name: AST_SymbolDeclaration | null
-  is_generator: boolean
-  async: boolean
+  public argnames: Array<AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign>
+  public uses_arguments: boolean
+  public name: AST_SymbolDeclaration | null
+  public is_generator: boolean
+  public async: boolean
 
   protected _optimize (compressor: Compressor): any {
     this.tighten_body(compressor)
@@ -139,7 +139,7 @@ export default class AST_Lambda extends AST_Scope {
     if (this.name) push(this.name)
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     is_generator: 'eq',
     async: 'eq'
   }
@@ -195,8 +195,8 @@ export default class AST_Lambda extends AST_Scope {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'Base class for functions'
-  static propdoc = {
+  public static documentation = 'Base class for functions'
+  public static propdoc ={
     name: '[AST_SymbolDeclaration?] the name of this function',
     argnames: '[AST_SymbolFunarg|AST_Destructuring|AST_Expansion|AST_DefaultAssign*] array of function arguments, destructurings, or expanding arguments',
     uses_arguments: '[boolean] tells whether this function accesses the arguments array',
@@ -204,8 +204,8 @@ export default class AST_Lambda extends AST_Scope {
     async: '[boolean] is this method async'
   }
 
-  static PROPS = AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
-  constructor (args: AST_Lambda_Props) {
+  public static PROPS =AST_Scope.PROPS.concat(['name', 'argnames', 'uses_arguments', 'is_generator', 'async'])
+  public constructor (args: AST_Lambda_Props) {
     super(args)
     this.name = args.name ?? null
     this.argnames = args.argnames

@@ -18,9 +18,9 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Conditional extends AST_Node {
-  alternative: AST_Node
-  consequent: AST_Node
-  condition: AST_Node
+  public alternative: AST_Node
+  public consequent: AST_Node
+  public condition: AST_Node
 
   public _prepend_comments_check (node: AST_Node) {
     return this.condition === node
@@ -393,8 +393,8 @@ export default class AST_Conditional extends AST_Node {
     push(this.condition)
   }
 
-  _size = () => 3
-  shallow_cmp_props: any = {}
+  public _size = () => 3
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.consequent = this.consequent.transform(tw)
@@ -410,7 +410,7 @@ export default class AST_Conditional extends AST_Node {
     }
   }
 
-  needs_parens = this.needsParens
+  public needs_parens = this.needsParens
   protected _codegen (output: OutputStream) {
     this.condition.print(output)
     output.space()
@@ -422,15 +422,15 @@ export default class AST_Conditional extends AST_Node {
     this.alternative.print(output)
   }
 
-  static documentation = 'Conditional expression using the ternary operator, i.e. `a ? b : c`'
-  static propdoc = {
+  public static documentation = 'Conditional expression using the ternary operator, i.e. `a ? b : c`'
+  public static propdoc ={
     condition: '[AST_Node]',
     consequent: '[AST_Node]',
     alternative: '[AST_Node]'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
-  constructor (args: AST_Conditional_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['condition', 'consequent', 'alternative'])
+  public constructor (args: AST_Conditional_Props) {
     super(args)
     this.condition = args.condition
     this.consequent = args.consequent

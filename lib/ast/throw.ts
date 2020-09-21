@@ -5,7 +5,7 @@ import { to_moz } from '../utils'
 import { MozillaAst } from '../types'
 
 export default class AST_Throw extends AST_Exit {
-  _size = () => 6
+  public _size = () => 6
   public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ThrowStatement',
@@ -17,9 +17,9 @@ export default class AST_Throw extends AST_Exit {
     this._do_print(output, 'throw')
   }
 
-  static documentation = 'A `throw` statement'
+  public static documentation = 'A `throw` statement'
 
-  static PROPS = AST_Exit.PROPS
+  public static PROPS =AST_Exit.PROPS
 }
 
 export interface AST_Throw_Props extends AST_Exit_Props {

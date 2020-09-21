@@ -5,16 +5,16 @@ export default class AST_Hole extends AST_Atom {
     return this
   }
 
-  value = (function () {}())
+  public value = (function () {}())
 
   public to_mozilla_ast (): MozillaAst { return null as any }
 
-  _size = () => 0 // comma is taken into account
+  public _size = () => 0 // comma is taken into account
 
   protected _codegen () { }
-  static documentation = 'A hole in an array'
+  public static documentation = 'A hole in an array'
 
-  static PROPS = AST_Atom.PROPS
+  public static PROPS =AST_Atom.PROPS
 }
 
 export interface AST_Hole_Props extends AST_Atom_Props {

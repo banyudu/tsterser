@@ -21,9 +21,9 @@ export default class AST_Const extends AST_Definitions {
     this._do_print(output, 'const')
   }
 
-  static documentation = 'A `const` statement'
+  public static documentation = 'A `const` statement'
 
-  static PROPS = AST_Definitions.PROPS
+  public static PROPS =AST_Definitions.PROPS
 }
 
 export interface AST_Const_Props extends AST_Definitions_Props {

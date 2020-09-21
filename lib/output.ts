@@ -75,11 +75,11 @@ const quote_template = (str: string) => {
 }
 
 export class OutputStream {
-  options: any
+  public options: any
 
-  in_directive = false
-  use_asm: AST_Scope | null = null
-  active_scope: AST_Scope | null = null
+  public in_directive = false
+  public use_asm: AST_Scope | null = null
+  public active_scope: AST_Scope | null = null
   private _has_parens = false
   private _might_need_space = false
   private _might_need_semicolon = false
@@ -95,7 +95,7 @@ export class OutputStream {
   private _current_line = 1
   private _current_pos = 0
   private _OUTPUT = ''
-  readonly printed_comments: Set<Comment[] | Comment> = new Set()
+  public readonly printed_comments: Set<Comment[] | Comment> = new Set()
 
   public with_parens (cont: () => any) {
     this.print('(')
@@ -132,7 +132,7 @@ export class OutputStream {
     }
   }
 
-  _mappings: any[] | null = null
+  public _mappings: any[] | null = null
 
   private _ensure_line_len () {
     if (this.options.max_line_len) {
@@ -484,7 +484,7 @@ export class OutputStream {
     this._last = str
   }
 
-  readonly: boolean
+  public readonly: boolean
   private _comment_filter (_comment: Comment) { return false } // Default case, throw all comments away
 
   public colon () {
@@ -656,9 +656,9 @@ export class OutputStream {
     return this._OUTPUT
   }
 
-  toString = this.get
+  public toString = this.get
 
-  constructor (opt?: any) {
+  public constructor (opt?: any) {
     this.readonly = !opt
     const _options: any = defaults(opt, {
       ascii_only: false,

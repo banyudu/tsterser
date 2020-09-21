@@ -4,7 +4,7 @@ import { to_moz, is_ast_prop_access, is_ast_call, is_ast_symbol_ref, is_ast_unar
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Await extends AST_Node {
-  expression: AST_Node
+  public expression: AST_Node
 
   protected walkInner () {
     const result: AST_Node[] = []
@@ -16,8 +16,8 @@ export default class AST_Await extends AST_Node {
     push(this.expression)
   }
 
-  _size = () => 6
-  shallow_cmp_props: any = {}
+  public _size = () => 6
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
@@ -52,13 +52,13 @@ export default class AST_Await extends AST_Node {
     if (parens) output.print(')')
   }
 
-  static documentation = 'An `await` statement'
-  static propdoc = {
+  public static documentation = 'An `await` statement'
+  public static propdoc ={
     expression: '[AST_Node] the mandatory expression being awaited'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args: AST_Await_Props) {
+  public static PROPS = AST_Node.PROPS.concat(['expression'])
+  public constructor (args: AST_Await_Props) {
     super(args)
     this.expression = args.expression
   }

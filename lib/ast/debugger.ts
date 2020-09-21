@@ -9,8 +9,8 @@ export default class AST_Debugger extends AST_Statement {
     return this
   }
 
-  shallow_cmp_props: any = {}
-  _size = () => 8
+  public shallow_cmp_props: any = {}
+  public _size = () => 8
   public _to_mozilla_ast (): any {
     return { type: 'DebuggerStatement' }
   }
@@ -21,9 +21,9 @@ export default class AST_Debugger extends AST_Statement {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'Represents a debugger statement'
+  public static documentation = 'Represents a debugger statement'
 
-  static PROPS = AST_Statement.PROPS
+  public static PROPS =AST_Statement.PROPS
 }
 
 export interface AST_Debugger_Props extends AST_Statement_Props {

@@ -7,7 +7,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_SimpleStatement extends AST_Statement {
-  body: any | undefined
+  public body: any | undefined
 
   protected _in_boolean_context (_context: AST_Node) {
     return true
@@ -46,7 +46,7 @@ export default class AST_SimpleStatement extends AST_Statement {
     push(this.body)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.body = (this.body).transform(tw)
   }
@@ -63,13 +63,13 @@ export default class AST_SimpleStatement extends AST_Statement {
     output.semicolon()
   }
 
-  static documentation = 'A statement consisting of an expression, i.e. a = 1 + 2'
-  static propdoc = {
+  public static documentation = 'A statement consisting of an expression, i.e. a = 1 + 2'
+  public static propdoc ={
     body: '[AST_Node] an expression node (should not be instanceof AST_Statement)'
   }
 
-  static PROPS = AST_Statement.PROPS.concat(['body'])
-  constructor (args: AST_SimpleStatement_Props) {
+  public static PROPS =AST_Statement.PROPS.concat(['body'])
+  public constructor (args: AST_SimpleStatement_Props) {
     super(args)
     this.body = args.body
   }

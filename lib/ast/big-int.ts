@@ -4,14 +4,14 @@ import AST_Constant, { AST_Constant_Props } from './constant'
 import '../utils'
 
 export default class AST_BigInt extends AST_Constant {
-  value: any | undefined
+  public value: any | undefined
 
   public _eval () { return this }
   public _size (): number {
     return this.value.length
   }
 
-  shallow_cmp_props: any = { value: 'eq' }
+  public shallow_cmp_props: any = { value: 'eq' }
 
   public _to_mozilla_ast (_parent: AST_Node): any {
     return {
@@ -35,14 +35,14 @@ export default class AST_BigInt extends AST_Constant {
     return false
   }
 
-  static documentation = 'A big int literal'
-  static propdoc = {
+  public static documentation = 'A big int literal'
+  public static propdoc ={
     value: '[string] big int value'
   }
 
-  static PROPS = AST_Constant.PROPS.concat(['value'])
+  public static PROPS =AST_Constant.PROPS.concat(['value'])
 
-  constructor (args: AST_BigInt_Props) {
+  public constructor (args: AST_BigInt_Props) {
     super(args)
     this.value = args.value
   }

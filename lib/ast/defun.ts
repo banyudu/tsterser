@@ -3,7 +3,7 @@ import AST_Lambda, { AST_Lambda_Props } from './lambda'
 import { lambda_modifiers, list_overhead, to_moz, to_moz_scope } from '../utils'
 
 export default class AST_Defun extends AST_Lambda {
-  name: any
+  public name: any
   public _size () {
     return lambda_modifiers(this) + 13 + list_overhead(this.argnames) + list_overhead(this.body)
   }
@@ -19,9 +19,9 @@ export default class AST_Defun extends AST_Lambda {
     }
   }
 
-  static documentation = 'A function definition'
+  public static documentation = 'A function definition'
 
-  static PROPS = AST_Lambda.PROPS
+  public static PROPS =AST_Lambda.PROPS
 }
 
 export interface AST_Defun_Props extends AST_Lambda_Props {

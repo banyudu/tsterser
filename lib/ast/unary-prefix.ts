@@ -143,9 +143,9 @@ export default class AST_UnaryPrefix extends AST_Unary {
     this.expression.print(output)
   }
 
-  static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
+  public static documentation = 'Unary prefix expression, i.e. `typeof i` or `++i`'
 
-  static PROPS = AST_Unary.PROPS
+  public static PROPS =AST_Unary.PROPS
 }
 
 export interface AST_UnaryPrefix_Props extends AST_Unary_Props {

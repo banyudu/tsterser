@@ -8,8 +8,8 @@ import { AST_Statement } from '.'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_If extends AST_StatementWithBody {
-  condition: AST_Node
-  alternative: AST_Statement | null
+  public condition: AST_Node
+  public alternative: AST_Statement | null
 
   protected _in_boolean_context (context: AST_Node) {
     return this.condition === context
@@ -207,8 +207,8 @@ export default class AST_If extends AST_StatementWithBody {
     push(this.condition)
   }
 
-  _size = () => 4
-  shallow_cmp_props: any = {
+  public _size = () => 4
+  public shallow_cmp_props: any = {
     alternative: 'exist'
   }
 
@@ -245,14 +245,14 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  static documentation = 'A `if` statement'
-  static propdoc = {
+  public static documentation = 'A `if` statement'
+  public static propdoc ={
     condition: '[AST_Node] the `if` condition',
     alternative: '[AST_Statement?] the `else` part, or null if not present'
   }
 
-  static PROPS = AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
-  constructor (args: AST_If_Props) {
+  public static PROPS =AST_StatementWithBody.PROPS.concat(['condition', 'alternative'])
+  public constructor (args: AST_If_Props) {
     super(args)
     this.condition = args.condition
     this.alternative = args.alternative ?? null

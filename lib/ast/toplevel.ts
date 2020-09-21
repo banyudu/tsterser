@@ -31,9 +31,9 @@ export let function_defs: Set<any> | null = null
 export let unmangleable_names: Set<any> | null = null
 
 export default class AST_Toplevel extends AST_Scope {
-  variables: any
-  globals: Map<any, any>
-  mangled_names: Set<any> = new Set()
+  public variables: any
+  public globals: Map<any, any>
+  public mangled_names: Set<any> = new Set()
 
   public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     this.globals.forEach(function (def: SymbolDef) {
@@ -184,7 +184,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   public _size () {
     return list_overhead(this.body)
   }
@@ -358,13 +358,13 @@ export default class AST_Toplevel extends AST_Scope {
     }
   }
 
-  static documentation = 'The toplevel scope'
-  static propdoc = {
+  public static documentation = 'The toplevel scope'
+  public static propdoc ={
     globals: '[Map] a map of name -> SymbolDef for all undeclared names'
   }
 
-  static PROPS = AST_Scope.PROPS.concat(['globals'])
-  constructor (args: AST_Toplevel_Props) {
+  public static PROPS =AST_Scope.PROPS.concat(['globals'])
+  public constructor (args: AST_Toplevel_Props) {
     super(args)
     this.globals = args.globals ?? new Map()
   }

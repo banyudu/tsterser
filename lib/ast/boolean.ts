@@ -47,9 +47,9 @@ export default class AST_Boolean extends AST_Atom {
     return To_Moz_Literal(this)
   }
 
-  static documentation = 'Base class for booleans'
+  public static documentation = 'Base class for booleans'
 
-  static PROPS = AST_Atom.PROPS
+  public static PROPS =AST_Atom.PROPS
 }
 
 export interface AST_Boolean_Props extends AST_Atom_Props {

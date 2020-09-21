@@ -22,9 +22,9 @@ import {
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Binary extends AST_Node {
-  left: AST_Node
-  operator: string
-  right: AST_Node
+  public left: AST_Node
+  public operator: string
+  public right: AST_Node
 
   public _prepend_comments_check (node: AST_Node) {
     return this.left === node
@@ -731,7 +731,7 @@ export default class AST_Binary extends AST_Node {
     push(this.left)
   }
 
-  shallow_cmp_props: any = { operator: 'eq' }
+  public shallow_cmp_props: any = { operator: 'eq' }
   public _size (info: any): number {
     if (this.operator === 'in') return 4
 
@@ -833,15 +833,15 @@ export default class AST_Binary extends AST_Node {
     this.right.print(output)
   }
 
-  static documentation = 'Binary expression, i.e. `a + b`'
-  static propdoc = {
+  public static documentation = 'Binary expression, i.e. `a + b`'
+  public static propdoc ={
     left: '[AST_Node] left-hand side expression',
     operator: '[string] the operator',
     right: '[AST_Node] right-hand side expression'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['operator', 'left', 'right'])
-  constructor (args: AST_Binary_Props) { // eslint-disable-line
+  public static PROPS =AST_Node.PROPS.concat(['operator', 'left', 'right'])
+  public constructor (args: AST_Binary_Props) { // eslint-disable-line
     super(args)
     this.operator = args.operator
     this.left = args.left

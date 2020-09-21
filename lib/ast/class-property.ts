@@ -6,9 +6,9 @@ import { to_moz, print_property_name, static_size, make_sequence, is_ast_node, i
 import { MozillaAst } from '../types'
 
 export default class AST_ClassProperty extends AST_ObjectProperty {
-  quote: string
-  static: boolean
-  key: AST_Node
+  public quote: string
+  public static: boolean
+  public key: AST_Node
 
   public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const key = this._to_mozilla_ast_key()
@@ -71,7 +71,7 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     )
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     static: 'eq'
   }
 
@@ -97,14 +97,14 @@ export default class AST_ClassProperty extends AST_ObjectProperty {
     output.semicolon()
   }
 
-  static documentation = 'A class property'
-  static propdoc = {
+  public static documentation = 'A class property'
+  public static propdoc ={
     static: '[boolean] whether this is a static key',
     quote: '[string] which quote is being used'
   }
 
-  static PROPS = AST_ObjectProperty.PROPS.concat(['static', 'quote'])
-  constructor (args: AST_ClassProperty_Props) {
+  public static PROPS =AST_ObjectProperty.PROPS.concat(['static', 'quote'])
+  public constructor (args: AST_ClassProperty_Props) {
     super(args)
     this.static = args.static ?? false
     this.quote = args.quote ?? ''

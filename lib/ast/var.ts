@@ -11,9 +11,9 @@ export default class AST_Var extends AST_Definitions {
     this._do_print(output, 'var')
   }
 
-  static documentation = 'A `var` statement'
+  public static documentation = 'A `var` statement'
 
-  static PROPS = AST_Definitions.PROPS
+  public static PROPS =AST_Definitions.PROPS
 }
 
 export interface AST_Var_Props extends AST_Definitions_Props {

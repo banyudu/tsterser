@@ -5,8 +5,8 @@ import Compressor from '../compressor'
 import AST_Scope from './scope'
 
 export default class AST_Statement extends AST_Node {
-  body: any
-  block_scope?: AST_Scope
+  public body: any
+  public block_scope?: AST_Scope
 
   public _eval (_compressor: Compressor): any {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
@@ -32,9 +32,9 @@ export default class AST_Statement extends AST_Node {
     output.semicolon()
   }
 
-  static documentation = 'Base class of all statements'
+  public static documentation = 'Base class of all statements'
 
-  static PROPS = AST_Node.PROPS
+  public static PROPS =AST_Node.PROPS
 }
 
 export interface AST_Statement_Props extends AST_Node_Props {

@@ -97,9 +97,9 @@ export default class AST_Arrow extends AST_Lambda {
     if (needs_parens) { output.print(')') }
   }
 
-  static documentation = 'An ES6 Arrow function ((a) => b)'
+  public static documentation = 'An ES6 Arrow function ((a) => b)'
 
-  static PROPS = AST_Lambda.PROPS
+  public static PROPS =AST_Lambda.PROPS
 }
 
 export interface AST_Arrow_Props extends AST_Lambda_Props {

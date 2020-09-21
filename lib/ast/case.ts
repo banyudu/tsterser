@@ -9,7 +9,7 @@ import { anyMayThrow, anySideEffect, push, pop, walk_body, list_overhead, do_lis
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Case extends AST_SwitchBranch {
-  expression: any | undefined
+  public expression: any | undefined
 
   public may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
@@ -61,13 +61,13 @@ export default class AST_Case extends AST_SwitchBranch {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `case` switch branch'
-  static propdoc = {
+  public static documentation = 'A `case` switch branch'
+  public static propdoc ={
     expression: '[AST_Node] the `case` expression'
   }
 
-  static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args: AST_Case_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['expression'])
+  public constructor (args: AST_Case_Props) {
     super(args)
     this.expression = args.expression
   }

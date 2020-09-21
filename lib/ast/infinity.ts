@@ -24,11 +24,11 @@ export default class AST_Infinity extends AST_Atom {
     })
   }
 
-  value = 1 / 0
-  _size = () => 8
-  static documentation: 'The `Infinity` value'
+  public value = 1 / 0
+  public _size = () => 8
+  public static documentation: 'The `Infinity` value'
 
-  static PROPS = AST_Atom.PROPS
+  public static PROPS =AST_Atom.PROPS
 }
 
 export interface AST_Infinity_Props extends AST_Atom_Props {

@@ -7,7 +7,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_TemplateString extends AST_Node {
-  segments: AST_TemplateSegment[]
+  public segments: AST_TemplateSegment[]
 
   protected _optimize (compressor: Compressor): any {
     if (!compressor.option('evaluate') ||
@@ -104,7 +104,7 @@ export default class AST_TemplateString extends AST_Node {
     return 2 + (Math.floor(this.segments.length / 2) * 3) /* "${}" */
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.segments = do_list(this.segments, tw)
   }
@@ -152,13 +152,13 @@ export default class AST_TemplateString extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A template string literal'
-  static propdoc = {
+  public static documentation = 'A template string literal'
+  public static propdoc ={
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['segments'])
-  constructor (args: AST_TemplateString_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['segments'])
+  public constructor (args: AST_TemplateString_Props) {
     super(args)
     this.segments = args.segments
   }

@@ -3,15 +3,15 @@ import AST_Constant, { AST_Constant_Props } from './constant'
 import '../utils'
 
 export default class AST_String extends AST_Constant {
-  value: string
-  quote: string
+  public value: string
+  public quote: string
 
   public is_string () { return true }
   public _size (): number {
     return this.value.length + 2
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     value: 'eq'
   }
 
@@ -23,15 +23,15 @@ export default class AST_String extends AST_Constant {
     output.print_string(this.getValue(), this.quote, output.in_directive)
   }
 
-  static documentation = 'A string literal'
-  static propdoc = {
+  public static documentation = 'A string literal'
+  public static propdoc ={
     value: '[string] the contents of this string',
     quote: '[string] the original quote character'
   }
 
-  static PROPS = AST_Constant.PROPS.concat(['value', 'quote'])
+  public static PROPS =AST_Constant.PROPS.concat(['value', 'quote'])
 
-  constructor (args: AST_String_Props) {
+  public constructor (args: AST_String_Props) {
     super(args)
     this.value = args.value
     this.quote = args.quote

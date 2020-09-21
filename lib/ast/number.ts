@@ -2,8 +2,8 @@ import { OutputStream } from '../output'
 import AST_Constant, { AST_Constant_Props } from './constant'
 import { make_num } from '../utils'
 export default class AST_Number extends AST_Constant {
-  literal?: any | undefined
-  value: any | undefined
+  public literal?: any | undefined
+  public value: any | undefined
 
   public is_number () { return true }
   public _size (): number {
@@ -15,7 +15,7 @@ export default class AST_Number extends AST_Constant {
     return value.toString().length
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     value: 'eq'
   }
 
@@ -38,15 +38,15 @@ export default class AST_Number extends AST_Constant {
     }
   }
 
-  static documentation = 'A number literal'
-  static propdoc = {
+  public static documentation = 'A number literal'
+  public static propdoc ={
     value: '[number] the numeric value',
     literal: '[string] numeric value as string (optional)'
   }
 
-  static PROPS = AST_Constant.PROPS.concat(['value', 'literal'])
+  public static PROPS =AST_Constant.PROPS.concat(['value', 'literal'])
 
-  constructor (args: AST_Number_Props) {
+  public constructor (args: AST_Number_Props) {
     super(args)
     this.value = args.value
     this.literal = args.literal

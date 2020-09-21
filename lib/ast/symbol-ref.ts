@@ -30,8 +30,8 @@ import {
 import { has_flag, set_flag, SQUEEZED, INLINED, walk_abort, pure_prop_access_globals, global_names, UNDEFINED, _NOINLINE } from '../constants'
 
 export default class AST_SymbolRef extends AST_Symbol {
-  scope: any
-  thedef: any
+  public scope: any
+  public thedef: any
 
   public to_fun_args (_croak: Function): any {
     return new AST_SymbolFunarg({
@@ -307,9 +307,9 @@ export default class AST_SymbolRef extends AST_Symbol {
     return 2
   }
 
-  static documentation = 'Reference to some symbol (not definition/declaration)'
+  public static documentation = 'Reference to some symbol (not definition/declaration)'
 
-  static PROPS = AST_Symbol.PROPS
+  public static PROPS =AST_Symbol.PROPS
 }
 
 export interface AST_SymbolRef_Props extends AST_Symbol_Props {

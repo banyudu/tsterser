@@ -6,9 +6,9 @@ export default class AST_SymbolExport extends AST_SymbolRef {
     return this
   }
 
-  static documentation = 'Symbol referring to a name to export'
+  public static documentation = 'Symbol referring to a name to export'
 
-  static PROPS = AST_SymbolRef.PROPS
+  public static PROPS =AST_SymbolRef.PROPS
 }
 
 export interface AST_SymbolExport_Props extends AST_SymbolRef_Props {

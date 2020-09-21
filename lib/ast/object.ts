@@ -19,7 +19,7 @@ import {
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Object extends AST_Node {
-  properties: AST_Node[]
+  public properties: AST_Node[]
 
   public to_fun_args (croak: Function): any {
     return new AST_Destructuring({
@@ -126,7 +126,7 @@ export default class AST_Object extends AST_Node {
     return base + list_overhead(this.properties)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.properties = do_list(this.properties, tw)
   }
@@ -161,13 +161,13 @@ export default class AST_Object extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'An object literal'
-  static propdoc = {
+  public static documentation = 'An object literal'
+  public static propdoc ={
     properties: '[AST_ObjectProperty*] array of properties'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['properties'])
-  constructor (args: AST_Object_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['properties'])
+  public constructor (args: AST_Object_Props) {
     super(args)
     this.properties = args.properties ?? []
   }

@@ -5,10 +5,10 @@ import { is_ast_constant, is_ast_string, is_ast_number, is_ast_class_property, m
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_ObjectProperty extends AST_Node {
-  key: AST_Node | string
-  value: AST_Node
-  quote: any
-  static: boolean = false
+  public key: AST_Node | string
+  public value: AST_Node
+  public quote: any
+  public static: boolean = false
 
   public computed_key () { return false }
 
@@ -144,14 +144,14 @@ export default class AST_ObjectProperty extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key as any) }
-  static documentation = 'Base class for literal object properties'
-  static propdoc = {
+  public static documentation = 'Base class for literal object properties'
+  public static propdoc ={
     key: '[string|AST_Node] property name. For ObjectKeyVal this is a string. For getters, setters and computed property this is an AST_Node.',
     value: '[AST_Node] property value.  For getters and setters this is an AST_Accessor.'
   } as any
 
-  static PROPS = AST_Node.PROPS.concat(['key', 'value'])
-  constructor (args: AST_ObjectProperty_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['key', 'value'])
+  public constructor (args: AST_ObjectProperty_Props) {
     super(args)
     this.key = args.key
     this.value = args.value

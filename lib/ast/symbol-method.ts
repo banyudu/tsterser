@@ -1,7 +1,7 @@
 import AST_Symbol, { AST_Symbol_Props } from './symbol'
 
 export default class AST_SymbolMethod extends AST_Symbol {
-  static documentation = 'Symbol in an object defining a method'
+  public static documentation = 'Symbol in an object defining a method'
 
   public _to_mozilla_ast (parent: any): any {
     if (parent.quote) {
@@ -17,7 +17,7 @@ export default class AST_SymbolMethod extends AST_Symbol {
     }
   }
 
-  static PROPS = AST_Symbol.PROPS
+  public static PROPS =AST_Symbol.PROPS
 }
 
 export interface AST_SymbolMethod_Props extends AST_Symbol_Props {

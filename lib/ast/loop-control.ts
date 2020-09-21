@@ -4,7 +4,7 @@ import AST_LabelRef from './label-ref'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_LoopControl extends AST_Jump {
-  label: AST_LabelRef | undefined
+  public label: AST_LabelRef | undefined
   protected walkInner () {
     return this.label ? [this.label] : []
   }
@@ -13,7 +13,7 @@ export default class AST_LoopControl extends AST_Jump {
     if (this.label) push(this.label)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     if (this.label) this.label = this.label.transform(tw)
   }
@@ -27,13 +27,13 @@ export default class AST_LoopControl extends AST_Jump {
     output.semicolon()
   }
 
-  static documentation = 'Base class for loop control statements (`break` and `continue`)'
-  static propdoc = {
+  public static documentation = 'Base class for loop control statements (`break` and `continue`)'
+  public static propdoc ={
     label: '[AST_LabelRef?] the label, or null if none'
   }
 
-  static PROPS = AST_Jump.PROPS.concat(['label'])
-  constructor (args: AST_LoopControl_Props) {
+  public static PROPS =AST_Jump.PROPS.concat(['label'])
+  public constructor (args: AST_LoopControl_Props) {
     super(args)
     this.label = args.label
   }

@@ -6,7 +6,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Expansion extends AST_Node {
-  expression: AST_Node
+  public expression: AST_Node
 
   public to_fun_args (croak: Function): any {
     this.expression = this.expression.to_fun_args(croak)
@@ -31,8 +31,8 @@ export default class AST_Expansion extends AST_Node {
     push(this.expression)
   }
 
-  _size = () => 3
-  shallow_cmp_props: any = {}
+  public _size = () => 3
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
@@ -49,13 +49,13 @@ export default class AST_Expansion extends AST_Node {
     this.expression.print(output)
   }
 
-  static documentation = 'An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list'
-  static propdoc = {
+  public static documentation = 'An expandible argument, such as ...rest, a splat, such as [1,2,...all], or an expansion in a variable declaration, such as var [first, ...rest] = list'
+  public static propdoc ={
     expression: '[AST_Node] the thing to be expanded'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['expression'])
-  constructor (args: AST_Expansion_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['expression'])
+  public constructor (args: AST_Expansion_Props) {
     super(args)
     this.expression = args.expression
   }

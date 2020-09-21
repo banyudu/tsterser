@@ -21,7 +21,7 @@ export default class AST_BlockStatement extends AST_Block {
     return this
   }
 
-  aborts = this._block_aborts
+  public aborts = this._block_aborts
   public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BlockStatement',
@@ -34,9 +34,9 @@ export default class AST_BlockStatement extends AST_Block {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A block statement'
+  public static documentation = 'A block statement'
 
-  static PROPS = AST_Block.PROPS
+  public static PROPS =AST_Block.PROPS
 }
 
 function can_be_extracted_from_if_block (node: AST_Node) {

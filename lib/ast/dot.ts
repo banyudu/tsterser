@@ -8,8 +8,8 @@ import { RESERVED_WORDS, is_identifier_string } from '../parse'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {
-  quote?: string
-  property: string
+  public quote?: string
+  public property: string
 
   public _prepend_comments_check (node: AST_Node) {
     return this.expression === node
@@ -137,7 +137,7 @@ export default class AST_Dot extends AST_PropAccess {
     return this.property.length + 1
   }
 
-  shallow_cmp_props: any = { property: 'eq' }
+  public shallow_cmp_props: any = { property: 'eq' }
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
@@ -167,13 +167,13 @@ export default class AST_Dot extends AST_PropAccess {
     }
   }
 
-  static documentation = 'A dotted property access expression'
-  static propdoc = {
+  public static documentation = 'A dotted property access expression'
+  public static propdoc ={
     quote: '[string] the original quote character when transformed from AST_Sub'
   }
 
-  static PROPS = AST_PropAccess.PROPS.concat(['quote'])
-  constructor (args: AST_Dot_Props) {
+  public static PROPS =AST_PropAccess.PROPS.concat(['quote'])
+  public constructor (args: AST_Dot_Props) {
     super(args)
     this.quote = args.quote
     this.property = args.property

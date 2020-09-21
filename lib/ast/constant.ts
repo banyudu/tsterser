@@ -4,8 +4,8 @@ import { To_Moz_Literal } from '../utils'
 import Compressor from '../compressor'
 
 export default class AST_Constant extends AST_Node {
-  value: any
-  literal?: any
+  public value: any
+  public literal?: any
 
   public drop_side_effect_free (): any { return null }
   public may_throw (_compressor: Compressor) { return false }
@@ -29,9 +29,9 @@ export default class AST_Constant extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'Base class for all constants'
+  public static documentation = 'Base class for all constants'
 
-  static PROPS = AST_Node.PROPS
+  public static PROPS =AST_Node.PROPS
 }
 
 export interface AST_Constant_Props extends AST_Node_Props {

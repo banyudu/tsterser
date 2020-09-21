@@ -11,8 +11,8 @@ import { MozillaAst } from '../types'
 /* -----[ EXCEPTIONS ]----- */
 
 export default class AST_Try extends AST_Block {
-  bfinally: AST_Finally | null
-  bcatch: AST_Catch
+  public bfinally: AST_Finally | null
+  public bcatch: AST_Catch
 
   protected _optimize (compressor: Compressor): AST_Try {
     this.tighten_body(compressor)
@@ -74,7 +74,7 @@ export default class AST_Try extends AST_Block {
     return 3 + list_overhead(this.body)
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     bcatch: 'exist',
     bfinally: 'exist'
   }
@@ -110,14 +110,14 @@ export default class AST_Try extends AST_Block {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A `try` statement'
-  static propdoc = {
+  public static documentation = 'A `try` statement'
+  public static propdoc ={
     bcatch: '[AST_Catch?] the catch block, or null if not present',
     bfinally: '[AST_Finally?] the finally block, or null if not present'
   }
 
-  static PROPS = AST_Block.PROPS.concat(['bcatch', 'bfinally'])
-  constructor (args: AST_Try_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['bcatch', 'bfinally'])
+  public constructor (args: AST_Try_Props) {
     super(args)
     this.bcatch = args.bcatch
     this.bfinally = args.bfinally

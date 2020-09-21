@@ -9,11 +9,11 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Export extends AST_Statement {
-  is_default: boolean
-  module_name: AST_String | undefined
-  exported_value: AST_Node | undefined
-  exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
-  exported_names: AST_NameMapping[]
+  public is_default: boolean
+  public module_name: AST_String | undefined
+  public exported_value: AST_Node | undefined
+  public exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
+  public exported_names: AST_NameMapping[]
 
   protected walkInner () {
     const result: AST_Node[] = []
@@ -60,7 +60,7 @@ export default class AST_Export extends AST_Statement {
     return size
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     exported_definition: 'exist',
     exported_value: 'exist',
     exported_names: 'exist',
@@ -147,8 +147,8 @@ export default class AST_Export extends AST_Statement {
     }
   }
 
-  static documentation = 'An `export` statement'
-  static propdoc = {
+  public static documentation = 'An `export` statement'
+  public static propdoc ={
     exported_definition: '[AST_Defun|AST_Definitions|AST_DefClass?] An exported definition',
     exported_value: '[AST_Node?] An exported value',
     exported_names: '[AST_NameMapping*?] List of exported names',
@@ -156,8 +156,8 @@ export default class AST_Export extends AST_Statement {
     is_default: '[boolean] Whether this is the default exported value of this module'
   }
 
-  static PROPS = AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
-  constructor (args: AST_Export_Props) {
+  public static PROPS =AST_Statement.PROPS.concat(['exported_definition', 'exported_value', 'is_default', 'exported_names', 'module_name'])
+  public constructor (args: AST_Export_Props) {
     super(args)
     this.exported_definition = args.exported_definition
     this.exported_value = args.exported_value

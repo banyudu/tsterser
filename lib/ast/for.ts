@@ -8,9 +8,9 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_For extends AST_IterationStatement {
-  step?: any | undefined
-  condition?: any | undefined
-  init?: any | undefined
+  public step?: any | undefined
+  public condition?: any | undefined
+  public init?: any | undefined
 
   protected _in_boolean_context (context: AST_Node) {
     return this.condition === context
@@ -89,8 +89,8 @@ export default class AST_For extends AST_IterationStatement {
     if (this.init) push(this.init)
   }
 
-  _size = () => 8
-  shallow_cmp_props: any = {
+  public _size = () => 8
+  public shallow_cmp_props: any = {
     init: 'exist',
     condition: 'exist',
     step: 'exist'
@@ -143,15 +143,15 @@ export default class AST_For extends AST_IterationStatement {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `for` statement'
-  static propdoc = {
+  public static documentation = 'A `for` statement'
+  public static propdoc ={
     init: '[AST_Node?] the `for` initialization code, or null if empty',
     condition: '[AST_Node?] the `for` termination clause, or null if empty',
     step: '[AST_Node?] the `for` update clause, or null if empty'
   } as any
 
-  static PROPS = AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
-  constructor (args: AST_For_Props) {
+  public static PROPS =AST_IterationStatement.PROPS.concat(['init', 'condition', 'step'])
+  public constructor (args: AST_For_Props) {
     super(args)
     this.init = args.init
     this.condition = args.condition

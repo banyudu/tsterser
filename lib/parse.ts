@@ -348,11 +348,11 @@ function parse_js_number (num: string, allow_e = true): number {
 }
 
 export class JS_Parse_Error extends Error {
-  filename: string | undefined
-  line: number
-  col: number
-  pos: number
-  constructor (message: string, filename: string | undefined, line: number, col: number, pos: number) {
+  public filename: string | undefined
+  public line: number
+  public col: number
+  public pos: number
+  public constructor (message: string, filename: string | undefined, line: number, col: number, pos: number) {
     super()
     this.name = 'SyntaxError'
     this.message = message

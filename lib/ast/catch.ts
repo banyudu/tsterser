@@ -10,7 +10,7 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Catch extends AST_Block {
-  argname?: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
+  public argname?: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
   protected walkInner () {
     const result: AST_Node[] = []
@@ -33,7 +33,7 @@ export default class AST_Catch extends AST_Block {
     return size
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     argname: 'exist'
   }
 
@@ -64,13 +64,13 @@ export default class AST_Catch extends AST_Block {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
-  static propdoc = {
+  public static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
+  public static propdoc ={
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'
   }
 
-  static PROPS = AST_Block.PROPS.concat(['argname'])
-  constructor (args: AST_Catch_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['argname'])
+  public constructor (args: AST_Catch_Props) {
     super(args)
     this.argname = args.argname
   }

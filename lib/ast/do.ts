@@ -65,8 +65,8 @@ export default class AST_Do extends AST_DWLoop {
     push(this.body)
   }
 
-  _size = () => 9
-  shallow_cmp_props: any = {}
+  public _size = () => 9
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.body = (this.body).transform(tw)
     this.condition = this.condition.transform(tw)
@@ -93,9 +93,9 @@ export default class AST_Do extends AST_DWLoop {
     output.semicolon()
   }
 
-  static documentation = 'A `do` statement'
+  public static documentation = 'A `do` statement'
 
-  static PROPS = AST_DWLoop.PROPS
+  public static PROPS =AST_DWLoop.PROPS
 }
 
 export interface AST_Do_Props extends AST_DWLoop_Props {

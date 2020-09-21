@@ -2,29 +2,29 @@ import AST from './_base'
 import { Comment } from '../types'
 
 export default class AST_Token extends AST {
-  value?: string
-  type?: string
-  pos: number
-  line: number
-  col: number
-  nlb?: boolean
-  file: string = ''
-  raw?: string
-  quote: string = ''
-  endpos: number | null = null
-  endline: number | null = null
-  endcol: number | null = null
-  comments_before: Comment[] = []
-  comments_after: Comment[] = []
-  end?: any
+  public value?: string
+  public type?: string
+  public pos: number
+  public line: number
+  public col: number
+  public nlb?: boolean
+  public file: string = ''
+  public raw?: string
+  public quote: string = ''
+  public endpos: number | null = null
+  public endline: number | null = null
+  public endcol: number | null = null
+  public comments_before: Comment[] = []
+  public comments_after: Comment[] = []
+  public end?: any
 
-  static PROPS = ['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
+  public static PROPS =['type', 'value', 'line', 'col', 'pos', 'endline', 'endcol', 'endpos', 'nlb', 'comments_before', 'comments_after', 'file', 'raw', 'quote', 'end']
 
   public isAst (type: string) {
     return type === 'AST_Token'
   }
 
-  constructor (args: AST_Token_Props) {
+  public constructor (args: AST_Token_Props) {
     super()
 
     this.type = args.type

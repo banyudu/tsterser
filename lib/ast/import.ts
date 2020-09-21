@@ -9,9 +9,9 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_Import extends AST_Node {
-  imported_name: AST_SymbolImport | null
-  module_name: AST_String
-  imported_names: AST_NameMapping[]
+  public imported_name: AST_SymbolImport | null
+  public module_name: AST_String
+  public imported_names: AST_NameMapping[]
 
   protected _optimize (_compressor: Compressor): any {
     return this
@@ -58,7 +58,7 @@ export default class AST_Import extends AST_Node {
     return size
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     imported_name: 'exist',
     imported_names: 'exist'
   }
@@ -133,15 +133,15 @@ export default class AST_Import extends AST_Node {
     output.semicolon()
   }
 
-  static documentation = 'An `import` statement'
-  static propdoc = {
+  public static documentation = 'An `import` statement'
+  public static propdoc ={
     imported_name: "[AST_SymbolImport] The name of the variable holding the module's default export.",
     imported_names: '[AST_NameMapping*] The names of non-default imported variables',
     module_name: '[AST_String] String literal describing where this module came from'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
-  constructor (args: AST_Import_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['imported_name', 'imported_names', 'module_name'])
+  public constructor (args: AST_Import_Props) {
     super(args)
     this.imported_name = args.imported_name
     this.imported_names = args.imported_names

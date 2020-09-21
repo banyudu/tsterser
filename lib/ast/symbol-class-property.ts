@@ -9,9 +9,9 @@ export default class AST_SymbolClassProperty extends AST_Symbol {
     return this.name.length
   }
 
-  static documentation = 'Symbol for a class property'
+  public static documentation = 'Symbol for a class property'
 
-  static PROPS = AST_Symbol.PROPS
+  public static PROPS =AST_Symbol.PROPS
 }
 
 export interface AST_SymbolClassProperty_Props extends AST_Symbol_Props {

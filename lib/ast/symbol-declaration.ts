@@ -3,8 +3,8 @@ import Compressor from '../compressor'
 import { HOP, warn } from '../utils'
 
 export default class AST_SymbolDeclaration extends AST_Symbol {
-  init?: any
-  thedef: any
+  public init?: any
+  public thedef: any
 
   public may_throw (_compressor: Compressor) { return false }
   public has_side_effects (_compressor: Compressor) { return false }
@@ -13,10 +13,10 @@ export default class AST_SymbolDeclaration extends AST_Symbol {
     if (HOP(compressor.option('global_defs') as object, this.name)) warn(compressor, this)
   }
 
-  static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
+  public static documentation = 'A declaration symbol (symbol in var/const, function name or argument, symbol in catch)'
 
-  static PROPS = AST_Symbol.PROPS.concat(['init'])
-  constructor (args: AST_SymbolDeclaration_Props) {
+  public static PROPS =AST_Symbol.PROPS.concat(['init'])
+  public constructor (args: AST_SymbolDeclaration_Props) {
     super(args)
     this.init = args.init
   }

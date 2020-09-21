@@ -43,9 +43,9 @@ export default class AST_New extends AST_Call {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
+  public static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
-  static PROPS = AST_Call.PROPS
+  public static PROPS =AST_Call.PROPS
 }
 
 export interface AST_New_Props extends AST_Call_Props {

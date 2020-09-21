@@ -9,8 +9,8 @@ import TreeTransformer from '../tree-transformer'
 import { MozillaAst } from '../types'
 
 export default class AST_PrefixedTemplateString extends AST_Node {
-  template_string: AST_TemplateString
-  prefix: AST_SymbolRef|AST_PropAccess
+  public template_string: AST_TemplateString
+  public prefix: AST_SymbolRef|AST_PropAccess
 
   protected _optimize (_compressor: Compressor): any {
     return this
@@ -28,7 +28,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     push(this.prefix)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.prefix = this.prefix.transform(tw)
     this.template_string = this.template_string.transform(tw)
@@ -56,14 +56,14 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     this.template_string.print(output)
   }
 
-  static documentation = 'A templatestring with a prefix, such as String.raw`foobarbaz`'
-  static propdoc = {
+  public static documentation = 'A templatestring with a prefix, such as String.raw`foobarbaz`'
+  public static propdoc ={
     template_string: '[AST_TemplateString] The template string',
     prefix: '[AST_SymbolRef|AST_PropAccess] The prefix, which can be a symbol such as `foo` or a dotted expression such as `String.raw`.'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['template_string', 'prefix'])
-  constructor (args: AST_PrefixedTemplateString_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['template_string', 'prefix'])
+  public constructor (args: AST_PrefixedTemplateString_Props) {
     super(args)
     this.template_string = args.template_string
     this.prefix = args.prefix

@@ -7,7 +7,7 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_LabeledStatement extends AST_StatementWithBody {
-  label: any
+  public label: any
 
   public get_loopcontrol_target (node: AST_Node) {
     if (node.label && this.label.name == node.label.name) {
@@ -66,8 +66,8 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return node
   }
 
-  _size = () => 2
-  shallow_cmp_props: any = { 'label.name': 'eq' }
+  public _size = () => 2
+  public shallow_cmp_props: any = { 'label.name': 'eq' }
   protected _transform (tw: TreeTransformer) {
     this.label = this.label.transform(tw)
     this.body = (this.body).transform(tw)
@@ -88,13 +88,13 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
   }
 
   protected add_source_map () { }
-  static documentation: 'Statement with a label'
-  static propdoc = {
+  public static documentation: 'Statement with a label'
+  public static propdoc ={
     label: '[AST_Label] a label definition'
   } as any
 
-  static PROPS = AST_StatementWithBody.PROPS.concat(['label'])
-  constructor (args: AST_LabeledStatement_Props) {
+  public static PROPS =AST_StatementWithBody.PROPS.concat(['label'])
+  public constructor (args: AST_LabeledStatement_Props) {
     super(args)
     this.label = args.label
   }

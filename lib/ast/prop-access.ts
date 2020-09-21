@@ -6,8 +6,8 @@ import { static_values, global_objs, walk_abort } from '../constants'
 import { MozillaAst } from '../types'
 
 export default class AST_PropAccess extends AST_Node {
-  expression: AST_Node
-  property: AST_Node | string
+  public expression: AST_Node
+  public property: AST_Node | string
 
   protected _needs_parens (child: AST_Node) {
     return this.expression === child
@@ -92,7 +92,7 @@ export default class AST_PropAccess extends AST_Node {
     return undefined
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'MemberExpression',
@@ -122,14 +122,14 @@ export default class AST_PropAccess extends AST_Node {
     return false
   }
 
-  static documentation = 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`'
-  static propdoc = {
+  public static documentation = 'Base class for property access expressions, i.e. `a.foo` or `a["foo"]`'
+  public static propdoc ={
     expression: '[AST_Node] the “container” expression',
     property: "[AST_Node|string] the property to access.  For AST_Dot this is always a plain string, while for AST_Sub it's an arbitrary AST_Node"
   } as any
 
-  static PROPS = AST_Node.PROPS.concat(['expression', 'property'])
-  constructor (args: AST_PropAccess_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['expression', 'property'])
+  public constructor (args: AST_PropAccess_Props) {
     super(args)
     this.expression = args.expression
     this.property = args.property

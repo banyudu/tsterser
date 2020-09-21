@@ -54,17 +54,17 @@ function map_add (map: Map<string | number, any[]>, key: string | number, value:
 }
 
 export default class AST_Scope extends AST_Block {
-  globals: any
-  _added_var_names?: Set<any>
+  public globals: any
+  public _added_var_names?: Set<any>
   protected _var_name_cache: any
-  _block_scope: boolean = false
-  variables: Map<string, SymbolDef>
-  functions: Map<string, SymbolDef>
-  uses_with: boolean
-  uses_eval: boolean
-  parent_scope?: AST_Scope
-  enclosed: SymbolDef[]
-  cname: number
+  public _block_scope: boolean = false
+  public variables: Map<string, SymbolDef>
+  public functions: Map<string, SymbolDef>
+  public uses_with: boolean
+  public uses_eval: boolean
+  public parent_scope?: AST_Scope
+  public enclosed: SymbolDef[]
+  public cname: number
 
   // determine if expression is constant
   protected all_refs_local (scope: AST_Scope) {
@@ -1164,8 +1164,8 @@ export default class AST_Scope extends AST_Block {
     }
   }
 
-  static documentation = 'Base class for all statements introducing a lexical scope'
-  static propdoc = {
+  public static documentation = 'Base class for all statements introducing a lexical scope'
+  public static propdoc ={
     variables: '[Map] a map of name -> SymbolDef for all variables/functions defined in this scope',
     functions: '[Map] like `variables`, but only lists function declarations',
     uses_with: '[boolean] tells whether this scope uses the `with` statement',
@@ -1175,8 +1175,8 @@ export default class AST_Scope extends AST_Block {
     cname: '[integer] current index for mangling variables (used internally by the mangler)'
   } as any
 
-  static PROPS = AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
-  constructor (args: AST_Scope_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['variables', 'functions', 'uses_with', 'uses_eval', 'parent_scope', 'enclosed', 'cname', '_var_name_cache'])
+  public constructor (args: AST_Scope_Props) {
     super(args)
     this.variables = args.variables ?? new Map()
     this.functions = args.functions ?? new Map()

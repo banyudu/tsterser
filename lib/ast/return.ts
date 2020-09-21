@@ -32,9 +32,9 @@ export default class AST_Return extends AST_Exit {
     this._do_print(output, 'return')
   }
 
-  static documentation: 'A `return` statement'
+  public static documentation: 'A `return` statement'
 
-  static PROPS = AST_Exit.PROPS
+  public static PROPS =AST_Exit.PROPS
 }
 
 export interface AST_Return_Props extends AST_Exit_Props {

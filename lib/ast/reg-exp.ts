@@ -9,7 +9,7 @@ const r_slash_script = /(<\s*\/\s*script)/i
 const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
-  value: RegExp
+  public value: RegExp
   protected _optimize (compressor: Compressor): any {
     return this.literals_in_boolean_context(compressor)
   }
@@ -61,14 +61,14 @@ export default class AST_RegExp extends AST_Constant {
             }
   }
 
-  static documentation = 'A regexp literal'
-  static propdoc = {
+  public static documentation = 'A regexp literal'
+  public static propdoc ={
     value: '[RegExp] the actual regexp'
   }
 
-  static PROPS = AST_Constant.PROPS.concat(['value'])
+  public static PROPS =AST_Constant.PROPS.concat(['value'])
 
-  constructor (args: AST_RegExp_Props) {
+  public constructor (args: AST_RegExp_Props) {
     super(args)
     this.value = args.value
   }

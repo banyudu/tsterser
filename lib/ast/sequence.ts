@@ -19,7 +19,7 @@ import {
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Sequence extends AST_Node {
-  expressions: AST_Node[]
+  public expressions: AST_Node[]
 
   public _prepend_comments_check (node: AST_Node) {
     return this.expressions[0] === node
@@ -127,7 +127,7 @@ export default class AST_Sequence extends AST_Node {
     return list_overhead(this.expressions)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     const result = do_list(this.expressions, tw)
     this.expressions = result.length
@@ -182,13 +182,13 @@ export default class AST_Sequence extends AST_Node {
     return this.expressions[this.expressions.length - 1]
   }
 
-  static documentation = 'A sequence expression (comma-separated expressions)'
-  static propdoc = {
+  public static documentation = 'A sequence expression (comma-separated expressions)'
+  public static propdoc ={
     expressions: '[AST_Node*] array of expressions (at least two)'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['expressions'])
-  constructor (args: AST_Sequence_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['expressions'])
+  public constructor (args: AST_Sequence_Props) {
     super(args)
     this.expressions = args.expressions
   }

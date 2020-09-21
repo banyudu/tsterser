@@ -53,9 +53,9 @@ import TreeTransformer from '../tree-transformer'
 import SymbolDef from '../symbol-def'
 
 export default class AST_Call extends AST_Node {
-  expression: AST_Node
-  args: AST_Node[]
-  _annotations: number
+  public expression: AST_Node
+  public args: AST_Node[]
+  public _annotations: number
 
   public _prepend_comments_check (node: AST_Node) {
     return this.TYPE == 'Call' && this.expression === node
@@ -898,7 +898,7 @@ export default class AST_Call extends AST_Node {
     return 2 + list_overhead(this.args)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.args = do_list(this.args, tw)
@@ -930,15 +930,15 @@ export default class AST_Call extends AST_Node {
     return this.callCodeGen(output)
   }
 
-  static documentation = 'A function call expression'
-  static propdoc = {
+  public static documentation = 'A function call expression'
+  public static propdoc ={
     expression: '[AST_Node] expression to invoke as function',
     args: '[AST_Node*] array of arguments',
     _annotations: '[number] bitfield containing information about the call'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
-  constructor (args: AST_Call_Props) { // eslint-disable-line
+  public static PROPS =AST_Node.PROPS.concat(['expression', 'args', '_annotations'])
+  public constructor (args: AST_Call_Props) { // eslint-disable-line
     super(args)
     this.expression = args.expression
     this.args = args.args

@@ -18,9 +18,9 @@ export default class AST_UnaryPostfix extends AST_Unary {
     output.print(this.operator)
   }
 
-  static documentation = 'Unary postfix expression, i.e. `i++`'
+  public static documentation = 'Unary postfix expression, i.e. `i++`'
 
-  static PROPS = AST_Unary.PROPS
+  public static PROPS =AST_Unary.PROPS
 }
 
 export interface AST_UnaryPostfix_Props extends AST_Unary_Props {

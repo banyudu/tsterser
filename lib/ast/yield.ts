@@ -5,9 +5,9 @@ import { is_undefined, to_moz, is_ast_binary, is_ast_call, is_ast_conditional, i
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Yield extends AST_Node {
-  value: any
-  is_star: boolean
-  expression: AST_Node | null
+  public value: any
+  public is_star: boolean
+  public expression: AST_Node | null
 
   protected _optimize (compressor: Compressor): any {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
@@ -24,8 +24,8 @@ export default class AST_Yield extends AST_Node {
     if (this.expression) push(this.expression)
   }
 
-  _size = () => 6
-  shallow_cmp_props: any = {
+  public _size = () => 6
+  public shallow_cmp_props: any = {
     is_star: 'eq'
   }
 
@@ -68,14 +68,14 @@ export default class AST_Yield extends AST_Node {
     }
   }
 
-  static documentation = 'A `yield` statement'
-  static propdoc = {
+  public static documentation = 'A `yield` statement'
+  public static propdoc ={
     expression: '[AST_Node?] the value returned or thrown by this statement; could be null (representing undefined) but only when is_star is set to false',
     is_star: '[boolean] Whether this is a yield or yield* statement'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['expression', 'is_star'])
-  constructor (args: AST_Yield_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['expression', 'is_star'])
+  public constructor (args: AST_Yield_Props) {
     super(args)
     this.expression = args.expression
     this.is_star = args.is_star ?? false

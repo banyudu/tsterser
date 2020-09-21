@@ -47,21 +47,21 @@ export function setPrintMangleOptions (val: any) {
 }
 
 export default class AST_Node extends AST {
-  start: AST_Token
-  end: AST_Token
-  expression: AST_Node | null = null
-  label?: any
+  public start: AST_Token
+  public end: AST_Token
+  public expression: AST_Node | null = null
+  public label?: any
   // type: string
-  left: any
-  value: any
-  right: any
-  _annotations?: number
-  body?: any
-  key: any
-  definitions?: AST_Node[]
-  scope: any
-  name: any
-  block_scope?: AST_Scope | null
+  public left: any
+  public value: any
+  public right: any
+  public _annotations?: number
+  public body?: any
+  public key: any
+  public definitions?: AST_Node[]
+  public scope: any
+  public name: any
+  public block_scope?: AST_Scope | null
 
   protected _codegen (_output: OutputStream) {}
 
@@ -285,7 +285,7 @@ export default class AST_Node extends AST {
 
   protected _transform (_tw: TreeTransformer) {}
 
-  shallow_cmp_props: any = undefined
+  public shallow_cmp_props: any = undefined
 
   public shallow_cmp (other?: any): any {
     if (this.shallow_cmp_props === undefined) {
@@ -380,20 +380,20 @@ export default class AST_Node extends AST {
 
   protected add_source_map (_output: OutputStream) {}
   public tail_node (): AST_Node { return this }
-  static documentation = 'Base class of all AST nodes'
-  static propdoc = {
+  public static documentation = 'Base class of all AST nodes'
+  public static propdoc ={
     start: '[AST_Token] The first token of this node',
     end: '[AST_Token] The last token of this node'
   } as any
 
-  static warn_function = function (warning: any) {
+  public static warn_function = function (warning: any) {
     if (AST_Node.enable_warnings) {
       AST_Node.warnings.push(warning)
     }
   }
 
-  static warnings: any[] = []
-  static enable_warnings = false
+  public static warnings: any[] = []
+  public static enable_warnings = false
 
   public static warn (txt: string, props?: any) {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
@@ -407,15 +407,15 @@ export default class AST_Node extends AST {
     return ast
   }
 
-  get CTOR (): new (...args: any[]) => any {
+  public get CTOR (): new (...args: any[]) => any {
     return this.constructor as any
   }
 
-  flags = 0
+  public flags = 0
 
-  static PROPS = ['start', 'end']
+  public static PROPS =['start', 'end']
 
-  constructor (args: AST_Node_Props) {
+  public constructor (args: AST_Node_Props) {
     super()
     this.start = args?.start as any
     this.end = args?.end as any

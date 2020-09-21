@@ -17,7 +17,7 @@ import SymbolDef from '../symbol-def'
 import { MozillaAst } from '../types'
 
 export default class AST_Function extends AST_Lambda {
-  name: any
+  public name: any
 
   protected _optimize (compressor: Compressor): any {
     const self = super._optimize(compressor)
@@ -109,9 +109,9 @@ export default class AST_Function extends AST_Lambda {
     return false
   }
 
-  static documentation = 'A function expression'
+  public static documentation = 'A function expression'
 
-  static PROPS = AST_Lambda.PROPS
+  public static PROPS =AST_Lambda.PROPS
 }
 
 export interface AST_Function_Props extends AST_Lambda_Props {

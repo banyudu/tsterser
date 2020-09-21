@@ -296,22 +296,22 @@ const AST_DICT = {
 }
 
 class AtTop {
-  v: any
-  constructor (val: any) {
+  public v: any
+  public constructor (val: any) {
     this.v = val
   }
 }
 
 class Splice {
-  v: any
-  constructor (val: any) {
+  public v: any
+  public constructor (val: any) {
     this.v = val
   }
 }
 
 class Last {
-  v: any
-  constructor (val: any) {
+  public v: any
+  public constructor (val: any) {
     this.v = val
   }
 }
@@ -325,8 +325,8 @@ export function member<T> (name: T, array: T[]) {
 }
 
 export class DefaultsError extends Error {
-  defs: any
-  constructor (msg: string, defs: any) {
+  public defs: any
+  public constructor (msg: string, defs: any) {
     super()
 
     this.name = 'DefaultsError'

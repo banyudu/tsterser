@@ -11,7 +11,7 @@ import { MozillaAst } from '../types'
 import AST_Dot from './dot'
 
 export default class AST_Sub extends AST_PropAccess {
-  property: AST_Node
+  public property: AST_Node
 
   public _prepend_comments_check (node: AST_Node) {
     return this.expression === node
@@ -205,7 +205,7 @@ export default class AST_Sub extends AST_PropAccess {
     push(this.expression)
   }
 
-  _size = () => 2
+  public _size = () => 2
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.property = this.property.transform(tw)
@@ -218,10 +218,10 @@ export default class AST_Sub extends AST_PropAccess {
     output.print(']')
   }
 
-  static documentation = 'Index-style property access, i.e. `a["foo"]`'
+  public static documentation = 'Index-style property access, i.e. `a["foo"]`'
 
-  static PROPS = AST_PropAccess.PROPS
-  constructor (args: AST_PropAccess_Props) {
+  public static PROPS =AST_PropAccess.PROPS
+  public constructor (args: AST_PropAccess_Props) {
     super(args)
     this.property = args.property
   }

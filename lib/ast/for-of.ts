@@ -4,8 +4,8 @@ import { to_moz } from '../utils'
 import { MozillaAst } from '../types'
 
 export default class AST_ForOf extends AST_ForIn {
-  await: any
-  shallow_cmp_props: any = {}
+  public await: any
+  public shallow_cmp_props: any = {}
   public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ForOfStatement',
@@ -16,10 +16,10 @@ export default class AST_ForOf extends AST_ForIn {
     }
   }
 
-  static documentation = 'A `for ... of` statement'
+  public static documentation = 'A `for ... of` statement'
 
-  static PROPS = AST_ForIn.PROPS.concat(['await'])
-  constructor (args: AST_ForOf_Props) {
+  public static PROPS =AST_ForIn.PROPS.concat(['await'])
+  public constructor (args: AST_ForOf_Props) {
     super(args)
     this.await = args.await
   }

@@ -3,11 +3,11 @@ export default class AST {
     return false
   }
 
-  get TYPE () {
+  public get TYPE () {
     return this.constructor.name.substr(4)
   }
 
-  static get TYPE () {
+  public static get TYPE () {
     return this.constructor.name.substr(4)
   }
 }

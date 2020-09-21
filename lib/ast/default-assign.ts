@@ -26,9 +26,9 @@ export default class AST_DefaultAssign extends AST_Binary {
     return self
   }
 
-  static documentation = 'A default assignment expression like in `(a = 3) => a`'
+  public static documentation = 'A default assignment expression like in `(a = 3) => a`'
 
-  static PROPS = AST_Binary.PROPS
+  public static PROPS =AST_Binary.PROPS
 }
 
 export interface AST_DefaultAssign_Props extends AST_Binary_Props {

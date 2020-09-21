@@ -34,8 +34,8 @@ export default class AST_While extends AST_DWLoop {
     push(this.condition)
   }
 
-  _size = () => 7
-  shallow_cmp_props: any = {}
+  public _size = () => 7
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
@@ -59,9 +59,9 @@ export default class AST_While extends AST_DWLoop {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `while` statement'
+  public static documentation = 'A `while` statement'
 
-  static PROPS = AST_DWLoop.PROPS
+  public static PROPS =AST_DWLoop.PROPS
 }
 
 export interface AST_While_Props extends AST_DWLoop_Props {

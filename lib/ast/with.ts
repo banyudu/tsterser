@@ -5,7 +5,7 @@ import { to_moz } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_With extends AST_StatementWithBody {
-  expression: AST_Node
+  public expression: AST_Node
   protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
@@ -18,8 +18,8 @@ export default class AST_With extends AST_StatementWithBody {
     push(this.expression)
   }
 
-  _size = () => 6
-  shallow_cmp_props: any = {}
+  public _size = () => 6
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = (this.body).transform(tw)
@@ -43,13 +43,13 @@ export default class AST_With extends AST_StatementWithBody {
     this._do_print_body(output)
   }
 
-  static documentation = 'A `with` statement'
-  static propdoc = {
+  public static documentation = 'A `with` statement'
+  public static propdoc ={
     expression: '[AST_Node] the `with` expression'
   }
 
-  static PROPS = AST_StatementWithBody.PROPS.concat(['expression'])
-  constructor (args: AST_With_Props) {
+  public static PROPS =AST_StatementWithBody.PROPS.concat(['expression'])
+  public constructor (args: AST_With_Props) {
     super(args)
     this.expression = args.expression
   }

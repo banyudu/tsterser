@@ -19,7 +19,7 @@ import {
 } from '../utils'
 
 export default class AST_Switch extends AST_Block {
-  expression: any | undefined
+  public expression: any | undefined
 
   public get_loopcontrol_target (node: AST_Node) {
     if (is_ast_break(node) && !node.label) {
@@ -165,7 +165,7 @@ export default class AST_Switch extends AST_Block {
     return 8 + list_overhead(this.body)
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = do_list(this.body, tw)
@@ -200,13 +200,13 @@ export default class AST_Switch extends AST_Block {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static documentation = 'A `switch` statement'
-  static propdoc = {
+  public static documentation = 'A `switch` statement'
+  public static propdoc ={
     expression: '[AST_Node] the `switch` “discriminant”'
   }
 
-  static PROPS = AST_Block.PROPS.concat(['expression'])
-  constructor (args: AST_Switch_Props) {
+  public static PROPS =AST_Block.PROPS.concat(['expression'])
+  public constructor (args: AST_Switch_Props) {
     super(args)
     this.expression = args.expression
   }

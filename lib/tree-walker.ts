@@ -3,14 +3,14 @@ import AST_Node from './ast/node'
 import AST_Scope from './ast/scope'
 
 export default class TreeWalker {
-  visit: Function | undefined
-  stack: AST_Node[]
-  directives: AnyObject
-  safe_ids: AnyObject
-  in_loop: any
-  loop_ids: Map<any, any>
-  defs_to_safe_ids: Map<number, AnyObject>
-  constructor (callback?: (node: any, descend: Function) => any) {
+  public visit: Function | undefined
+  public stack: AST_Node[]
+  public directives: AnyObject
+  public safe_ids: AnyObject
+  public in_loop: any
+  public loop_ids: Map<any, any>
+  public defs_to_safe_ids: Map<number, AnyObject>
+  public constructor (callback?: (node: any, descend: Function) => any) {
     this.visit = callback
     this.stack = []
     this.directives = Object.create(null)

@@ -6,8 +6,8 @@ export default class AST_This extends AST_Symbol {
   public drop_side_effect_free (): any { return null }
   public may_throw (_compressor: Compressor) { return false }
   public has_side_effects (_compressor: Compressor) { return false }
-  _size = () => 4
-  shallow_cmp_props: any = {}
+  public _size = () => 4
+  public shallow_cmp_props: any = {}
   public _to_mozilla_ast (): any {
     return { type: 'ThisExpression' }
   }
@@ -16,9 +16,9 @@ export default class AST_This extends AST_Symbol {
     output.print('this')
   }
 
-  static documentation = 'The `this` symbol'
+  public static documentation = 'The `this` symbol'
 
-  static PROPS = AST_Symbol.PROPS
+  public static PROPS =AST_Symbol.PROPS
 }
 
 export interface AST_This_Props extends AST_Symbol_Props {

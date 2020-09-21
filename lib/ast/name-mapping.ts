@@ -8,8 +8,8 @@ import { is_ast_import } from '../utils'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_NameMapping extends AST_Node {
-  name: AST_SymbolExport | AST_SymbolImport
-  foreign_name: AST_SymbolExportForeign | AST_SymbolImportForeign
+  public name: AST_SymbolExport | AST_SymbolImport
+  public foreign_name: AST_SymbolExportForeign | AST_SymbolImportForeign
 
   protected walkInner () {
     const result: AST_Node[] = []
@@ -28,7 +28,7 @@ export default class AST_NameMapping extends AST_Node {
     return this.name ? 4 : 0
   }
 
-  shallow_cmp_props: any = {}
+  public shallow_cmp_props: any = {}
   protected _transform (tw: TreeTransformer) {
     this.foreign_name = this.foreign_name.transform(tw)
     this.name = this.name.transform(tw)
@@ -59,14 +59,14 @@ export default class AST_NameMapping extends AST_Node {
     }
   }
 
-  static documentation = 'The part of the export/import statement that declare names from a module.'
-  static propdoc = {
+  public static documentation = 'The part of the export/import statement that declare names from a module.'
+  public static propdoc ={
     foreign_name: '[AST_SymbolExportForeign|AST_SymbolImportForeign] The name being exported/imported (as specified in the module)',
     name: '[AST_SymbolExport|AST_SymbolImport] The name as it is visible to this module.'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['foreign_name', 'name'])
-  constructor (args: AST_NameMapping_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['foreign_name', 'name'])
+  public constructor (args: AST_NameMapping_Props) {
     super(args)
     this.foreign_name = args.foreign_name
     this.name = args.name

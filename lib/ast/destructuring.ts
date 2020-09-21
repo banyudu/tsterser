@@ -9,8 +9,8 @@ import { MozillaAst } from '../types'
 
 /* -----[ DESTRUCTURING ]----- */
 export default class AST_Destructuring extends AST_Node {
-  is_array: boolean
-  names: AST_Node[]
+  public is_array: boolean
+  public names: AST_Node[]
 
   public to_fun_args (croak: Function): any {
     this.names = this.names.map(item => item.to_fun_args(croak))
@@ -89,8 +89,8 @@ export default class AST_Destructuring extends AST_Node {
     return out
   }
 
-  _size = () => 2
-  shallow_cmp_props: any = { is_array: 'eq' }
+  public _size = () => 2
+  public shallow_cmp_props: any = { is_array: 'eq' }
   protected _transform (tw: TreeTransformer) {
     this.names = do_list(this.names, tw)
   }
@@ -122,14 +122,14 @@ export default class AST_Destructuring extends AST_Node {
     output.print(this.is_array ? ']' : '}')
   }
 
-  static documentation = 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names'
-  static propdoc = {
+  public static documentation = 'A destructuring of several names. Used in destructuring assignment and with destructuring function argument names'
+  public static propdoc ={
     names: '[AST_Node*] Array of properties or elements',
     is_array: '[boolean] Whether the destructuring represents an object or array'
   }
 
-  static PROPS = AST_Node.PROPS.concat(['names', 'is_array'])
-  constructor (args: AST_Destructuring_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['names', 'is_array'])
+  public constructor (args: AST_Destructuring_Props) {
     super(args)
     this.names = args.names ?? []
     this.is_array = args.is_array ?? false

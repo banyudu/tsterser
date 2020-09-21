@@ -6,9 +6,9 @@ import { make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is
 import { is_identifier_string, RESERVED_WORDS } from '../parse'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
-  quote: string
-  key: any
-  value: AST_Node
+  public quote: string
+  public key: any
+  public value: AST_Node
 
   public to_fun_args (croak: Function): any {
     this.value = this.value.to_fun_args(croak)
@@ -64,7 +64,7 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return is_ast_node(this.key)
   }
 
-  shallow_cmp_props: any = { key: 'eq' }
+  public shallow_cmp_props: any = { key: 'eq' }
   public _size (): number {
     return key_size(this.key) + 1
   }
@@ -107,13 +107,13 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     }
   }
 
-  static documentation = 'A key: value object property'
-  static propdoc = {
+  public static documentation = 'A key: value object property'
+  public static propdoc ={
     quote: '[string] the original quote character'
   }
 
-  static PROPS = AST_ObjectProperty.PROPS.concat(['quote'])
-  constructor (args: AST_ObjectKeyVal_Props) {
+  public static PROPS =AST_ObjectProperty.PROPS.concat(['quote'])
+  public constructor (args: AST_ObjectKeyVal_Props) {
     super(args)
     this.quote = args.quote ?? ''
     this.value = args.value

@@ -8,9 +8,9 @@ import AST_Scope from './scope'
 let mangle_options: MangleOptions | undefined
 
 export default class AST_Symbol extends AST_Node {
-  thedef: SymbolDef
-  name: string
-  scope: AST_Scope
+  public thedef: SymbolDef
+  public name: string
+  public scope: AST_Scope
 
   public fixed_value () {
     const fixed = this.thedef.fixed
@@ -56,7 +56,7 @@ export default class AST_Symbol extends AST_Node {
       : 2
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     name: 'eq'
   }
 
@@ -78,16 +78,16 @@ export default class AST_Symbol extends AST_Node {
   }
 
   protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
-  static propdoc = {
+  public static propdoc ={
     name: '[string] name of this symbol',
     scope: '[AST_Scope] the current scope (not necessarily the definition scope)',
     thedef: '[SymbolDef] the definition of this symbol'
   } as any
 
-  static documentation = 'Base class for all symbols'
+  public static documentation = 'Base class for all symbols'
 
-  static PROPS = AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
-  constructor (args: AST_Symbol_Props) {
+  public static PROPS =AST_Node.PROPS.concat(['scope', 'name', 'thedef'])
+  public constructor (args: AST_Symbol_Props) {
     super(args)
     this.scope = args.scope
     this.name = args.name

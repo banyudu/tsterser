@@ -7,11 +7,11 @@ import AST_Arrow from './arrow'
 import { MozillaAst } from '../types'
 
 export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
-  async: boolean
-  is_generator: boolean
-  static: boolean
-  quote: string
-  key: AST_Node
+  public async: boolean
+  public is_generator: boolean
+  public static: boolean
+  public quote: string
+  public key: AST_Node
 
   protected _optimize (compressor: Compressor): AST_ConciseMethod {
     this.lift_key(compressor)
@@ -57,7 +57,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     return static_size(this.static) + key_size(this.key) + lambda_modifiers(this)
   }
 
-  shallow_cmp_props: any = {
+  public shallow_cmp_props: any = {
     static: 'eq',
     is_generator: 'eq',
     async: 'eq'
@@ -97,17 +97,17 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     this._print_getter_setter(type, output)
   }
 
-  static propdoc = {
+  public static propdoc ={
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] is this method static (classes only)',
     is_generator: '[boolean] is this a generator method',
     async: '[boolean] is this method async'
   }
 
-  static documentation = 'An ES6 concise method inside an object or class'
+  public static documentation = 'An ES6 concise method inside an object or class'
 
-  static PROPS = AST_ObjectMethodProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
-  constructor (args: AST_ConciseMethod_Props) {
+  public static PROPS =AST_ObjectMethodProperty.PROPS.concat(['quote', 'static', 'is_generator', 'async'])
+  public constructor (args: AST_ConciseMethod_Props) {
     super(args)
     this.quote = args.quote ?? ''
     this.static = args.static ?? false
