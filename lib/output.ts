@@ -273,9 +273,9 @@ export class OutputStream {
     }
   }
 
-  // private indentation () { return this._indentation }
+  public indentation () { return this._indentation }
 
-  private current_width () { return this._current_col - this._indentation }
+  public current_width () { return this._current_col - this._indentation }
 
   public should_break () { return !!(this.options.width && this.current_width() >= this.options.width) }
 
@@ -499,11 +499,11 @@ export class OutputStream {
 
   public option (opt: keyof any) { return this.options[opt] }
 
-  // private line () { return this._current_line }
+  public line () { return this._current_line }
 
-  // private col () { return this._current_col }
+  public col () { return this._current_col }
 
-  // private pos () { return this._current_pos }
+  public pos () { return this._current_pos }
 
   private readonly stack: any[] = []
 
