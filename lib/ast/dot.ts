@@ -11,11 +11,11 @@ export default class AST_Dot extends AST_PropAccess {
   quote?: string
   property: string
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (this.property == 'arguments' || this.property == 'caller') {
       compressor.warn('Function.prototype.{prop} not supported [{file}:{line},{col}]', {
         prop: this.property,
@@ -78,32 +78,32 @@ export default class AST_Dot extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (this.expression.may_throw_on_access(compressor)) return this
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor)
   }
 
-  _find_defs (compressor: Compressor, suffix: string) {
+  public _find_defs (compressor: Compressor, suffix: string) {
     return this.expression._find_defs(compressor, '.' + this.property + suffix)
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
     if (is_ast_function(this.expression) && this.property == 'prototype') return false
     return true
   }
 
-  is_call_pure (compressor: Compressor) {
+  public is_call_pure (compressor: Compressor) {
     if (!compressor.option('unsafe')) return
     const expr = this.expression
     let map
@@ -123,26 +123,26 @@ export default class AST_Dot extends AST_PropAccess {
     return map?.has(this.property)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.expression)
   }
 
-  _size (): number {
+  public _size (): number {
     return this.property.length + 1
   }
 
   shallow_cmp_props: any = { property: 'eq' }
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const expr = this.expression
     expr.print(output)
     const prop: string = this.property

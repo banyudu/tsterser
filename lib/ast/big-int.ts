@@ -6,25 +6,25 @@ import '../utils'
 export default class AST_BigInt extends AST_Constant {
   value: any | undefined
 
-  _eval () { return this }
-  _size (): number {
+  public _eval () { return this }
+  public _size (): number {
     return this.value.length
   }
 
   shallow_cmp_props: any = { value: 'eq' }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BigIntLiteral',
       value: this.value
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print(this.getValue() + 'n')
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()

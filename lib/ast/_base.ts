@@ -1,5 +1,5 @@
 export default class AST {
-  isAst (_type: string) {
+  public isAst (_type: string) {
     return false
   }
 

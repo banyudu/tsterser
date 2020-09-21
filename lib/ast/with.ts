@@ -6,26 +6,26 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_With extends AST_StatementWithBody {
   expression: AST_Node
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     result.push(this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
     push(this.expression)
   }
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'WithStatement',
       object: to_moz(this.expression),
@@ -33,7 +33,7 @@ export default class AST_With extends AST_StatementWithBody {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('with')
     output.space()
     output.with_parens(() => {

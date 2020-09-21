@@ -10,12 +10,12 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   key: any
   value: AST_Node
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     this.value = this.value.to_fun_args(croak)
     return this
   }
 
-  _to_mozilla_ast_computed (): boolean {
+  public _to_mozilla_ast_computed (): boolean {
     const string_or_num = typeof this.key === 'string' || typeof this.key === 'number'
     let computed = string_or_num ? false : !(is_ast_symbol(this.key)) || is_ast_symbol_ref(this.key)
     if (is_ast_object_key_val(this)) {
@@ -24,14 +24,14 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return computed
   }
 
-  _to_mozilla_ast_kind (): string | undefined {
+  public _to_mozilla_ast_kind (): string | undefined {
     if (is_ast_object_key_val(this)) {
       return 'init'
     }
     return undefined
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     this.lift_key(compressor)
     // p:function(){} ---> p(){}
     // p:function*(){} ---> *p(){}
@@ -60,16 +60,16 @@ export default class AST_ObjectKeyVal extends AST_ObjectProperty {
     return this
   }
 
-  computed_key () {
+  public computed_key () {
     return is_ast_node(this.key)
   }
 
   shallow_cmp_props: any = { key: 'eq' }
-  _size (): number {
+  public _size (): number {
     return key_size(this.key) + 1
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     function get_name (self: any) {
       const def = self.definition()
       return def ? def.mangled_name || def.name : self.name

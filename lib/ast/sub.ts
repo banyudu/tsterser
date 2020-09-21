@@ -13,11 +13,11 @@ import AST_Dot from './dot'
 export default class AST_Sub extends AST_PropAccess {
   property: AST_Node
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.expression === node
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),
@@ -26,7 +26,7 @@ export default class AST_Sub extends AST_PropAccess {
     }
   }
 
-  _optimize (compressor: Compressor): AST_Node {
+  protected _optimize (compressor: Compressor): AST_Node {
     let expr = this.expression
     let prop: AST_Node = this.property
     let property: any
@@ -169,7 +169,7 @@ export default class AST_Sub extends AST_PropAccess {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node | null {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): AST_Node | null {
     const prop = this.property
     if (this.expression.may_throw_on_access(compressor)) return this
     const expression = this.expression.drop_side_effect_free(compressor, first_in_statement)
@@ -179,39 +179,39 @@ export default class AST_Sub extends AST_PropAccess {
     return make_sequence(this, [expression, property])
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     const property = this.property
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.may_throw(compressor) ||
           property.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     const property = this.property
     return this.expression.may_throw_on_access(compressor) ||
           this.expression.has_side_effects(compressor) ||
           property.has_side_effects(compressor)
   }
 
-  walkInner (): AST_Node[] {
+  protected walkInner (): AST_Node[] {
     const result: AST_Node[] = []
     result.push(this.expression)
     result.push(this.property)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.property)
     push(this.expression)
   }
 
   _size = () => 2
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.property = this.property.transform(tw)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this.expression.print(output)
     output.print('[')
     this.property.print(output)

@@ -28,7 +28,7 @@ import {
 import { ASSIGN_OPS, set_flag, WRITE_ONLY, binary, ASSIGN_OPS_COMMUTATIVE } from '../constants'
 
 export default class AST_Assign extends AST_Binary {
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     const insert_default = (ex: any) => {
       if (this.right) {
         return new AST_DefaultAssign({
@@ -44,7 +44,7 @@ export default class AST_Assign extends AST_Binary {
     return insert_default(this.left.to_fun_args(croak))
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: any = this
     let def
     if (compressor.option('dead_code') &&
@@ -105,7 +105,7 @@ export default class AST_Assign extends AST_Binary {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     let left = this.left
     if (left.has_side_effects(compressor) ||
           (compressor.has_directive('use strict') &&
@@ -123,7 +123,7 @@ export default class AST_Assign extends AST_Binary {
     return this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     if (this.right.may_throw(compressor)) return true
     if (!compressor.has_directive('use strict') &&
           this.operator == '=' &&
@@ -133,21 +133,21 @@ export default class AST_Assign extends AST_Binary {
     return this.left.may_throw(compressor)
   }
 
-  has_side_effects (_compressor: Compressor) { return true }
-  is_string (compressor: Compressor) {
+  public has_side_effects (_compressor: Compressor) { return true }
+  public is_string (compressor: Compressor) {
     return (this.operator == '=' || this.operator == '+=') && this.right.is_string(compressor)
   }
 
-  is_number (compressor: Compressor) {
+  public is_number (compressor: Compressor) {
     return binary.has(this.operator.slice(0, -1)) ||
           (this.operator == '=' && this.right.is_number(compressor))
   }
 
-  is_boolean () {
+  public is_boolean () {
     return this.operator == '=' && this.right.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     const node = this
     if (is_ast_destructuring(node.left)) {
       suppress(node.left)
@@ -182,12 +182,12 @@ export default class AST_Assign extends AST_Binary {
     return true
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     return this.operator == '=' &&
           this.right._dot_throw(compressor)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'AssignmentExpression',
       operator: this.operator,

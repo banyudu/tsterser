@@ -6,8 +6,8 @@ export default class AST_String extends AST_Constant {
   value: string
   quote: string
 
-  is_string () { return true }
-  _size (): number {
+  public is_string () { return true }
+  public _size (): number {
     return this.value.length + 2
   }
 
@@ -15,11 +15,11 @@ export default class AST_String extends AST_Constant {
     value: 'eq'
   }
 
-  addStrings (add: Function) {
+  public addStrings (add: Function) {
     add(this.value)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print_string(this.getValue(), this.quote, output.in_directive)
   }
 

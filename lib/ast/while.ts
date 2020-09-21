@@ -7,11 +7,11 @@ import TreeWalker from '../tree-walker'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_While extends AST_DWLoop {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     return compressor.option('loops') ? make_node('AST_For', this, this).optimize(compressor) : this
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     const saved_loop = tw.in_loop
     tw.in_loop = this
@@ -22,26 +22,26 @@ export default class AST_While extends AST_DWLoop {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.condition)
     result.push(this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
     push(this.condition)
   }
 
   _size = () => 7
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'WhileStatement',
       test: to_moz(this.condition),
@@ -49,7 +49,7 @@ export default class AST_While extends AST_DWLoop {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('while')
     output.space()
     output.with_parens(() => {

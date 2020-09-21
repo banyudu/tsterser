@@ -22,7 +22,7 @@ export default class AST_Lambda extends AST_Scope {
   is_generator: boolean
   async: boolean
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     this.tighten_body(compressor)
     if (compressor.option('side_effects') &&
           this.body.length == 1 &&
@@ -32,15 +32,15 @@ export default class AST_Lambda extends AST_Scope {
     return this
   }
 
-  may_throw (_compressor: Compressor) { return false }
-  has_side_effects (_compressor: Compressor) { return false }
-  _eval (_compressor: Compressor) { return this }
+  public may_throw (_compressor: Compressor) { return false }
+  public has_side_effects (_compressor: Compressor) { return false }
+  public _eval (_compressor: Compressor) { return this }
 
-  is_constant_expression (scope: AST_Scope) {
+  public is_constant_expression (scope: AST_Scope) {
     return this.all_refs_local(scope)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
+  public reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
     clear_flag(this, INLINED)
     push(tw)
     reset_variables(tw, compressor, this as any)
@@ -80,7 +80,7 @@ export default class AST_Lambda extends AST_Scope {
     return true
   }
 
-  contains_this () {
+  public contains_this () {
     return walk(this, (node: AST_Node) => {
       if (is_ast_this(node)) return walk_abort
       if (
@@ -94,8 +94,8 @@ export default class AST_Lambda extends AST_Scope {
     })
   }
 
-  is_block_scope () { return false }
-  init_scope_vars (parent_scope: AST_Scope) {
+  public is_block_scope () { return false }
+  protected init_scope_vars (parent_scope: AST_Scope) {
     this._init_scope_vars(parent_scope)
     this.uses_arguments = false
     this.def_variable(new AST_SymbolFunarg({
@@ -105,7 +105,7 @@ export default class AST_Lambda extends AST_Scope {
     }))
   }
 
-  args_as_names () {
+  protected args_as_names () {
     const out: any[] = []
     for (let i = 0; i < this.argnames.length; i++) {
       const arg = this.argnames[i]
@@ -118,7 +118,7 @@ export default class AST_Lambda extends AST_Scope {
     return out
   }
 
-  walkInner (): AST_Node[] {
+  protected walkInner (): AST_Node[] {
     const result: AST_Node[] = []
     if (this.name) result.push(this.name)
     const argnames = this.argnames
@@ -129,7 +129,7 @@ export default class AST_Lambda extends AST_Scope {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
 
@@ -144,7 +144,7 @@ export default class AST_Lambda extends AST_Scope {
     async: 'eq'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.name) this.name = this.name.transform(tw)
     this.argnames = do_list(this.argnames, tw)
     if (is_ast_node(this.body)) {
@@ -154,11 +154,11 @@ export default class AST_Lambda extends AST_Scope {
     }
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return To_Moz_FunctionExpression(this, parent)
   }
 
-  _do_print (output: OutputStream, nokeyword: boolean = false) {
+  public _do_print (output: OutputStream, nokeyword: boolean = false) {
     const self = this
     if (!nokeyword) {
       if (self.async) {
@@ -190,11 +190,11 @@ export default class AST_Lambda extends AST_Scope {
     this.print_braced(output, true)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Base class for functions'
   static propdoc = {
     name: '[AST_SymbolDeclaration?] the name of this function',

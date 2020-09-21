@@ -5,8 +5,8 @@ export default class AST_Number extends AST_Constant {
   literal?: any | undefined
   value: any | undefined
 
-  is_number () { return true }
-  _size (): number {
+  public is_number () { return true }
+  public _size (): number {
     const { value } = this
     if (value === 0) return 1
     if (value > 0 && Math.floor(value) === value) {
@@ -19,7 +19,7 @@ export default class AST_Number extends AST_Constant {
     value: 'eq'
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (p?._needs_parens(this)) {
       const value = this.getValue()
@@ -30,7 +30,7 @@ export default class AST_Number extends AST_Constant {
     return false
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     if ((output.option('keep_numbers') || output.use_asm) && this.start && this.start.raw != null) {
       output.print(this.start.raw)
     } else {

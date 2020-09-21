@@ -3,16 +3,16 @@ import AST_Symbol, { AST_Symbol_Props } from './symbol'
 import Compressor from '../compressor'
 
 export default class AST_This extends AST_Symbol {
-  drop_side_effect_free (): any { return null }
-  may_throw (_compressor: Compressor) { return false }
-  has_side_effects (_compressor: Compressor) { return false }
+  public drop_side_effect_free (): any { return null }
+  public may_throw (_compressor: Compressor) { return false }
+  public has_side_effects (_compressor: Compressor) { return false }
   _size = () => 4
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (): any {
+  public _to_mozilla_ast (): any {
     return { type: 'ThisExpression' }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('this')
   }
 

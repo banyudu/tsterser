@@ -26,22 +26,22 @@ export default class AST_Binary extends AST_Node {
   operator: string
   right: AST_Node
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.left === node
   }
 
-  _in_boolean_context_next (_context: AST_Node): boolean {
+  protected _in_boolean_context_next (_context: AST_Node): boolean {
     if (this.operator == '&&' || this.operator == '||' || this.operator == '??') {
       return true
     }
     return false
   }
 
-  _codegen_should_output_space (child: AST_Node) {
+  protected _codegen_should_output_space (child: AST_Node) {
     return /^\w/.test(this.operator) && this.left === child
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: any = this
     function reversible () {
       return self.left.is_constant() ||
@@ -548,7 +548,7 @@ export default class AST_Binary extends AST_Node {
     return self
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const right = this.right.drop_side_effect_free(compressor)
     if (!right) return this.left.drop_side_effect_free(compressor, first_in_statement)
     if (lazy_op.has(this.operator)) {
@@ -563,17 +563,17 @@ export default class AST_Binary extends AST_Node {
     }
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.left.may_throw(compressor) ||
           this.right.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.left.has_side_effects(compressor) ||
           this.right.has_side_effects(compressor)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     if (!non_converting_binary.has(this.operator)) depth++
     const left = this.left._eval(compressor, depth)
     if (left === this.left) return this
@@ -614,12 +614,12 @@ export default class AST_Binary extends AST_Node {
     return result
   }
 
-  is_constant_expression () {
+  public is_constant_expression () {
     return this.left.is_constant_expression() &&
           this.right.is_constant_expression()
   }
 
-  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
+  public negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Node {
     const self = this.clone() as AST_Binary
     const op = this.operator
     if (compressor.option('unsafe_comps')) {
@@ -652,25 +652,25 @@ export default class AST_Binary extends AST_Node {
     return basic_negation(this)
   }
 
-  is_string (compressor: Compressor) {
+  public is_string (compressor: Compressor) {
     return this.operator == '+' &&
           (this.left.is_string(compressor) || this.right.is_string(compressor))
   }
 
-  is_number (compressor: Compressor) {
+  public is_number (compressor: Compressor) {
     return binary.has(this.operator) || (this.operator == '+' &&
           this.left.is_number(compressor) &&
           this.right.is_number(compressor))
   }
 
-  is_boolean () {
+  public is_boolean () {
     return binary_bool.has(this.operator) ||
           (lazy_op.has(this.operator) &&
               this.left.is_boolean() &&
               this.right.is_boolean())
   }
 
-  reduce_vars (tw: TreeWalker, _descend: Function, _compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, _compressor: Compressor) {
     if (!lazy_op.has(this.operator)) return
     this.left.walk(tw)
     push(tw)
@@ -679,12 +679,12 @@ export default class AST_Binary extends AST_Node {
     return true
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     return (this.operator == '&&' || this.operator == '||' || this.operator == '??') &&
           (this.left._dot_throw(compressor) || this.right._dot_throw(compressor))
   }
 
-  lift_sequences (compressor: Compressor) {
+  protected lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
       if (is_ast_sequence(this.left)) {
         const x = this.left.expressions.slice()
@@ -719,20 +719,20 @@ export default class AST_Binary extends AST_Node {
     return this
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.left)
     result.push(this.right)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.right)
     push(this.left)
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _size (info: any): number {
+  public _size (info: any): number {
     if (this.operator === 'in') return 4
 
     let size = this.operator.length
@@ -752,12 +752,12 @@ export default class AST_Binary extends AST_Node {
     return size
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.left = this.left.transform(tw)
     this.right = this.right.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.operator == '=' && to_moz_in_destructuring()) {
       return {
         type: 'AssignmentPattern',
@@ -778,7 +778,7 @@ export default class AST_Binary extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     // (foo && bar)()
     if (is_ast_call(p) && p.expression === this) { return true }
@@ -806,7 +806,7 @@ export default class AST_Binary extends AST_Node {
     return false
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const op = this.operator
     this.left.print(output)
     if (op[0] == '>' && /* ">>" ">>>" ">" ">=" */

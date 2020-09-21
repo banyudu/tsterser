@@ -6,7 +6,7 @@ import { MozillaAst } from '../types'
 export default class AST_ForOf extends AST_ForIn {
   await: any
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ForOfStatement',
       left: this.init ? to_moz(this.init) : null,

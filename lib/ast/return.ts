@@ -6,29 +6,29 @@ import { is_undefined, to_moz } from '../utils'
 import { MozillaAst } from '../types'
 
 export default class AST_Return extends AST_Exit {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (this.value && is_undefined(this.value, compressor)) {
       this.value = null
     }
     return this
   }
 
-  may_throw (compressor: Compressor): boolean {
+  public may_throw (compressor: Compressor): boolean {
     return !!this.value?.may_throw(compressor)
   }
 
-  _size () {
+  public _size () {
     return this.value ? 7 : 6
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ReturnStatement',
       argument: this.value ? to_moz(this.value) : null
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output, 'return')
   }
 

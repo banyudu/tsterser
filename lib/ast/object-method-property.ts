@@ -5,7 +5,7 @@ import { is_ast_symbol_method, print_property_name, is_ast_node } from '../utils
 
 export default class AST_ObjectMethodProperty extends AST_ObjectProperty {
   value: AST_Accessor
-  _print_getter_setter (type: string, output: OutputStream) {
+  protected _print_getter_setter (type: string, output: OutputStream) {
     const self = this
     if (self.static) {
       output.print('static')

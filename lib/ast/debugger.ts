@@ -4,23 +4,23 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import { make_node } from '../utils'
 
 export default class AST_Debugger extends AST_Statement {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (compressor.option('drop_debugger')) { return make_node('AST_EmptyStatement', this) }
     return this
   }
 
   shallow_cmp_props: any = {}
   _size = () => 8
-  _to_mozilla_ast (): any {
+  public _to_mozilla_ast (): any {
     return { type: 'DebuggerStatement' }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('debugger')
     output.semicolon()
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Represents a debugger statement'
 
   static PROPS = AST_Statement.PROPS

@@ -4,16 +4,16 @@ import { OutputStream } from '../output'
 import AST_Unary, { AST_Unary_Props } from './unary'
 
 export default class AST_UnaryPostfix extends AST_Unary {
-  _prepend_comments_check (_node: AST_Node) {
+  public _prepend_comments_check (_node: AST_Node) {
     return true
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     return this.lift_sequences(compressor)
   }
 
-  _dot_throw () { return false }
-  _codegen (output: OutputStream) {
+  public _dot_throw () { return false }
+  protected _codegen (output: OutputStream) {
     this.expression.print(output)
     output.print(this.operator)
   }

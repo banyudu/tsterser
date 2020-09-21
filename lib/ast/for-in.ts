@@ -11,7 +11,7 @@ export default class AST_ForIn extends AST_IterationStatement {
   object: AST_Node
   await: boolean = false
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     suppress(this.init)
     this.object.walk(tw)
@@ -24,7 +24,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.init)
     result.push(this.object)
@@ -32,7 +32,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
     if (this.object) push(this.object)
     if (this.init) push(this.init)
@@ -40,13 +40,13 @@ export default class AST_ForIn extends AST_IterationStatement {
 
   _size = () => 8
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.init = this.init?.transform(tw) || null
     this.object = this.object.transform(tw)
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ForInStatement',
       left: to_moz(this.init),
@@ -55,7 +55,7 @@ export default class AST_ForIn extends AST_IterationStatement {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('for')
     if (this.await) {
       output.space()

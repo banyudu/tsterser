@@ -12,13 +12,13 @@ export default class AST_Symbol extends AST_Node {
   name: string
   scope: AST_Scope
 
-  fixed_value () {
+  public fixed_value () {
     const fixed = this.thedef.fixed
     if (!fixed || is_ast_node(fixed)) return fixed
     return fixed()
   }
 
-  mark_enclosed () {
+  public mark_enclosed () {
     const def = this.definition()
     let s: AST_Scope | undefined = this.scope
     while (s) {
@@ -28,29 +28,29 @@ export default class AST_Symbol extends AST_Node {
     }
   }
 
-  reference () {
+  public reference () {
     this.definition().references.push(this)
     this.mark_enclosed()
   }
 
-  unmangleable (options: MangleOptions): any {
+  public unmangleable (options: MangleOptions): any {
     const def = this.definition()
     return !def || def.unmangleable(options)
   }
 
-  unreferenced () {
+  public unreferenced () {
     return !this.definition().references.length && !this.scope.pinned()
   }
 
-  definition () {
+  public definition () {
     return this.thedef
   }
 
-  global () {
+  protected global () {
     return this.thedef.global
   }
 
-  _size (): number {
+  public _size (): number {
     return !mangle_options || this.definition().unmangleable(mangle_options)
       ? this.name.length
       : 2
@@ -60,7 +60,7 @@ export default class AST_Symbol extends AST_Node {
     name: 'eq'
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const def = this.definition()
     return {
       type: 'Identifier',
@@ -68,16 +68,16 @@ export default class AST_Symbol extends AST_Node {
     }
   }
 
-  _do_print (output: OutputStream) {
+  public _do_print (output: OutputStream) {
     const def = this.definition()
     output.print_name(def ? def.mangled_name || def.name : this.name)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[string] name of this symbol',
     scope: '[AST_Scope] the current scope (not necessarily the definition scope)',

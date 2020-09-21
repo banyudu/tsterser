@@ -8,14 +8,14 @@ export default class AST_IterationStatement extends AST_StatementWithBody {
   condition?: any
   step?: any
 
-  get_loopcontrol_target (node: AST_Node) {
+  public get_loopcontrol_target (node: AST_Node) {
     if (!node.label) {
       return this
     }
     return undefined
   }
 
-  is_block_scope () { return true }
+  public is_block_scope () { return true }
   static documentation = 'Internal class.  All loops inherit from it.'
   static propdoc = {
     block_scope: '[AST_Scope] the block scope for this iteration statement.'

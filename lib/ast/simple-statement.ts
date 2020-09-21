@@ -9,11 +9,11 @@ import { MozillaAst } from '../types'
 export default class AST_SimpleStatement extends AST_Statement {
   body: any | undefined
 
-  _in_boolean_context (_context: AST_Node) {
+  protected _in_boolean_context (_context: AST_Node) {
     return true
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (compressor.option('side_effects')) {
       const body = this.body
       const node = body.drop_side_effect_free(compressor, true)
@@ -28,37 +28,37 @@ export default class AST_SimpleStatement extends AST_Statement {
     return this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ExpressionStatement',
       expression: to_moz(this.body) // TODO: check type
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     (this.body).print(output)
     output.semicolon()
   }

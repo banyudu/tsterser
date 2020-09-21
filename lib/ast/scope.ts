@@ -101,7 +101,7 @@ export default class AST_Scope extends AST_Block {
     return result
   }
 
-  process_expression (insert: boolean, compressor?: Compressor) {
+  public process_expression (insert: boolean, compressor?: Compressor) {
     const self: AST_Scope = this
     const tt = new TreeTransformer(function (node: AST_Node) {
       if (insert && is_ast_simple_statement(node)) {
@@ -146,7 +146,7 @@ export default class AST_Scope extends AST_Block {
     self.transform(tt)
   }
 
-  drop_unused (compressor: Compressor) {
+  public drop_unused (compressor: Compressor) {
     const optUnused = compressor.option('unused')
     if (!optUnused) return
     if (compressor.has_directive('use asm')) return
@@ -547,7 +547,7 @@ export default class AST_Scope extends AST_Block {
     }
   }
 
-  hoist_declarations (compressor: Compressor) {
+  public hoist_declarations (compressor: Compressor) {
     let self = this
     if (compressor.has_directive('use asm')) return self
     // Hoisting makes no sense in an arrow func
@@ -678,7 +678,7 @@ export default class AST_Scope extends AST_Block {
     return self
   }
 
-  make_var_name (prefix: string) {
+  private make_var_name (prefix: string) {
     const var_names = this.var_names() ?? new Set()
     prefix = prefix.replace(/(?:^[^a-z_$]|[^a-z0-9_$])/ig, '_')
     let name = prefix
@@ -687,7 +687,7 @@ export default class AST_Scope extends AST_Block {
     return name
   }
 
-  hoist_properties (compressor: Compressor) {
+  public hoist_properties (compressor: Compressor) {
     const self = this
     if (!compressor.option('hoist_props') || compressor.has_directive('use asm')) return self
     const top_retain = (is_ast_toplevel(self) && compressor.top_retain) || (() => false)
@@ -753,7 +753,7 @@ export default class AST_Scope extends AST_Block {
     return self.transform(hoister)
   }
 
-  _init_scope_vars (parent: AST_Scope) {
+  protected _init_scope_vars (parent: AST_Scope) {
     this.variables = new Map() // map name to AST_SymbolVar (variables defined in this scope; includes functions)
     this.functions = new Map() // map name to AST_SymbolDefun (functions defined in this scope)
     this.uses_with = false // will be set to true if this or some nested scope uses the `with` statement
@@ -764,11 +764,11 @@ export default class AST_Scope extends AST_Block {
     this._var_name_cache = null
   }
 
-  init_scope_vars (parent: AST_Scope) {
+  protected init_scope_vars (parent: AST_Scope) {
     this._init_scope_vars(parent)
   }
 
-  var_names (): Set<string> | null {
+  private var_names (): Set<string> | null {
     let var_names = this._var_name_cache
     if (!var_names) {
       this._var_name_cache = var_names = new Set(
@@ -787,7 +787,7 @@ export default class AST_Scope extends AST_Block {
     return var_names
   }
 
-  add_var_name (name: string) {
+  private add_var_name (name: string) {
     // TODO change enclosed too
     if (!this._added_var_names) {
       // TODO stop adding var names entirely
@@ -799,7 +799,7 @@ export default class AST_Scope extends AST_Block {
   }
 
   // TODO create function that asks if we can inline
-  add_child_scope (scope: AST_Scope) {
+  protected add_child_scope (scope: AST_Scope) {
     // `scope` is going to be moved into wherever the compressor is
     // right now. Update the required scopes' information
 
@@ -836,24 +836,24 @@ export default class AST_Scope extends AST_Block {
     }
   }
 
-  is_block_scope () {
+  public is_block_scope () {
     return this._block_scope || false
   }
 
-  find_variable (name: any | string): any {
+  public find_variable (name: any | string): any {
     if (is_ast_symbol(name)) name = name.name
     return this.variables.get(name) ||
           (this.parent_scope?.find_variable(name))
   }
 
-  def_function (symbol: any, init: boolean) {
+  protected def_function (symbol: any, init: boolean) {
     const def = this.def_variable(symbol, init)
     if (!def.init || is_ast_defun(def.init)) def.init = init
     this.functions.set(symbol.name, def)
     return def
   }
 
-  def_variable (symbol: any, init?: any) {
+  protected def_variable (symbol: any, init?: any) {
     let def = this.variables.get(symbol.name)
     if (def) {
       def.orig.push(symbol)
@@ -868,11 +868,11 @@ export default class AST_Scope extends AST_Block {
     return (symbol.thedef = def)
   }
 
-  next_mangled (options: any, _def: SymbolDef) {
+  protected next_mangled (options: any, _def: SymbolDef) {
     return next_mangled(this, options)
   }
 
-  get_defun_scope () {
+  public get_defun_scope () {
     let self: AST_Scope | undefined = this
     while (self?.is_block_scope()) {
       self = self.parent_scope
@@ -880,7 +880,7 @@ export default class AST_Scope extends AST_Block {
     return self
   }
 
-  clone (deep: boolean = false) {
+  public clone (deep: boolean = false) {
     const node = this._clone(deep)
     if (this.variables) node.variables = new Map(this.variables)
     if (this.functions) node.functions = new Map(this.functions)
@@ -889,11 +889,11 @@ export default class AST_Scope extends AST_Block {
     return node
   }
 
-  pinned () {
+  public pinned () {
     return this.uses_eval || this.uses_with
   }
 
-  figure_out_scope (options: any, data: any = {}) {
+  public figure_out_scope (options: any, data: any = {}) {
     options = defaults(options, {
       cache: null,
       ie8: false,

@@ -9,13 +9,13 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_LabeledStatement extends AST_StatementWithBody {
   label: any
 
-  get_loopcontrol_target (node: AST_Node) {
+  public get_loopcontrol_target (node: AST_Node) {
     if (node.label && this.label.name == node.label.name) {
       return this.body
     }
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (is_ast_break(this.body) &&
           compressor.loopcontrol_target(this.body) === this.body) {
       return make_node('AST_EmptyStatement', this)
@@ -23,34 +23,34 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     return this.label.references.length == 0 ? this.body : this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.body.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.body.has_side_effects(compressor)
   }
 
-  reduce_vars (tw: TreeWalker) {
+  public reduce_vars (tw: TreeWalker) {
     push(tw)
     this.body.walk(tw)
     pop(tw)
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.label)
     result.push(this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
     push(this.label)
   }
 
-  clone (deep: boolean) {
+  public clone (deep: boolean) {
     const node = this._clone(deep)
     if (deep) {
       const label = node.label
@@ -68,12 +68,12 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
 
   _size = () => 2
   shallow_cmp_props: any = { 'label.name': 'eq' }
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.label = this.label.transform(tw)
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'LabeledStatement',
       label: to_moz(this.label),
@@ -81,13 +81,13 @@ export default class AST_LabeledStatement extends AST_StatementWithBody {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this.label.print(output)
     output.colon();
     (this.body).print(output)
   }
 
-  add_source_map () { }
+  protected add_source_map () { }
   static documentation: 'Statement with a label'
   static propdoc = {
     label: '[AST_Label] a label definition'

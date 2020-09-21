@@ -1,7 +1,7 @@
 import AST_Symbol, { AST_Symbol_Props } from './symbol'
 
 export default class AST_SymbolImportForeign extends AST_Symbol {
-  _size (): number {
+  public _size (): number {
     return this.name.length
   }
 

@@ -127,45 +127,45 @@ export default class AST_Block extends AST_Statement {
     return null
   }
 
-  _optimize (compressor: Compressor): AST_Block {
+  protected _optimize (compressor: Compressor): AST_Block {
     this.tighten_body(compressor)
     return this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.body, compressor)
   }
 
-  reduce_vars (_tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (_tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
   }
 
-  is_block_scope () { return true }
-  walkInner (): AST_Node[] {
+  public is_block_scope () { return true }
+  protected walkInner (): AST_Node[] {
     const result: AST_Node[] = []
     result.push(...this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
   }
 
-  _size (_info: any) {
+  public _size (_info: any) {
     return 2 + list_overhead(this.body)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
@@ -877,7 +877,7 @@ export default class AST_Block extends AST_Statement {
     }
   }
 
-  can_merge_flow (ab: AST_Node, compressor: Compressor, i: number) {
+  private can_merge_flow (ab: AST_Node, compressor: Compressor, i: number) {
     const self = compressor.self()
     const in_lambda = is_ast_lambda(self)
     if (!ab) return false
@@ -1150,7 +1150,7 @@ export default class AST_Block extends AST_Statement {
   }
 
   // Tighten a bunch of statements together. Used whenever there is a block.
-  tighten_body (compressor: Compressor) {
+  protected tighten_body (compressor: Compressor) {
     this.find_loop_scope_try(compressor)
     let max_iter = 10
     do {

@@ -176,11 +176,11 @@ export default class Compressor extends TreeWalker {
     this.evaluated_regexps = new Map()
   }
 
-  option<T extends keyof any>(key: T) {
+  public option<T extends keyof any>(key: T) {
     return this.options[key]
   }
 
-  exposed (def: SymbolDef) {
+  public exposed (def: SymbolDef) {
     if (def.export) return true
     if (def.global) {
       for (let i = 0, len = def.orig.length; i < len; i++) {
@@ -190,7 +190,7 @@ export default class Compressor extends TreeWalker {
     return false
   }
 
-  in_boolean_context () {
+  public in_boolean_context () {
     if (!this.option('booleans')) return false
     let self = this.self()
     for (let i = 0, p; (p = this.parent(i)); i++) {
@@ -207,7 +207,7 @@ export default class Compressor extends TreeWalker {
     return undefined
   }
 
-  compress (toplevel: AST_Toplevel) {
+  public compress (toplevel: AST_Toplevel) {
     toplevel = toplevel.resolve_defines(this)
     if (this.option('expression')) {
       toplevel.process_expression(true)
@@ -246,13 +246,13 @@ export default class Compressor extends TreeWalker {
     return toplevel
   }
 
-  info (text: string, props?: AnyObject<any>) {
+  public info (text: string, props?: AnyObject<any>) {
     if (this.options.warnings == 'verbose') {
             AST_Node.warn?.(text, props)
     }
   }
 
-  warn (text: string, props?: AnyObject<any>) {
+  public warn (text: string, props?: AnyObject<any>) {
     if (this.options.warnings) {
       // only emit unique warnings
       const message = string_template(text, props)
@@ -263,11 +263,11 @@ export default class Compressor extends TreeWalker {
     }
   }
 
-  clear_warnings () {
+  protected clear_warnings () {
     this.warnings_produced = {}
   }
 
-  before (node: AST_Node, descend: Function) {
+  public before (node: AST_Node, descend: Function) {
     if (has_flag(node, SQUEEZED)) return node
     let was_scope = false
     if (is_ast_scope(node)) {

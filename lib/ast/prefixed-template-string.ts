@@ -12,29 +12,29 @@ export default class AST_PrefixedTemplateString extends AST_Node {
   template_string: AST_TemplateString
   prefix: AST_SymbolRef|AST_PropAccess
 
-  _optimize (_compressor: Compressor): any {
+  protected _optimize (_compressor: Compressor): any {
     return this
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.prefix)
     result.push(this.template_string)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.template_string)
     push(this.prefix)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.prefix = this.prefix.transform(tw)
     this.template_string = this.template_string.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'TaggedTemplateExpression',
       tag: to_moz(this.prefix),
@@ -42,7 +42,7 @@ export default class AST_PrefixedTemplateString extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const tag = this.prefix
     const parenthesize_tag = is_ast_lambda(tag) ||
             is_ast_binary(tag) ||

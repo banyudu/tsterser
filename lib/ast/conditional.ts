@@ -22,27 +22,27 @@ export default class AST_Conditional extends AST_Node {
   consequent: AST_Node
   condition: AST_Node
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.condition === node
   }
 
-  addStrings (add: Function) {
+  public addStrings (add: Function) {
     this.consequent?.addStrings(add)
     this.alternative?.addStrings(add)
   }
 
-  _in_boolean_context (context: AST_Node): boolean {
+  protected _in_boolean_context (context: AST_Node): boolean {
     if (this.condition === context) {
       return true
     }
     return false
   }
 
-  _in_boolean_context_next (_context: AST_Node): boolean {
+  protected _in_boolean_context_next (_context: AST_Node): boolean {
     return true
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: AST_Conditional = this
     if (!compressor.option('conditionals')) return self
     // This looks like lift_sequences(), should probably be under "sequences"
@@ -300,7 +300,7 @@ export default class AST_Conditional extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     const consequent = this.consequent.drop_side_effect_free(compressor)
     const alternative = this.alternative.drop_side_effect_free(compressor)
     if (consequent === this.consequent && alternative === this.alternative) return this
@@ -324,19 +324,19 @@ export default class AST_Conditional extends AST_Node {
     return node
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.condition.may_throw(compressor) ||
           this.consequent.may_throw(compressor) ||
           this.alternative.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.consequent.has_side_effects(compressor) ||
           this.alternative.has_side_effects(compressor)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     const condition = this.condition._eval(compressor, depth)
     if (condition === this.condition) return this
     const node = condition ? this.consequent : this.alternative
@@ -344,26 +344,26 @@ export default class AST_Conditional extends AST_Node {
     return value === node ? this : value
   }
 
-  negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Conditional {
+  public negate (compressor: Compressor, first_in_statement: Function | boolean): AST_Conditional {
     const self = this.clone() as AST_Conditional
     self.consequent = self.consequent.negate(compressor)
     self.alternative = self.alternative.negate(compressor)
     return best(this, self, first_in_statement) as AST_Conditional
   }
 
-  is_string (compressor: Compressor) {
+  public is_string (compressor: Compressor) {
     return this.consequent.is_string(compressor) && this.alternative.is_string(compressor)
   }
 
-  is_number (compressor: Compressor) {
+  public is_number (compressor: Compressor) {
     return this.consequent.is_number(compressor) && this.alternative.is_number(compressor)
   }
 
-  is_boolean () {
+  public is_boolean () {
     return this.consequent.is_boolean() && this.alternative.is_boolean()
   }
 
-  reduce_vars (tw: TreeWalker) {
+  public reduce_vars (tw: TreeWalker) {
     this.condition.walk(tw)
     push(tw)
     this.consequent.walk(tw)
@@ -374,12 +374,12 @@ export default class AST_Conditional extends AST_Node {
     return true
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     return this.consequent._dot_throw(compressor) ||
           this.alternative._dot_throw(compressor)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.condition)
     result.push(this.consequent)
@@ -387,7 +387,7 @@ export default class AST_Conditional extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.alternative)
     push(this.consequent)
     push(this.condition)
@@ -395,13 +395,13 @@ export default class AST_Conditional extends AST_Node {
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.consequent = this.consequent.transform(tw)
     this.alternative = this.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ConditionalExpression',
       test: to_moz(this.condition),
@@ -411,7 +411,7 @@ export default class AST_Conditional extends AST_Node {
   }
 
   needs_parens = this.needsParens
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this.condition.print(output)
     output.space()
     output.print('?')

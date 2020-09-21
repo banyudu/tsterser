@@ -9,7 +9,7 @@ import { MozillaAst } from '../types'
 export default class AST_Directive extends AST_Statement {
   value: any
   quote: any
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (compressor.option('directives') &&
           (!directives.has(this.value) || compressor.has_directive(this.value) !== this)) {
       return make_node('AST_EmptyStatement', this)
@@ -18,12 +18,12 @@ export default class AST_Directive extends AST_Statement {
   }
 
   shallow_cmp_props: any = { value: 'eq' }
-  _size (): number {
+  public _size (): number {
     // TODO string encoding stuff
     return 2 + this.value.length
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ExpressionStatement',
       expression: {
@@ -35,12 +35,12 @@ export default class AST_Directive extends AST_Statement {
     } as any
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print_string(this.value, this.quote)
     output.semicolon()
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Represents a directive, like "use strict";'
   static propdoc = {
     value: "[string] The value of this directive as a plain string (it's not an AST_String!)",

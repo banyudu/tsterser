@@ -4,7 +4,7 @@ import { MozillaAst } from '../types'
 
 export default class AST_Atom extends AST_Constant {
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'Identifier',
       name: String(this.value)

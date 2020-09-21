@@ -14,7 +14,7 @@ export default class AST_Try extends AST_Block {
   bfinally: AST_Finally | null
   bcatch: AST_Catch
 
-  _optimize (compressor: Compressor): AST_Try {
+  protected _optimize (compressor: Compressor): AST_Try {
     this.tighten_body(compressor)
     if (this.bcatch && this.bfinally && this.bfinally.body.every(is_empty)) this.bfinally = null
     if (compressor.option('dead_code') && this.body.every(is_empty)) {
@@ -30,18 +30,18 @@ export default class AST_Try extends AST_Block {
     return this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.bcatch ? this.bcatch.may_throw(compressor) : anyMayThrow(this.body, compressor) ||
               !!this.bfinally?.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.body, compressor) ||
               !!this.bcatch?.has_side_effects(compressor) ||
               !!this.bfinally?.has_side_effects(compressor)
   }
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     push(tw)
     walk_body(this, tw)
@@ -55,7 +55,7 @@ export default class AST_Try extends AST_Block {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(...this.body)
     if (this.bcatch) result.push(this.bcatch)
@@ -63,14 +63,14 @@ export default class AST_Try extends AST_Block {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.bfinally) push(this.bfinally)
     if (this.bcatch) push(this.bcatch)
     let i = this.body.length
     while (i--) push(this.body[i])
   }
 
-  _size (): number {
+  public _size (): number {
     return 3 + list_overhead(this.body)
   }
 
@@ -79,13 +79,13 @@ export default class AST_Try extends AST_Block {
     bfinally: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.body = do_list(this.body, tw)
     if (this.bcatch) this.bcatch = this.bcatch.transform(tw)
     if (this.bfinally) this.bfinally = this.bfinally.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'TryStatement',
       block: to_moz_block(this),
@@ -95,7 +95,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('try')
     output.space()
     this.print_braced(output)
@@ -109,7 +109,7 @@ export default class AST_Try extends AST_Block {
     }
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `try` statement'
   static propdoc = {
     bcatch: '[AST_Catch?] the catch block, or null if not present',

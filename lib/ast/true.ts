@@ -1,7 +1,7 @@
 import AST_Boolean, { AST_Boolean_Props } from './boolean'
 
 export default class AST_True extends AST_Boolean {
-  is_boolean () { return true }
+  public is_boolean () { return true }
   value = true
   _size = () => 4
   static documentation = 'The `true` atom'

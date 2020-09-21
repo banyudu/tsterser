@@ -21,7 +21,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Object extends AST_Node {
   properties: AST_Node[]
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     return new AST_Destructuring({
       start: this.start,
       end: this.end,
@@ -30,7 +30,7 @@ export default class AST_Object extends AST_Node {
     })
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     const optimized = this.literals_in_boolean_context(compressor)
     if (optimized !== this) {
       return optimized
@@ -56,20 +56,20 @@ export default class AST_Object extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const values = trim(this.properties, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.properties, compressor)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       const val: any = {}
       for (let i = 0, len = this.properties.length; i < len; i++) {
@@ -94,17 +94,17 @@ export default class AST_Object extends AST_Node {
     return this
   }
 
-  is_constant_expression () {
+  public is_constant_expression () {
     return this.properties.every((l) => l.is_constant_expression())
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     if (!is_strict(compressor)) return false
     for (let i = this.properties.length; --i >= 0;) { if (this.properties[i]._dot_throw(compressor)) return true }
     return false
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     const properties = this.properties
     for (let i = 0, len = properties.length; i < len; i++) {
@@ -113,12 +113,12 @@ export default class AST_Object extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.properties.length
     while (i--) push(this.properties[i])
   }
 
-  _size (info: any): number {
+  public _size (info: any): number {
     let base = 2
     if (first_in_statement(info)) {
       base += 2 // parens
@@ -127,11 +127,11 @@ export default class AST_Object extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.properties = do_list(this.properties, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ObjectExpression',
       properties: this.properties.map(to_moz)
@@ -140,11 +140,11 @@ export default class AST_Object extends AST_Node {
 
   // same goes for an object literal, because otherwise it would be
   // interpreted as a block of code.
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     return !output.has_parens() && first_in_statement(output)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     if (this.properties.length > 0) {
       output.with_block(() => {
         this.properties.forEach(function (prop, i) {
@@ -160,7 +160,7 @@ export default class AST_Object extends AST_Node {
     } else this.print_braced_empty(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An object literal'
   static propdoc = {
     properties: '[AST_ObjectProperty*] array of properties'

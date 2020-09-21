@@ -4,18 +4,18 @@ import AST_LoopControl, { AST_LoopControl_Props } from './loop-control'
 import { to_moz } from '../utils'
 
 export default class AST_Continue extends AST_LoopControl {
-  _size () {
+  public _size () {
     return this.label ? 9 : 8
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ContinueStatement',
       label: this.label ? to_moz(this.label) : null
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output, 'continue')
   }
 

@@ -9,7 +9,7 @@ import { MozillaAst } from '../types'
 export default class AST_TemplateString extends AST_Node {
   segments: AST_TemplateSegment[]
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (!compressor.option('evaluate') ||
       is_ast_prefixed_template_string(compressor.parent())) { return this }
 
@@ -72,22 +72,22 @@ export default class AST_TemplateString extends AST_Node {
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     const values = trim(this.segments, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.segments, compressor)
   }
 
-  _eval () {
+  public _eval () {
     if (this.segments.length !== 1) return this
     return this.segments[0].value
   }
 
-  is_string () { return true }
-  walkInner () {
+  public is_string () { return true }
+  protected walkInner () {
     const result: AST_Node[] = []
     this.segments.forEach(function (seg) {
       result.push(seg)
@@ -95,21 +95,21 @@ export default class AST_TemplateString extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.segments.length
     while (i--) push(this.segments[i])
   }
 
-  _size (): number {
+  public _size (): number {
     return 2 + (Math.floor(this.segments.length / 2) * 3) /* "${}" */
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.segments = do_list(this.segments, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const quasis: any[] = []
     const expressions: any[] = []
     for (let i = 0; i < this.segments.length; i++) {
@@ -133,7 +133,7 @@ export default class AST_TemplateString extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const is_tagged = is_ast_prefixed_template_string(output.parent())
 
     output.print('`')
@@ -151,7 +151,7 @@ export default class AST_TemplateString extends AST_Node {
     output.print('`')
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A template string literal'
   static propdoc = {
     segments: '[AST_Node*] One or more segments, starting with AST_TemplateSegment. AST_Node may follow AST_TemplateSegment, but each AST_Node must be followed by AST_TemplateSegment.'

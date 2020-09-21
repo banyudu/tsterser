@@ -33,7 +33,7 @@ export default class AST_SymbolRef extends AST_Symbol {
   scope: any
   thedef: any
 
-  to_fun_args (_croak: Function): any {
+  public to_fun_args (_croak: Function): any {
     return new AST_SymbolFunarg({
       name: this.name,
       start: this.start,
@@ -41,7 +41,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     })
   }
 
-  _optimize (compressor: Compressor): AST_SymbolRef {
+  protected _optimize (compressor: Compressor): AST_SymbolRef {
     if (!compressor.option('ie8') &&
           is_undeclared_ref(this) &&
           (!this.scope.uses_with || !compressor.find_parent(AST_With))) {
@@ -194,21 +194,21 @@ export default class AST_SymbolRef extends AST_Symbol {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     const safe_access = this.is_declared(compressor) ||
           pure_prop_access_globals.has(this.name)
     return safe_access ? null : this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return !this.is_declared(compressor) && !pure_prop_access_globals.has(this.name)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     const fixed = this.fixed_value()
     if (!fixed) return this
     let value: any
@@ -230,14 +230,14 @@ export default class AST_SymbolRef extends AST_Symbol {
     return value
   }
 
-  _find_defs (compressor: Compressor, suffix: string): any {
+  public _find_defs (compressor: Compressor, suffix: string): any {
     if (!this.global()) return
     const defines = compressor.option('global_defs') as AnyObject
     const name = this.name + suffix
     if (HOP(defines, name)) return to_node(defines[name], this)
   }
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     const d = this.definition?.()
     d.references.push(this)
     if (d.references.length == 1 &&
@@ -277,7 +277,7 @@ export default class AST_SymbolRef extends AST_Symbol {
     mark_escaped(tw, d, this.scope, this, fixed_value, 0, 1)
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     if (this.name === 'arguments') return false
     if (has_flag(this, UNDEFINED)) return true
     if (!is_strict(compressor)) return false
@@ -287,17 +287,17 @@ export default class AST_SymbolRef extends AST_Symbol {
     return !fixed || fixed._dot_throw(compressor)
   }
 
-  is_declared (compressor: Compressor) {
+  public is_declared (compressor: Compressor) {
     return !this.definition?.().undeclared ||
           (compressor.option('unsafe') && global_names.has(this.name))
   }
 
-  is_immutable () {
+  public is_immutable () {
     const orig = this.definition?.().orig
     return orig.length == 1 && is_ast_symbol_lambda(orig[0])
   }
 
-  _size (): number {
+  public _size (): number {
     const { name, thedef } = this
 
     if (thedef?.global) return name.length

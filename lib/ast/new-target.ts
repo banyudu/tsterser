@@ -4,7 +4,7 @@ import AST_Node, { AST_Node_Props } from './node'
 export default class AST_NewTarget extends AST_Node {
   _size = () => 10
   shallow_cmp_props: any = {}
-  _to_mozilla_ast () {
+  public _to_mozilla_ast () {
     return {
       type: 'MetaProperty',
       meta: {
@@ -18,7 +18,7 @@ export default class AST_NewTarget extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('new.target')
   }
 

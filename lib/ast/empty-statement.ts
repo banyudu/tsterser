@@ -3,15 +3,15 @@ import AST_Statement, { AST_Statement_Props } from './statement'
 import Compressor from '../compressor'
 
 export default class AST_EmptyStatement extends AST_Statement {
-  may_throw (_compressor: Compressor) { return false }
-  has_side_effects (_compressor: Compressor) { return false }
+  public may_throw (_compressor: Compressor) { return false }
+  public has_side_effects (_compressor: Compressor) { return false }
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (): any {
+  public _to_mozilla_ast (): any {
     return { type: 'EmptyStatement' }
   }
 
   _size = () => 1
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.semicolon()
   }
 

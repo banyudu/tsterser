@@ -35,14 +35,14 @@ export default class AST_Toplevel extends AST_Scope {
   globals: Map<any, any>
   mangled_names: Set<any> = new Set()
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     this.globals.forEach(function (def: SymbolDef) {
       reset_def(compressor, def)
     })
     reset_variables(tw, compressor, this)
   }
 
-  resolve_defines (compressor: Compressor) {
+  public resolve_defines (compressor: Compressor) {
     if (!compressor.option('global_defs')) return this
     this.figure_out_scope({ ie8: compressor.option('ie8') })
     return this.transform(new TreeTransformer(function (this: any, node: AST_Node) {
@@ -62,7 +62,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  reset_opt_flags (compressor: Compressor) {
+  public reset_opt_flags (compressor: Compressor) {
     const self = this
     const reduce_vars = compressor.option('reduce_vars')
 
@@ -88,7 +88,7 @@ export default class AST_Toplevel extends AST_Scope {
     self.walk(preparation)
   }
 
-  drop_console () {
+  public drop_console () {
     return this.transform(new TreeTransformer(function (self: AST_Toplevel) {
       if (self.TYPE == 'Call') {
         const exp = self.expression
@@ -106,7 +106,7 @@ export default class AST_Toplevel extends AST_Scope {
     }))
   }
 
-  def_global (node: AST_Node) {
+  public def_global (node: AST_Node) {
     const globals = this.globals; const name = node.name
     if (globals.has(name)) {
       return globals.get(name)
@@ -119,8 +119,8 @@ export default class AST_Toplevel extends AST_Scope {
     }
   }
 
-  is_block_scope () { return false }
-  next_mangled (options: any) {
+  public is_block_scope () { return false }
+  protected next_mangled (options: any) {
     let name
     const mangled_names = this.mangled_names
     do {
@@ -129,7 +129,7 @@ export default class AST_Toplevel extends AST_Scope {
     return name
   }
 
-  _default_mangler_options (options: any) {
+  private _default_mangler_options (options: any) {
     options = defaults(options, {
       eval: false,
       ie8: false,
@@ -152,7 +152,7 @@ export default class AST_Toplevel extends AST_Scope {
     return options
   }
 
-  wrap_commonjs (name: string) {
+  protected wrap_commonjs (name: string) {
     const body = this.body
     const _wrapped_tl = "(function(exports){'$ORIG';})(typeof " + name + "=='undefined'?(" + name + '={}):' + name + ');'
     let wrapped_tl = parse(_wrapped_tl)
@@ -165,7 +165,7 @@ export default class AST_Toplevel extends AST_Scope {
     return wrapped_tl
   }
 
-  wrap_enclose (args_values: string) {
+  protected wrap_enclose (args_values: string) {
     if (typeof args_values !== 'string') args_values = ''
     let index = args_values.indexOf(':')
     if (index < 0) index = args_values.length
@@ -185,21 +185,21 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   shallow_cmp_props: any = {}
-  _size () {
+  public _size () {
     return list_overhead(this.body)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return to_moz_scope('Program', this)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     display_body(this.body as any[], true, output, true)
     output.print('')
   }
 
-  add_source_map () { }
-  compute_char_frequency (options: any) {
+  protected add_source_map () { }
+  protected compute_char_frequency (options: any) {
     setPrintMangleOptions(this._default_mangler_options(options))
     try {
       base54.consider(this.print_to_string(), 1)
@@ -209,7 +209,7 @@ export default class AST_Toplevel extends AST_Scope {
     base54.sort()
   }
 
-  expand_names (options: any) {
+  protected expand_names (options: any) {
     base54.reset()
     base54.sort()
     options = this._default_mangler_options(options)
@@ -244,7 +244,7 @@ export default class AST_Toplevel extends AST_Scope {
     }
   }
 
-  find_colliding_names (options: any) {
+  private find_colliding_names (options: any) {
     const cache = options.cache?.props
     const avoid = new Set()
       options.reserved?.forEach(to_avoid)
@@ -267,7 +267,7 @@ export default class AST_Toplevel extends AST_Scope {
       }
   }
 
-  mangle_names (options: any) {
+  protected mangle_names (options: any) {
     options = this._default_mangler_options(options)
 
     // We only need to mangle declaration nodes.  Special logic wired

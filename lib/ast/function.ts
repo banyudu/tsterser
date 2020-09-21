@@ -19,7 +19,7 @@ import { MozillaAst } from '../types'
 export default class AST_Function extends AST_Lambda {
   name: any
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     const self = super._optimize(compressor)
     if (compressor.option('unsafe_arrows') &&
           compressor.option('ecma') >= 2015 &&
@@ -36,9 +36,9 @@ export default class AST_Function extends AST_Lambda {
     return self
   }
 
-  drop_side_effect_free (): AST_Function { return null as any }
+  public drop_side_effect_free (): AST_Function { return null as any }
 
-  _eval (compressor: Compressor) {
+  public _eval (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       const fn: any = function () {}
       fn.node = this
@@ -50,12 +50,12 @@ export default class AST_Function extends AST_Lambda {
     return this
   }
 
-  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
+  public negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 
-  _dot_throw () { return false }
-  next_mangled (options: any, def: SymbolDef) {
+  public _dot_throw () { return false }
+  protected next_mangled (options: any, def: SymbolDef) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name
@@ -71,18 +71,18 @@ export default class AST_Function extends AST_Lambda {
     }
   }
 
-  _size (info: any) {
+  public _size (info: any) {
     const first: any = !!first_in_statement(info)
     return (first * 2) + lambda_modifiers(this) + 12 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (parent: AST_Node): MozillaAst {
     return To_Moz_FunctionExpression(this, parent)
   }
 
   // a function expression needs parens around it when it's provably
   // the first token to appear in a statement.
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     if (!output.has_parens() && first_in_statement(output)) {
       return true
     }

@@ -12,12 +12,12 @@ export default class AST_Destructuring extends AST_Node {
   is_array: boolean
   names: AST_Node[]
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     this.names = this.names.map(item => item.to_fun_args(croak))
     return this
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (compressor.option('pure_getters') == true &&
           compressor.option('unused') &&
           !this.is_array &&
@@ -66,7 +66,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     this.names.forEach(function (name: any) {
       result.push(name)
@@ -74,12 +74,12 @@ export default class AST_Destructuring extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.names.length
     while (i--) push(this.names[i])
   }
 
-  all_symbols () {
+  public all_symbols () {
     const out: any[] = []
     this.walk(new TreeWalker(function (node: AST_Node) {
       if (is_ast_symbol(node)) {
@@ -91,11 +91,11 @@ export default class AST_Destructuring extends AST_Node {
 
   _size = () => 2
   shallow_cmp_props: any = { is_array: 'eq' }
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.names = do_list(this.names, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.is_array) {
       return {
         type: 'ArrayPattern',
@@ -108,7 +108,7 @@ export default class AST_Destructuring extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print(this.is_array ? '[' : '{')
     const len = this.names.length
     this.names.forEach(function (name, i) {

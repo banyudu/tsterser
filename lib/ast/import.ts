@@ -13,12 +13,12 @@ export default class AST_Import extends AST_Node {
   module_name: AST_String
   imported_names: AST_NameMapping[]
 
-  _optimize (_compressor: Compressor): any {
+  protected _optimize (_compressor: Compressor): any {
     return this
   }
 
-  aborts (): any { return null }
-  walkInner () {
+  protected aborts (): any { return null }
+  protected walkInner () {
     const result: AST_Node[] = []
     if (this.imported_name) {
       result.push(this.imported_name)
@@ -32,7 +32,7 @@ export default class AST_Import extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.module_name)
     if (this.imported_names) {
       let i = this.imported_names.length
@@ -41,7 +41,7 @@ export default class AST_Import extends AST_Node {
     if (this.imported_name) push(this.imported_name)
   }
 
-  _size (): number {
+  public _size (): number {
     // import
     let size = 6
 
@@ -63,13 +63,13 @@ export default class AST_Import extends AST_Node {
     imported_names: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.imported_name) this.imported_name = this.imported_name.transform(tw)
     if (this.imported_names) do_list(this.imported_names, tw)
     this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const specifiers: any[] = []
     if (this.imported_name) {
       specifiers.push({
@@ -98,7 +98,7 @@ export default class AST_Import extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('import')
     output.space()
     if (this.imported_name) {

@@ -7,7 +7,7 @@ export default class AST_Label extends AST_Symbol {
   mangled_name: any
 
   // labels are always mangleable
-  unmangleable () { return false }
+  public unmangleable () { return false }
 
   static documentation = 'Symbol naming a label (declaration)'
   static propdoc = {

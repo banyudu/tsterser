@@ -6,37 +6,37 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Await extends AST_Node {
   expression: AST_Node
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.expression)
   }
 
   _size = () => 6
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'AwaitExpression',
       argument: to_moz(this.expression)
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return (is_ast_prop_access(p) && p.expression === this) ||
             (is_ast_call(p) && p.expression === this) ||
             (output.option('safari10') && is_ast_unary_prefix(p))
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('await')
     output.space()
     const e = this.expression

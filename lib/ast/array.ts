@@ -9,7 +9,7 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Array extends AST_Node {
   elements: AST_Node[]
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     return new AST_Destructuring({
       start: this.start,
       end: this.end,
@@ -18,7 +18,7 @@ export default class AST_Array extends AST_Node {
     })
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     const optimized = this.literals_in_boolean_context(compressor)
     if (optimized !== this) {
       return optimized
@@ -26,20 +26,20 @@ export default class AST_Array extends AST_Node {
     return this.inline_array_like_spread(compressor, this.elements)
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     const values = trim(this.elements, compressor, first_in_statement)
     return values && make_sequence(this, values)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return anyMayThrow(this.elements, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.elements, compressor)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       const elements: any[] = []
       for (let i = 0, len = this.elements.length; i < len; i++) {
@@ -53,12 +53,12 @@ export default class AST_Array extends AST_Node {
     return this
   }
 
-  is_constant_expression () {
+  public is_constant_expression () {
     return this.elements.every((l) => l.is_constant_expression())
   }
 
-  _dot_throw () { return false }
-  walkInner () {
+  public _dot_throw () { return false }
+  protected walkInner () {
     const result: AST_Node[] = []
     const elements = this.elements
     for (let i = 0, len = elements.length; i < len; i++) {
@@ -67,28 +67,28 @@ export default class AST_Array extends AST_Node {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.elements.length
     while (i--) push(this.elements[i])
   }
 
-  _size (): number {
+  public _size (): number {
     return 2 + list_overhead(this.elements)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.elements = do_list(this.elements, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'ArrayExpression',
       elements: this.elements.map(to_moz)
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.with_square(() => {
       const a = this.elements; const len = a.length
       if (len > 0) output.space()
@@ -104,7 +104,7 @@ export default class AST_Array extends AST_Node {
     })
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An array literal'
   static propdoc = {
     elements: '[AST_Node*] array of elements'

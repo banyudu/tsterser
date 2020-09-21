@@ -6,9 +6,9 @@ import { MozillaAst } from '../types'
 
 export default class AST_SwitchBranch extends AST_Block {
   aborts = this._block_aborts
-  is_block_scope (): boolean { return false }
+  public is_block_scope (): boolean { return false }
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'SwitchCase',
       test: to_moz(this.expression),
@@ -16,7 +16,7 @@ export default class AST_SwitchBranch extends AST_Block {
     }
   }
 
-  _do_print_body (output: OutputStream) {
+  protected _do_print_body (output: OutputStream) {
     output.newline()
     this.body.forEach(function (stmt) {
       output.indent()
@@ -25,7 +25,7 @@ export default class AST_SwitchBranch extends AST_Block {
     })
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Base class for `switch` branches'
 
   static PROPS = AST_Block.PROPS

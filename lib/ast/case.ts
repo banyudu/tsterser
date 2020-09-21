@@ -11,17 +11,17 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Case extends AST_SwitchBranch {
   expression: any | undefined
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
               anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
               anySideEffect(this.body, compressor)
   }
 
-  reduce_vars (tw: TreeWalker) {
+  public reduce_vars (tw: TreeWalker) {
     push(tw)
     this.expression.walk(tw)
     pop(tw)
@@ -31,29 +31,29 @@ export default class AST_Case extends AST_SwitchBranch {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     result.push(...this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
     push(this.expression)
   }
 
-  _size (): number {
+  public _size (): number {
     return 5 + list_overhead(this.body)
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = do_list(this.body, tw)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('case')
     output.space()
     this.expression.print(output)

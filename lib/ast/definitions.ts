@@ -11,20 +11,20 @@ import { MozillaAst } from '../types'
 export default class AST_Definitions extends AST_Statement {
   definitions: AST_VarDef[]
 
-  _optimize (_compressor: Compressor): any {
+  protected _optimize (_compressor: Compressor): any {
     if (this.definitions.length == 0) { return make_node('AST_EmptyStatement', this) }
     return this
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return anyMayThrow(this.definitions, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.definitions, compressor)
   }
 
-  to_assignments (compressor: Compressor) {
+  public to_assignments (compressor: Compressor) {
     const reduce_vars = compressor.option('reduce_vars')
     const assignments = this.definitions.reduce(function (a: any[], def) {
       if (def.value && !(is_ast_destructuring(def.name))) {
@@ -55,7 +55,7 @@ export default class AST_Definitions extends AST_Statement {
     return make_sequence(this, assignments)
   }
 
-  remove_initializers () {
+  public remove_initializers () {
     const decls: any[] = []
     this.definitions.forEach(function (def: AST_VarDef) {
       if (is_ast_symbol_declaration(def.name)) {
@@ -75,7 +75,7 @@ export default class AST_Definitions extends AST_Statement {
     this.definitions = decls
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     const definitions = this.definitions
     for (let i = 0, len = definitions.length; i < len; i++) {
@@ -84,17 +84,17 @@ export default class AST_Definitions extends AST_Statement {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.definitions.length
     while (i--) push(this.definitions[i])
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.definitions = do_list(this.definitions, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'var',
@@ -102,7 +102,7 @@ export default class AST_Definitions extends AST_Statement {
     }
   }
 
-  _do_print (output: OutputStream, kind: string) {
+  public _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     output.space()
     this.definitions.forEach(function (def: AST_VarDef, i) {
@@ -115,7 +115,7 @@ export default class AST_Definitions extends AST_Statement {
     if (output_semicolon) { output.semicolon() }
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'Base class for `var` or `const` nodes (variable declarations/initializations)'
   static propdoc = {
     definitions: '[AST_VarDef*] array of variable definitions'

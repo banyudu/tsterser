@@ -9,18 +9,18 @@ export default class AST_Yield extends AST_Node {
   is_star: boolean
   expression: AST_Node | null
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (this.expression && !this.is_star && is_undefined(this.expression, compressor)) {
       this.expression = null
     }
     return this
   }
 
-  walkInner () {
+  protected walkInner () {
     return this.expression ? [this.expression] : []
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.expression) push(this.expression)
   }
 
@@ -29,11 +29,11 @@ export default class AST_Yield extends AST_Node {
     is_star: 'eq'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.expression) this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'YieldExpression',
       argument: this.expression ? to_moz(this.expression) : null,
@@ -41,7 +41,7 @@ export default class AST_Yield extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     // (yield 1) + (yield 2)
     // a = yield 3
@@ -59,7 +59,7 @@ export default class AST_Yield extends AST_Node {
     return false
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const star = this.is_star ? '*' : ''
     output.print('yield' + star)
     if (this.expression) {

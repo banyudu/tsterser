@@ -48,12 +48,12 @@ export default class SymbolDef {
     Object.seal(this)
   }
 
-  fixed_value () {
+  protected fixed_value () {
     if (!this.fixed || is_ast_node(this.fixed)) return this.fixed
     return this.fixed()
   }
 
-  unmangleable (options: MangleOptions) {
+  public unmangleable (options: MangleOptions) {
     if (!options) options = {}
     const firstOrig = this.orig[0]
     if (in_function_defs(this.id) && keep_name(options.keep_fnames, firstOrig.name)) return true
@@ -69,7 +69,7 @@ export default class SymbolDef {
               is_ast_symbol_def_class(firstOrig)) && keep_name(options.keep_classnames, firstOrig.name))
   }
 
-  mangle (options: any) {
+  public mangle (options: any) {
     const cache = options.cache?.props
     if (this.global && cache && cache.has(this.name)) {
       this.mangled_name = cache.get(this.name)

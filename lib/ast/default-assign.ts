@@ -3,12 +3,12 @@ import AST_Binary, { AST_Binary_Props } from './binary'
 import { make_node_from_constant, best_of_expression } from '../utils'
 
 export default class AST_DefaultAssign extends AST_Binary {
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     this.left = this.left.to_fun_args(croak)
     return this
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: any = this
     if (!compressor.option('evaluate')) {
       return self

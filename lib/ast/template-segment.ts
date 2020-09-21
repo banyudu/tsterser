@@ -7,14 +7,14 @@ export default class AST_TemplateSegment extends AST_Node {
   value: any
   raw: any
 
-  drop_side_effect_free (): any { return null }
-  has_side_effects (_compressor: Compressor) { return false }
+  public drop_side_effect_free (): any { return null }
+  public has_side_effects (_compressor: Compressor) { return false }
   shallow_cmp_props: any = { value: 'eq' }
-  _size (): number {
+  public _size (): number {
     return this.value.length
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A segment of a template string literal'
   static propdoc = {
     value: 'Content of the segment',

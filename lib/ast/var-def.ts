@@ -16,16 +16,16 @@ export default class AST_VarDef extends AST_Node {
   eliminated: number = 0
   replaced: number = 0
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     if (!this.value) return false
     return this.value.may_throw(compressor)
   }
 
-  has_side_effects (_compressor: Compressor) {
+  public has_side_effects (_compressor: Compressor) {
     return this.value as any
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function) {
+  public reduce_vars (tw: TreeWalker, descend: Function) {
     const node = this
     if (is_ast_destructuring(node.name)) {
       suppress(node.name)
@@ -49,19 +49,19 @@ export default class AST_VarDef extends AST_Node {
     return undefined
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.name)
     if (this.value) result.push(this.value)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.value) push(this.value)
     push(this.name)
   }
 
-  _size (): number {
+  public _size (): number {
     return this.value ? 1 : 0
   }
 
@@ -69,12 +69,12 @@ export default class AST_VarDef extends AST_Node {
     value: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.name = this.name.transform(tw)
     if (this.value) this.value = this.value.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclarator',
       id: to_moz(this.name),
@@ -82,7 +82,7 @@ export default class AST_VarDef extends AST_Node {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this.name.print(output)
     if (this.value) {
       output.space()

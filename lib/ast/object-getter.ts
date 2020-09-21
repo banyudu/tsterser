@@ -11,28 +11,28 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
   key: AST_Node
   value: AST_Accessor
 
-  _to_mozilla_ast_kind (): string | undefined {
+  public _to_mozilla_ast_kind (): string | undefined {
     return 'get'
   }
 
-  drop_side_effect_free (): AST_Node | null {
+  public drop_side_effect_free (): AST_Node | null {
     return this.computed_key() ? this.key : null
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.computed_key() && this.key.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   }
 
-  _dot_throw () { return true }
-  computed_key () {
+  public _dot_throw () { return true }
+  public computed_key () {
     return !(is_ast_symbol_method(this.key))
   }
 
-  _size (): number {
+  public _size (): number {
     return 5 + static_size(this.static) + key_size(this.key)
   }
 
@@ -40,11 +40,11 @@ export default class AST_ObjectGetter extends AST_ObjectMethodProperty {
     static: 'eq'
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._print_getter_setter('get', output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start, this.key.name) }
   static propdoc = {
     quote: '[string|undefined] the original quote character, if any',
     static: '[boolean] whether this is a static getter (classes only)'

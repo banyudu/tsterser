@@ -63,7 +63,7 @@ export default class AST_Node extends AST {
   name: any
   block_scope?: AST_Scope | null
 
-  _codegen (_output: OutputStream) {}
+  protected _codegen (_output: OutputStream) {}
 
   protected print_braced_empty (output: OutputStream) {
     const self: AST_Node = this
@@ -74,7 +74,7 @@ export default class AST_Node extends AST {
     output.print('}')
   }
 
-  print_braced (output: OutputStream, allow_directives: boolean = false) {
+  protected print_braced (output: OutputStream, allow_directives: boolean = false) {
     if ((this.body as any[]).length > 0) {
       output.with_block(() => {
         display_body(this.body, false, output, !!allow_directives)
@@ -126,27 +126,27 @@ export default class AST_Node extends AST {
     return false
   }
 
-  _prepend_comments_check (_node: AST_Node) {
+  public _prepend_comments_check (_node: AST_Node) {
     return false
   }
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     croak('Invalid function parameter', this.start.line, this.start.col)
   }
 
-  _in_boolean_context (_context: AST_Node) {
+  protected _in_boolean_context (_context: AST_Node) {
     return false
   }
 
-  _in_boolean_context_next (context: AST_Node): boolean {
+  protected _in_boolean_context_next (context: AST_Node): boolean {
     return this.tail_node() === context
   }
 
-  get_loopcontrol_target (_node: AST_Node): any {
+  public get_loopcontrol_target (_node: AST_Node): any {
     return undefined
   }
 
-  isAst<T extends AST_Node> (type: string): this is T {
+  public isAst<T extends AST_Node> (type: string): this is T {
     let proto: any = this.constructor
     while (proto.name) {
       if (proto.name === type) {
@@ -157,41 +157,41 @@ export default class AST_Node extends AST {
     return false
   }
 
-  _codegen_should_output_space (_child: AST_Node) { return false }
+  protected _codegen_should_output_space (_child: AST_Node) { return false }
 
-  _needs_parens (_child: AST_Node) {
+  protected _needs_parens (_child: AST_Node) {
     return false
   }
 
-  _optimize (_compressor?: Compressor): AST_Node {
+  protected _optimize (_compressor?: Compressor): AST_Node {
     return this
   }
 
-  drop_side_effect_free (_compressor: Compressor, _first_in_statement?: Function | boolean): AST_Node | null {
+  public drop_side_effect_free (_compressor: Compressor, _first_in_statement?: Function | boolean): AST_Node | null {
     return this
   }
 
-  may_throw (_compressor: Compressor) { return true }
-  has_side_effects (_compressor: Compressor) { return true }
-  _eval (_compressor?: Compressor, _depth?: number): any { return this }
-  is_constant_expression (_scope?: AST_Scope) { return false }
-  negate (_compressor: Compressor, _first_in_statement?: Function | boolean) {
+  public may_throw (_compressor: Compressor) { return true }
+  public has_side_effects (_compressor: Compressor) { return true }
+  public _eval (_compressor?: Compressor, _depth?: number): any { return this }
+  public is_constant_expression (_scope?: AST_Scope) { return false }
+  public negate (_compressor: Compressor, _first_in_statement?: Function | boolean) {
     return basic_negation(this)
   }
 
-  _find_defs (_compressor: Compressor, _suffix: string): any {}
-  is_string (_compressor: Compressor) { return false }
-  is_number (_compressor: Compressor) { return false }
-  is_boolean () { return false }
-  reduce_vars (_tw: TreeWalker, _descend: Function, _compressor: Compressor) {}
-  _dot_throw (compressor: Compressor) { return is_strict(compressor) }
+  public _find_defs (_compressor: Compressor, _suffix: string): any {}
+  public is_string (_compressor: Compressor) { return false }
+  public is_number (_compressor: Compressor) { return false }
+  public is_boolean () { return false }
+  public reduce_vars (_tw: TreeWalker, _descend: Function, _compressor: Compressor) {}
+  public _dot_throw (compressor: Compressor) { return is_strict(compressor) }
   // methods to evaluate a constant expression
   // If the node has been successfully reduced to a constant,
   // then its value is returned; otherwise the element itself
   // is returned.
   // They can be distinguished as constant value is never a
   // descendant of AST_Node.
-  evaluate (compressor: Compressor) {
+  public evaluate (compressor: Compressor) {
     if (!compressor.option('evaluate')) return this
     const val = this._eval(compressor, 1)
     if (!val || val instanceof RegExp) return val
@@ -199,7 +199,7 @@ export default class AST_Node extends AST {
     return val
   }
 
-  is_constant (): boolean {
+  public is_constant (): boolean {
     // Accomodate when compress option evaluate=false
     // as well as the common constant expressions !0 and -1
     if (is_ast_constant(this)) {
@@ -211,21 +211,21 @@ export default class AST_Node extends AST {
     }
   }
 
-  is_call_pure (_compressor: Compressor) { return false }
+  public is_call_pure (_compressor: Compressor) { return false }
 
   // may_throw_on_access()
   // returns true if this node may be null, undefined or contain `AST_Accessor`
-  may_throw_on_access (compressor: Compressor) {
+  public may_throw_on_access (compressor: Compressor) {
     return !compressor.option('pure_getters') ||
           this._dot_throw(compressor)
   }
 
-  equivalent_to (node: AST_Node) {
+  public equivalent_to (node: AST_Node) {
     return equivalent_to(this, node)
   }
 
-  is_block_scope () { return false }
-  _clone (deep: boolean = false) {
+  public is_block_scope () { return false }
+  protected _clone (deep: boolean = false) {
     if (deep) {
       const self = this.clone()
       return self.transform(new TreeTransformer(function (node: AST_Node) {
@@ -238,11 +238,11 @@ export default class AST_Node extends AST {
     return new this.CTOR(this)
   }
 
-  clone (deep: boolean = false): AST_Node {
+  public clone (deep: boolean = false): AST_Node {
     return this._clone(deep)
   }
 
-  walkInner (): AST_Node[] {
+  protected walkInner (): AST_Node[] {
     return []
   }
 
@@ -250,13 +250,13 @@ export default class AST_Node extends AST {
     return visitor._visit(this, () => this.walkInner?.()?.forEach(item => item?.walk(visitor)))
   }
 
-  addStrings (_add: Function) {
+  public addStrings (_add: Function) {
 
   }
 
-  _children_backwards (_push: Function) {}
-  _size (_info?: any) { return 0 }
-  size (compressor?: Compressor, stack?: any) {
+  public _children_backwards (_push: Function) {}
+  public _size (_info?: any) { return 0 }
+  public size (compressor?: Compressor, stack?: any) {
     let size = 0
     walk_parent(this, (node: AST_Node, info: any) => {
       size += node?._size(info) || 0
@@ -267,7 +267,7 @@ export default class AST_Node extends AST {
     return size
   }
 
-  transform (tw: TreeTransformer, in_list: boolean = false) {
+  public transform (tw: TreeTransformer, in_list: boolean = false) {
     let transformed: any | undefined
     tw.push(this)
     if (tw.before) transformed = tw.before(this, (_node: AST_Node, tw: TreeTransformer) => this._transform(tw), in_list)
@@ -283,11 +283,11 @@ export default class AST_Node extends AST {
     return transformed
   }
 
-  _transform (_tw: TreeTransformer) {}
+  protected _transform (_tw: TreeTransformer) {}
 
   shallow_cmp_props: any = undefined
 
-  shallow_cmp (other?: any): any {
+  public shallow_cmp (other?: any): any {
     if (this.shallow_cmp_props === undefined) {
       throw new Error('did not find a shallow_cmp function for ' + this.constructor.name)
     }
@@ -309,17 +309,17 @@ export default class AST_Node extends AST {
     return true
   }
 
-  print (output: OutputStream, force_parens: boolean = false) {
+  public print (output: OutputStream, force_parens: boolean = false) {
     return this._print(output, force_parens)
   }
 
-  print_to_string (options?: any) {
+  public print_to_string (options?: any) {
     const output = GetOutputStream(options)
     this.print(output)
     return output.get()
   }
 
-  _print (output: OutputStream, force_parens: boolean = false) {
+  private _print (output: OutputStream, force_parens: boolean = false) {
     const generator = this._codegen.bind(this)
     if (is_ast_scope(this)) {
       output.active_scope = this
@@ -356,8 +356,8 @@ export default class AST_Node extends AST {
     }
   }
 
-  needs_parens (_output: OutputStream): boolean { return false }
-  optimize (compressor: Compressor) {
+  protected needs_parens (_output: OutputStream): boolean { return false }
+  public optimize (compressor: Compressor) {
     if (!this._optimize) {
       throw new Error('optimize not defined')
     }
@@ -369,17 +369,17 @@ export default class AST_Node extends AST {
     return opt
   }
 
-  to_mozilla_ast (parent: AST_Node): MozillaAst {
+  public to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (!this._to_mozilla_ast) {
       throw new Error('to_mozilla_ast not defined')
     }
     return set_moz_loc(this, this._to_mozilla_ast(parent))
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {}
+  public _to_mozilla_ast (_parent: AST_Node): any {}
 
-  add_source_map (_output: OutputStream) {}
-  tail_node (): AST_Node { return this }
+  protected add_source_map (_output: OutputStream) {}
+  public tail_node (): AST_Node { return this }
   static documentation = 'Base class of all AST nodes'
   static propdoc = {
     start: '[AST_Token] The first token of this node',
@@ -395,7 +395,7 @@ export default class AST_Node extends AST {
   static warnings: any[] = []
   static enable_warnings = false
 
-  static warn (txt: string, props?: any) {
+  public static warn (txt: string, props?: any) {
     if (AST_Node.warn_function) { AST_Node.warn_function(string_template(txt, props)) }
   }
 

@@ -11,30 +11,30 @@ export default class AST_NameMapping extends AST_Node {
   name: AST_SymbolExport | AST_SymbolImport
   foreign_name: AST_SymbolExportForeign | AST_SymbolImportForeign
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.foreign_name)
     result.push(this.name)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.name)
     push(this.foreign_name)
   }
 
-  _size (): number {
+  public _size (): number {
     // foreign name isn't mangled
     return this.name ? 4 : 0
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.foreign_name = this.foreign_name.transform(tw)
     this.name = this.name.transform(tw)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const is_import = is_ast_import(output.parent())
     const definition = this.name.definition()
     const names_are_different =

@@ -12,20 +12,20 @@ import { MozillaAst } from '../types'
 export default class AST_Catch extends AST_Block {
   argname?: AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     if (this.argname) result.push(this.argname)
     result.push(...this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
     if (this.argname) push(this.argname)
   }
 
-  _size (): number {
+  public _size (): number {
     let size = 7 + list_overhead(this.body)
     if (this.argname) {
       size += 2
@@ -37,12 +37,12 @@ export default class AST_Catch extends AST_Block {
     argname: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.argname) this.argname = this.argname.transform(tw)
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'CatchClause',
       param: this.argname ? to_moz(this.argname) : null,
@@ -51,7 +51,7 @@ export default class AST_Catch extends AST_Block {
     } as any
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('catch')
     if (this.argname) {
       output.space()
@@ -63,7 +63,7 @@ export default class AST_Catch extends AST_Block {
     this.print_braced(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `catch` node; only makes sense as part of a `try` statement'
   static propdoc = {
     argname: '[AST_SymbolCatch|AST_Destructuring|AST_Expansion|AST_DefaultAssign] symbol for the exception'

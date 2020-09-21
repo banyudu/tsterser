@@ -21,11 +21,11 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Sequence extends AST_Node {
   expressions: AST_Node[]
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.expressions[0] === node
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: any = this
     if (!compressor.option('side_effects')) return self
     const expressions: any[] = []
@@ -64,7 +64,7 @@ export default class AST_Sequence extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     const last = this.tail_node()
     const expr = last.drop_side_effect_free(compressor)
     if (expr === last) return this
@@ -76,37 +76,37 @@ export default class AST_Sequence extends AST_Node {
     return make_sequence(this, expressions)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return anyMayThrow(this.expressions, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return anySideEffect(this.expressions, compressor)
   }
 
-  negate (compressor: Compressor): AST_Node {
+  public negate (compressor: Compressor): AST_Node {
     const expressions = this.expressions.slice()
     expressions.push(expressions.pop()?.negate(compressor) as any)
     return make_sequence(this, expressions)
   }
 
-  is_string (compressor: Compressor) {
+  public is_string (compressor: Compressor) {
     return this.tail_node().is_string(compressor)
   }
 
-  is_number (compressor: Compressor) {
+  public is_number (compressor: Compressor) {
     return this.tail_node().is_number(compressor)
   }
 
-  is_boolean () {
+  public is_boolean () {
     return this.tail_node().is_boolean()
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     return this.tail_node()._dot_throw(compressor)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     this.expressions.forEach(function (node: AST_Node) {
       result.push(node)
@@ -114,35 +114,35 @@ export default class AST_Sequence extends AST_Node {
     return result
   }
 
-  addStrings (add: Function) {
+  public addStrings (add: Function) {
     this.tail_node()?.addStrings(add)
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.expressions.length
     while (i--) push(this.expressions[i])
   }
 
-  _size (): number {
+  public _size (): number {
     return list_overhead(this.expressions)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     const result = do_list(this.expressions, tw)
     this.expressions = result.length
       ? result
       : [new AST_Number({ value: 0 })]
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'SequenceExpression',
       expressions: this.expressions.map(to_moz)
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_call(p) || // (foo, bar)() or foo(1, (2, 3), 4)
             is_ast_unary(p) || // !(foo, bar, baz)
@@ -161,7 +161,7 @@ export default class AST_Sequence extends AST_Node {
             is_ast_export(p) // export default (foo, bar)
   }
 
-  _do_print (output: OutputStream) {
+  public _do_print (output: OutputStream) {
     this.expressions.forEach(function (node: AST_Node, index) {
       if (index > 0) {
         output.comma()
@@ -174,11 +174,11 @@ export default class AST_Sequence extends AST_Node {
     })
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output)
   }
 
-  tail_node () {
+  public tail_node () {
     return this.expressions[this.expressions.length - 1]
   }
 

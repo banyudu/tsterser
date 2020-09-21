@@ -4,11 +4,11 @@ import AST_This, { AST_This_Props } from './this'
 export default class AST_Super extends AST_This {
   _size = () => 5
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (): any {
+  public _to_mozilla_ast (): any {
     return { type: 'Super' }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('super')
   }
 

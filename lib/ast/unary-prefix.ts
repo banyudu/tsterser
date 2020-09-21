@@ -6,11 +6,11 @@ import { unary_bool, non_converting_unary } from '../constants'
 import { is_identifier_atom, make_node, make_sequence, best_of, first_in_statement, basic_negation, make_node_from_constant, is_ast_symbol_ref, is_ast_lambda, is_ast_unary_prefix, is_ast_prop_access, is_ast_sequence, is_ast_binary, is_ast_infinity, is_ast_number, is_ast_big_int } from '../utils'
 
 export default class AST_UnaryPrefix extends AST_Unary {
-  _in_boolean_context (context: AST_Node) {
+  protected _in_boolean_context (context: AST_Node) {
     return this.operator == '!' && this.expression === context
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self = this
     let e = self.expression
     if (self.operator == 'delete' &&
@@ -85,7 +85,7 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return self
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     let e = this.expression
     // Function would be evaluated to an array and so typeof would
     // incorrectly return 'object'. Hence making is a special case.
@@ -114,24 +114,24 @@ export default class AST_UnaryPrefix extends AST_Unary {
     return this
   }
 
-  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
+  public negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     if (this.operator == '!') { return this.expression }
     return basic_negation(this)
   }
 
-  is_string () {
+  public is_string () {
     return this.operator == 'typeof'
   }
 
-  is_boolean () {
+  public is_boolean () {
     return unary_bool.has(this.operator)
   }
 
-  _dot_throw () {
+  public _dot_throw () {
     return this.operator == 'void'
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     const op = this.operator
     output.print(op)
     if (/^[a-z]/i.test(op) ||

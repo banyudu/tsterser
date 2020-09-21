@@ -12,18 +12,18 @@ import AST_Scope from './scope'
 import Compressor from '../compressor'
 
 export default class AST_Arrow extends AST_Lambda {
-  drop_side_effect_free (): any { return null }
-  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
+  public drop_side_effect_free (): any { return null }
+  public negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     return basic_negation(this)
   }
 
-  _dot_throw () { return false }
-  init_scope_vars (parent_scope: AST_Scope) {
+  public _dot_throw () { return false }
+  protected init_scope_vars (parent_scope: AST_Scope) {
     this._init_scope_vars(parent_scope)
     this.uses_arguments = false
   }
 
-  _size (_info?: any): number {
+  public _size (_info?: any): number {
     let args_and_arrow = 2 + list_overhead(this.argnames)
 
     if (!(this.argnames.length === 1 && is_ast_symbol(this.argnames[0]))) {
@@ -34,7 +34,7 @@ export default class AST_Arrow extends AST_Lambda {
     return lambda_modifiers(this) + args_and_arrow + list_overhead(this.body)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     const body = {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
@@ -47,12 +47,12 @@ export default class AST_Arrow extends AST_Lambda {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return is_ast_prop_access(p) && p.expression === this
   }
 
-  _do_print (output: OutputStream) {
+  public _do_print (output: OutputStream) {
     const self = this
     const parent = output.parent()
     const needs_parens = (is_ast_binary(parent) && !(is_ast_assign(parent))) ||

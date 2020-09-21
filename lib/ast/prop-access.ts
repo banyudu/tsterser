@@ -9,11 +9,11 @@ export default class AST_PropAccess extends AST_Node {
   expression: AST_Node
   property: AST_Node | string
 
-  _needs_parens (child: AST_Node) {
+  protected _needs_parens (child: AST_Node) {
     return this.expression === child
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     if (compressor.option('unsafe')) {
       let key: any = this.property
       if (key instanceof AST_Node && is_ast_node(key)) {
@@ -56,7 +56,7 @@ export default class AST_PropAccess extends AST_Node {
     return this
   }
 
-  flatten_object (key: any, compressor: Compressor) {
+  protected flatten_object (key: any, compressor: Compressor) {
     if (!compressor.option('properties')) return
     const arrows = compressor.option('unsafe_arrows') && compressor.option('ecma') >= 2015
     const expr = this.expression
@@ -93,7 +93,7 @@ export default class AST_PropAccess extends AST_Node {
   }
 
   shallow_cmp_props: any = {}
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'MemberExpression',
       object: to_moz(this.expression),
@@ -102,7 +102,7 @@ export default class AST_PropAccess extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (is_ast_new(p) && p.expression === this) {
       // i.e. new (foo.bar().baz)

@@ -10,7 +10,7 @@ import { MozillaAst } from '../types'
 export default class AST_Unary extends AST_Node {
   operator: string
   expression: AST_Node
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (unary_side_effects.has(this.operator)) {
       if (!this.expression.has_side_effects(compressor)) {
         set_flag(this, WRITE_ONLY)
@@ -28,25 +28,25 @@ export default class AST_Unary extends AST_Node {
     return expression
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     if (this.operator == 'typeof' && is_ast_symbol_ref(this.expression)) { return false }
     return this.expression.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return unary_side_effects.has(this.operator) ||
           this.expression.has_side_effects(compressor)
   }
 
-  is_constant_expression () {
+  public is_constant_expression () {
     return this.expression.is_constant_expression()
   }
 
-  is_number () {
+  public is_number () {
     return unary.has(this.operator)
   }
 
-  reduce_vars (tw: TreeWalker) {
+  public reduce_vars (tw: TreeWalker) {
     const node = this
     if (node.operator !== '++' && node.operator !== '--') return
     const exp = node.expression
@@ -75,7 +75,7 @@ export default class AST_Unary extends AST_Node {
     return true
   }
 
-  lift_sequences (compressor: Compressor) {
+  protected lift_sequences (compressor: Compressor) {
     if (compressor.option('sequences')) {
       if (is_ast_sequence(this.expression)) {
         const x = this.expression.expressions.slice()
@@ -88,28 +88,28 @@ export default class AST_Unary extends AST_Node {
     return this
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.expression)
   }
 
-  _size (): number {
+  public _size (): number {
     if (this.operator === 'typeof') return 7
     if (this.operator === 'void') return 5
     return this.operator.length
   }
 
   shallow_cmp_props: any = { operator: 'eq' }
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: this.operator == '++' || this.operator == '--' ? 'UpdateExpression' : 'UnaryExpression',
       operator: this.operator,
@@ -118,7 +118,7 @@ export default class AST_Unary extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     return (is_ast_prop_access(p) && p.expression === this) ||
             (is_ast_call(p) && p.expression === this) ||

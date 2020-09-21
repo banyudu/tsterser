@@ -6,23 +6,23 @@ import TreeTransformer from '../tree-transformer'
 export default class AST_Exit extends AST_Jump {
   value: AST_Node | undefined | null
 
-  _prepend_comments_check (_node: AST_Node) {
+  public _prepend_comments_check (_node: AST_Node) {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     return this.value ? [this.value] : []
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.value) push(this.value)
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.value) this.value = this.value.transform(tw)
   }
 
-  _do_print (output: OutputStream, kind: string) {
+  public _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     if (this.value) {
       output.space()

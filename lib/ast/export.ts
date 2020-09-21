@@ -15,7 +15,7 @@ export default class AST_Export extends AST_Statement {
   exported_definition: AST_Defun|AST_Definitions|AST_DefClass | undefined
   exported_names: AST_NameMapping[]
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     if (this.exported_definition) {
       result.push(this.exported_definition)
@@ -32,7 +32,7 @@ export default class AST_Export extends AST_Statement {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.module_name) push(this.module_name)
     let i = this.exported_names.length
     while (i--) push(this.exported_names[i])
@@ -40,7 +40,7 @@ export default class AST_Export extends AST_Statement {
     if (this.exported_definition) push(this.exported_definition)
   }
 
-  _size (): number {
+  public _size (): number {
     let size = 7 + (this.is_default ? 8 : 0)
 
     if (this.exported_value) {
@@ -68,14 +68,14 @@ export default class AST_Export extends AST_Statement {
     is_default: 'eq'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.exported_definition) this.exported_definition = this.exported_definition.transform(tw)
     if (this.exported_value) this.exported_value = this.exported_value.transform(tw)
     if (this.exported_names.length > 0) do_list(this.exported_names, tw)
     if (this.module_name) this.module_name = this.module_name.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     if (this.exported_names.length > 0) {
       if (this.exported_names[0].name.name === '*') {
         return {
@@ -103,7 +103,7 @@ export default class AST_Export extends AST_Statement {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('export')
     output.space()
     if (this.is_default) {

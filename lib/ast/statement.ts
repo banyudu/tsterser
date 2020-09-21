@@ -8,16 +8,16 @@ export default class AST_Statement extends AST_Node {
   body: any
   block_scope?: AST_Scope
 
-  _eval (_compressor: Compressor): any {
+  public _eval (_compressor: Compressor): any {
     throw new Error(string_template('Cannot evaluate a statement [{file}:{line},{col}]', this.start))
   }
 
-  aborts (): any { return null }
-  negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
+  protected aborts (): any { return null }
+  public negate (_compressor: Compressor, _first_in_statement: Function | boolean): AST_Node {
     throw new Error('Cannot negate a statement')
   }
 
-  clone (deep: boolean = false): AST_Node {
+  public clone (deep: boolean = false): AST_Node {
     const clone = this._clone(deep)
     if (this.block_scope) {
       // TODO this is sometimes undefined during compression.
@@ -27,7 +27,7 @@ export default class AST_Statement extends AST_Node {
     return clone
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     (this.body).print(output)
     output.semicolon()
   }

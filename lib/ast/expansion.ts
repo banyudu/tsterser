@@ -8,43 +8,43 @@ import { MozillaAst } from '../types'
 export default class AST_Expansion extends AST_Node {
   expression: AST_Node
 
-  to_fun_args (croak: Function): any {
+  public to_fun_args (croak: Function): any {
     this.expression = this.expression.to_fun_args(croak)
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     return this.expression.drop_side_effect_free(compressor, first_in_statement)
   }
 
-  _dot_throw (compressor: Compressor) {
+  public _dot_throw (compressor: Compressor) {
     return this.expression._dot_throw(compressor)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.expression)
   }
 
   _size = () => 3
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: to_moz_in_destructuring() ? 'RestElement' : 'SpreadElement',
       argument: to_moz(this.expression)
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('...')
     this.expression.print(output)
   }

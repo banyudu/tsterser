@@ -1,7 +1,7 @@
 import AST_SymbolBlockDeclaration, { AST_SymbolBlockDeclaration_Props } from './symbol-block-declaration'
 
 export default class AST_SymbolCatch extends AST_SymbolBlockDeclaration {
-  reduce_vars () {
+  public reduce_vars () {
     this.definition().fixed = false
   }
 

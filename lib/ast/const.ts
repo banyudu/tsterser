@@ -5,7 +5,7 @@ import { def_size, to_moz } from '../utils'
 import { MozillaAst } from '../types'
 
 export default class AST_Const extends AST_Definitions {
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     return {
       type: 'VariableDeclaration',
       kind: 'const',
@@ -13,11 +13,11 @@ export default class AST_Const extends AST_Definitions {
     }
   }
 
-  _size (): number {
+  public _size (): number {
     return def_size(6, this)
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this._do_print(output, 'const')
   }
 

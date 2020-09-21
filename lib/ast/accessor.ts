@@ -4,8 +4,8 @@ import { push, reset_variables, pop, lambda_modifiers, list_overhead } from '../
 import TreeWalker from '../tree-walker'
 
 export default class AST_Accessor extends AST_Lambda {
-  drop_side_effect_free (): AST_Accessor | null { return null }
-  reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
+  public drop_side_effect_free (): AST_Accessor | null { return null }
+  public reduce_vars (tw: TreeWalker, descend: Function, compressor: Compressor): boolean {
     push(tw)
     reset_variables(tw, compressor, this)
     descend()
@@ -13,7 +13,7 @@ export default class AST_Accessor extends AST_Lambda {
     return true
   }
 
-  _size () {
+  public _size () {
     return lambda_modifiers(this) + 4 + list_overhead(this.argnames) + list_overhead(this.body)
   }
 

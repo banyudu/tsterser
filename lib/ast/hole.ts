@@ -1,17 +1,17 @@
 import AST_Atom, { AST_Atom_Props } from './atom'
 import { MozillaAst } from '../types'
 export default class AST_Hole extends AST_Atom {
-  to_fun_args (_croak: Function): any {
+  public to_fun_args (_croak: Function): any {
     return this
   }
 
   value = (function () {}())
 
-  to_mozilla_ast (): MozillaAst { return null as any }
+  public to_mozilla_ast (): MozillaAst { return null as any }
 
   _size = () => 0 // comma is taken into account
 
-  _codegen () { }
+  protected _codegen () { }
   static documentation = 'A hole in an array'
 
   static PROPS = AST_Atom.PROPS

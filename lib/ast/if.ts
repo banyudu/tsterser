@@ -11,11 +11,11 @@ export default class AST_If extends AST_StatementWithBody {
   condition: AST_Node
   alternative: AST_Statement | null
 
-  _in_boolean_context (context: AST_Node) {
+  protected _in_boolean_context (context: AST_Node) {
     return this.condition === context
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     let self: AST_If = this
     if (is_empty(self.alternative)) self.alternative = null
 
@@ -162,23 +162,23 @@ export default class AST_If extends AST_StatementWithBody {
     return self
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.condition.may_throw(compressor) ||
           this.body?.may_throw(compressor) ||
           this.alternative?.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.condition.has_side_effects(compressor) ||
           this.body?.has_side_effects(compressor) ||
           this.alternative?.has_side_effects(compressor)
   }
 
-  aborts () {
+  protected aborts () {
     return this.alternative && aborts(this.body) && aborts(this.alternative) && this
   }
 
-  reduce_vars (tw: TreeWalker) {
+  public reduce_vars (tw: TreeWalker) {
     this.condition.walk(tw)
     push(tw)
     this.body.walk(tw)
@@ -191,7 +191,7 @@ export default class AST_If extends AST_StatementWithBody {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.condition)
     result.push(this.body)
@@ -199,7 +199,7 @@ export default class AST_If extends AST_StatementWithBody {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.alternative) {
       push(this.alternative)
     }
@@ -212,13 +212,13 @@ export default class AST_If extends AST_StatementWithBody {
     alternative: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.condition = this.condition.transform(tw)
     this.body = (this.body).transform(tw)
     if (this.alternative) this.alternative = this.alternative.transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'IfStatement',
       test: to_moz(this.condition),
@@ -227,7 +227,7 @@ export default class AST_If extends AST_StatementWithBody {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('if')
     output.space()
     output.with_parens(() => {

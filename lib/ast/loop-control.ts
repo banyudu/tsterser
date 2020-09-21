@@ -5,20 +5,20 @@ import TreeTransformer from '../tree-transformer'
 
 export default class AST_LoopControl extends AST_Jump {
   label: AST_LabelRef | undefined
-  walkInner () {
+  protected walkInner () {
     return this.label ? [this.label] : []
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     if (this.label) push(this.label)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.label) this.label = this.label.transform(tw)
   }
 
-  _do_print (output: OutputStream, kind: string) {
+  public _do_print (output: OutputStream, kind: string) {
     output.print(kind)
     if (this.label) {
       output.space()

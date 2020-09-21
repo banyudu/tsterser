@@ -13,7 +13,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
   quote: string
   key: AST_Node
 
-  _optimize (compressor: Compressor): AST_ConciseMethod {
+  protected _optimize (compressor: Compressor): AST_ConciseMethod {
     this.lift_key(compressor)
     // p(){return x;} ---> p:()=>x
     if (compressor.option('arrows') &&
@@ -37,23 +37,23 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     return this
   }
 
-  drop_side_effect_free (): AST_Node | null {
+  public drop_side_effect_free (): AST_Node | null {
     return this.computed_key() ? this.key : null
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.computed_key() && this.key.may_throw(compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.computed_key() && this.key.has_side_effects(compressor)
   }
 
-  computed_key () {
+  public computed_key () {
     return !(is_ast_symbol_method(this.key))
   }
 
-  _size (): number {
+  public _size (): number {
     return static_size(this.static) + key_size(this.key) + lambda_modifiers(this)
   }
 
@@ -63,7 +63,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     async: 'eq'
   }
 
-  _to_mozilla_ast (parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (parent: AST_Node): MozillaAst {
     if (is_ast_object(parent)) {
       return {
         type: 'Property',
@@ -85,7 +85,7 @@ export default class AST_ConciseMethod extends AST_ObjectMethodProperty {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     let type = ''
     if (this.is_generator && this.async) {
       type = 'async*'

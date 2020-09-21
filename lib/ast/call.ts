@@ -57,7 +57,7 @@ export default class AST_Call extends AST_Node {
   args: AST_Node[]
   _annotations: number
 
-  _prepend_comments_check (node: AST_Node) {
+  public _prepend_comments_check (node: AST_Node) {
     return this.TYPE == 'Call' && this.expression === node
   }
 
@@ -75,7 +75,7 @@ export default class AST_Call extends AST_Node {
     })
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     const self: any = this
     const exp = self.expression
     let fn = exp
@@ -765,7 +765,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
+  public drop_side_effect_free (compressor: Compressor, first_in_statement: Function | boolean): any {
     if (!this.is_expr_pure(compressor)) {
       if (this.expression.is_call_pure(compressor)) {
         const exprs: any[] = this.args.slice()
@@ -788,7 +788,7 @@ export default class AST_Call extends AST_Node {
     return args && make_sequence(this, args)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     if (anyMayThrow(this.args, compressor)) return true
     if (this.is_expr_pure(compressor)) return false
     if (this.expression.may_throw(compressor)) return true
@@ -796,7 +796,7 @@ export default class AST_Call extends AST_Node {
           anyMayThrow(this.expression.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     if (!this.is_expr_pure(compressor) &&
           (!this.expression.is_call_pure(compressor) ||
               this.expression.has_side_effects(compressor))) {
@@ -805,7 +805,7 @@ export default class AST_Call extends AST_Node {
     return anySideEffect(this.args, compressor)
   }
 
-  _eval (compressor: Compressor, depth: number) {
+  public _eval (compressor: Compressor, depth: number) {
     const exp = this.expression
     if (compressor.option('unsafe') && is_ast_prop_access(exp)) {
       let key = exp.property
@@ -856,7 +856,7 @@ export default class AST_Call extends AST_Node {
     return this
   }
 
-  is_expr_pure (compressor: Compressor) {
+  public is_expr_pure (compressor: Compressor) {
     if (compressor.option('unsafe')) {
       const expr = this.expression
       const first_arg = (this.args?.[0]?.evaluate(compressor))
@@ -878,7 +878,7 @@ export default class AST_Call extends AST_Node {
     return !!has_annotation(this, _PURE) || !compressor.pure_funcs(this)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     const args = this.args
     for (let i = 0, len = args.length; i < len; i++) {
@@ -888,23 +888,23 @@ export default class AST_Call extends AST_Node {
     return result // TODO why do we need to crawl this last?
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.args.length
     while (i--) push(this.args[i])
     push(this.expression)
   }
 
-  _size (): number {
+  public _size (): number {
     return 2 + list_overhead(this.args)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.args = do_list(this.args, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'CallExpression',
       callee: to_moz(this.expression),
@@ -912,7 +912,7 @@ export default class AST_Call extends AST_Node {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent(); let p1
     if ((is_ast_new(p) && p.expression === this) ||
             (is_ast_export(p) && p.is_default && is_ast_function(this.expression))) { return true }
@@ -926,7 +926,7 @@ export default class AST_Call extends AST_Node {
             p1.left === p
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     return this.callCodeGen(output)
   }
 

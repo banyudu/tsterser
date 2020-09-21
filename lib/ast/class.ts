@@ -15,13 +15,13 @@ export default class AST_Class extends AST_Scope {
   properties: AST_ObjectProperty[]
   name: AST_SymbolClass|AST_SymbolDefClass | undefined
 
-  _optimize (_compressor: Compressor): any {
+  protected _optimize (_compressor: Compressor): any {
     // HACK to avoid compress failure.
     // AST_Class is not really an AST_Scope/AST_Block as it lacks a body.
     return this
   }
 
-  drop_side_effect_free (compressor: Compressor): any {
+  public drop_side_effect_free (compressor: Compressor): any {
     const with_effects: any[] = []
     const trimmed_extends = this.extends?.drop_side_effect_free(compressor)
     if (trimmed_extends) with_effects.push(trimmed_extends)
@@ -33,20 +33,20 @@ export default class AST_Class extends AST_Scope {
     return make_sequence(this, with_effects)
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     if (this.extends?.may_throw(compressor)) return true
     return anyMayThrow(this.properties, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     if (this.extends?.has_side_effects(compressor)) {
       return true
     }
     return anySideEffect(this.properties, compressor)
   }
 
-  _eval () { return this }
-  is_constant_expression (scope: AST_Scope) {
+  public _eval () { return this }
+  public is_constant_expression (scope: AST_Scope) {
     if (this.extends && !this.extends.is_constant_expression(scope)) {
       return false
     }
@@ -64,7 +64,7 @@ export default class AST_Class extends AST_Scope {
     return this.all_refs_local(scope)
   }
 
-  reduce_vars (tw: TreeWalker, descend: Function) {
+  public reduce_vars (tw: TreeWalker, descend: Function) {
     clear_flag(this, INLINED)
     push(tw)
     descend()
@@ -72,8 +72,8 @@ export default class AST_Class extends AST_Scope {
     return true
   }
 
-  is_block_scope () { return false }
-  walkInner () {
+  public is_block_scope () { return false }
+  protected walkInner () {
     const result: AST_Node[] = []
     if (this.name) {
       result.push(this.name)
@@ -85,21 +85,21 @@ export default class AST_Class extends AST_Scope {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.properties.length
     while (i--) push(this.properties[i])
     if (this.extends) push(this.extends)
     if (this.name) push(this.name)
   }
 
-  _size (): number {
+  public _size (): number {
     return (
       (this.name ? 8 : 7) +
                 (this.extends ? 8 : 0)
     )
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.name) this.name = this.name.transform(tw)
     if (this.extends) this.extends = this.extends.transform(tw)
     this.properties = do_list(this.properties, tw)
@@ -110,7 +110,7 @@ export default class AST_Class extends AST_Scope {
     extends: 'exist'
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const type = is_ast_class_expression(this) ? 'ClassExpression' : 'ClassDeclaration'
     return {
       type: type,
@@ -123,7 +123,7 @@ export default class AST_Class extends AST_Scope {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('class')
     output.space()
     if (this.name) {
@@ -164,7 +164,7 @@ export default class AST_Class extends AST_Scope {
     } else output.print('{}')
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static propdoc = {
     name: '[AST_SymbolClass|AST_SymbolDefClass?] optional class name.',
     extends: '[AST_Node]? optional parent class',

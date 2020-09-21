@@ -5,7 +5,7 @@ import AST_Call, { AST_Call_Props } from './call'
 import { is_undeclared_ref, list_overhead, to_moz, make_node, is_ast_prop_access, is_ast_call } from '../utils'
 
 export default class AST_New extends AST_Call {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (
       compressor.option('unsafe') &&
           is_undeclared_ref(this.expression) &&
@@ -14,12 +14,12 @@ export default class AST_New extends AST_Call {
     return this
   }
 
-  _eval () { return this }
-  _size (): number {
+  public _eval () { return this }
+  public _size (): number {
     return 6 + list_overhead(this.args)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'NewExpression',
       callee: to_moz(this.expression),
@@ -27,7 +27,7 @@ export default class AST_New extends AST_Call {
     }
   }
 
-  needs_parens (output: OutputStream): boolean {
+  protected needs_parens (output: OutputStream): boolean {
     const p = output.parent()
     if (this.args.length === 0 && (is_ast_prop_access(p) || // (new Date).getTime(), (new Date)["getTime"]()
         (is_ast_call(p) && p.expression === this))) { // (new foo)(bar)
@@ -36,13 +36,13 @@ export default class AST_New extends AST_Call {
     return false
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('new')
     output.space()
     this.callCodeGen(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'An object instantiation.  Derives from a function call since it has exactly the same properties'
 
   static PROPS = AST_Call.PROPS

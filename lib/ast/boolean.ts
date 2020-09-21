@@ -4,7 +4,7 @@ import AST_Atom, { AST_Atom_Props } from './atom'
 import { make_node, To_Moz_Literal, is_ast_binary } from '../utils'
 
 export default class AST_Boolean extends AST_Atom {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (compressor.in_boolean_context()) {
       return make_node('AST_Number', this, {
         value: +this.value
@@ -43,7 +43,7 @@ export default class AST_Boolean extends AST_Atom {
     return this
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return To_Moz_Literal(this)
   }
 

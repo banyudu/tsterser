@@ -12,11 +12,11 @@ export default class AST_For extends AST_IterationStatement {
   condition?: any | undefined
   init?: any | undefined
 
-  _in_boolean_context (context: AST_Node) {
+  protected _in_boolean_context (context: AST_Node) {
     return this.condition === context
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     if (!compressor.option('loops')) return this
     if (compressor.option('side_effects') && this.init) {
       this.init = this.init.drop_side_effect_free(compressor)
@@ -53,7 +53,7 @@ export default class AST_For extends AST_IterationStatement {
     return if_break_in_loop(this, compressor)
   }
 
-  reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
+  public reduce_vars (tw: TreeWalker, _descend: Function, compressor: Compressor) {
     reset_block_variables(compressor, this)
     if (this.init) this.init.walk(tw)
     const saved_loop = tw.in_loop
@@ -73,7 +73,7 @@ export default class AST_For extends AST_IterationStatement {
     return true
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     if (this.init) result.push(this.init)
     if (this.condition) result.push(this.condition)
@@ -82,7 +82,7 @@ export default class AST_For extends AST_IterationStatement {
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     push(this.body)
     if (this.step) push(this.step)
     if (this.condition) push(this.condition)
@@ -96,14 +96,14 @@ export default class AST_For extends AST_IterationStatement {
     step: 'exist'
   }
 
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     if (this.init) this.init = this.init.transform(tw)
     if (this.condition) this.condition = this.condition.transform(tw)
     if (this.step) this.step = this.step.transform(tw)
     this.body = (this.body).transform(tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'ForStatement',
       init: to_moz(this.init),
@@ -113,7 +113,7 @@ export default class AST_For extends AST_IterationStatement {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('for')
     output.space()
     output.with_parens(() => {

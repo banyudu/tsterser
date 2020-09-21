@@ -10,11 +10,11 @@ const slash_script_replace = (_: any, $1: string) => $1.replace('/', '\\/')
 
 export default class AST_RegExp extends AST_Constant {
   value: RegExp
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     return this.literals_in_boolean_context(compressor)
   }
 
-  _eval (compressor: Compressor) {
+  public _eval (compressor: Compressor) {
     let evaluated = compressor.evaluated_regexps.get(this)
     if (evaluated === undefined) {
       try {
@@ -27,18 +27,18 @@ export default class AST_RegExp extends AST_Constant {
     return evaluated || this
   }
 
-  _size (): number {
+  public _size (): number {
     return this.value.toString().length
   }
 
-  shallow_cmp (other: any) {
+  public shallow_cmp (other: any) {
     return (
       this.value.flags === other.value.flags &&
                 this.value.source === other.value.source
     )
   }
 
-  _to_mozilla_ast (_parent: AST_Node): MozillaAst {
+  public _to_mozilla_ast (_parent: AST_Node): MozillaAst {
     const pattern = this.value.source
     const flags = this.value.flags
     return {
@@ -49,7 +49,7 @@ export default class AST_RegExp extends AST_Constant {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     let { source, flags } = this.getValue()
     source = regexp_source_fix(source)
     flags = flags ? sort_regexp_flags(flags) : ''

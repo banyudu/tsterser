@@ -5,7 +5,7 @@ import AST_Block, { AST_Block_Props } from './block'
 import { can_be_evicted_from_block, to_moz, make_node, is_ast_if, is_ast_const, is_ast_let, is_ast_class } from '../utils'
 
 export default class AST_BlockStatement extends AST_Block {
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     this.tighten_body(compressor)
     switch (this.body.length) {
       case 1:
@@ -22,18 +22,18 @@ export default class AST_BlockStatement extends AST_Block {
   }
 
   aborts = this._block_aborts
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'BlockStatement',
       body: this.body.map(to_moz)
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     this.print_braced(output)
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A block statement'
 
   static PROPS = AST_Block.PROPS

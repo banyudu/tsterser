@@ -21,14 +21,14 @@ import {
 export default class AST_Switch extends AST_Block {
   expression: any | undefined
 
-  get_loopcontrol_target (node: AST_Node) {
+  public get_loopcontrol_target (node: AST_Node) {
     if (is_ast_break(node) && !node.label) {
       return this
     }
     return undefined
   }
 
-  _optimize (compressor: Compressor): any {
+  protected _optimize (compressor: Compressor): any {
     const self = this
     if (!compressor.option('switches')) return self
     let branch
@@ -138,40 +138,40 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  may_throw (compressor: Compressor) {
+  public may_throw (compressor: Compressor) {
     return this.expression.may_throw(compressor) ||
           anyMayThrow(this.body, compressor)
   }
 
-  has_side_effects (compressor: Compressor) {
+  public has_side_effects (compressor: Compressor) {
     return this.expression.has_side_effects(compressor) ||
           anySideEffect(this.body, compressor)
   }
 
-  walkInner () {
+  protected walkInner () {
     const result: AST_Node[] = []
     result.push(this.expression)
     result.push(...this.body)
     return result
   }
 
-  _children_backwards (push: Function) {
+  public _children_backwards (push: Function) {
     let i = this.body.length
     while (i--) push(this.body[i])
     push(this.expression)
   }
 
-  _size (): number {
+  public _size (): number {
     return 8 + list_overhead(this.body)
   }
 
   shallow_cmp_props: any = {}
-  _transform (tw: TreeTransformer) {
+  protected _transform (tw: TreeTransformer) {
     this.expression = this.expression.transform(tw)
     this.body = do_list(this.body, tw)
   }
 
-  _to_mozilla_ast (_parent: AST_Node): any {
+  public _to_mozilla_ast (_parent: AST_Node): any {
     return {
       type: 'SwitchStatement',
       discriminant: to_moz(this.expression),
@@ -179,7 +179,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  _codegen (output: OutputStream) {
+  protected _codegen (output: OutputStream) {
     output.print('switch')
     output.space()
     output.with_parens(() => {
@@ -199,7 +199,7 @@ export default class AST_Switch extends AST_Block {
     }
   }
 
-  add_source_map (output: OutputStream) { output.add_mapping(this.start) }
+  protected add_source_map (output: OutputStream) { output.add_mapping(this.start) }
   static documentation = 'A `switch` statement'
   static propdoc = {
     expression: '[AST_Node] the `switch` “discriminant”'
