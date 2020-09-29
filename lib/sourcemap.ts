@@ -47,14 +47,11 @@ import { SourceMapOptions } from './types'
 
 // a small wrapper around fitzgen's source-map library
 export default function SourceMap (options: SourceMapOptions) {
-  options = defaults(options, {
-    file: null,
-    root: null,
-    orig: null,
-
+  const defaultOptions: SourceMapOptions = {
     orig_line_diff: 0,
     dest_line_diff: 0
-  })
+  }
+  options = defaults(options, defaultOptions)
   const generator: any = new MOZ_SourceMap.SourceMapGenerator({
     file: options.file,
     sourceRoot: options.root
