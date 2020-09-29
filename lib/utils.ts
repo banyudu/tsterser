@@ -335,9 +335,9 @@ export class DefaultsError extends Error {
   }
 }
 
-export function defaults (args: any, defs: AnyObject, croak: boolean = false): typeof args {
-  if (args === true) { args = {} }
-  const ret = args || {}
+export function defaults<T> (args: Partial<T>, defs: T, croak: boolean = false): T {
+  if ((args as any) === true) { args = {} }
+  const ret: any = args || {}
   if (croak) {
     for (const i in ret) {
       if (HOP(ret, i) && !HOP(defs, i)) { throw new DefaultsError('`' + i + '` is not a supported option', defs) }
@@ -348,7 +348,7 @@ export function defaults (args: any, defs: AnyObject, croak: boolean = false): t
       if (!args || !HOP(args, i)) {
         ret[i] = defs[i]
       } else if (i === 'ecma') {
-        let ecma = args[i] | 0
+        let ecma = (args as any)[i] | 0
         if (ecma > 5 && ecma < 2015) ecma += 2009
         ret[i] = ecma
       } else {
