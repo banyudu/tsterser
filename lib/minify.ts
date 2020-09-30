@@ -10,6 +10,7 @@ import {
   mangle_properties,
   reserve_quoted_keys
 } from './propmangle'
+import { MangleOptions, MinifyOptions, SourceMapOptions } from './types'
 
 export const to_ascii = typeof atob === 'undefined' ? function (b64: string) {
   return Buffer.from(b64, 'base64').toString()
@@ -72,11 +73,11 @@ function cache_to_json (cache: any) {
   }
 }
 
-export function minify (files: any, options: any): any {
+export function minify (files: any, minifyOptions: Partial<MinifyOptions>): any {
   const enable_warnings = AST_Node.enable_warnings
   try {
-    options = defaults(options, {
-      compress: {},
+    const defaultOptions: MinifyOptions = {
+      compress: {} as any,
       ecma: undefined,
       enclose: false,
       ie8: false,
@@ -84,7 +85,7 @@ export function minify (files: any, options: any): any {
       keep_fnames: false,
       mangle: {},
       module: false,
-      nameCache: null,
+      nameCache: undefined,
       output: {},
       parse: {},
       rename: undefined,
@@ -94,7 +95,8 @@ export function minify (files: any, options: any): any {
       toplevel: false,
       warnings: false,
       wrap: false
-    }, true)
+    }
+    const options = defaults(minifyOptions, defaultOptions, true)
     const timings: any = options.timings && {
       start: Date.now()
     }
@@ -102,7 +104,7 @@ export function minify (files: any, options: any): any {
       options.keep_classnames = options.keep_fnames
     }
     if (options.rename === undefined) {
-      options.rename = (options.compress && options.mangle)
+      options.rename = !!(options.compress && options.mangle)
     }
     set_shorthand('ecma', options, ['parse', 'compress', 'output'])
     set_shorthand('ie8', options, ['compress', 'mangle', 'output'])
@@ -114,18 +116,19 @@ export function minify (files: any, options: any): any {
     set_shorthand('warnings', options, ['compress'])
     let quoted_props: string[] | undefined
     if (options.mangle) {
-      options.mangle = defaults(options.mangle, {
+      const defaultMangleOptions: MangleOptions = {
         cache: options.nameCache && (options.nameCache.vars || {}),
         eval: false,
         ie8: false,
         keep_classnames: false,
         keep_fnames: false,
         module: false,
-        properties: false,
-        reserved: [],
+        properties: undefined,
+        reserved: [] as any,
         safari10: false,
         toplevel: false
-      }, true)
+      }
+      options.mangle = defaults(options.mangle, defaultMangleOptions, true)
       if (options.mangle?.properties) {
         if (typeof options.mangle.properties !== 'object') {
           options.mangle.properties = {}
@@ -143,14 +146,15 @@ export function minify (files: any, options: any): any {
       init_cache(options.mangle?.properties?.cache)
     }
     if (options.sourceMap) {
-      options.sourceMap = defaults(options.sourceMap, {
+      const defaultSourceMapOptions: SourceMapOptions = {
         asObject: false,
-        content: null,
-        filename: null,
+        content: undefined,
+        filename: undefined,
         includeSources: false,
-        root: null,
-        url: null
-      }, true)
+        root: undefined,
+        url: undefined
+      }
+      options.sourceMap = defaults(options.sourceMap, defaultSourceMapOptions, true)
     }
     if (options.warnings && !AST_Node.enable_warnings) {
       AST_Node.enable_warnings = true
@@ -222,7 +226,7 @@ export function minify (files: any, options: any): any {
             file: options.sourceMap.filename,
             orig: options.sourceMap.content,
             root: options.sourceMap.root
-          })
+          } as any)
           if (options.sourceMap.includeSources) {
             if (is_ast_toplevel(files)) {
               throw new Error('original source content unavailable')

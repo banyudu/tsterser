@@ -111,7 +111,7 @@ export interface MangleOptions {
   keep_classnames?: boolean | RegExp
   keep_fnames?: boolean | RegExp
   module?: boolean
-  properties?: false | ManglePropertiesOptions
+  properties?: ManglePropertiesOptions
   reserved?: Set<string>
   safari10?: boolean
   toplevel?: boolean
@@ -325,7 +325,7 @@ export interface MinifyOptions {
   ie8?: boolean
   keep_classnames?: boolean | RegExp
   keep_fnames?: boolean | RegExp
-  mangle?: false | MangleOptions
+  mangle?: MangleOptions
   module?: boolean
   nameCache?: AnyObject
   output?: OutputOptions
