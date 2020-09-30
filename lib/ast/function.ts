@@ -14,7 +14,7 @@ import {
 } from '../utils'
 import { walk_abort } from '../constants'
 import SymbolDef from '../symbol-def'
-import { MozillaAst } from '../types'
+import { MangleOptions, MozillaAst } from '../types'
 
 export default class AST_Function extends AST_Lambda {
   public name: any
@@ -55,7 +55,7 @@ export default class AST_Function extends AST_Lambda {
   }
 
   public _dot_throw () { return false }
-  protected next_mangled (options: any, def: SymbolDef) {
+  protected next_mangled (options: MangleOptions, def: SymbolDef) {
     // #179, #326
     // in Safari strict mode, something like (function x(x){...}) is a syntax error;
     // a function expression's argument cannot shadow the function expression's name

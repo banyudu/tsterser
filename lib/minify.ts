@@ -29,12 +29,13 @@ function read_source_map (code: string) {
   return to_ascii(match[2])
 }
 
-function set_shorthand (name: string, options: any, keys: string[]) {
+function set_shorthand (name: keyof MinifyOptions, options: MinifyOptions, keys: Array<keyof MinifyOptions>) {
   if (options[name]) {
     keys.forEach(function (key) {
       if (options[key]) {
-        if (typeof options[key] !== 'object') options[key] = {}
-        if (!(name in options[key])) options[key][name] = options[name]
+        if (typeof options[key] !== 'object') options[key] = {} as any
+        const tmp: any = options[key]
+        if (!(name in tmp)) tmp[name] = options[name]
       }
     })
   }

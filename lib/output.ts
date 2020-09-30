@@ -75,7 +75,7 @@ const quote_template = (str: string) => {
 }
 
 export class OutputStream {
-  public options: any
+  public options: OutputOptions
 
   public in_directive = false
   public use_asm: AST_Scope | null = null
@@ -136,7 +136,7 @@ export class OutputStream {
 
   private _ensure_line_len () {
     if (this.options.max_line_len) {
-      if (this._current_col > (this.options.max_line_len as number)) {
+      if (this._current_col > this.options.max_line_len) {
         if (this._might_add_newline) {
           const left = this._OUTPUT.slice(0, this._might_add_newline)
           const right = this._OUTPUT.slice(this._might_add_newline)
@@ -152,8 +152,8 @@ export class OutputStream {
           this._current_pos++
           this._current_col = right.length
         }
-        if (this._current_col > (this.options.max_line_len as number)) {
-                AST_Node.warn?.('Output exceeds {max_line_len} characters', this.options)
+        if (this._current_col > this.options.max_line_len) {
+          AST_Node.warn?.('Output exceeds {max_line_len} characters', this.options)
         }
       }
       if (this._might_add_newline) {
@@ -497,7 +497,7 @@ export class OutputStream {
     this.space()
   }
 
-  public option (opt: keyof any) { return this.options[opt] }
+  public option (opt: keyof OutputOptions) { return this.options[opt] }
 
   public line () { return this._current_line }
 

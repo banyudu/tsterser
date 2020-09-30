@@ -18,7 +18,7 @@ import {
   MozillaAstTemplateLiteral,
   MozillaAstArrowFunctionExpression,
   MozillaAstFieldDefinition,
-  MozillaAstProperty, MozillaAstBinaryExpression, MozillaAstLogicalExpression, MozillaAstAssignmentExpression
+  MozillaAstProperty, MozillaAstBinaryExpression, MozillaAstLogicalExpression, MozillaAstAssignmentExpression, MangleOptions
 } from './types'
 import { OutputStream } from './output'
 /***********************************************************************
@@ -1913,7 +1913,7 @@ export function skip_string (node: AST_Node) {
   }
 }
 
-export function next_mangled (scope: AST_Scope, options: any) {
+export function next_mangled (scope: AST_Scope, options: MangleOptions) {
   const ext = scope.enclosed
   while (true) {
     const m = base54(++scope.cname)

@@ -39,10 +39,10 @@ import {
 } from '../utils'
 
 import Compressor from '../compressor'
-import { MozillaAst } from '../types'
+import { MangleOptions, MozillaAst } from '../types'
 
-export let printMangleOptions: any
-export function setPrintMangleOptions (val: any) {
+export let printMangleOptions: MangleOptions | undefined
+export function setPrintMangleOptions (val: MangleOptions | undefined) {
   printMangleOptions = val
 }
 

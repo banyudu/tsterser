@@ -69,7 +69,7 @@ export default class SymbolDef {
               is_ast_symbol_def_class(firstOrig)) && keep_name(options.keep_classnames, firstOrig.name))
   }
 
-  public mangle (options: any) {
+  public mangle (options: MangleOptions) {
     const cache = options.cache?.props
     if (this.global && cache && cache.has(this.name)) {
       this.mangled_name = cache.get(this.name)

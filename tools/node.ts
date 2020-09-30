@@ -1,4 +1,5 @@
 import { minify } from '../lib/minify'
+import { MinifyOptions } from '../lib/types'
 
 export function default_options () {
   const defs: AnyObject = {}
@@ -13,7 +14,7 @@ export function default_options () {
   return defs
 }
 
-function infer_options (options: any) {
+function infer_options (options: MinifyOptions) {
   const result = minify('', options)
   return result.error?.defs
 }

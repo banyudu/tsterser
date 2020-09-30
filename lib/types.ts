@@ -115,7 +115,7 @@ export interface MangleOptions {
   reserved?: Set<string>
   safari10?: boolean
   toplevel?: boolean
-  cache?: false | { props: Map<string, string> }
+  cache?: { props: Map<string, string> }
 }
 
 export interface ManglePropertiesOptions {

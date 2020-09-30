@@ -120,7 +120,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   public is_block_scope () { return false }
-  protected next_mangled (options: any) {
+  protected next_mangled (options: MangleOptions) {
     let name
     const mangled_names = this.mangled_names
     do {
@@ -199,7 +199,7 @@ export default class AST_Toplevel extends AST_Scope {
   }
 
   protected add_source_map () { }
-  protected compute_char_frequency (options: any) {
+  protected compute_char_frequency (options: MangleOptions) {
     setPrintMangleOptions(this._default_mangler_options(options))
     try {
       base54.consider(this.print_to_string(), 1)
@@ -209,7 +209,7 @@ export default class AST_Toplevel extends AST_Scope {
     base54.sort()
   }
 
-  protected expand_names (options: any) {
+  protected expand_names (options: MangleOptions) {
     base54.reset()
     base54.sort()
     options = this._default_mangler_options(options)
@@ -244,7 +244,7 @@ export default class AST_Toplevel extends AST_Scope {
     }
   }
 
-  private find_colliding_names (options: any) {
+  private find_colliding_names (options: MangleOptions) {
     const cache = options.cache?.props
     const avoid = new Set()
       options.reserved?.forEach(to_avoid)
@@ -267,7 +267,7 @@ export default class AST_Toplevel extends AST_Scope {
       }
   }
 
-  protected mangle_names (options: any) {
+  protected mangle_names (options: MangleOptions) {
     options = this._default_mangler_options(options)
 
     // We only need to mangle declaration nodes.  Special logic wired
