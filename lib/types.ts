@@ -141,7 +141,7 @@ export interface OutputOptions {
   inline_script?: boolean
   keep_quoted_props?: boolean
   max_line_len?: number | false
-  preamble?: string
+  preamble?: string | null
   preserve_annotations?: boolean
   quote_keys?: boolean
   quote_style?: OutputQuoteStyle

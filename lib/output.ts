@@ -47,7 +47,7 @@ import TreeWalker from './tree-walker'
 import { get_full_char_code, get_full_char, is_identifier_char } from './parse'
 import AST_Token from './ast/token'
 import AST_Scope from './ast/scope'
-import { Comment } from './types'
+import { Comment, OutputOptions } from './types'
 
 const EXPECT_DIRECTIVE = /^$|[;{][\s\n]*$/
 const CODE_LINE_BREAK = 10
@@ -658,9 +658,9 @@ export class OutputStream {
 
   public toString = this.get
 
-  public constructor (opt?: any) {
+  public constructor (opt?: Partial<OutputOptions>) {
     this.readonly = !opt
-    const _options: any = defaults(opt, {
+    const defaultOptions: OutputOptions = {
       ascii_only: false,
       beautify: false,
       braces: false,
@@ -686,7 +686,8 @@ export class OutputStream {
       width: 80,
       wrap_iife: false,
       wrap_func_args: true
-    }, true)
+    }
+    const _options: OutputOptions = defaults(opt ?? {}, defaultOptions, true)
 
     this.options = _options
     if (_options.source_map) {
