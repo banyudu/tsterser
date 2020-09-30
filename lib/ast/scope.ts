@@ -44,6 +44,7 @@ import {
   WRITE_ONLY
 } from '../constants'
 import { AST_SymbolRef } from '.'
+import { MangleOptions } from '../types'
 
 function map_add (map: Map<string | number, any[]>, key: string | number, value: any) {
   if (map.has(key)) {
@@ -893,9 +894,9 @@ export default class AST_Scope extends AST_Block {
     return this.uses_eval || this.uses_with
   }
 
-  public figure_out_scope (options: any, data: any = {}) {
-    options = defaults(options, {
-      cache: null,
+  public figure_out_scope (opt: Partial<MangleOptions>, data: any = {}) {
+    const options = defaults<MangleOptions>(opt, {
+      cache: undefined,
       ie8: false,
       safari10: false
     })

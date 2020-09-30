@@ -42,7 +42,7 @@
 
  ***********************************************************************/
 
-import { Comment } from './types'
+import { Comment, ParseOptions } from './types'
 import AST_Symbol from './ast/symbol'
 import {
   characters,
@@ -979,7 +979,7 @@ const ATOMIC_START_TOKEN = makePredicate(['atom', 'num', 'big_int', 'string', 'r
 
 /* -----[ Parser ]----- */
 
-export function parse ($TEXT: string, opt?: any) {
+export function parse ($TEXT: string, opt?: ParseOptions) {
   // maps start tokens to count of comments found outside of their parens
   // Example: /* I count */ ( /* I don't */ foo() )
   // Useful because comments_before property of call with parens outside
@@ -987,18 +987,19 @@ export function parse ($TEXT: string, opt?: any) {
   // right #__PURE__ comments for an expression
   const outer_comments_before_counts = new Map()
 
-  const options: any = defaults(opt, {
+  const defaultOptions: ParseOptions = {
     bare_returns: false,
     ecma: 2017,
     expression: false,
-    filename: null,
+    filename: undefined,
     html5_comments: true,
     module: false,
     shebang: true,
     strict: false,
     toplevel: null
-  }, true)
+  }
 
+  const options: ParseOptions = defaults(opt ?? {}, defaultOptions, true)
   const S = {
     input: (typeof $TEXT === 'string'
       ? tokenizer($TEXT, options.filename,

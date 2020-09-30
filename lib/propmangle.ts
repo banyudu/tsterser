@@ -46,6 +46,7 @@ import TreeWalker from './tree-walker'
 import { domprops } from '../tools/domprops'
 import TreeTransformer from './tree-transformer'
 import { AST_Node } from './ast'
+import { ManglePropertiesOptions } from './types'
 
 function find_builtins (reserved: Set<string | undefined>) {
   domprops.forEach(add)
@@ -113,20 +114,22 @@ function addStrings (node: AST_Node, add: Function) {
   }))
 }
 
-export function mangle_properties (ast: AST_Node, options: any) {
-  options = defaults(options, {
+export function mangle_properties (ast: AST_Node, opt: Partial<ManglePropertiesOptions>) {
+  const defaultOptions: ManglePropertiesOptions = {
     builtins: false,
     cache: null,
     debug: false,
     keep_quoted: false,
     only_cache: false,
-    regex: null,
-    reserved: null,
+    regex: undefined,
+    reserved: undefined,
     undeclared: false
-  }, true)
+  }
+
+  const options = defaults(opt, defaultOptions, true)
 
   const reserved_option = Array.isArray(options.reserved) ? options.reserved : [options.reserved]
-  const reserved = new Set(reserved_option as string)
+  const reserved = new Set(reserved_option)
   if (!options.builtins) find_builtins(reserved)
 
   let cname = -1

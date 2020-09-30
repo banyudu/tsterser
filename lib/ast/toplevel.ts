@@ -25,7 +25,7 @@ import {
 import TreeTransformer from '../tree-transformer'
 import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP } from '../constants'
 import { parse, RESERVED_WORDS } from '../parse'
-import { MozillaAst } from '../types'
+import { MangleOptions, MozillaAst } from '../types'
 
 export let function_defs: Set<any> | null = null
 export let unmangleable_names: Set<any> | null = null
@@ -129,14 +129,14 @@ export default class AST_Toplevel extends AST_Scope {
     return name
   }
 
-  private _default_mangler_options (options: any) {
-    options = defaults(options, {
+  private _default_mangler_options (opt: Partial<MangleOptions>) {
+    const options = defaults<MangleOptions>(opt, {
       eval: false,
       ie8: false,
       keep_classnames: false,
       keep_fnames: false,
       module: false,
-      reserved: [],
+      reserved: new Set(),
       toplevel: false
     })
     if (options.module) options.toplevel = true
