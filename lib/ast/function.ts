@@ -22,7 +22,7 @@ export default class AST_Function extends AST_Lambda {
   protected _optimize (compressor: Compressor): any {
     const self = super._optimize(compressor)
     if (compressor.option('unsafe_arrows') &&
-          compressor.option('ecma') >= 2015 &&
+          Number(compressor.option('ecma')) >= 2015 &&
           !self.name &&
           !self.is_generator &&
           !self.uses_arguments &&

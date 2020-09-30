@@ -55,16 +55,17 @@ import { parse } from './parse'
 import { SQUEEZED, has_flag, set_flag } from './constants'
 import SymbolDef from './symbol-def'
 import TreeWalker from './tree-walker'
+import { CompressOptions } from './types'
 
 export default class Compressor extends TreeWalker {
-  public options: any
+  public options: CompressOptions
   public pure_funcs: any
   public top_retain: ((def: any) => any) | undefined
   public toplevel: { funcs: any, vars: any }
   public sequences_limit: number
   public warnings_produced: AnyObject
   public evaluated_regexps: Map<any, any>
-  public constructor (options: any, false_by_default: boolean = false) {
+  public constructor (options: Partial<CompressOptions>, false_by_default: boolean = false) {
     super()
     if (options.defaults !== undefined && !options.defaults) false_by_default = true
     this.options = defaults(options, {
@@ -84,7 +85,7 @@ export default class Compressor extends TreeWalker {
       ecma: 5,
       evaluate: !false_by_default,
       expression: false,
-      global_defs: false,
+      global_defs: undefined,
       hoist_funs: false,
       hoist_props: !false_by_default,
       hoist_vars: false,
@@ -102,8 +103,8 @@ export default class Compressor extends TreeWalker {
       passes: 1,
       properties: !false_by_default,
       pure_getters: !false_by_default && 'strict',
-      pure_funcs: null,
-      reduce_funcs: null, // legacy
+      pure_funcs: undefined,
+      reduce_funcs: undefined, // legacy
       reduce_vars: !false_by_default,
       sequences: !false_by_default,
       side_effects: !false_by_default,
@@ -176,7 +177,7 @@ export default class Compressor extends TreeWalker {
     this.evaluated_regexps = new Map()
   }
 
-  public option<T extends keyof any>(key: T) {
+  public option<T extends keyof CompressOptions>(key: T) {
     return this.options[key]
   }
 

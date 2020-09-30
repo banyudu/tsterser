@@ -54,7 +54,7 @@ export interface CompressOptions {
   directives?: boolean
   drop_console?: boolean
   drop_debugger?: boolean
-  ecma?: ECMA
+  ecma: ECMA
   evaluate?: boolean
   expression?: boolean
   global_defs?: object
@@ -63,7 +63,7 @@ export interface CompressOptions {
   hoist_vars?: boolean
   ie8?: boolean
   if_return?: boolean
-  inline?: boolean | InlineFunctions
+  inline: boolean | InlineFunctions
   join_vars?: boolean
   keep_classnames?: boolean | RegExp
   keep_fargs?: boolean
@@ -81,20 +81,20 @@ export interface CompressOptions {
   sequences?: boolean | number
   side_effects?: boolean
   switches?: boolean
-  toplevel?: boolean
+  toplevel?: boolean | string
   top_retain?: null | string | string[] | RegExp
   typeofs?: boolean
   unsafe_arrows?: boolean
   unsafe?: boolean
   unsafe_comps?: boolean
   unsafe_Function?: boolean
-  unsafe_math?: boolean
+  unsafe_math: boolean
   unsafe_symbols?: boolean
-  unsafe_methods?: boolean
+  unsafe_methods?: boolean | RegExp
   unsafe_proto?: boolean
   unsafe_regexp?: boolean
   unsafe_undefined?: boolean
-  unused?: boolean
+  unused?: boolean | string
   warnings?: boolean | 'verbose'
 }
 
@@ -317,4 +317,25 @@ export interface MozillaAstLogicalExpression extends MozillaAst {
 
 export interface MozillaAstAssignmentExpression extends MozillaAst {
   operator: string
+}
+
+export interface MinifyOptions {
+  compress?: false | CompressOptions
+  ecma?: ECMA
+  ie8?: boolean
+  keep_classnames?: boolean | RegExp
+  keep_fnames?: boolean | RegExp
+  mangle?: false | MangleOptions
+  module?: boolean
+  nameCache?: AnyObject
+  output?: OutputOptions
+  parse?: ParseOptions
+  safari10?: boolean
+  sourceMap?: false | SourceMapOptions
+  toplevel?: boolean
+  warnings?: boolean | 'verbose'
+  timings?: boolean
+  rename?: boolean
+  wrap?: boolean
+  enclose?: boolean
 }
