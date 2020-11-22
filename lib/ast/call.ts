@@ -24,6 +24,7 @@ import {
   regexp_source_fix,
   make_node_from_constant,
   base54,
+  JS_Parse_Error,
   make_sequence,
   walk,
   has_annotation,
@@ -48,7 +49,7 @@ import {
 
 import GetOutputStream, { OutputStream } from '../output'
 
-import { parse, JS_Parse_Error } from '../parse'
+import { parse } from '../parse'
 import TreeTransformer from '../tree-transformer'
 import SymbolDef from '../symbol-def'
 

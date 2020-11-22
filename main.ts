@@ -127,12 +127,13 @@ export {
   push_uniq,
   base54,
   string_template,
+  JS_Parse_Error as _JS_Parse_Error,
   has_annotation as _has_annotation
 } from './lib/utils'
 export { default as Compressor } from './lib/compressor'
 export { to_ascii } from './lib/minify'
 export { default as OutputStream } from './lib/output'
-export { parse, tokenizer as _tokenizer, JS_Parse_Error as _JS_Parse_Error } from './lib/parse'
+export { parse, tokenizer as _tokenizer } from './lib/parse'
 export {
   mangle_properties,
   reserve_quoted_keys

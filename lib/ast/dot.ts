@@ -2,9 +2,8 @@ import AST_Node from './node'
 import { OutputStream } from '../output'
 import AST_PropAccess, { AST_PropAccess_Props } from './prop-access'
 import Compressor from '../compressor'
-import { is_lhs, make_node, best_of, is_strict, is_undeclared_ref, has_annotation, make_node_from_constant, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
-import { native_fns, _NOINLINE } from '../constants'
-import { RESERVED_WORDS, is_identifier_string } from '../parse'
+import { is_lhs, make_node, best_of, is_strict, is_identifier_string, is_undeclared_ref, has_annotation, make_node_from_constant, is_ast_dot, is_ast_function, is_ast_array, is_ast_number, is_ast_call, is_ast_reg_exp } from '../utils'
+import { native_fns, _NOINLINE, RESERVED_WORDS } from '../constants'
 import TreeTransformer from '../tree-transformer'
 
 export default class AST_Dot extends AST_PropAccess {

@@ -2,8 +2,8 @@ import Compressor from '../compressor'
 import { OutputStream } from '../output'
 import AST_Node from './node'
 import AST_ObjectProperty, { AST_ObjectProperty_Props } from './object-property'
-import { make_node, print_property_name, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_default_assign } from '../utils'
-import { is_identifier_string, RESERVED_WORDS } from '../parse'
+import { make_node, print_property_name, is_identifier_string, key_size, is_ast_node, is_ast_arrow, is_ast_symbol, is_ast_function, is_ast_symbol_ref, is_ast_object_key_val, is_ast_default_assign } from '../utils'
+import { RESERVED_WORDS } from '../constants'
 
 export default class AST_ObjectKeyVal extends AST_ObjectProperty {
   public quote: string

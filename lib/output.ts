@@ -41,10 +41,9 @@
 
  ***********************************************************************/
 
-import { defaults, makePredicate, is_ast_statement, is_ast_exit } from './utils'
+import { defaults, makePredicate, is_ast_statement, is_ast_exit, get_full_char_code, get_full_char, is_identifier_char } from './utils'
 import AST_Node from './ast/node'
 import TreeWalker from './tree-walker'
-import { get_full_char_code, get_full_char, is_identifier_char } from './parse'
 import AST_Token from './ast/token'
 import AST_Scope from './ast/scope'
 import { Comment, OutputOptions } from './types'

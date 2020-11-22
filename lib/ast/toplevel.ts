@@ -23,8 +23,8 @@ import {
   reset_variables, is_ast_prop_access, is_ast_defun, is_ast_directive, is_ast_scope, is_ast_labeled_statement, is_ast_symbol_catch, is_ast_var_def, is_ast_lambda, is_ast_label
 } from '../utils'
 import TreeTransformer from '../tree-transformer'
-import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP } from '../constants'
-import { parse, RESERVED_WORDS } from '../parse'
+import { clear_flag, set_flag, CLEAR_BETWEEN_PASSES, MASK_EXPORT_DONT_MANGLE, TOP, RESERVED_WORDS } from '../constants'
+import { parse } from '../parse'
 import { MangleOptions, MozillaAst } from '../types'
 
 export let function_defs: Set<any> | null = null

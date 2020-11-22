@@ -64,7 +64,7 @@ import { OutputStream } from './output'
 
  ***********************************************************************/
 
-import { walk_abort, UNDEFINED, has_flag, unary_side_effects, TOP, lazy_op } from './constants'
+import { walk_abort, UNDEFINED, has_flag, unary_side_effects, TOP, lazy_op, UNICODE, RESERVED_WORDS } from './constants'
 
 import {
   AST_Accessor,
@@ -192,7 +192,6 @@ import { unmangleable_names, function_defs } from './ast/toplevel'
 import TreeTransformer from './tree-transformer'
 import TreeWalker from './tree-walker'
 
-import { is_basic_identifier_string, is_identifier_string, RESERVED_WORDS } from './parse'
 import Compressor from './compressor'
 import SymbolDef from './symbol-def'
 
@@ -2872,4 +2871,82 @@ export function is_ast_assign (node: any): node is AST_Assign {
 
 export function is_ast_default_assign (node: any): node is AST_DefaultAssign {
   return node instanceof AST_Node && node.isAst('AST_DefaultAssign')
+}
+
+export function get_full_char (str: string, pos: number) {
+  if (is_surrogate_pair_head(str.charCodeAt(pos))) {
+    if (is_surrogate_pair_tail(str.charCodeAt(pos + 1))) {
+      return str.charAt(pos) + str.charAt(pos + 1)
+    }
+  } else if (is_surrogate_pair_tail(str.charCodeAt(pos))) {
+    if (is_surrogate_pair_head(str.charCodeAt(pos - 1))) {
+      return str.charAt(pos - 1) + str.charAt(pos)
+    }
+  }
+  return str.charAt(pos)
+}
+
+export function get_full_char_code (str: string, pos: number) {
+  // https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
+  if (is_surrogate_pair_head(str.charCodeAt(pos))) {
+    return 0x10000 + (str.charCodeAt(pos) - 0xd800 << 10) + str.charCodeAt(pos + 1) - 0xdc00
+  }
+  return str.charCodeAt(pos)
+}
+
+export function is_surrogate_pair_head (code: number) {
+  return code >= 0xd800 && code <= 0xdbff
+}
+
+export function is_surrogate_pair_tail (code: number) {
+  return code >= 0xdc00 && code <= 0xdfff
+}
+
+export function is_identifier_char (ch: string) {
+  return UNICODE.ID_Continue.test(ch)
+}
+
+export function is_basic_identifier_string (str: string) {
+  return /^[a-z_$][a-z0-9_$]*$/i.test(str)
+}
+
+export function is_identifier_string (str: string, allow_surrogates: boolean) {
+  if (/^[a-z_$][a-z0-9_$]*$/i.test(str)) {
+    return true
+  }
+  if (!allow_surrogates && /[\ud800-\udfff]/.test(str)) {
+    return false
+  }
+  let match = UNICODE.ID_Start.exec(str)
+  if (!match || match.index !== 0) {
+    return false
+  }
+
+  str = str.slice(match[0].length)
+  if (!str) {
+    return true
+  }
+
+  match = UNICODE.ID_Continue.exec(str)
+  return !!match && match[0].length === str.length
+}
+
+export class JS_Parse_Error extends Error {
+  public filename: string | undefined
+  public line: number
+  public col: number
+  public pos: number
+  public constructor (message: string, filename: string | undefined, line: number, col: number, pos: number) {
+    super()
+    this.name = 'SyntaxError'
+    this.message = message
+    this.filename = filename
+    this.line = line
+    this.col = col
+    this.pos = pos
+  }
+}
+
+export function js_error (message: string, filename: string | undefined, line: number, col: number, pos: number) {
+  throw new JS_Parse_Error(message, filename, line, col, pos)
 }
