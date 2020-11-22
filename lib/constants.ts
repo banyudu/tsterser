@@ -258,3 +258,31 @@ export const PUNC_CHARS = makePredicate(characters('[]{}(),;:'))
 export const UNARY_PREFIX = makePredicate(['typeof', 'void', 'delete', '--', '++', '!', '~', '-', '+'])
 export const UNARY_POSTFIX = makePredicate(['--', '++'])
 export const ASSIGNMENT = makePredicate(['=', '+=', '-=', '/=', '*=', '**=', '%=', '>>=', '<<=', '>>>=', '|=', '^=', '&='])
+
+export const PRECEDENCE = (function (a: string[][], ret: AnyObject) {
+  for (let i = 0; i < a.length; ++i) {
+    const b = a[i]
+    for (let j = 0; j < b.length; ++j) {
+      ret[b[j]] = i + 1
+    }
+  }
+  return ret
+})(
+  [
+    ['||'],
+    ['??'],
+    ['&&'],
+    ['|'],
+    ['^'],
+    ['&'],
+    ['==', '===', '!=', '!=='],
+    ['<', '>', '<=', '>=', 'in', 'instanceof'],
+    ['>>', '<<', '>>>'],
+    ['+', '-'],
+    ['*', '/', '%'],
+    ['**']
+  ],
+  {}
+)
+
+export const ATOMIC_START_TOKEN = makePredicate(['atom', 'num', 'big_int', 'string', 'regexp', 'name'])

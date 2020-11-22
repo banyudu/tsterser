@@ -2,7 +2,6 @@ import { OutputStream } from '../output'
 import AST_Node, { AST_Node_Props } from './node'
 import Compressor from '../compressor'
 import AST_With from './with'
-import { PRECEDENCE } from '../parse'
 import TreeWalker from '../tree-walker'
 import { MozillaAst } from '../types'
 
@@ -15,6 +14,7 @@ import {
   FALSY,
   binary,
   binary_bool,
+  PRECEDENCE,
   TRUTHY,
   set_flag,
   lazy_op
