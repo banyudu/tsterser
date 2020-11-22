@@ -392,57 +392,10 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
     directive_stack: [] as any[]
   }
 
-  function peek () { return get_full_char(S.text, S.pos) }
-
-  function next (signal_eof?: boolean, in_string: boolean = false) {
-    let ch = get_full_char(S.text, S.pos++)
-    if (signal_eof && !ch) { throw EX_EOF }
-    if (NEWLINE_CHARS.has(ch)) {
-      S.newline_before = S.newline_before || !in_string
-      ++S.line
-      S.col = 0
-      if (ch == '\r' && peek() == '\n') {
-        // treat a \r\n sequence as a single \n
-        ++S.pos
-        ch = '\n'
-      }
-    } else {
-      if (ch.length > 1) {
-        ++S.pos
-        ++S.col
-      }
-      ++S.col
-    }
-    return ch
-  }
-
-  function forward (i: number) {
-    while (i--) next()
-  }
-
-  function looking_at (str: string) {
-    return S.text.substr(S.pos, str.length) == str
-  }
-
-  function find_eol () {
-    const text = S.text
-    for (let i = S.pos, n = S.text.length; i < n; ++i) {
-      const ch = text[i]
-      if (NEWLINE_CHARS.has(ch)) { return i }
-    }
-    return -1
-  }
-
   function find (what: string, signal_eof: boolean) {
     const pos = S.text.indexOf(what, S.pos)
     if (signal_eof && pos == -1) throw EX_EOF
     return pos
-  }
-
-  function start_token () {
-    S.tokline = S.line
-    S.tokcol = S.col
-    S.tokpos = S.pos
   }
 
   let prev_was_dot = false
@@ -482,13 +435,9 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
     return ret
   }
 
-  function skip_whitespace () {
-    while (WHITESPACE_CHARS.has(peek())) { next() }
-  }
-
   function read_while (pred: (ch: string, i: number) => boolean) {
     let ret = ''; let ch; let i = 0
-    while ((ch = peek()) && pred(ch, i++)) { ret += next() }
+    while ((ch = peek(S)) && pred(ch, i++)) { ret += next(S) }
     return ret
   }
 
@@ -550,7 +499,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
   }
 
   function read_escaped_char (in_string: boolean, strict_hex: boolean, template_string: boolean = false) {
-    const ch = next(true, in_string)
+    const ch = next(S, true, in_string)
     switch (ch.charCodeAt(0)) {
       case 110 : return '\n'
       case 114 : return '\r'
@@ -560,30 +509,30 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
       case 102 : return '\f'
       case 120 : return String.fromCharCode(hex_bytes(2, strict_hex) as number) // \x
       case 117 : // \u
-        if (peek() == '{') {
-          next(true)
-          if (peek() === '}') { parse_error('Expecting hex-character between {}') }
-          while (peek() == '0') next(true) // No significance
+        if (peek(S) == '{') {
+          next(S, true)
+          if (peek(S) === '}') { parse_error('Expecting hex-character between {}') }
+          while (peek(S) == '0') next(S, true) // No significance
           let result; const length = find('}', true) - S.pos
           // Avoid 32 bit integer overflow (1 << 32 === 1)
           // We know first character isn't 0 and thus out of range anyway
           if (length > 6 || (result = hex_bytes(length, strict_hex)) > 0x10FFFF) {
             parse_error('Unicode reference out of bounds')
           }
-          next(true)
+          next(S, true)
           return from_char_code(Number(result))
         }
         return String.fromCharCode(hex_bytes(4, strict_hex) as number)
       case 10 : return '' // newline
       case 13 : // \r
-        if (peek() == '\n') { // DOS newline
-          next(true, in_string)
+        if (peek(S) == '\n') { // DOS newline
+          next(S, true, in_string)
           return ''
         }
     }
     if (is_octal(ch)) {
       if (template_string && strict_hex) {
-        const represents_null_character = ch === '0' && !is_octal(peek())
+        const represents_null_character = ch === '0' && !is_octal(peek(S))
         if (!represents_null_character) {
           parse_error('Octal escape sequences are not allowed in template strings')
         }
@@ -595,10 +544,10 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   function read_octal_escape_sequence (ch: string, strict_octal: boolean) {
     // Read
-    let p = peek()
+    let p = peek(S)
     if (p >= '0' && p <= '7') {
-      ch += next(true)
-      if (ch[0] <= '3' && (p = peek()) >= '0' && p <= '7') { ch += next(true) }
+      ch += next(S, true)
+      if (ch[0] <= '3' && (p = peek(S)) >= '0' && p <= '7') { ch += next(S, true) }
     }
 
     // Parse
@@ -610,10 +559,10 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
   function hex_bytes (n: number, strict_hex: boolean) {
     let num: string = '0'
     for (; n > 0; --n) {
-      if (!strict_hex && isNaN(parseInt(peek(), 16))) {
+      if (!strict_hex && isNaN(parseInt(peek(S), 16))) {
         return parseInt(num, 16) || ''
       }
-      const digit = next(true)
+      const digit = next(S, true)
       if (isNaN(parseInt(digit, 16))) { parse_error('Invalid hex-character pattern in string') }
       num += digit
     }
@@ -621,9 +570,9 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
   }
 
   const read_string = with_eof_error('Unterminated string constant', function () {
-    const quote = next(); let ret = ''
+    const quote = next(S); let ret = ''
     for (;;) {
-      let ch = next(true, true)
+      let ch = next(S, true, true)
       if (ch == '\\') ch = read_escaped_char(true, true)
       else if (ch == '\r' || ch == '\n') parse_error('Unterminated string constant')
       else if (ch == quote) break
@@ -639,13 +588,13 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
       S.template_braces.push(S.brace_counter)
     }
     let content = ''; let raw = ''; let ch; let tok
-    next(true, true)
-    while ((ch = next(true, true)) != '`') {
+    next(S, true, true)
+    while ((ch = next(S, true, true)) != '`') {
       if (ch == '\r') {
-        if (peek() == '\n') ++S.pos
+        if (peek(S) == '\n') ++S.pos
         ch = '\n'
-      } else if (ch == '$' && peek() == '{') {
-        next(true, true)
+      } else if (ch == '$' && peek(S) == '{') {
+        next(S, true, true)
         S.brace_counter++
         tok = token(begin ? 'template_head' : 'template_substitution', content)
         tok.raw = raw
@@ -671,7 +620,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   function skip_line_comment (type: string) {
     const regex_allowed = S.regex_allowed
-    const i = find_eol(); let ret
+    const i = find_eol(S); let ret
     if (i == -1) {
       ret = S.text.substr(S.pos)
       S.pos = S.text.length
@@ -690,7 +639,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
     const i = find('*/', true)
     const text = S.text.substring(S.pos, i).replace(/\r\n|\r|\u2028|\u2029/g, '\n')
     // update stream position
-    forward(get_full_char_length(text) /* text length doesn't count \r\n as 2 char while S.pos - i does */ + 2)
+    forward(S, get_full_char_length(text) /* text length doesn't count \r\n as 2 char while S.pos - i does */ + 2)
     S.comments_before.push(token('comment2', text, true))
     S.newline_before = S.newline_before || text.includes('\n')
     S.regex_allowed = regex_allowed
@@ -701,28 +650,28 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
     let name: string; let ch: string; let escaped = false
     const read_escaped_identifier_char = function () {
       escaped = true
-      next()
-      if (peek() !== 'u') {
+      next(S)
+      if (peek(S) !== 'u') {
         parse_error('Expecting UnicodeEscapeSequence -- uXXXX or u{XXXX}')
       }
       return read_escaped_char(false, true)
     }
 
     // Read first character (ID_Start)
-    if ((name = peek()) === '\\') {
+    if ((name = peek(S)) === '\\') {
       name = read_escaped_identifier_char()
       if (!is_identifier_start(name)) {
         parse_error('First identifier char is an invalid identifier char')
       }
     } else if (is_identifier_start(name)) {
-      next()
+      next(S)
     } else {
       return ''
     }
 
     // Read ID_Continue
-    while ((ch = peek()) != null) {
-      if ((ch = peek()) === '\\') {
+    while ((ch = peek(S)) != null) {
+      if ((ch = peek(S)) === '\\') {
         ch = read_escaped_identifier_char()
         if (!is_identifier_char(ch)) {
           parse_error('Invalid escaped identifier char')
@@ -731,7 +680,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
         if (!is_identifier_char(ch)) {
           break
         }
-        next()
+        next(S)
       }
       name += ch
     }
@@ -743,7 +692,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   const read_regexp = with_eof_error('Unterminated regular expression', function (source: string) {
     let prev_backslash = false; let ch; let in_class = false
-    while ((ch = next(true))) {
+    while ((ch = next(S, true))) {
       if (NEWLINE_CHARS.has(ch)) {
         parse_error('Unexpected line terminator')
       } else if (prev_backslash) {
@@ -769,35 +718,35 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   function read_operator (prefix?: string | undefined) {
     function grow (op: string): string {
-      if (!peek()) return op
-      const bigger = op + peek()
+      if (!peek(S)) return op
+      const bigger = op + peek(S)
       if (OPERATORS.has(bigger)) {
-        next()
+        next(S)
         return grow(bigger)
       } else {
         return op
       }
     }
-    return token('operator', grow(prefix || next()))
+    return token('operator', grow(prefix || next(S)))
   }
 
   function handle_slash () {
-    next()
-    switch (peek()) {
+    next(S)
+    switch (peek(S)) {
       case '/':
-        next()
+        next(S)
         return skip_line_comment('comment1')
       case '*':
-        next()
+        next(S)
         return skip_multiline_comment()
     }
     return S.regex_allowed ? read_regexp('') : read_operator('/')
   }
 
   function handle_eq_sign () {
-    next()
-    if (peek() === '>') {
-      next()
+    next(S)
+    if (peek(S) === '>') {
+      next(S)
       return token('arrow', '=>')
     } else {
       return read_operator('=')
@@ -805,13 +754,13 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
   }
 
   function handle_dot () {
-    next()
-    if (is_digit(peek().charCodeAt(0))) {
+    next(S)
+    if (is_digit(peek(S).charCodeAt(0))) {
       return read_num('.')
     }
-    if (peek() === '.') {
-      next() // Consume second dot
-      next() // Consume third dot
+    if (peek(S) === '.') {
+      next(S) // Consume second dot
+      next(S) // Consume third dot
       return token('expand', '...')
     }
 
@@ -840,28 +789,28 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
 
   function next_token (force_regexp?: any) {
     if (force_regexp != null) { return read_regexp(force_regexp) }
-    if (shebang && S.pos == 0 && looking_at('#!')) {
-      start_token()
-      forward(2)
+    if (shebang && S.pos == 0 && looking_at(S, '#!')) {
+      start_token(S)
+      forward(S, 2)
       skip_line_comment('comment5')
     }
     let ch
     for (;;) {
-      skip_whitespace()
-      start_token()
+      skip_whitespace(S)
+      start_token(S)
       if (html5_comments) {
-        if (looking_at('<!--')) {
-          forward(4)
+        if (looking_at(S, '<!--')) {
+          forward(S, 4)
           skip_line_comment('comment3')
           continue
         }
-        if (looking_at('-->') && S.newline_before) {
-          forward(3)
+        if (looking_at(S, '-->') && S.newline_before) {
+          forward(S, 3)
           skip_line_comment('comment4')
           continue
         }
       }
-      ch = peek()
+      ch = peek(S)
       if (!ch) return token('eof')
       const code = ch.charCodeAt(0)
       switch (code) {
@@ -884,7 +833,7 @@ export function tokenizer ($TEXT: string, filename: string | undefined, html5_co
           break
       }
       if (is_digit(code)) return read_num()
-      if (PUNC_CHARS.has(ch)) return token('punc', next())
+      if (PUNC_CHARS.has(ch)) return token('punc', next(S))
       if (OPERATOR_CHARS.has(ch)) return read_operator()
       if (code == 92 || is_identifier_start(ch)) return read_word()
       break
@@ -1040,29 +989,16 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     return S.prev
   }
 
-  function croak (msg: string, line?: number | null, col?: number | null, pos?: number | null) {
-    const ctx = S.input.context()
-    js_error(msg,
-      ctx.filename,
-      line != null ? line : ctx.tokline,
-      col != null ? col : ctx.tokcol,
-      pos != null ? pos : ctx.tokpos)
-  }
-
-  function token_error (token: any | null, msg: string) {
-    croak(msg, token?.line, token?.col)
-  }
-
   function unexpected (token?: any | null | undefined) {
     if (token == null) { token = S.token }
-    token_error(token, 'Unexpected token: ' + token?.type + ' (' + token?.value + ')')
+    token_error(S, token, 'Unexpected token: ' + token?.type + ' (' + token?.value + ')')
   }
 
   function expect_token (type: string, val: string | undefined) {
     if (is(type, val)) {
       return next()
     }
-    token_error(S.token, 'Unexpected token ' + S.token?.type + ' «' + S.token?.value + '»' + ', expected ' + type + ' «' + val + '»')
+    token_error(S, S.token, 'Unexpected token ' + S.token?.type + ' «' + S.token?.value + '»' + ', expected ' + type + ' «' + val + '»')
   }
 
   function expect (punc: string) { return expect_token('punc', punc) }
@@ -1074,14 +1010,6 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
   function can_insert_semicolon () {
     return !options.strict &&
             (is('eof') || is('punc', '}') || has_newline_before(S.token))
-  }
-
-  function is_in_generator () {
-    return S.in_generator === S.in_function
-  }
-
-  function is_in_async () {
-    return S.in_async === S.in_function
   }
 
   function semicolon (optional: boolean = false) {
@@ -1146,7 +1074,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
           next()
           next()
           if (is_for_body) {
-            croak('functions are not allowed as the body of a loop')
+            croak(S, 'functions are not allowed as the body of a loop')
           }
           return function_(AST_Defun, false, true, is_export_default)
         }
@@ -1219,17 +1147,17 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
           case 'class':
             next()
             if (is_for_body) {
-              croak('classes are not allowed as the body of a loop')
+              croak(S, 'classes are not allowed as the body of a loop')
             }
             if (is_if_body) {
-              croak('classes are not allowed as the body of an if')
+              croak(S, 'classes are not allowed as the body of an if')
             }
             return class_(AST_DefClass)
 
           case 'function':
             next()
             if (is_for_body) {
-              croak('functions are not allowed as the body of a loop')
+              croak(S, 'functions are not allowed as the body of a loop')
             }
             return function_(AST_Defun, false, false, is_export_default)
 
@@ -1238,7 +1166,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
             return if_()
 
           case 'return': {
-            if (S.in_function == 0 && !options.bare_returns) { croak("'return' outside of function") }
+            if (S.in_function == 0 && !options.bare_returns) { croak(S, "'return' outside of function") }
             next()
             let value = null
             if (is('punc', ';')) {
@@ -1260,7 +1188,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
           case 'throw': {
             next()
-            if (has_newline_before(S.token)) { croak("Illegal newline after 'throw'") }
+            if (has_newline_before(S.token)) { croak(S, "Illegal newline after 'throw'") }
             const value = expression(true)
             semicolon()
             return new AST_Throw({
@@ -1294,7 +1222,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
           case 'with':
             if (S.input.has_directive('use strict')) {
-              croak('Strict mode may not include a with statement')
+              croak(S, 'Strict mode may not include a with statement')
             }
             next()
             return new AST_With({
@@ -1319,15 +1247,15 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
   function labeled_statement () {
     const label = as_symbol(AST_Label)
-    if (label.name === 'await' && is_in_async()) {
-      token_error(S.prev, 'await cannot be used as label inside async function')
+    if (label.name === 'await' && is_in_async(S)) {
+      token_error(S, S.prev, 'await cannot be used as label inside async function')
     }
     if (S.labels.some((l) => l.name === label.name)) {
       // ECMA-262, 12.12: An ECMAScript program is considered
       // syntactically incorrect if it contains a
       // LabelledStatement that is enclosed by a
       // LabelledStatement with the same Identifier as label.
-      croak('Label ' + label.name + ' defined twice')
+      croak(S, 'Label ' + label.name + ' defined twice')
     }
     expect(':')
     S.labels.push(label)
@@ -1340,7 +1268,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
       (label as any).references.forEach(function (ref: any) {
         if (is_ast_continue(ref)) {
           ref = ref.label?.start
-          croak('Continue label `' + label.name + '` refers to non-IterationStatement.',
+          croak(S, 'Continue label `' + label.name + '` refers to non-IterationStatement.',
             ref.line, ref.col, ref.pos)
         }
       })
@@ -1361,9 +1289,9 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     }
     if (label != null) {
       ldef = S.labels.find((l) => l.name === label.name)
-      if (!ldef) { croak('Undefined label ' + label.name) }
+      if (!ldef) { croak(S, 'Undefined label ' + label.name) }
       label.thedef = ldef
-    } else if (S.in_loop == 0) { croak(type.TYPE + ' not inside a loop or switch') }
+    } else if (S.in_loop == 0) { croak(S, type.TYPE + ' not inside a loop or switch') }
     semicolon()
     const stat = new type({ label: label })
     if (ldef) ldef.references.push(stat)
@@ -1374,8 +1302,8 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     const for_await_error = '`for await` invalid in this context'
     let await_tok: any | false | null = S.token
     if (await_tok?.type == 'name' && await_tok.value == 'await') {
-      if (!is_in_async()) {
-        token_error(await_tok, for_await_error)
+      if (!is_in_async(S)) {
+        token_error(S, await_tok, for_await_error)
       }
       next()
     } else {
@@ -1392,13 +1320,13 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
       const is_in = is('operator', 'in')
       const is_of = is('name', 'of')
       if (await_tok && !is_of) {
-        token_error(await_tok, for_await_error)
+        token_error(S, await_tok, for_await_error)
       }
       if (is_in || is_of) {
         if (is_ast_definitions(init)) {
-          if (init.definitions.length > 1) { token_error(init.start, 'Only one variable declaration allowed in for..in loop') }
+          if (init.definitions.length > 1) { token_error(S, init.start, 'Only one variable declaration allowed in for..in loop') }
         } else if (!(is_assignable(init) || is_ast_destructuring((init = to_destructuring(init))))) {
-          token_error(init.start, 'Invalid left-hand side in for..in loop')
+          token_error(S, init.start, 'Invalid left-hand side in for..in loop')
         }
         next()
         if (is_in) {
@@ -1408,7 +1336,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         }
       }
     } else if (await_tok) {
-      token_error(await_tok, for_await_error)
+      token_error(S, await_tok, for_await_error)
     }
     return regular_for(init)
   }
@@ -1452,7 +1380,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
   const arrow_function = function (start: AST_Token, argnames: any, is_async: boolean) {
     if (has_newline_before(S.token)) {
-      croak('Unexpected newline before arrow (=>)')
+      croak(S, 'Unexpected newline before arrow (=>)')
     }
 
     expect_token('arrow', '=>')
@@ -1525,7 +1453,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
               case 'eval':
               case 'yield':
                 if (strict_mode) {
-                  token_error(token, 'Unexpected ' + token.value + ' identifier as parameter inside strict mode')
+                  token_error(S, token, 'Unexpected ' + token.value + ' identifier as parameter inside strict mode')
                 }
                 break
               default:
@@ -1554,7 +1482,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
       },
       check_strict: function () {
         if (tracker.is_strict() && duplicate !== false) {
-          token_error(duplicate, 'Parameter ' + duplicate.value + ' was used already')
+          token_error(S, duplicate, 'Parameter ' + duplicate.value + ' was used already')
         }
       }
     }
@@ -1670,7 +1598,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
           used_parameters.add_parameter(S.token)
           elements.push(as_symbol(symbol_type))
         } else {
-          croak('Invalid function parameter')
+          croak(S, 'Invalid function parameter')
         }
         if (is('operator', '=') && !is_expand) {
           used_parameters.mark_default_assignment(S.token)
@@ -1685,7 +1613,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         }
         if (is_expand) {
           if (!is('punc', ']')) {
-            croak('Rest element must be last element')
+            croak(S, 'Rest element must be last element')
           }
           elements[elements.length - 1] = new AST_Expansion({
             start: expand_token,
@@ -1765,7 +1693,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         }
         if (is_expand) {
           if (!is('punc', '}')) {
-            croak('Rest element must be last element')
+            croak(S, 'Rest element must be last element')
           }
         } else if (is('operator', '=')) {
           used_parameters.mark_default_assignment(S.token)
@@ -1791,7 +1719,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
       used_parameters.add_parameter(S.token)
       return as_symbol(symbol_type)
     } else {
-      croak('Invalid function parameter')
+      croak(S, 'Invalid function parameter')
     }
     return undefined as any
   }
@@ -1870,8 +1798,8 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
   function _await_expression (): AST_Node | never {
     // Previous token must be "await" and not be interpreted as an identifier
-    if (!is_in_async()) {
-      croak('Unexpected await expression outside async function',
+    if (!is_in_async(S)) {
+      croak(S, 'Unexpected await expression outside async function',
                 S.prev?.line, S.prev?.col, S.prev?.pos)
     }
     // the await expression is parsed as a unary expression in Babel
@@ -1884,8 +1812,8 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
   function _yield_expression () {
     // Previous token must be keyword yield and not be interpret as an identifier
-    if (!is_in_generator()) {
-      croak('Unexpected yield expression outside generator function',
+    if (!is_in_generator(S)) {
+      croak(S, 'Unexpected yield expression outside generator function',
                 S.prev?.line, S.prev?.col, S.prev?.pos)
     }
     const start = S.token
@@ -2004,7 +1932,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         end: prev()
       })
     }
-    if (!bcatch && !bfinally) { croak('Missing catch/finally blocks') }
+    if (!bcatch && !bfinally) { croak(S, 'Missing catch/finally blocks') }
     return new AST_Try({
       body: body,
       bcatch: bcatch,
@@ -2034,10 +1962,10 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
           value: is('operator', '=')
             ? (next(), expression(false, no_in))
             : !no_in && kind === 'const'
-              ? croak('Missing initializer in const declaration') : null,
+              ? croak(S, 'Missing initializer in const declaration') : null,
           end: prev()
         })
-        if (def.name.name == 'import') croak('Unexpected token: import')
+        if (def.name.name == 'import') croak(S, 'Unexpected token: import')
       }
       a.push(def)
       if (!is('punc', ',')) { break }
@@ -2750,12 +2678,12 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         /* falls through */
       case 'name':
         if (tmp.value == 'yield') {
-          if (is_in_generator()) {
-            token_error(tmp, 'Yield cannot be used as identifier inside generators')
+          if (is_in_generator(S)) {
+            token_error(S, tmp, 'Yield cannot be used as identifier inside generators')
           } else if (!is_token(peek(), 'punc', ':') &&
                     !is_token(peek(), 'punc', '(') &&
                     S.input.has_directive('use strict')) {
-            token_error(tmp, 'Unexpected yield identifier inside strict mode')
+            token_error(S, tmp, 'Unexpected yield identifier inside strict mode')
           }
         }
       case 'string':
@@ -2790,22 +2718,22 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
 
   function _verify_symbol (sym: AST_Symbol) {
     const name = sym.name
-    if (is_in_generator() && name == 'yield') {
-      token_error(sym.start, 'Yield cannot be used as identifier inside generators')
+    if (is_in_generator(S) && name == 'yield') {
+      token_error(S, sym.start, 'Yield cannot be used as identifier inside generators')
     }
     if (S.input.has_directive('use strict')) {
       if (name == 'yield') {
-        token_error(sym.start, 'Unexpected yield identifier inside strict mode')
+        token_error(S, sym.start, 'Unexpected yield identifier inside strict mode')
       }
       if (is_ast_symbol_declaration(sym) && (name == 'arguments' || name == 'eval')) {
-        token_error(sym.start, 'Unexpected ' + name + ' in strict mode')
+        token_error(S, sym.start, 'Unexpected ' + name + ' in strict mode')
       }
     }
   }
 
   function as_symbol (type: typeof AST_Symbol, noerror: boolean = false): AST_Symbol {
     if (!is('name')) {
-      if (!noerror) croak('Name expected')
+      if (!noerror) croak(S, 'Name expected')
       return null as any
     }
     const sym = _make_symbol(type)
@@ -2908,11 +2836,11 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
   const maybe_unary = function (allow_calls: boolean, allow_arrows: boolean = false) {
     const start = S.token
     if (start.type == 'name' && start.value == 'await') {
-      if (is_in_async()) {
+      if (is_in_async(S)) {
         next()
         return _await_expression()
       } else if (S.input.has_directive('use strict')) {
-        token_error(S.token, 'Unexpected await identifier inside strict mode')
+        token_error(S, S.token, 'Unexpected await identifier inside strict mode')
       }
     }
     if (is('operator') && UNARY_PREFIX.has(start.value)) {
@@ -2939,10 +2867,10 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     switch (op) {
       case '++':
       case '--':
-        if (!is_assignable(expr)) { croak('Invalid use of ' + op + ' operator', token.line, token.col, token.pos) }
+        if (!is_assignable(expr)) { croak(S, 'Invalid use of ' + op + ' operator', token.line, token.col, token.pos) }
         break
       case 'delete':
-        if (is_ast_symbol_ref(expr) && S.input.has_directive('use strict')) { croak('Calling delete on expression not allowed in strict mode', expr.start.line, expr.start.col, expr.start.pos) }
+        if (is_ast_symbol_ref(expr) && S.input.has_directive('use strict')) { croak(S, 'Calling delete on expression not allowed in strict mode', expr.start.line, expr.start.col, expr.start.pos) }
         break
     }
     return new CTOR({ operator: op, expression: expr })
@@ -3013,7 +2941,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
         const element = elements[i]
         if (is_ast_expansion(element)) {
           if (i + 1 !== elements.length) {
-            token_error(elements[i].start, 'Spread must the be last element in destructuring array')
+            token_error(S, elements[i].start, 'Spread must the be last element in destructuring array')
           }
           element.expression = to_destructuring(element.expression)
         }
@@ -3047,11 +2975,11 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     const start = S.token
 
     if (start.type == 'name' && start.value == 'yield') {
-      if (is_in_generator()) {
+      if (is_in_generator(S)) {
         next()
         return _yield_expression()
       } else if (S.input.has_directive('use strict')) {
-        token_error(S.token, 'Unexpected yield identifier inside strict mode')
+        token_error(S, S.token, 'Unexpected yield identifier inside strict mode')
       }
     }
 
@@ -3069,7 +2997,7 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
           end: prev()
         })
       }
-      croak('Invalid assignment')
+      croak(S, 'Invalid assignment')
     }
     return left
   }
@@ -3118,4 +3046,76 @@ export function parse ($TEXT: string, opt?: ParseOptions) {
     }
     return toplevel
   })()
+}
+
+function start_token (S: any) {
+  S.tokline = S.line
+  S.tokcol = S.col
+  S.tokpos = S.pos
+}
+
+function peek (S: any) { return get_full_char(S.text, S.pos) }
+
+function next (S: any, signal_eof?: boolean, in_string: boolean = false) {
+  let ch = get_full_char(S.text, S.pos++)
+  if (signal_eof && !ch) { throw EX_EOF }
+  if (NEWLINE_CHARS.has(ch)) {
+    S.newline_before = S.newline_before || !in_string
+    ++S.line
+    S.col = 0
+    if (ch == '\r' && peek(S) == '\n') {
+      // treat a \r\n sequence as a single \n
+      ++S.pos
+      ch = '\n'
+    }
+  } else {
+    if (ch.length > 1) {
+      ++S.pos
+      ++S.col
+    }
+    ++S.col
+  }
+  return ch
+}
+
+function forward (S: any, i: number) {
+  while (i--) next(S)
+}
+
+function looking_at (S: any, str: string) {
+  return S.text.substr(S.pos, str.length) == str
+}
+
+function find_eol (S: any) {
+  const text = S.text
+  for (let i = S.pos, n = S.text.length; i < n; ++i) {
+    const ch = text[i]
+    if (NEWLINE_CHARS.has(ch)) { return i }
+  }
+  return -1
+}
+
+function skip_whitespace (S: any) {
+  while (WHITESPACE_CHARS.has(peek(S))) { next(S) }
+}
+
+function is_in_generator (S: any) {
+  return S.in_generator === S.in_function
+}
+
+function is_in_async (S: any) {
+  return S.in_async === S.in_function
+}
+
+function croak (S: any, msg: string, line?: number | null, col?: number | null, pos?: number | null) {
+  const ctx = S.input.context()
+  js_error(msg,
+    ctx.filename,
+    line != null ? line : ctx.tokline,
+    col != null ? col : ctx.tokcol,
+    pos != null ? pos : ctx.tokpos)
+}
+
+function token_error (S: any, token: any | null, msg: string) {
+  croak(S, msg, token?.line, token?.col)
 }
